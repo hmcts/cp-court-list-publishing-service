@@ -101,7 +101,7 @@ dependencies {
     // implementation('org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0-M1') {
     //     exclude group: 'org.springdoc', module: 'springdoc-openapi-kotlin'
     // }
-    implementation 'io.swagger.core.v3:swagger-core:2.2.36'
+    implementation 'io.swagger.core.v3:swagger-core:2.2.38'
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -135,7 +135,7 @@ dependencies {
     testCompileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
     testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 
-    testImplementation(platform('org.junit:junit-bom:5.13.4'))
+    testImplementation(platform('org.junit:junit-bom:6.0.0'))
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'junit', module: 'junit'
@@ -154,7 +154,7 @@ dependencies {
 
     // integrationTestImplementation dependencies are need as they aren't always propagate as expected,
     // especially with platform BOMs, test runtime dependencies, or custom tasks. Explicit dependencies eliminate that risk.
-    integrationTestImplementation platform('org.junit:junit-bom:5.13.4')
+    integrationTestImplementation platform('org.junit:junit-bom:6.0.0')
     integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 
     integrationTestImplementation('org.springframework.boot:spring-boot-starter-test') {
