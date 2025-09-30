@@ -1,0 +1,14 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+  jpa:
+    hibernate:
+      ddl-auto: none
+  datasource:
+    url: jdbc:postgresql://localhost:55432/appdb
+    driver-class-name: org.postgresql.Driver
+    username: app
+    password: app

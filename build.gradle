@@ -1,0 +1,428 @@
+plugins {
+    id 'application'
+    id 'java'
+
+    id 'org.springframework.boot' version '4.0.0-M3'
+    id 'io.spring.dependency-management' version '1.1.7'
+
+    id 'jacoco'
+    id 'pmd'
+
+    id 'maven-publish'
+    id 'com.github.ben-manes.versions' version '0.53.0'
+    id 'org.cyclonedx.bom' version '2.4.1'
+    id "au.com.dius.pact" version "4.6.17"
+    // generating git.properties file for Spring Boot apps. Properties are exposed by telemetry
+    id 'com.gorylenko.gradle-git-properties' version '2.5.3'
+
+    // Docker Compose lifecycle for integration tests
+    id 'com.avast.gradle.docker-compose' version '0.17.12'
+}
+
+group = 'uk.gov.hmcts.cp'
+version = System.getProperty('ARTEFACT_VERSION') ?: '0.0.999'
+
+
+
+// Centralized port configuration
+ext {
+    serverPort = project.findProperty('server.port') ?: '8082'
+}
+
+def githubActor = project.findProperty("github.actor") ?: System.getenv("GITHUB_ACTOR")
+def githubToken = project.findProperty("github.token") ?: System.getenv("GITHUB_TOKEN")
+def githubRepo = System.getenv("GITHUB_REPOSITORY")
+
+def azureADOArtifactRepository = 'https://pkgs.dev.azure.com/hmcts/Artifacts/_packaging/hmcts-lib/maven/v1'
+def azureADOArtifactActor = System.getenv("AZURE_DEVOPS_ARTIFACT_USERNAME")
+def azureADOArtifactToken = System.getenv("AZURE_DEVOPS_ARTIFACT_TOKEN")
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << "-Xlint:unchecked" << "-Werror"
+}
+
+// https://github.com/gradle/gradle/issues/16791
+tasks.withType(JavaExec).configureEach {
+    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
+}
+
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += sourceSets.main.output
+            runtimeClasspath += sourceSets.main.output
+
+        }
+        resources.srcDir file('src/integrationTest/resources')
+    }
+    pactVerificationTest {
+        java {
+            compileClasspath += sourceSets.main.output
+            runtimeClasspath += sourceSets.main.output
+            srcDir file('src/pactVerificationTest/java')
+        }
+        resources.srcDir file('src/pactVerificationTest/resources')
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+
+    //Uncomment when using pact tests
+    pactVerificationTestImplementation.extendsFrom testImplementation
+    pactVerificationTestRuntimeOnly.extendsFrom runtimeOnly
+
+    // Ensure testRuntimeClasspath can be resolved for agent injection
+    testRuntimeClasspath {
+        canBeResolved = true
+    }
+}
+
+/* ---------------- Dependencies ---------------- */
+
+ext {
+    apiSpecVersion = "0.4.2"
+    log4JVersion = "2.24.3"
+    logbackVersion = "1.5.18"
+    lombokVersion = "1.18.38"
+}
+
+
+dependencies {
+    implementation("uk.gov.hmcts.cp:api-cp-crime-schedulingandlisting-courtschedule:$apiSpecVersion") {
+        exclude group: 'org.springdoc', module: 'springdoc-openapi-kotlin'
+    }
+    // Temporarily commented out due to SpringDoc compatibility issues with Spring Boot 4.0.0-M3
+    // implementation('org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0-M1') {
+    //     exclude group: 'org.springdoc', module: 'springdoc-openapi-kotlin'
+    // }
+    implementation 'io.swagger.core.v3:swagger-core:2.2.36'
+    implementation 'javax.xml.bind:jaxb-api:2.3.1'
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-aspectj'
+
+    // --- Observability / Actuator / OTEL / Prometheus ---
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'org.springframework.boot:spring-boot-starter-opentelemetry'
+
+    implementation 'net.logstash.logback:logstash-logback-encoder:8.1'
+    implementation 'org.apache.logging.log4j:log4j-to-slf4j'
+    implementation 'ch.qos.logback:logback-classic'
+    implementation 'ch.qos.logback:logback-core'
+
+    // --- Data / DB ---
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.postgresql:postgresql'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+
+    implementation group: 'io.rest-assured', name: 'rest-assured', version: '5.5.6'
+    implementation 'org.hibernate.validator:hibernate-validator:9.0.1.Final'
+    implementation 'org.apache.commons:commons-text:1.14.0'
+
+    // Keep only if you actually use JWT primitives yourself (not via Spring Security)
+    implementation 'io.jsonwebtoken:jjwt:0.13.0'
+
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    testCompileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+
+    testImplementation(platform('org.junit:junit-bom:5.13.4'))
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'junit', module: 'junit'
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    testImplementation 'io.micrometer:micrometer-tracing-test'
+    testImplementation 'com.h2database:h2'
+
+    testImplementation 'au.com.dius.pact.provider:junit5:4.6.17'
+    testImplementation 'au.com.dius.pact.provider:spring6:4.6.17'
+    pactVerificationTestImplementation 'au.com.dius.pact.provider:junit5:4.6.17'
+    pactVerificationTestImplementation 'au.com.dius.pact.provider:spring6:4.6.17'
+
+    // integrationTestImplementation dependencies are need as they aren't always propagate as expected,
+    // especially with platform BOMs, test runtime dependencies, or custom tasks. Explicit dependencies eliminate that risk.
+    integrationTestImplementation platform('org.junit:junit-bom:5.13.4')
+    integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+
+    integrationTestImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'junit', module: 'junit'
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    integrationTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    integrationTestCompileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    integrationTestAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+
+}
+
+springBoot {
+    buildInfo {
+        properties {
+            name = project.name
+            version = project.version.toString()
+        }
+    }
+}
+
+/* ---------------- Static Code Analysis Task ---------------- */
+pmd {
+    ruleSets = []
+    ruleSetFiles = files(".github/pmd-ruleset.xml")
+    ignoreFailures = false
+}
+
+tasks.withType(Pmd).configureEach {
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+tasks.named("pmdMain").configure {
+    onlyIf { gradle.startParameter.taskNames.contains(name) }
+}
+tasks.named("pmdTest").configure { enabled = false }
+tasks.named("pmdIntegrationTest").configure { enabled = false }
+tasks.named("pmdPactVerificationTest").configure { enabled = false }
+
+/* ---------------- Artefact ---------------- */
+
+// check dependencies upon release ONLY
+tasks.named("dependencyUpdates").configure {
+    def isNonStable = { String version ->
+        def stableKeyword = ['RELEASE', 'FINAL', 'GA'].any { qualifier -> version.toUpperCase().contains(qualifier) }
+        def regex = /^[0-9,.v-]+$/
+        return !stableKeyword && !(version ==~ regex)
+    }
+    rejectVersionIf {
+        isNonStable(it.candidate.version) && !isNonStable(it.currentVersion)
+    }
+}
+
+//Creation of Software Bill of Materials
+//https://github.com/CycloneDX/cyclonedx-gradle-plugin
+cyclonedxBom {
+    includeConfigs = ["runtimeClasspath"]
+    skipConfigs = ["compileClasspath", "testImplementation", "testCompileClasspath", "testRuntimeClasspath"]
+    schemaVersion = "1.6"
+    componentVersion = providers.provider { project.version.toString() }
+    destination = layout.buildDirectory.dir("reports").get().asFile
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+jar {
+    enabled = true
+    archiveClassifier.set('plain')
+    manifest {
+        attributes(
+                'Implementation-Title': project.name,
+                'Implementation-Version': project.version.toString()
+        )
+    }
+    if (file("CHANGELOG.md").exists()) {
+        from('CHANGELOG.md') {
+            into 'META-INF'
+        }
+    } else {
+        println "⚠️  CHANGELOG.md not found, skipping inclusion in JAR"
+    }
+}
+
+bootJar {
+    archiveFileName = "${rootProject.name}-${project.version}.jar"
+
+    manifest {
+        attributes('Implementation-Version': project.version.toString())
+    }
+}
+
+application {
+    mainClass = 'uk.gov.hmcts.cp.Application'
+}
+
+/* ---------------- Docker Compose–driven Integration Tests ---------------- */
+
+// Build app before compose build (your compose should COPY the bootJar)
+tasks.named('composeBuild') { dependsOn tasks.named('bootJar') }
+
+dockerCompose {
+    useComposeFiles = ['docker/docker-compose.integration.yml']
+    startedServices = ['app', 'db']
+
+    buildBeforeUp = true
+    waitForTcpPorts = true
+    upAdditionalArgs = ['--wait', '--wait-timeout', '120']
+
+    captureContainersOutput = true
+    removeOrphans = true
+    stopContainers = true
+    removeContainers = true
+
+    projectName = "${rootProject.name}-it".replaceAll('[^A-Za-z0-9]', '')
+
+    useDockerComposeV2 = true
+    dockerExecutable = 'docker'
+}
+
+/* ---------------- Test and Integration Tasks ---------------- */
+
+tasks.named('test') {
+    useJUnitPlatform {
+        excludeTags 'pact'
+    }
+    systemProperty 'API_SPEC_VERSION', project.version
+    failFast = true
+    // Mockito must be added as an agent, see:
+    // https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+    jvmArgs += [
+            "-javaagent:${configurations.testRuntimeClasspath.find { it.name.contains('mockito-core') }}", '-Xshare:off'
+    ]
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat = 'full'
+        showStandardStreams = true
+    }
+    reports {
+        junitXml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+tasks.named('build') {
+    dependsOn tasks.named('test')
+    dependsOn tasks.named('integration')
+}
+
+// Run integration tests as part of check, after unit tests
+tasks.named('check') {
+    dependsOn tasks.named('integration')
+}
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+    executionData fileTree(
+            dir: layout.buildDirectory.dir("jacoco").get().asFile,
+            include: ["*.exec"]
+    )
+    reports {
+        xml.required.set(true)
+        csv.required.set(false)
+        html.required.set(true)
+    }
+}
+
+tasks.register('integration', Test) {
+    description = "Runs integration tests against docker-compose stack"
+    group = "Verification"
+
+    mustRunAfter tasks.named('test')
+
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath       = sourceSets.integrationTest.runtimeClasspath
+    useJUnitPlatform()
+
+    dependsOn tasks.composeUp
+    finalizedBy tasks.composeDown
+
+    systemProperty 'app.baseUrl', "http://localhost:${serverPort}"
+
+    jvmArgs = ['-Xshare:off']
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat = 'full'
+        showStandardStreams = true
+    }
+}
+
+tasks.named('processIntegrationTestResources') {
+    // prevent duplicate resource collisions (e.g., application-docker-it.yml)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+// ADD when added PACT
+tasks.register('pactVerificationTest', Test) {
+    description = "Runs Pact provider verification tests"
+    group = "Verification"
+    testClassesDirs = sourceSets.pactVerificationTest.output.classesDirs
+    classpath = sourceSets.pactVerificationTest.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'pact'
+    }
+    failFast = true
+
+    def sysOrEnv = { String key ->
+        System.getProperty(key) ?: System.getenv(key.toUpperCase().replace('.', '_'))
+    }
+    systemProperty 'pact.broker.url', sysOrEnv('pact.broker.url')
+    systemProperty 'pact.broker.token', sysOrEnv('pact.broker.token')
+    systemProperty 'pact.provider.version', sysOrEnv('pact.provider.version')
+    systemProperty 'pact.provider.branch', sysOrEnv('pact.provider.branch')
+    systemProperty 'pact.verifier.publishResults', sysOrEnv('pact.verifier.publishResults')
+    systemProperty 'pact.env', sysOrEnv('pact.env') ?: 'local'
+    reports {
+        junitXml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+tasks.named('processPactVerificationTestResources') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+/* ---------------- Publishing ---------------- */
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url = "https://repo.spring.io/milestone" }  // required for Boot 4 milestones
+    maven {
+        url = azureADOArtifactRepository
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact(tasks.named('bootJar'))
+            artifact(tasks.named('jar'))
+            pom {
+                name = project.name
+                //description = "TODO UPDATE THE DESCRIPTION"
+                url = "https://github.com/${githubRepo ?: 'org/repo'}"
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/$githubRepo")
+            credentials {
+                username = githubActor
+                password = githubToken
+            }
+        }
+        maven {
+            name = "AzureArtifacts"
+            url = uri(azureADOArtifactRepository)
+            credentials {
+                username = azureADOArtifactActor
+                password = azureADOArtifactToken
+            }
+        }
+    }
+}
