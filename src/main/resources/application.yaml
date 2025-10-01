@@ -1,6 +1,6 @@
 spring:
   application:
-    name: service-UPDATE-TO-BE-NAME-OF-SERVICE
+    name: cp-court-list-publishing-service
 
   # Disable SpringDoc auto-configuration
   autoconfigure:
@@ -71,7 +71,7 @@ management:
         enabled: true                  # liveness/readiness groups
   metrics:
     tags:
-      service: service-hmcts-springboot-template
+      service: cp-court-list-publishing-service
       cluster: ${CLUSTER_NAME:local}
       region: ${REGION:local}
   tracing:

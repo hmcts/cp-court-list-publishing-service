@@ -3,9 +3,8 @@ bin/*
 !bin/run-in-docker.sh
 .gradle
 /build/
-/gradlew
-/gradlew.bat
 !gradle/wrapper/gradle-wrapper.properties
+!gradle/wrapper/gradle-wrapper.jar
 *.class
 bin/main/application.yaml
 
