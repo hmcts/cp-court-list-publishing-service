@@ -15,6 +15,7 @@ spring:
     url: ${APP_NAME_DATASOURCE_URL:jdbc:postgresql://localhost:55432/appdb}
     username: ${APP_NAME_DATASOURCE_USERNAME:app}
     password: ${APP_NAME_DATASOURCE_PASSWORD:app}
+    driver-class-name: ${APP_NAME_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
     hikari:
       pool-name: cp-hikari
       maximum-pool-size: ${APP_NAME_DB_POOL_SIZE:20}
@@ -24,11 +25,12 @@ spring:
       max-lifetime: 1800000            # ms
       keepalive-time: 300000           # ms
       validation-timeout: 5000         # ms
+      auto-commit: false
 
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate               # schema managed by Flyway
+      ddl-auto: update               # schema managed by Flyway
     properties:
       hibernate.jdbc.time_zone: UTC
       hibernate.connection.provider_disables_autocommit: true
