@@ -37,12 +37,7 @@ public class HearingController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "HearingId is required");
         }
 
-        try {
-            hearing = hearingService.getHearingById(hearingId);
-        } catch (Exception e) {
-            LOG.atError().log(e.getMessage());
-            throw e;
-        }
+        hearing = hearingService.getHearingById(hearingId);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(hearing);
@@ -54,25 +49,10 @@ public class HearingController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
         }
 
-        try {
-            String hearing = hearingService.updateHearing(hearingRequest);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(hearing);
-        } catch (IllegalArgumentException e) {
-            LOG.atError().log("Invalid request: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
-        } catch (IllegalStateException e) {
-            LOG.atError().log("Conflict: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage(), e);
-        } catch (Exception e) {
-            LOG.atError().log("Error creating hearing: {}", e.getMessage(), e);
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Failed to create hearing",
-                    e
-            );
-        }
+        String hearing = hearingService.updateHearing(hearingRequest);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(hearing);
     }
 
 }
