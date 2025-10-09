@@ -21,11 +21,14 @@ services:
       dockerfile: docker/Dockerfile
     ports:
       - "${SERVER_PORT:-8082}:${SERVER_PORT:-8082}"
+      - "8787:5005"
     environment:
       APP_NAME_DATASOURCE_URL: jdbc:postgresql://db:5432/appdb
       APP_NAME_DATASOURCE_USERNAME: app
       APP_NAME_DATASOURCE_PASSWORD: app
       SERVER_PORT: ${SERVER_PORT:-8082}
+      APP_NAME_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
     depends_on:
       db:
         condition: service_healthy
