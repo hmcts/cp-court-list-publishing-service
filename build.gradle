@@ -10,13 +10,13 @@ plugins {
 
     id 'maven-publish'
     id 'com.github.ben-manes.versions' version '0.53.0'
-    id 'org.cyclonedx.bom' version '2.4.1'
+    id 'org.cyclonedx.bom' version '3.0.1'
     id "au.com.dius.pact" version "4.6.17"
     // generating git.properties file for Spring Boot apps. Properties are exposed by telemetry
     id 'com.gorylenko.gradle-git-properties' version '2.5.3'
 
     // Docker Compose lifecycle for integration tests
-    id 'com.avast.gradle.docker-compose' version '0.17.12'
+    id 'com.avast.gradle.docker-compose' version '0.17.17'
 }
 
 group = 'uk.gov.hmcts.cp'
@@ -101,7 +101,7 @@ dependencies {
     // implementation('org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0-M1') {
     //     exclude group: 'org.springdoc', module: 'springdoc-openapi-kotlin'
     // }
-    implementation 'io.swagger.core.v3:swagger-core:2.2.38'
+    implementation 'io.swagger.core.v3:swagger-core:2.2.39'
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
