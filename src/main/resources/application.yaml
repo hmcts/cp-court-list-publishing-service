@@ -95,6 +95,10 @@ management:
 azure:
   application-insights:
     instrumentation-key: ${rpe.AppInsightsInstrumentationKey:00000000-0000-0000-0000-000000000000}
+  storage:
+    enabled: ${AZURE_STORAGE_ENABLED:false}
+    connection-string: DefaultEndpointsProtocol=https;AccountName=${AZURE_STORAGE_ACCOUNT_NAME};AccountKey=${AZURE_STORAGE_ACCOUNT_KEY};EndpointSuffix=core.windows.net
+    container-name: schedulelistinginput
 
 jwt:
   # Expose upwards to allow env var override: export JWT_SECRET_KEY=... (base64, 256-bit min)

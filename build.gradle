@@ -127,6 +127,9 @@ dependencies {
     implementation 'org.hibernate.validator:hibernate-validator:9.0.1.Final'
     implementation 'org.apache.commons:commons-text:1.14.0'
 
+    // Azure Blob Storage
+    implementation 'com.azure:azure-storage-blob:12.25.1'
+
     // Keep only if you actually use JWT primitives yourself (not via Spring Security)
     implementation 'io.jsonwebtoken:jjwt:0.13.0'
 
