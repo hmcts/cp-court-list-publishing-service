@@ -70,6 +70,17 @@ This project uses a two-file approach for environment variable management with `
 - Gradle property: `./gradlew integration -Pserver.port=8080`
 - System property: `./gradlew integration -Dserver.port=8080`
 
+**Azure Environment Variable:** To use azure blob, you should define following parameters on your env variables.
+- Azure Storage Enable: `export AZURE_STORAGE_ENABLED=true `
+- Account Name: `export AZURE_STORAGE_ACCOUNT_NAME= ... `
+- Account Key: `export AZURE_STORAGE_ACCOUNT_KEY= ... `
+
+**Database information:** you can use postico to reach DB
+- Database : `courtlistpublishing`
+- Account Name: `courtlistpublishing`
+- Password: `courtlistpublishing`
+
+
 📖 **For complete setup instructions, troubleshooting, and best practices, see the [Environment Variables Guide](docs/EnvironmentVariables.md).**
 
 ## Static code analysis
