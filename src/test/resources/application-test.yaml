@@ -8,7 +8,7 @@ spring:
     hibernate:
       ddl-auto: none
   datasource:
-    url: jdbc:postgresql://localhost:55432/appdb
+    url: jdbc:postgresql://localhost:55432/courtlistpublishing
     driver-class-name: org.postgresql.Driver
-    username: app
-    password: app
+    username: courtlistpublishing
+    password: courtlistpublishing
