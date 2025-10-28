@@ -12,10 +12,10 @@ spring:
       enabled: ${VIRTUAL_THREADS:false}
   datasource:
     # Override these via env in each environment
-    url: ${APP_NAME_DATASOURCE_URL:jdbc:postgresql://localhost:55432/courtlistpublishing}
-    username: ${APP_NAME_DATASOURCE_USERNAME:courtlistpublishing}
-    password: ${APP_NAME_DATASOURCE_PASSWORD:courtlistpublishing}
-    driver-class-name: ${APP_NAME_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
+    url: ${CP_CLP_DATASOURCE_URL:jdbc:postgresql://localhost:55432/courtlistpublishing}
+    username: ${CP_CLP_DATASOURCE_USERNAME:courtlistpublishing}
+    password: ${CP_CLP_DATASOURCE_PASSWORD:courtlistpublishing}
+    driver-class-name: ${CP_CLP_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
     hikari:
       pool-name: cp-hikari
       maximum-pool-size: ${APP_NAME_DB_POOL_SIZE:20}

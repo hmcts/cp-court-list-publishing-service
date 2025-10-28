@@ -23,11 +23,11 @@ services:
       - "${SERVER_PORT:-8082}:${SERVER_PORT:-8082}"
       - "8787:5005"
     environment:
-      APP_NAME_DATASOURCE_URL: jdbc:postgresql://db:5432/courtlistpublishing
-      APP_NAME_DATASOURCE_USERNAME: courtlistpublishing
-      APP_NAME_DATASOURCE_PASSWORD: courtlistpublishing
+      CP_CLP_DATASOURCE_URL: jdbc:postgresql://db:5432/courtlistpublishing
+      CP_CLP_DATASOURCE_USERNAME: courtlistpublishing
+      CP_CLP_DATASOURCE_PASSWORD: courtlistpublishing
       SERVER_PORT: ${SERVER_PORT:-8082}
-      APP_NAME_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      CP_CLP_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
       AZURE_STORAGE_ACCOUNT_NAME: ${AZURE_STORAGE_ACCOUNT_NAME}
       AZURE_STORAGE_ACCOUNT_KEY: ${AZURE_STORAGE_ACCOUNT_KEY}
