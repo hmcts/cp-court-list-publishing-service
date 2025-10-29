@@ -4,7 +4,6 @@ import uk.gov.hmcts.cp.dto.azure.FileInfo;
 import uk.gov.hmcts.cp.services.AzureBlobService;
 
 import java.util.List;
-import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -17,11 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/files")
 @RequiredArgsConstructor
-@ConditionalOnProperty(
-    prefix = "azure.storage",
-    name = "enabled",
-    havingValue = "true"
-)
+@ConditionalOnProperty(name = "azure.storage.enabled", havingValue = "true", matchIfMissing = false)
 public class FileController {
 
     private final AzureBlobService blobService;

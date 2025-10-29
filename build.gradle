@@ -129,7 +129,7 @@ dependencies {
 
     // Azure Blob Storage
     implementation 'com.azure:azure-storage-blob:12.25.1'
-
+    implementation 'com.azure:azure-identity:1.14.0'
     // Keep only if you actually use JWT primitives yourself (not via Spring Security)
     implementation 'io.jsonwebtoken:jjwt:0.13.0'
 

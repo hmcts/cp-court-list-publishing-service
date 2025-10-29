@@ -80,7 +80,6 @@ This project uses a two-file approach for environment variable management with `
 - Account Name: `courtlistpublishing`
 - Password: `courtlistpublishing`
 
-
 📖 **For complete setup instructions, troubleshooting, and best practices, see the [Environment Variables Guide](docs/EnvironmentVariables.md).**
 
 ## Static code analysis

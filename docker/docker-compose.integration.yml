@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: APP_NAME_CP_CDK_DB_it
+    container_name: CP_CLP_CP_CDK_DB_it
     environment:
       POSTGRES_DB: courtlistpublishing
       POSTGRES_USER: courtlistpublishing
@@ -15,7 +15,7 @@ services:
       retries: 30
 
   app:
-    container_name: APP_NAME_app_it
+    container_name: CP_CLP_app_it
     build:
       context: ..                # project root (so Docker has access to source)
       dockerfile: docker/Dockerfile
@@ -29,9 +29,8 @@ services:
       SERVER_PORT: ${SERVER_PORT:-8082}
       CP_CLP_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
-      AZURE_STORAGE_ACCOUNT_NAME: ${AZURE_STORAGE_ACCOUNT_NAME}
-      AZURE_STORAGE_ACCOUNT_KEY: ${AZURE_STORAGE_ACCOUNT_KEY}
-      AZURE_STORAGE_ENABLED: ${AZURE_STORAGE_ENABLED}
+      SPRING_PROFILES_ACTIVE: integration
+      AZURE_STORAGE_ENABLED: false
     depends_on:
       db:
         condition: service_healthy

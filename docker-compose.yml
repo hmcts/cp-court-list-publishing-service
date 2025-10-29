@@ -3,7 +3,7 @@ version: '3.8'
 services:
   db:
     image: postgres:16-alpine
-    container_name: APP_NAME_DB_it
+    container_name: CP_CLP_DB_it
     environment:
       POSTGRES_DB: courtlistpublishing
       POSTGRES_USER: courtlistpublishing
@@ -35,8 +35,8 @@ services:
       - CP_CLP_DATASOURCE_USERNAME=${CP_CLP_DATASOURCE_USERNAME:-app}
       - CP_CLP_DATASOURCE_PASSWORD=${CP_CLP_DATASOURCE_PASSWORD:-app}
       - AZURE_STORAGE_ACCOUNT_NAME=${AZURE_STORAGE_ACCOUNT_NAME:test-account-name}
-      - AZURE_STORAGE_ACCOUNT_KEY=${AZURE_STORAGE_ACCOUNT_KEY:test-account-key}
-      - AZURE_STORAGE_ENABLED=${AZURE_STORAGE_ENABLED:false}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:test-client-id}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID:test-tenant-id}
     depends_on:
       db:
         condition: service_healthy
