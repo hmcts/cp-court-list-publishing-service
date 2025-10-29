@@ -37,7 +37,6 @@ services:
       - AZURE_STORAGE_ACCOUNT_NAME=${AZURE_STORAGE_ACCOUNT_NAME:test-account-name}
       - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:test-client-id}
       - AZURE_TENANT_ID=${AZURE_TENANT_ID:test-tenant-id}
-      - AZURE_STORAGE_ENABLED=${AZURE_STORAGE_ENABLED:false}
     depends_on:
       db:
         condition: service_healthy

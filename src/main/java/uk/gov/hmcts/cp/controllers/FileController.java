@@ -4,9 +4,9 @@ import uk.gov.hmcts.cp.dto.azure.FileInfo;
 import uk.gov.hmcts.cp.services.AzureBlobService;
 
 import java.util.List;
-import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
