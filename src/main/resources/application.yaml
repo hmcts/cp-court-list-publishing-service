@@ -18,8 +18,8 @@ spring:
     driver-class-name: ${CP_CLP_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
     hikari:
       pool-name: cp-hikari
-      maximum-pool-size: ${APP_NAME_DB_POOL_SIZE:20}
-      minimum-idle: ${APP_NAME_DB_MIN_IDLE:5}
+      maximum-pool-size: ${CP_CLP_DB_POOL_SIZE:20}
+      minimum-idle: ${CP_CLP_DB_MIN_IDLE:5}
       connection-timeout: 30000        # ms
       idle-timeout: 600000             # ms
       max-lifetime: 1800000            # ms
@@ -97,8 +97,10 @@ azure:
     instrumentation-key: ${rpe.AppInsightsInstrumentationKey:00000000-0000-0000-0000-000000000000}
   storage:
     enabled: ${AZURE_STORAGE_ENABLED:false}
-    connection-string: DefaultEndpointsProtocol=https;AccountName=${AZURE_STORAGE_ACCOUNT_NAME};AccountKey=${AZURE_STORAGE_ACCOUNT_KEY};EndpointSuffix=core.windows.net
     container-name: schedulelistinginput
+    account-name: ${AZURE_STORAGE_ACCOUNT_NAME}
+  client-id: ${AZURE_CLIENT_ID}
+  tenant-id: ${AZURE_TENANT_ID}
 
 jwt:
   # Expose upwards to allow env var override: export JWT_SECRET_KEY=... (base64, 256-bit min)
