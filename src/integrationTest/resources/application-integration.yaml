@@ -1,0 +1,12 @@
+spring:
+  profiles:
+    active: integration
+
+azure:
+  storage:
+    enabled: false
+
+logging:
+  level:
+    root: INFO
+    uk.gov.hmcts.cp: DEBUG

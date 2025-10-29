@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "azure.storage.enabled", havingValue = "true", matchIfMissing = true)
 public class AzureBlobService {
 
     private final BlobContainerClient blobContainerClient;

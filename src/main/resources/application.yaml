@@ -96,6 +96,7 @@ azure:
   application-insights:
     instrumentation-key: ${rpe.AppInsightsInstrumentationKey:00000000-0000-0000-0000-000000000000}
   storage:
+    enabled: ${AZURE_STORAGE_ENABLED:true}
     container-name: schedulelistinginput
     account-name: ${AZURE_STORAGE_ACCOUNT_NAME}
   client-id: ${AZURE_CLIENT_ID}
