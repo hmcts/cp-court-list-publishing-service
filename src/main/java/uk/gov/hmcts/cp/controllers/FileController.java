@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/files")
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "azure.storage.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "azure.storage.enabled", havingValue = "true", matchIfMissing = false)
 public class FileController {
 
     private final AzureBlobService blobService;
