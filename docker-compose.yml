@@ -45,7 +45,7 @@ services:
     networks:
       - service-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:${SERVER_PORT}/actuator/health" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:${SERVER_PORT}/courtlistpublishing-service/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
