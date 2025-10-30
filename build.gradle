@@ -342,7 +342,7 @@ tasks.register('integration', Test) {
     dependsOn tasks.composeUp
     finalizedBy tasks.composeDown
 
-    systemProperty 'app.baseUrl', "http://localhost:${serverPort}"
+    systemProperty 'app.baseUrl', "http://localhost:${serverPort}/courtlistpublishing-service"
 
     jvmArgs = ['-Xshare:off']
     testLogging {
