@@ -27,7 +27,6 @@ services:
       CP_CLP_DATASOURCE_USERNAME: courtlistpublishing
       CP_CLP_DATASOURCE_PASSWORD: courtlistpublishing
       SERVER_PORT: ${SERVER_PORT:-8082}
-      SERVER_SERVLET_CONTEXT_PATH: /courtlistpublishing-service
       CP_CLP_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
       SPRING_PROFILES_ACTIVE: integration

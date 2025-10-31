@@ -15,7 +15,7 @@ import org.springframework.web.client.RestTemplate;
 
 public class HearingControllerHttpLiveTest {
 
-    private final String baseUrl = System.getProperty("app.baseUrl", "http://localhost:8082");
+    private final String baseUrl = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private final RestTemplate http = new RestTemplate();
 
     @Test
