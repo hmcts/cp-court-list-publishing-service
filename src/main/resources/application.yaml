@@ -79,12 +79,15 @@ management:
       cluster: ${CLUSTER_NAME:local}
       region: ${REGION:local}
   tracing:
+    enabled: ${OTEL_METRICS_ENABLED:false}
     sampling:
       probability: ${TRACING_SAMPLER_PROBABILITY:1.0}
   otlp:
     tracing:
       enabled: ${OTEL_METRICS_ENABLED:false}
       endpoint: ${OTEL_TRACES_URL:http://localhost:4318/traces}
+      export:
+        enabled: ${OTEL_METRICS_ENABLED:false}
     metrics:
       export:
         enabled: ${OTEL_METRICS_ENABLED:false}
