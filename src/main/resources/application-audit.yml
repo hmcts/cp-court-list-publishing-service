@@ -1,0 +1,37 @@
+# Audit configuration
+# Note: openapi-rest-spec is required even when enabled=false due to bean creation
+# Provide a valid OpenAPI spec file path when enabling audit
+audit:
+  http:
+    enabled: ${CP_CLP_HTTP_AUDIT_ENABLED:false}
+    openapi-rest-spec: ${CP_CLP_REST_SPECIFICATION:court-list-publishing-api.openapi.yml}
+
+# CP Audit (Artemis JMS) configuration
+# Required by cp-audit-filter-springboot even when audit.http.enabled=false
+cp:
+  audit:
+    enabled: ${CP_CLP_AUDIT_ENABLED:false}
+    high-availability: ${CP_CLP_ARTEMIS_HA:false}
+    hosts:
+      - ${CP_CLP_ARTEMIS_HOST_PRIMARY:localhost}
+      - ${CP_CLP_ARTEMIS_HOST_SECONDARY:}
+    port: ${CP_CLP_ARTEMIS_PORT:61616}
+    user: ${CP_CLP_ARTEMIS_USER:}
+    password: ${CP_CLP_ARTEMIS_PASSWORD:}
+    ssl-enabled: ${CP_CLP_ARTEMIS_SSL_ENABLED:false}
+    client-auth-required: ${CP_CLP_ARTEMIS_CLIENT_AUTH_REQUIRED:false}
+    keystore: ${CP_CLP_ARTEMIS_KEYSTORE:}
+    keystore-password: ${CP_CLP_ARTEMIS_KEYSTORE_PASSWORD:}
+    truststore: ${CP_CLP_ARTEMIS_KEYSTORE:}
+    truststore-password: ${CP_CLP_ARTEMIS_KEYSTORE_PASSWORD:}
+    verify-host: ${CP_CLP_ARTEMIS_VERIFY_HOST:false}
+    jms:
+      reconnect-attempts: ${CP_CLP_JMS_RECONNECT_ATTEMPTS:-1}
+      initial-connect-attempts: ${CP_CLP_JMS_INITIAL_CONNECT_ATTEMPTS:10}
+      retry-interval-ms: ${CP_CLP_JMS_RETRY_INTERVAL_MS:2000}
+      retry-multiplier: ${CP_CLP_JMS_RETRY_MULTIPLIER:1.5}
+      max-retry-interval-ms: ${CP_CLP_JMS_MAX_RETRY_INTERVAL_MS:30000}
+      connection-ttl-ms: ${CP_CLP_JMS_CONNECTION_TTL_MS:60000}
+      call-timeout-ms: ${CP_CLP_JMS_CALL_TIMEOUT_MS:15000}
+      session-cache-size: ${CP_CLP_JMS_SESSION_CACHE_SIZE:10}
+

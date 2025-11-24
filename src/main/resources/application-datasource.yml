@@ -1,0 +1,39 @@
+# Datasource, JPA and Flyway
+spring:
+  datasource:
+    # Override these via env in each environment
+    url: ${CP_CLP_DATASOURCE_URL:jdbc:postgresql://localhost:55432/courtlistpublishing}
+    username: ${CP_CLP_DATASOURCE_USERNAME:courtlistpublishing}
+    password: ${CP_CLP_DATASOURCE_PASSWORD:courtlistpublishing}
+    driver-class-name: ${CP_CLP_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
+    hikari:
+      pool-name: cp-hikari
+      maximum-pool-size: ${CP_CLP_DB_POOL_SIZE:20}
+      minimum-idle: ${CP_CLP_DB_MIN_IDLE:5}
+      connection-timeout: 30000        # ms
+      idle-timeout: 600000             # ms
+      max-lifetime: 1800000            # ms
+      keepalive-time: 300000           # ms
+      validation-timeout: 5000         # ms
+      auto-commit: false               # transactions must be committed manually — either by: Spring's @Transactional annotation, or Explicit Connection.commit() calls in your code.
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update               # schema managed by Flyway it is updating db
+    properties:
+      hibernate.jdbc.time_zone: UTC
+      hibernate.connection.provider_disables_autocommit: true
+      hibernate.jdbc.batch_size: 50
+      hibernate.order_inserts: true
+      hibernate.order_updates: true
+
+  sql:
+    init:
+      mode: never
+
+flyway:
+  enabled: true
+  locations: classpath:db/migration
+  baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
+

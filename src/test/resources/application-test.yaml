@@ -4,6 +4,7 @@ spring:
       - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
+      - org.springframework.boot.autoconfigure.jms.JmsAutoConfiguration
   jpa:
     hibernate:
       ddl-auto: none
@@ -12,3 +13,28 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: courtlistpublishing
     password: courtlistpublishing
+
+# Disable authz and audit filters by default in tests
+authz:
+  http:
+    enabled: false
+
+audit:
+  http:
+    enabled: false
+    openapi-rest-spec: test-openapi-spec.yml
+
+# Disable JMS health indicator in tests
+management:
+  health:
+    jms:
+      enabled: false
+  endpoint:
+    health:
+      probes:
+        enabled: false  # Disable liveness/readiness probes in tests
+
+# Disable CP audit (Artemis) in tests
+cp:
+  audit:
+    enabled: false
