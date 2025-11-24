@@ -31,6 +31,11 @@ services:
       JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
       SPRING_PROFILES_ACTIVE: integration
       AZURE_STORAGE_ENABLED: false
+      MANAGEMENT_HEALTH_JMS_ENABLED: "false"
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "false"
+      CP_CLP_AUTHZ_ENABLED: "false"
+      CP_CLP_HTTP_AUDIT_ENABLED: "false"
+      CP_CLP_AUDIT_ENABLED: "false"
     depends_on:
       db:
         condition: service_healthy

@@ -1,0 +1,7 @@
+# JWT configuration
+jwt:
+  # Expose upwards to allow env var override: export JWT_SECRET_KEY=... (base64, 256-bit min)
+  secretKey: ${JWT_SECRET_KEY:it-must-be-a-string-secret-at-least-256-bits-long}
+  filter:
+    enabled: false
+

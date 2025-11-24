@@ -1,0 +1,19 @@
+# Authz configuration
+authz:
+  http:
+    enabled: ${CP_CLP_AUTHZ_ENABLED:false}
+    identity-url-template: ${CP_CLP_IDENTITY_URL_TEMPLATE:}
+    user-id-header: "CJSCPPUID"
+    action-header: "CPP-ACTION"
+    accept-header: "application/vnd.usersgroups.get-logged-in-user-permissions+json"
+    drools-classpath-pattern: "classpath:/acl/**/*.drl"
+    reload-on-each-request: true
+    action-required: false
+    deny-when-no-rules: true
+    group-aliases:
+      "Legal Advisers": "Legal Advisers"
+      "Prosecuting Authority Access": "Prosecuting Authority Access"
+    exclude-path-prefixes:
+      - "/actuator"
+      - "/error"
+

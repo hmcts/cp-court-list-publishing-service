@@ -1,10 +1,38 @@
 spring:
   profiles:
     active: integration
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jms.JmsAutoConfiguration
 
 azure:
   storage:
     enabled: false
+
+# Disable authz and audit filters in integration tests
+authz:
+  http:
+    enabled: false
+
+audit:
+  http:
+    enabled: false
+    openapi-rest-spec: court-list-publishing-api.openapi.yml
+
+# Disable CP audit (Artemis) in integration tests
+cp:
+  audit:
+    enabled: false
+
+# Disable JMS health indicator and probes in integration tests
+management:
+  health:
+    jms:
+      enabled: false
+  endpoint:
+    health:
+      probes:
+        enabled: false
 
 logging:
   level:

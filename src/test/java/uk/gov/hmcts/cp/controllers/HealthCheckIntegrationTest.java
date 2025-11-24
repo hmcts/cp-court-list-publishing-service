@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.cp.NonTracingIntegrationTestSetup;
@@ -16,6 +17,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(SpringExtension.class)
 @AutoConfigureMockMvc
+@TestPropertySource(properties = {
+    "management.health.jms.enabled=false",
+    "management.endpoint.health.probes.enabled=false"
+})
 class HealthCheckIntegrationTest extends NonTracingIntegrationTestSetup {
 
     @Resource

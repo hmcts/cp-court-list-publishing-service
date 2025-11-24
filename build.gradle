@@ -90,6 +90,8 @@ ext {
     log4JVersion = "2.24.3"
     logbackVersion = "1.5.18"
     lombokVersion = "1.18.38"
+    cpAuthFilterVersion = findProperty('version.cpAuthFilter') ?: '1.0.6'
+    cpAuditFilterVersion = findProperty('version.cpAuditFilter') ?: '1.0.4'
 }
 
 
@@ -132,6 +134,10 @@ dependencies {
     implementation 'com.azure:azure-identity:1.14.0'
     // Keep only if you actually use JWT primitives yourself (not via Spring Security)
     implementation 'io.jsonwebtoken:jjwt:0.13.0'
+
+    // HMCTS filters
+    implementation "uk.gov.hmcts.cp:cp-auth-rules-filter:${cpAuthFilterVersion}"
+    implementation "uk.gov.hmcts.cp:cp-audit-filter-springboot:${cpAuditFilterVersion}"
 
     compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
     annotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
