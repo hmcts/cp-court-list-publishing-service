@@ -2,7 +2,7 @@ plugins {
     id 'application'
     id 'java'
 
-    id 'org.springframework.boot' version '4.0.0-M3'
+    id 'org.springframework.boot' version '4.0.0'
     id 'io.spring.dependency-management' version '1.1.7'
 
     id 'jacoco'
@@ -10,13 +10,13 @@ plugins {
 
     id 'maven-publish'
     id 'com.github.ben-manes.versions' version '0.53.0'
-    id 'org.cyclonedx.bom' version '2.4.1'
-    id "au.com.dius.pact" version "4.6.17"
+    id 'org.cyclonedx.bom' version '3.1.0'
+    id "au.com.dius.pact" version "4.6.18"
     // generating git.properties file for Spring Boot apps. Properties are exposed by telemetry
-    id 'com.gorylenko.gradle-git-properties' version '2.5.3'
+    id 'com.gorylenko.gradle-git-properties' version '2.5.4'
 
     // Docker Compose lifecycle for integration tests
-    id 'com.avast.gradle.docker-compose' version '0.17.12'
+    id 'com.avast.gradle.docker-compose' version '0.17.20'
 }
 
 group = 'uk.gov.hmcts.cp'
@@ -103,7 +103,7 @@ dependencies {
     // implementation('org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0-M1') {
     //     exclude group: 'org.springdoc', module: 'springdoc-openapi-kotlin'
     // }
-    implementation 'io.swagger.core.v3:swagger-core:2.2.38'
+    implementation 'io.swagger.core.v3:swagger-core:2.2.41'
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -114,7 +114,7 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus'
     implementation 'org.springframework.boot:spring-boot-starter-opentelemetry'
 
-    implementation 'net.logstash.logback:logstash-logback-encoder:8.1'
+    implementation 'net.logstash.logback:logstash-logback-encoder:9.0'
     implementation 'org.apache.logging.log4j:log4j-to-slf4j'
     implementation 'ch.qos.logback:logback-classic'
     implementation 'ch.qos.logback:logback-core'
@@ -125,13 +125,13 @@ dependencies {
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
 
-    implementation group: 'io.rest-assured', name: 'rest-assured', version: '5.5.6'
-    implementation 'org.hibernate.validator:hibernate-validator:9.0.1.Final'
-    implementation 'org.apache.commons:commons-text:1.14.0'
+    implementation group: 'io.rest-assured', name: 'rest-assured', version: '6.0.0'
+    implementation 'org.hibernate.validator:hibernate-validator:9.1.0.Final'
+    implementation 'org.apache.commons:commons-text:1.15.0'
 
     // Azure Blob Storage
-    implementation 'com.azure:azure-storage-blob:12.25.1'
-    implementation 'com.azure:azure-identity:1.14.0'
+    implementation 'com.azure:azure-storage-blob:12.32.0'
+    implementation 'com.azure:azure-identity:1.18.1'
     // Keep only if you actually use JWT primitives yourself (not via Spring Security)
     implementation 'io.jsonwebtoken:jjwt:0.13.0'
 
@@ -144,7 +144,7 @@ dependencies {
     testCompileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
     testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
 
-    testImplementation(platform('org.junit:junit-bom:6.0.0'))
+    testImplementation(platform('org.junit:junit-bom:6.0.1'))
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'junit', module: 'junit'
@@ -156,14 +156,14 @@ dependencies {
     testImplementation 'io.micrometer:micrometer-tracing-test'
     testImplementation 'com.h2database:h2'
 
-    testImplementation 'au.com.dius.pact.provider:junit5:4.6.17'
-    testImplementation 'au.com.dius.pact.provider:spring6:4.6.17'
-    pactVerificationTestImplementation 'au.com.dius.pact.provider:junit5:4.6.17'
-    pactVerificationTestImplementation 'au.com.dius.pact.provider:spring6:4.6.17'
+    testImplementation 'au.com.dius.pact.provider:junit5:4.6.18'
+    testImplementation 'au.com.dius.pact.provider:spring6:4.6.18'
+    pactVerificationTestImplementation 'au.com.dius.pact.provider:junit5:4.6.18'
+    pactVerificationTestImplementation 'au.com.dius.pact.provider:spring6:4.6.18'
 
     // integrationTestImplementation dependencies are need as they aren't always propagate as expected,
     // especially with platform BOMs, test runtime dependencies, or custom tasks. Explicit dependencies eliminate that risk.
-    integrationTestImplementation platform('org.junit:junit-bom:6.0.0')
+    integrationTestImplementation platform('org.junit:junit-bom:6.0.1')
     integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 
     integrationTestImplementation('org.springframework.boot:spring-boot-starter-test') {
