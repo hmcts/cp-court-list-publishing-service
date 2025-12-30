@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class FileControllerTest {
 
+    public static final String VND_COURTLISTPUBLISHING_SERVICE_FILES_JSON = "application/vnd.courtlistpublishing-service.files+json";
     private MockMvc mockMvc;
 
     @Mock
@@ -51,7 +52,7 @@ class FileControllerTest {
         mockMvc.perform(get(BASE_URL + "/list")
                         .param("folder", folder))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/vnd.courtlistpublishing-service.files+json"))
+                .andExpect(content().contentType(VND_COURTLISTPUBLISHING_SERVICE_FILES_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(0));
 
@@ -73,7 +74,7 @@ class FileControllerTest {
         mockMvc.perform(get(BASE_URL + "/list")
                         .param("folder", folder))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/vnd.courtlistpublishing-service.files+json"))
+                .andExpect(content().contentType(VND_COURTLISTPUBLISHING_SERVICE_FILES_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].name").value("file1.pdf"))
@@ -100,7 +101,7 @@ class FileControllerTest {
         // When & Then
         mockMvc.perform(get(BASE_URL + "/list"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/vnd.courtlistpublishing-service.files+json"))
+                .andExpect(content().contentType(VND_COURTLISTPUBLISHING_SERVICE_FILES_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("rootfile.txt"));
@@ -121,7 +122,7 @@ class FileControllerTest {
         mockMvc.perform(get(BASE_URL + "/list")
                         .param("folder", ""))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/vnd.courtlistpublishing-service.files+json"))
+                .andExpect(content().contentType(VND_COURTLISTPUBLISHING_SERVICE_FILES_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1));
 
@@ -142,7 +143,7 @@ class FileControllerTest {
         mockMvc.perform(get(BASE_URL + "/list")
                         .param("folder", folder))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/vnd.courtlistpublishing-service.files+json"))
+                .andExpect(content().contentType(VND_COURTLISTPUBLISHING_SERVICE_FILES_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("report.pdf"))

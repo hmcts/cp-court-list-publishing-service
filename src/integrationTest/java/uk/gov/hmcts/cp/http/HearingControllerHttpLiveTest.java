@@ -15,6 +15,8 @@ import org.springframework.web.client.RestTemplate;
 
 public class HearingControllerHttpLiveTest {
 
+    public static final String VND_COURTLISTPUBLISHING_SERVICE_HEARING_POST_JSON = "application/vnd.courtlistpublishing-service.hearing.post+json";
+    public static final String VND_COURTLISTPUBLISHING_SERVICE_HEARING_GET_JSON = "application/vnd.courtlistpublishing-service.hearing.get+json";
     private final String baseUrl = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private final RestTemplate http = new RestTemplate();
 
@@ -43,7 +45,7 @@ public class HearingControllerHttpLiveTest {
         );
 
         assertThat(postRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(postRes.getHeaders().getContentType().toString()).isEqualTo("application/vnd.courtlistpublishing-service.hearing.post+json");
+        assertThat(postRes.getHeaders().getContentType().toString()).isEqualTo(VND_COURTLISTPUBLISHING_SERVICE_HEARING_POST_JSON);
         assertThat(postRes.getBody()).isNotNull();
         assertThat(postRes.getBody()).contains(randomPayload);
 
@@ -58,7 +60,7 @@ public class HearingControllerHttpLiveTest {
 
         // Then
         assertThat(getRes.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(getRes.getHeaders().getContentType().toString()).isEqualTo("application/vnd.courtlistpublishing-service.hearing.get+json");
+        assertThat(getRes.getHeaders().getContentType().toString()).isEqualTo(VND_COURTLISTPUBLISHING_SERVICE_HEARING_GET_JSON);
         assertThat(getRes.getBody()).isEqualTo(randomPayload);
     }
 
@@ -88,7 +90,7 @@ public class HearingControllerHttpLiveTest {
 
         // Then
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(res.getHeaders().getContentType().toString()).isEqualTo("application/vnd.courtlistpublishing-service.hearing.post+json");
+        assertThat(res.getHeaders().getContentType().toString()).isEqualTo(VND_COURTLISTPUBLISHING_SERVICE_HEARING_POST_JSON);
         assertThat(res.getBody()).isNotNull();
         assertThat(res.getBody()).contains(randomPayload);
     }
