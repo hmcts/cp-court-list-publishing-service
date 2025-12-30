@@ -33,25 +33,24 @@ public class HearingController {
     }
 
     @GetMapping("/hearing/{hearingId}")
-    public ResponseEntity<String> getHearingData(@PathVariable UUID hearingId) {
-        final String hearing;
+    public ResponseEntity<String> getHearingData(@PathVariable final UUID hearingId) {
         if (hearingId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "HearingId is required");
         }
 
-        hearing = hearingService.getHearingById(hearingId);
+        final String hearing = hearingService.getHearingById(hearingId);
         return ResponseEntity.ok()
                 .contentType(MEDIA_TYPE_GET)
                 .body(hearing);
     }
 
     @PostMapping("/hearing")
-    public ResponseEntity<String> postHearing(@RequestBody HearingRequest hearingRequest) {
+    public ResponseEntity<String> postHearing(@RequestBody final HearingRequest hearingRequest) {
         if (hearingRequest == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
         }
 
-        String hearing = hearingService.updateHearing(hearingRequest);
+       final String hearing = hearingService.updateHearing(hearingRequest);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .contentType(MEDIA_TYPE_POST)
                 .body(hearing);
