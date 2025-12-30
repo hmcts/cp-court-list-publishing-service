@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: V1_001_create_test_hearing_table
+      author: system
+      changes:
+        - createTable:
+            tableName: test_hearing
+            columns:
+              - column:
+                  name: hearing_id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: payload
+                  type: TEXT
+                  constraints:
+                    nullable: false
+

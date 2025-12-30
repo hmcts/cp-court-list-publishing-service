@@ -1,4 +1,4 @@
-# Datasource, JPA and Flyway
+# Datasource, JPA and Liquibase
 spring:
   datasource:
     # Override these via env in each environment
@@ -20,7 +20,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update               # schema managed by Flyway it is updating db
+      ddl-auto: update               # schema managed by Liquibase it is updating db
     properties:
       hibernate.jdbc.time_zone: UTC
       hibernate.connection.provider_disables_autocommit: true
@@ -32,8 +32,8 @@ spring:
     init:
       mode: never
 
-flyway:
-  enabled: true
-  locations: classpath:db/migration
-  baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: ${CP_CLP_DATASOURCE_SCHEMA:}
 

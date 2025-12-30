@@ -1,0 +1,6 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/V1_001_create_test_hearing_table.yaml
+  - include:
+      file: db/changelog/changes/V1_002_court_list_request_detail.yaml
+
