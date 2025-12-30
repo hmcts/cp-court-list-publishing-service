@@ -10,28 +10,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
-import uk.gov.hmcts.cp.dto.azure.FileInfo;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import uk.gov.hmcts.cp.openapi.model.FileInfo;
 
 @ExtendWith(MockitoExtension.class)
 class AzureBlobServiceTest {
@@ -85,13 +74,13 @@ class AzureBlobServiceTest {
 
         // Then
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).name()).isEqualTo("file1.pdf");
-        assertThat(result.get(0).path()).isEqualTo("documents/file1.pdf");
-        assertThat(result.get(0).url()).isEqualTo("https://storage.example.com/file1.pdf");
-        assertThat(result.get(0).size()).isEqualTo(1024L);
-        assertThat(result.get(1).name()).isEqualTo("file2.docx");
-        assertThat(result.get(1).path()).isEqualTo("documents/file2.docx");
-        assertThat(result.get(1).size()).isEqualTo(2048L);
+        assertThat(result.get(0).getName()).isEqualTo("file1.pdf");
+        assertThat(result.get(0).getPath()).isEqualTo("documents/file1.pdf");
+        assertThat(result.get(0).getUrl().toString()).isEqualTo("https://storage.example.com/file1.pdf");
+        assertThat(result.get(0).getSize()).isEqualTo(1024L);
+        assertThat(result.get(1).getName()).isEqualTo("file2.docx");
+        assertThat(result.get(1).getPath()).isEqualTo("documents/file2.docx");
+        assertThat(result.get(1).getSize()).isEqualTo(2048L);
     }
 
     @Test
@@ -114,8 +103,8 @@ class AzureBlobServiceTest {
 
         // Then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).name()).isEqualTo("rootfile.txt");
-        assertThat(result.get(0).path()).isEqualTo("rootfile.txt");
+        assertThat(result.get(0).getName()).isEqualTo("rootfile.txt");
+        assertThat(result.get(0).getPath()).isEqualTo("rootfile.txt");
     }
 
 

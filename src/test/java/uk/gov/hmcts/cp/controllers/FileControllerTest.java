@@ -6,12 +6,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import uk.gov.hmcts.cp.dto.azure.FileInfo;
+
+import uk.gov.hmcts.cp.openapi.model.FileInfo;
 import uk.gov.hmcts.cp.services.AzureBlobService;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -64,8 +65,8 @@ class FileControllerTest {
         // Given
         String folder = "documents";
         List<FileInfo> mockFiles = Arrays.asList(
-                new FileInfo("file1.pdf", "documents/file1.pdf", "https://storage.example.com/file1.pdf", 1024L),
-                new FileInfo("file2.docx", "documents/file2.docx", "https://storage.example.com/file2.docx", 2048L)
+                new FileInfo("file1.pdf", "documents/file1.pdf", URI.create("https://storage.example.com/file1.pdf"), 1024L),
+                new FileInfo("file2.docx", "documents/file2.docx", URI.create("https://storage.example.com/file2.docx"), 2048L)
         );
 
         when(blobService.listFiles(folder)).thenReturn(mockFiles);
@@ -93,7 +94,7 @@ class FileControllerTest {
     void listFiles_shouldUseDefaultEmptyFolder_whenFolderParameterNotProvided() throws Exception {
         // Given
         List<FileInfo> mockFiles = List.of(
-                new FileInfo("rootfile.txt", "rootfile.txt", "https://storage.example.com/rootfile.txt", 512L)
+                new FileInfo("rootfile.txt", "rootfile.txt", URI.create("https://storage.example.com/rootfile.txt"), 512L)
         );
 
         when(blobService.listFiles("")).thenReturn(mockFiles);
@@ -113,7 +114,7 @@ class FileControllerTest {
     void listFiles_shouldHandleEmptyFolderParameter() throws Exception {
         // Given
         List<FileInfo> mockFiles = List.of(
-                new FileInfo("file.txt", "file.txt", "https://storage.example.com/file.txt", 256L)
+                new FileInfo("file.txt", "file.txt", URI.create("https://storage.example.com/file.txt"), 256L)
         );
 
         when(blobService.listFiles("")).thenReturn(mockFiles);
@@ -134,7 +135,7 @@ class FileControllerTest {
         // Given
         String folder = "documents/2024/january";
         List<FileInfo> mockFiles = List.of(
-                new FileInfo("report.pdf", "documents/2024/january/report.pdf", "https://storage.example.com/report.pdf", 4096L)
+                new FileInfo("report.pdf", "documents/2024/january/report.pdf", URI.create("https://storage.example.com/report.pdf"), 4096L)
         );
 
         when(blobService.listFiles(folder)).thenReturn(mockFiles);
