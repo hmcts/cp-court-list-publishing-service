@@ -54,7 +54,7 @@ class HearingControllerTest {
         // When & Then
         mockMvc.perform(get(BASE_URL + "/{hearingId}", hearingId))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType("application/vnd.courtlistpublishing-service.hearing.get+json"))
                 .andExpect(content().string(expectedResponse));
     }
 
@@ -78,7 +78,7 @@ class HearingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(hearingRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType("application/vnd.courtlistpublishing-service.hearing.post+json"))
                 .andExpect(content().string(expectedResponse));
     }
 

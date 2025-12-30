@@ -43,7 +43,7 @@ public class HearingControllerHttpLiveTest {
         );
 
         assertThat(postRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(postRes.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_JSON);
+        assertThat(postRes.getHeaders().getContentType().toString()).isEqualTo("application/vnd.courtlistpublishing-service.hearing.post+json");
         assertThat(postRes.getBody()).isNotNull();
         assertThat(postRes.getBody()).contains(randomPayload);
 
@@ -58,7 +58,7 @@ public class HearingControllerHttpLiveTest {
 
         // Then
         assertThat(getRes.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(getRes.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_JSON);
+        assertThat(getRes.getHeaders().getContentType().toString()).isEqualTo("application/vnd.courtlistpublishing-service.hearing.get+json");
         assertThat(getRes.getBody()).isEqualTo(randomPayload);
     }
 
@@ -88,7 +88,7 @@ public class HearingControllerHttpLiveTest {
 
         // Then
         assertThat(res.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(res.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_JSON);
+        assertThat(res.getHeaders().getContentType().toString()).isEqualTo("application/vnd.courtlistpublishing-service.hearing.post+json");
         assertThat(res.getBody()).isNotNull();
         assertThat(res.getBody()).contains(randomPayload);
     }

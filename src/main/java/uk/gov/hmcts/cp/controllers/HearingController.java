@@ -22,6 +22,8 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping(path = "api", produces = MediaType.TEXT_PLAIN_VALUE)
 public class HearingController {
 
+    public static final MediaType MEDIA_TYPE_GET = new MediaType("application", "vnd.courtlistpublishing-service.hearing.get+json");
+    public static final MediaType MEDIA_TYPE_POST = new MediaType("application", "vnd.courtlistpublishing-service.hearing.post+json");
     private final HearingService hearingService;
 
     private static final Logger LOG = LoggerFactory.getLogger(HearingController.class);
@@ -39,7 +41,7 @@ public class HearingController {
 
         hearing = hearingService.getHearingById(hearingId);
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MEDIA_TYPE_GET)
                 .body(hearing);
     }
 
@@ -51,7 +53,7 @@ public class HearingController {
 
         String hearing = hearingService.updateHearing(hearingRequest);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MEDIA_TYPE_POST)
                 .body(hearing);
     }
 

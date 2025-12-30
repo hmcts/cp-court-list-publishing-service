@@ -1,5 +1,7 @@
 package uk.gov.hmcts.cp.controllers;
 
+import static org.springframework.http.HttpStatus.OK;
+
 import uk.gov.hmcts.cp.dto.azure.FileInfo;
 import uk.gov.hmcts.cp.services.AzureBlobService;
 
@@ -7,6 +9,7 @@ import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,6 +32,8 @@ public class FileController {
     public ResponseEntity<List<FileInfo>> listFiles(
             @RequestParam(value = "folder", defaultValue = "") String folder) {
         List<FileInfo> files = blobService.listFiles(folder);
-        return ResponseEntity.ok(files);
+        return ResponseEntity.ok()
+                .contentType(new MediaType("application", "vnd.courtlistpublishing-service.files+json"))
+                .body(files);
     }
 }

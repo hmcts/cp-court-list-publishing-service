@@ -4,7 +4,7 @@
 audit:
   http:
     enabled: ${CP_CLP_HTTP_AUDIT_ENABLED:false}
-    openapi-rest-spec: ${CP_CLP_REST_SPECIFICATION:court-list-publishing-api.openapi.yml}
+    openapi-rest-spec: ${CP_CLP_REST_SPECIFICATION:court-list-publisher.openapi.yml}
 
 # CP Audit (Artemis JMS) configuration
 # Required by cp-audit-filter-springboot even when audit.http.enabled=false

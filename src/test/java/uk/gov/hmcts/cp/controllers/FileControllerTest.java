@@ -51,7 +51,7 @@ class FileControllerTest {
         mockMvc.perform(get(BASE_URL + "/list")
                         .param("folder", folder))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType("application/vnd.courtlistpublishing-service.files+json"))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(0));
 
@@ -73,7 +73,7 @@ class FileControllerTest {
         mockMvc.perform(get(BASE_URL + "/list")
                         .param("folder", folder))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType("application/vnd.courtlistpublishing-service.files+json"))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].name").value("file1.pdf"))
@@ -100,7 +100,7 @@ class FileControllerTest {
         // When & Then
         mockMvc.perform(get(BASE_URL + "/list"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType("application/vnd.courtlistpublishing-service.files+json"))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("rootfile.txt"));
@@ -121,7 +121,7 @@ class FileControllerTest {
         mockMvc.perform(get(BASE_URL + "/list")
                         .param("folder", ""))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType("application/vnd.courtlistpublishing-service.files+json"))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1));
 
@@ -142,7 +142,7 @@ class FileControllerTest {
         mockMvc.perform(get(BASE_URL + "/list")
                         .param("folder", folder))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType("application/vnd.courtlistpublishing-service.files+json"))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("report.pdf"))
