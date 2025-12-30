@@ -13,7 +13,7 @@ public class AuditFilterConfig {
      * creates the OpenApiSpecificationParser bean unconditionally.
      */
     @Bean
-    public String auditOpenApiRestSpec(@Value("${audit.http.openapi-rest-spec:court-list-publishing-api.openapi.yml}") String openApiRestSpec) {
+    public String auditOpenApiRestSpec(@Value("${audit.http.openapi-rest-spec:court-list-publisher.openapi.yml}") String openApiRestSpec) {
         return openApiRestSpec;
     }
 
