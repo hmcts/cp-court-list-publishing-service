@@ -11,6 +11,7 @@
                 <threadName/>
                 <logLevel/>
                 <message/>
+                <stackTrace/>
             </providers>
         </encoder>
     </appender>
