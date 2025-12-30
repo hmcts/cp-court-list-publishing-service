@@ -6,7 +6,7 @@ global uk.gov.moj.cpp.authz.http.providers.UserAndGroupProvider userAndGroupProv
 rule "Allow LA – hearing"
 when
   $o: Outcome()
-  $a: Action(name == "courtlistpublishing-service.hearing")
+  $a: Action(name == "courtlistpublishing-service.hearing.post" || name == "courtlistpublishing-service.hearing.get" )
   eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, "Legal Advisers","District Judge","System Users"))
 then
   $o.setSuccess(true);

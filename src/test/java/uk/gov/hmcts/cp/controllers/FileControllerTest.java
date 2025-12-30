@@ -6,12 +6,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import uk.gov.hmcts.cp.dto.azure.FileInfo;
+
+import uk.gov.hmcts.cp.openapi.model.FileInfo;
 import uk.gov.hmcts.cp.services.AzureBlobService;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class FileControllerTest {
 
+    public static final String VND_COURTLISTPUBLISHING_SERVICE_FILES_JSON = "application/vnd.courtlistpublishing-service.files+json";
     private MockMvc mockMvc;
 
     @Mock
@@ -51,7 +53,7 @@ class FileControllerTest {
         mockMvc.perform(get(BASE_URL + "/list")
                         .param("folder", folder))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(VND_COURTLISTPUBLISHING_SERVICE_FILES_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(0));
 
@@ -63,8 +65,8 @@ class FileControllerTest {
         // Given
         String folder = "documents";
         List<FileInfo> mockFiles = Arrays.asList(
-                new FileInfo("file1.pdf", "documents/file1.pdf", "https://storage.example.com/file1.pdf", 1024L),
-                new FileInfo("file2.docx", "documents/file2.docx", "https://storage.example.com/file2.docx", 2048L)
+                new FileInfo("file1.pdf", "documents/file1.pdf", URI.create("https://storage.example.com/file1.pdf"), 1024L),
+                new FileInfo("file2.docx", "documents/file2.docx", URI.create("https://storage.example.com/file2.docx"), 2048L)
         );
 
         when(blobService.listFiles(folder)).thenReturn(mockFiles);
@@ -73,7 +75,7 @@ class FileControllerTest {
         mockMvc.perform(get(BASE_URL + "/list")
                         .param("folder", folder))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(VND_COURTLISTPUBLISHING_SERVICE_FILES_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].name").value("file1.pdf"))
@@ -92,7 +94,7 @@ class FileControllerTest {
     void listFiles_shouldUseDefaultEmptyFolder_whenFolderParameterNotProvided() throws Exception {
         // Given
         List<FileInfo> mockFiles = List.of(
-                new FileInfo("rootfile.txt", "rootfile.txt", "https://storage.example.com/rootfile.txt", 512L)
+                new FileInfo("rootfile.txt", "rootfile.txt", URI.create("https://storage.example.com/rootfile.txt"), 512L)
         );
 
         when(blobService.listFiles("")).thenReturn(mockFiles);
@@ -100,7 +102,7 @@ class FileControllerTest {
         // When & Then
         mockMvc.perform(get(BASE_URL + "/list"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(VND_COURTLISTPUBLISHING_SERVICE_FILES_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("rootfile.txt"));
@@ -112,7 +114,7 @@ class FileControllerTest {
     void listFiles_shouldHandleEmptyFolderParameter() throws Exception {
         // Given
         List<FileInfo> mockFiles = List.of(
-                new FileInfo("file.txt", "file.txt", "https://storage.example.com/file.txt", 256L)
+                new FileInfo("file.txt", "file.txt", URI.create("https://storage.example.com/file.txt"), 256L)
         );
 
         when(blobService.listFiles("")).thenReturn(mockFiles);
@@ -121,7 +123,7 @@ class FileControllerTest {
         mockMvc.perform(get(BASE_URL + "/list")
                         .param("folder", ""))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(VND_COURTLISTPUBLISHING_SERVICE_FILES_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1));
 
@@ -133,7 +135,7 @@ class FileControllerTest {
         // Given
         String folder = "documents/2024/january";
         List<FileInfo> mockFiles = List.of(
-                new FileInfo("report.pdf", "documents/2024/january/report.pdf", "https://storage.example.com/report.pdf", 4096L)
+                new FileInfo("report.pdf", "documents/2024/january/report.pdf", URI.create("https://storage.example.com/report.pdf"), 4096L)
         );
 
         when(blobService.listFiles(folder)).thenReturn(mockFiles);
@@ -142,7 +144,7 @@ class FileControllerTest {
         mockMvc.perform(get(BASE_URL + "/list")
                         .param("folder", folder))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(VND_COURTLISTPUBLISHING_SERVICE_FILES_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("report.pdf"))

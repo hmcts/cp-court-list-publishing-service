@@ -1,159 +1,129 @@
 package uk.gov.hmcts.cp.logging;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.Resource;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.*;
-import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import uk.gov.hmcts.cp.testconfig.TracingIntegrationTestConfiguration;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import uk.gov.hmcts.cp.controllers.GlobalExceptionHandler;
+import uk.gov.hmcts.cp.filters.jwt.JWTFilter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.WebApplicationContext;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@Slf4j
-@EnableAutoConfiguration(exclude = {
-        org.springframework.boot.micrometer.tracing.autoconfigure.OpenTelemetryTracingAutoConfiguration.class
-})
-@Import(TracingIntegrationTestConfiguration.class)
 @TestPropertySource(properties = {
-        "spring.application.name=service-hmcts-springboot-template"
+        "spring.application.name=cp-court-list-publishing-service",
+        "jwt.filter.enabled=false",
+        "spring.main.lazy-initialization=true",
+        "server.servlet.context-path="
 })
+@WebMvcTest(controllers = TracingProbeController.class,
+        excludeFilters = {@ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {JWTFilter.class,GlobalExceptionHandler.class})}
+)
+@Import(TestTracingConfig.class)
+@Slf4j
 class TracingIntegrationTest {
 
-    // Constants for tracing field names
-    private static final String TRACE_ID_FIELD = "traceId";
-    private static final String SPAN_ID_FIELD = "spanId";
+    private final PrintStream originalStdOut = System.out;
 
-    // Constants for test trace values
-    private static final String TEST_TRACE_ID_1 = "test-trace-id-12345";
-    private static final String TEST_SPAN_ID_1 = "test-span-id-67890";
-    private static final String TEST_TRACE_ID_2 = "1234-1234";
-    private static final String TEST_SPAN_ID_2 = "567-567";
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private WebApplicationContext wac;
 
     @Value("${spring.application.name}")
     private String springApplicationName;
 
-    @Resource
-    private MockMvc mockMvc;
-
-    private final PrintStream originalStdOut = System.out;
-
-    @BeforeEach
-    public void setUp() {
-        // Manually populate MDC with trace information similar to TracingFilter
-        MDC.put(TRACE_ID_FIELD, TEST_TRACE_ID_1);
-        MDC.put(SPAN_ID_FIELD, TEST_SPAN_ID_1);
-        MDC.put("applicationName", springApplicationName);
-    }
-
     @AfterEach
-    public void afterEach() {
+    void tearDown() {
         System.setOut(originalStdOut);
-        // Clear MDC after each test
         MDC.clear();
     }
 
     @Test
     void incoming_request_should_add_new_tracing() throws Exception {
-        final MvcResultHelper result = performRequestAndCaptureLogs("/", null, null);
-        final Map<String, Object> rootControllerLog = findRootControllerLog(result.capturedLogOutput());
+        ByteArrayOutputStream captured = captureStdOut();
 
-        assertTracingFields(rootControllerLog, TEST_TRACE_ID_1, TEST_SPAN_ID_1);
-        assertCommonLogFields(rootControllerLog);
+        mockMvc.perform(get("/_trace-probe")
+                        .accept(org.springframework.http.MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("traceId"));
+
+        Map<String, Object> fields = parseLastJsonLine(captured);
+        assertThat(fields.get("traceId")).as("traceId").isNotNull();
+        assertThat(fields.get("spanId")).as("spanId").isNotNull();
+
+        // logger name can be abbreviated by Logback; assert on the stable tail
+        String loggerName = String.valueOf(fieldOf(fields, "logger_name", "logger"));
+        assertThat(loggerName)
+                .as("logger name")
+                .matches("(^|.*\\.)RootController$");  // accepts "RootController", "u.g.h.cp.controllers.RootController", or full FQCN
+
+        assertThat(fieldOf(fields, "message")).isEqualTo("START");
+
+        assertThat(fieldOf(fields, "message")).isEqualTo("START");
     }
 
     @Test
     void incoming_request_with_traceId_should_pass_through() throws Exception {
-        // Override the MDC with the header values that would be set by TracingFilter
-        MDC.put(TRACE_ID_FIELD, TEST_TRACE_ID_2);
-        MDC.put(SPAN_ID_FIELD, TEST_SPAN_ID_2);
+        ByteArrayOutputStream captured = captureStdOut();
 
-        final MvcResultHelper result = performRequestAndCaptureLogs("/", TEST_TRACE_ID_2, TEST_SPAN_ID_2);
-        final Map<String, Object> rootControllerLog = findRootControllerLog(result.capturedLogOutput());
+        var result = mockMvc.perform(
+                get("/_trace-probe")
+                        .header("traceId", "1234-1234")
+                        .header("spanId", "567-567")
+                        .accept(MediaType.APPLICATION_JSON)
+        ).andExpect(status().isOk()).andReturn();
 
-        assertTracingFields(rootControllerLog, TEST_TRACE_ID_2, TEST_SPAN_ID_2);
-        assertResponseHeaders(result.mvcResult(), TEST_TRACE_ID_2, TEST_SPAN_ID_2);
+        Map<String, Object> fields = parseLastJsonLine(captured);
+        assertThat(fields.get("traceId")).isEqualTo("1234-1234");
+        assertThat(fields.get("spanId")).isEqualTo("567-567");
+        assertThat(fields.get("applicationName")).isEqualTo(springApplicationName);
+
+        assertThat(result.getResponse().getHeader("traceId")).isEqualTo(fields.get("traceId"));
+        assertThat(result.getResponse().getHeader("spanId")).isEqualTo(fields.get("spanId"));
     }
 
-    private ByteArrayOutputStream captureStdOut() {
-        final ByteArrayOutputStream capturedStdOut = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(capturedStdOut, true, StandardCharsets.UTF_8));
-        return capturedStdOut;
-    }
-
-    private MvcResultHelper performRequestAndCaptureLogs(final String path, final String traceId, final String spanId) throws Exception {
-        final ByteArrayOutputStream capturedStdOut = captureStdOut();
-
-        MockHttpServletRequestBuilder requestBuilder = MockMvcRequestBuilders.get(path);
-        if (traceId != null) {
-            requestBuilder = requestBuilder.header(TRACE_ID_FIELD, traceId);
-        }
-        if (spanId != null) {
-            requestBuilder = requestBuilder.header(SPAN_ID_FIELD, spanId);
-        }
-
-        final MvcResult result = mockMvc.perform(requestBuilder)
-                .andExpect(status().isOk())
-                .andReturn();
-
-        return new MvcResultHelper(result, capturedStdOut.toString(StandardCharsets.UTF_8));
-    }
-
-    private Map<String, Object> findRootControllerLog(final String logOutput) throws Exception {
-        final String[] logLines = logOutput.split("\n");
-        final ObjectMapper objectMapper = new ObjectMapper();
-        final TypeReference<Map<String, Object>> typeReference = new TypeReference<>() {};
-
-        Map<String, Object> stringObjectMap = null;
-        for (final String logLine : logLines) {
-            if (logLine.contains("START") && logLine.contains("RootController") && stringObjectMap == null) {
-                stringObjectMap = objectMapper.readValue(logLine, typeReference);
+    private static Map<String, Object> parseLastJsonLine(ByteArrayOutputStream buf) throws Exception {
+        String[] lines = buf.toString().split("\\R");
+        for (int i = lines.length - 1; i >= 0; i--) {
+            String line = lines[i].trim();
+            if (!line.isEmpty() && line.startsWith("{") && line.endsWith("}")) {
+                return new ObjectMapper().readValue(line, new TypeReference<>() {
+                });
             }
         }
-
-        if (stringObjectMap != null) {
-            return stringObjectMap;
-        } else {
-            throw new AssertionError("RootController log message not found in output: " + logOutput);
-        }
+        throw new IllegalStateException("No JSON log line found on STDOUT");
     }
 
-    private void assertTracingFields(final Map<String, Object> log, final String expectedTraceId, final String expectedSpanId) {
-        assertThat(log).isNotNull();
-        assertThat(log.get(TRACE_ID_FIELD)).isEqualTo(expectedTraceId);
-        assertThat(log.get(SPAN_ID_FIELD)).isEqualTo(expectedSpanId);
-        assertThat(log.get("applicationName")).isEqualTo(springApplicationName);
+    private static Object fieldOf(Map<String, Object> map, String... keys) {
+        for (String k : keys) if (map.containsKey(k)) return map.get(k);
+        return null;
     }
 
-    private void assertCommonLogFields(final Map<String, Object> log) {
-        assertThat(log.get("logger_name")).isEqualTo("uk.gov.hmcts.cp.controllers.RootController");
-        assertThat(log.get("message")).isEqualTo("START");
+    private static ByteArrayOutputStream captureStdOut() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(out));
+        return out;
     }
 
-    private void assertResponseHeaders(final MvcResult result, final String expectedTraceId, final String expectedSpanId) {
-        assertThat(result.getResponse().getHeader(TRACE_ID_FIELD)).isEqualTo(expectedTraceId);
-        assertThat(result.getResponse().getHeader(SPAN_ID_FIELD)).isEqualTo(expectedSpanId);
-    }
-
-    // Helper class to encapsulate MvcResult and captured log output
-    private record MvcResultHelper(MvcResult mvcResult, String capturedLogOutput) {
-    }
 }

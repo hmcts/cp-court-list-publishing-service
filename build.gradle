@@ -2,7 +2,7 @@ plugins {
     id 'application'
     id 'java'
 
-    id 'org.springframework.boot' version '4.0.0-M3'
+    id 'org.springframework.boot' version '4.0.0'
     id 'io.spring.dependency-management' version '1.1.7'
 
     id 'jacoco'
@@ -85,20 +85,9 @@ configurations {
 
 /* ---------------- Dependencies ---------------- */
 
-ext {
-    apiSpecVersion = "0.4.2"
-    log4JVersion = "2.24.3"
-    logbackVersion = "1.5.18"
-    lombokVersion = "1.18.38"
-    cpAuthFilterVersion = findProperty('version.cpAuthFilter') ?: '1.0.6'
-    cpAuditFilterVersion = findProperty('version.cpAuditFilter') ?: '1.0.4'
-}
-
 
 dependencies {
-    implementation("uk.gov.hmcts.cp:api-cp-crime-schedulingandlisting-courtschedule:$apiSpecVersion") {
-        exclude group: 'org.springdoc', module: 'springdoc-openapi-kotlin'
-    }
+    implementation "uk.gov.hmcts.cp:api-cp-crime-court-list-publisher:${apiSpecVersion}"
     // Temporarily commented out due to SpringDoc compatibility issues with Spring Boot 4.0.0-M3
     // implementation('org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0-M1') {
     //     exclude group: 'org.springdoc', module: 'springdoc-openapi-kotlin'
@@ -155,6 +144,8 @@ dependencies {
 
     testImplementation 'io.micrometer:micrometer-tracing-test'
     testImplementation 'com.h2database:h2'
+    testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
+    testImplementation "org.springframework.boot:spring-boot-starter-data-jpa-test"
 
     testImplementation 'au.com.dius.pact.provider:junit5:4.6.17'
     testImplementation 'au.com.dius.pact.provider:spring6:4.6.17'

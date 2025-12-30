@@ -1,7 +1,8 @@
 package uk.gov.hmcts.cp.services;
 
-import uk.gov.hmcts.cp.dto.azure.FileInfo;
+import uk.gov.hmcts.cp.openapi.model.FileInfo;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,10 +32,10 @@ public class AzureBlobService {
             if (!item.isPrefix()) {
                 BlobClient blobClient = blobContainerClient.getBlobClient(item.getName());
 
+                final URI url = blobClient.getBlobUrl() == null ? null: URI.create(blobClient.getBlobUrl());
                 files.add(new FileInfo(
                         extractFileName(item.getName()),
-                        item.getName(),
-                        blobClient.getBlobUrl(),
+                        item.getName(), url ,
                         item.getProperties().getContentLength()
                 ));
             }

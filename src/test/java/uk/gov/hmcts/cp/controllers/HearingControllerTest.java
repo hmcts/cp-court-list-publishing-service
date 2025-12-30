@@ -25,6 +25,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class HearingControllerTest {
 
+    public static final String VND_COURTLISTPUBLISHING_SERVICE_HEARING_GET_JSON = "application/vnd.courtlistpublishing-service.hearing.get+json";
+    public static final String VND_COURTLISTPUBLISHING_SERVICE_HEARING_POST_JSON = "application/vnd.courtlistpublishing-service.hearing.post+json";
     private MockMvc mockMvc;
 
     @Mock
@@ -54,7 +56,7 @@ class HearingControllerTest {
         // When & Then
         mockMvc.perform(get(BASE_URL + "/{hearingId}", hearingId))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(VND_COURTLISTPUBLISHING_SERVICE_HEARING_GET_JSON))
                 .andExpect(content().string(expectedResponse));
     }
 
@@ -78,7 +80,7 @@ class HearingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(hearingRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(VND_COURTLISTPUBLISHING_SERVICE_HEARING_POST_JSON))
                 .andExpect(content().string(expectedResponse));
     }
 

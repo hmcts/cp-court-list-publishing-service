@@ -22,6 +22,8 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping(path = "api", produces = MediaType.TEXT_PLAIN_VALUE)
 public class HearingController {
 
+    public static final MediaType MEDIA_TYPE_GET = new MediaType("application", "vnd.courtlistpublishing-service.hearing.get+json");
+    public static final MediaType MEDIA_TYPE_POST = new MediaType("application", "vnd.courtlistpublishing-service.hearing.post+json");
     private final HearingService hearingService;
 
     private static final Logger LOG = LoggerFactory.getLogger(HearingController.class);
@@ -31,27 +33,26 @@ public class HearingController {
     }
 
     @GetMapping("/hearing/{hearingId}")
-    public ResponseEntity<String> getHearingData(@PathVariable UUID hearingId) {
-        final String hearing;
+    public ResponseEntity<String> getHearingData(@PathVariable final UUID hearingId) {
         if (hearingId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "HearingId is required");
         }
 
-        hearing = hearingService.getHearingById(hearingId);
+        final String hearing = hearingService.getHearingById(hearingId);
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MEDIA_TYPE_GET)
                 .body(hearing);
     }
 
     @PostMapping("/hearing")
-    public ResponseEntity<String> postHearing(@RequestBody HearingRequest hearingRequest) {
+    public ResponseEntity<String> postHearing(@RequestBody final HearingRequest hearingRequest) {
         if (hearingRequest == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
         }
 
-        String hearing = hearingService.updateHearing(hearingRequest);
+       final String hearing = hearingService.updateHearing(hearingRequest);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MEDIA_TYPE_POST)
                 .body(hearing);
     }
 
