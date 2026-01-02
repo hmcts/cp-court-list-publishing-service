@@ -32,6 +32,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class CourtListPublishControllerTest {
 
+    public static final MediaType CONTENT_TYPE_APPLICATION_VND_POST = new MediaType("application", "vnd.courtlistpublishing-service.publish.post+json");
+    public static final MediaType CONTENT_TYPE_APPLICATION_VND_GET = new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json");
+
     private MockMvc mockMvc;
 
     @Mock
@@ -68,8 +71,8 @@ class CourtListPublishControllerTest {
         mockMvc.perform(post(PUBLISH_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(CONTENT_TYPE_APPLICATION_VND_POST))
                 .andExpect(jsonPath("$.courtListId").value(request.courtListId().toString()))
                 .andExpect(jsonPath("$.courtCentreId").value(request.courtCentreId().toString()))
                 .andExpect(jsonPath("$.publishStatus").exists())
@@ -196,7 +199,7 @@ class CourtListPublishControllerTest {
         // When & Then
         mockMvc.perform(get(BASE_URL + "/court-centre/" + courtCentreId))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(CONTENT_TYPE_APPLICATION_VND_GET))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].courtCentreId").value(courtCentreId.toString()))
@@ -214,7 +217,7 @@ class CourtListPublishControllerTest {
         // When & Then
         mockMvc.perform(get(BASE_URL + "/court-centre/" + courtCentreId))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(CONTENT_TYPE_APPLICATION_VND_GET))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(0));
 

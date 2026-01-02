@@ -48,8 +48,8 @@ public class CourtListPublishController {
                 request.courtListType()
         );
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .contentType(MediaType.APPLICATION_JSON)
+        return ResponseEntity.ok()
+                .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.post+json"))
                 .body(response);
     }
 
@@ -60,7 +60,7 @@ public class CourtListPublishController {
         LOG.atInfo().log("Fetching court list publish statuses for court centre ID: {}", courtCentreId);
         List<CourtListPublishResponse> responses = service.findByCourtCentreId(courtCentreId);
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
                 .body(responses);
     }
 }

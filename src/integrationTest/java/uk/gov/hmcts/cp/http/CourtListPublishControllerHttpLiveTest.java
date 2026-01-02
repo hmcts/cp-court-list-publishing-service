@@ -56,7 +56,7 @@ public class CourtListPublishControllerHttpLiveTest {
         ResponseEntity<String> response = postRequest(updateRequestJson);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode responseBody = parseResponse(response);
         assertThat(responseBody.get("courtListId").asText()).isEqualTo(courtListId.toString());
         assertThat(responseBody.get("publishStatus").asText()).isEqualTo(PUBLISH_STATUS_PUBLISHED);
@@ -75,7 +75,7 @@ public class CourtListPublishControllerHttpLiveTest {
         );
 
         // Then - Verify creation
-        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode createBody = parseResponse(createResponse);
         assertThat(createBody.get("publishStatus").asText()).isEqualTo(PUBLISH_STATUS_PENDING);
 
@@ -85,7 +85,7 @@ public class CourtListPublishControllerHttpLiveTest {
         );
 
         // Then - Verify update
-        assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode updateBody = parseResponse(updateResponse);
         assertThat(updateBody.get("courtListId").asText()).isEqualTo(courtListId.toString());
         assertThat(updateBody.get("publishStatus").asText()).isEqualTo(PUBLISH_STATUS_PUBLISHED);
@@ -230,7 +230,7 @@ public class CourtListPublishControllerHttpLiveTest {
     }
 
     private void assertSuccessfulCreation(ResponseEntity<String> response, UUID courtListId, UUID courtCentreId) throws Exception {
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getHeaders().getContentType()).isNotNull();
         assertThat(response.getBody()).isNotNull();
 
