@@ -114,7 +114,7 @@ dependencies {
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
 
-    implementation group: 'io.rest-assured', name: 'rest-assured', version: '5.5.6'
+    implementation 'io.rest-assured:rest-assured:5.5.6'
     implementation 'org.hibernate.validator:hibernate-validator:9.0.1.Final'
     implementation 'org.apache.commons:commons-text:1.14.0'
 
@@ -128,10 +128,10 @@ dependencies {
     implementation "uk.gov.hmcts.cp:cp-auth-rules-filter:${cpAuthFilterVersion}"
     implementation "uk.gov.hmcts.cp:cp-audit-filter-springboot:${cpAuditFilterVersion}"
 
-    compileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
-    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
-    testCompileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
-    testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
     testImplementation(platform('org.junit:junit-bom:6.0.0'))
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
@@ -162,8 +162,8 @@ dependencies {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
     integrationTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    integrationTestCompileOnly group: 'org.projectlombok', name: 'lombok', version: lombokVersion
-    integrationTestAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombokVersion
+    integrationTestCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+    integrationTestAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
 }
 

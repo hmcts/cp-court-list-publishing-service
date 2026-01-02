@@ -3,19 +3,19 @@ import uk.gov.moj.cpp.authz.drools.Action;
 
 global uk.gov.moj.cpp.authz.http.providers.UserAndGroupProvider userAndGroupProvider;
 
-rule "Allow LA – hearing"
+rule "Allow LA – files"
 when
   $o: Outcome()
-  $a: Action(name == "courtlistpublishing-service.hearing.post" || name == "courtlistpublishing-service.hearing.get" )
+  $a: Action(name == "courtlistpublishing-service.files")
   eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, "Legal Advisers","District Judge","System Users"))
 then
   $o.setSuccess(true);
 end
 
-rule "Allow LA – files"
+rule "Allow LA – court-list-publish"
 when
   $o: Outcome()
-  $a: Action(name == "courtlistpublishing-service.files")
+  $a: Action(name == "courtlistpublishing-service.court-list-publish.post" || name == "courtlistpublishing-service.court-list-publish.put")
   eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, "Legal Advisers","District Judge","System Users"))
 then
   $o.setSuccess(true);
