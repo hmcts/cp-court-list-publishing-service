@@ -1,6 +1,7 @@
 package uk.gov.hmcts.cp.repositories;
 
 import uk.gov.hmcts.cp.domain.CourtListPublishStatusEntity;
+import uk.gov.hmcts.cp.openapi.model.PublishStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,9 +16,9 @@ public interface CourtListPublishStatusRepository extends JpaRepository<CourtLis
 
     List<CourtListPublishStatusEntity> findByCourtCentreId(UUID courtCentreId);
 
-    List<CourtListPublishStatusEntity> findByPublishStatus(String publishStatus);
+    List<CourtListPublishStatusEntity> findByPublishStatus(PublishStatus publishStatus);
 
-    List<CourtListPublishStatusEntity> findByCourtCentreIdAndPublishStatus(UUID courtCentreId, String publishStatus);
+    List<CourtListPublishStatusEntity> findByCourtCentreIdAndPublishStatus(UUID courtCentreId, PublishStatus publishStatus);
 
 }
 

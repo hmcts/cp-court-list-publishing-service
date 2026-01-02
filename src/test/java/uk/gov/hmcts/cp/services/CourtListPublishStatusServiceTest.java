@@ -8,10 +8,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import uk.gov.hmcts.cp.domain.CourtListPublishStatusEntity;
-import uk.gov.hmcts.cp.dto.CourtListPublishResponse;
+import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.openapi.model.PublishStatus;
 import uk.gov.hmcts.cp.repositories.CourtListPublishStatusRepository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,9 +41,9 @@ class CourtListPublishStatusServiceTest {
         CourtListPublishStatusEntity entity = new CourtListPublishStatusEntity(
                 courtListId,
                 courtCentreId,
-                "PUBLISHED",
-                "DAILY",
-                LocalDateTime.now()
+                PublishStatus.COURT_LIST_REQUESTED,
+                CourtListType.PUBLIC,
+                Instant.now()
         );
 
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
@@ -51,10 +53,10 @@ class CourtListPublishStatusServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.courtListId()).isEqualTo(courtListId);
-        assertThat(result.courtCentreId()).isEqualTo(courtCentreId);
-        assertThat(result.publishStatus()).isEqualTo("PUBLISHED");
-        assertThat(result.courtListType()).isEqualTo("DAILY");
+        assertThat(result.getCourtListId()).isEqualTo(courtListId);
+        assertThat(result.getCourtCentreId()).isEqualTo(courtCentreId);
+        assertThat(result.getPublishStatus()).isEqualTo(PublishStatus.COURT_LIST_REQUESTED);
+        assertThat(result.getCourtListType()).isEqualTo(CourtListType.PUBLIC);
         verify(repository).getByCourtListId(courtListId);
     }
 
@@ -94,8 +96,8 @@ class CourtListPublishStatusServiceTest {
         // Given
         UUID courtListId = UUID.randomUUID();
         UUID courtCentreId = UUID.randomUUID();
-        String publishStatus = "PUBLISHED";
-        String courtListType = "DAILY";
+        PublishStatus publishStatus = PublishStatus.COURT_LIST_REQUESTED;
+        CourtListType courtListType = CourtListType.STANDARD;
 
         when(repository.getByCourtListId(courtListId)).thenReturn(null);
         when(repository.save(any(CourtListPublishStatusEntity.class))).thenAnswer(invocation -> invocation.<CourtListPublishStatusEntity>getArgument(0));
@@ -106,11 +108,11 @@ class CourtListPublishStatusServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.courtListId()).isEqualTo(courtListId);
-        assertThat(result.courtCentreId()).isEqualTo(courtCentreId);
-        assertThat(result.publishStatus()).isEqualTo(publishStatus);
-        assertThat(result.courtListType()).isEqualTo(courtListType);
-        assertThat(result.lastUpdated()).isNotNull();
+        assertThat(result.getCourtListId()).isEqualTo(courtListId);
+        assertThat(result.getCourtCentreId()).isEqualTo(courtCentreId);
+        assertThat(result.getPublishStatus()).isEqualTo(publishStatus);
+        assertThat(result.getCourtListType()).isEqualTo(courtListType);
+        assertThat(result.getLastUpdated()).isNotNull();
         verify(repository).getByCourtListId(courtListId);
         verify(repository).save(any(CourtListPublishStatusEntity.class));
     }
@@ -120,15 +122,15 @@ class CourtListPublishStatusServiceTest {
         // Given
         UUID courtListId = UUID.randomUUID();
         UUID courtCentreId = UUID.randomUUID();
-        String newPublishStatus = "PENDING";
-        String newCourtListType = "WEEKLY";
+        PublishStatus newPublishStatus = PublishStatus.COURT_LIST_REQUESTED;
+        CourtListType newCourtListType = CourtListType.ALPHABETICAL;
 
         CourtListPublishStatusEntity existingEntity = new CourtListPublishStatusEntity(
                 courtListId,
                 UUID.randomUUID(),
-                "PUBLISHED",
-                "DAILY",
-                LocalDateTime.now()
+                PublishStatus.COURT_LIST_REQUESTED,
+                CourtListType.FINAL,
+                Instant.now()
         );
 
         when(repository.getByCourtListId(courtListId)).thenReturn(existingEntity);
@@ -140,11 +142,11 @@ class CourtListPublishStatusServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.courtListId()).isEqualTo(courtListId);
-        assertThat(result.courtCentreId()).isEqualTo(courtCentreId);
-        assertThat(result.publishStatus()).isEqualTo(newPublishStatus);
-        assertThat(result.courtListType()).isEqualTo(newCourtListType);
-        assertThat(result.lastUpdated()).isNotNull();
+        assertThat(result.getCourtListId()).isEqualTo(courtListId);
+        assertThat(result.getCourtCentreId()).isEqualTo(courtCentreId);
+        assertThat(result.getPublishStatus()).isEqualTo(newPublishStatus);
+        assertThat(result.getCourtListType()).isEqualTo(newCourtListType);
+        assertThat(result.getLastUpdated()).isNotNull();
         verify(repository).getByCourtListId(courtListId);
         verify(repository).save(existingEntity);
     }
@@ -153,7 +155,7 @@ class CourtListPublishStatusServiceTest {
     void createOrUpdate_shouldThrowResponseStatusException_whenCourtListIdIsNull() {
         // When & Then
         assertThatThrownBy(() -> service.createOrUpdate(
-                null, UUID.randomUUID(), "PUBLISHED", "DAILY"))
+                null, UUID.randomUUID(), PublishStatus.COURT_LIST_REQUESTED, CourtListType.FINAL))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> {
                     ResponseStatusException ex = (ResponseStatusException) exception;
@@ -168,7 +170,7 @@ class CourtListPublishStatusServiceTest {
     void createOrUpdate_shouldThrowResponseStatusException_whenCourtCentreIdIsNull() {
         // When & Then
         assertThatThrownBy(() -> service.createOrUpdate(
-                UUID.randomUUID(), null, "PUBLISHED", "DAILY"))
+                UUID.randomUUID(), null, PublishStatus.COURT_LIST_REQUESTED, CourtListType.DRAFT))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> {
                     ResponseStatusException ex = (ResponseStatusException) exception;
@@ -182,7 +184,7 @@ class CourtListPublishStatusServiceTest {
     void createOrUpdate_shouldThrowResponseStatusException_whenPublishStatusIsNull() {
         // When & Then
         assertThatThrownBy(() -> service.createOrUpdate(
-                UUID.randomUUID(), UUID.randomUUID(), null, "DAILY"))
+                UUID.randomUUID(), UUID.randomUUID(), null, CourtListType.FIRM))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> {
                     ResponseStatusException ex = (ResponseStatusException) exception;
@@ -196,7 +198,7 @@ class CourtListPublishStatusServiceTest {
     void createOrUpdate_shouldThrowResponseStatusException_whenPublishStatusIsBlank() {
         // When & Then
         assertThatThrownBy(() -> service.createOrUpdate(
-                UUID.randomUUID(), UUID.randomUUID(), "   ", "DAILY"))
+                UUID.randomUUID(), UUID.randomUUID(), null, CourtListType.PUBLIC))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> {
                     ResponseStatusException ex = (ResponseStatusException) exception;
@@ -210,7 +212,7 @@ class CourtListPublishStatusServiceTest {
     void createOrUpdate_shouldThrowResponseStatusException_whenCourtListTypeIsNull() {
         // When & Then
         assertThatThrownBy(() -> service.createOrUpdate(
-                UUID.randomUUID(), UUID.randomUUID(), "PUBLISHED", null))
+                UUID.randomUUID(), UUID.randomUUID(), PublishStatus.COURT_LIST_REQUESTED, null))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> {
                     ResponseStatusException ex = (ResponseStatusException) exception;
@@ -227,16 +229,16 @@ class CourtListPublishStatusServiceTest {
         CourtListPublishStatusEntity entity1 = new CourtListPublishStatusEntity(
                 UUID.randomUUID(),
                 courtCentreId,
-                "PUBLISHED",
-                "DAILY",
-                LocalDateTime.now()
+                PublishStatus.COURT_LIST_REQUESTED,
+                CourtListType.PUBLIC,
+                Instant.now()
         );
         CourtListPublishStatusEntity entity2 = new CourtListPublishStatusEntity(
                 UUID.randomUUID(),
                 courtCentreId,
-                "PENDING",
-                "WEEKLY",
-                LocalDateTime.now()
+                PublishStatus.EXPORT_SUCCESSFUL,
+                CourtListType.STANDARD,
+                Instant.now()
         );
 
         when(repository.findByCourtCentreId(courtCentreId)).thenReturn(List.of(entity1, entity2));
@@ -246,10 +248,10 @@ class CourtListPublishStatusServiceTest {
 
         // Then
         assertThat(result).hasSize(2);
-        assertThat(result).extracting(CourtListPublishResponse::courtCentreId)
+        assertThat(result).extracting(CourtListPublishResponse::getCourtCentreId)
                 .containsExactlyInAnyOrder(courtCentreId, courtCentreId);
-        assertThat(result).extracting(CourtListPublishResponse::publishStatus)
-                .containsExactlyInAnyOrder("PUBLISHED", "PENDING");
+        assertThat(result).extracting(r -> r.getPublishStatus())
+                .containsExactlyInAnyOrder(PublishStatus.EXPORT_SUCCESSFUL, PublishStatus.COURT_LIST_REQUESTED);
         verify(repository).findByCourtCentreId(courtCentreId);
     }
 
@@ -261,9 +263,9 @@ class CourtListPublishStatusServiceTest {
                 .mapToObj(i -> new CourtListPublishStatusEntity(
                         UUID.randomUUID(),
                         courtCentreId,
-                        "PUBLISHED",
-                        "DAILY",
-                        LocalDateTime.now()
+                        PublishStatus.COURT_LIST_REQUESTED,
+                        CourtListType.STANDARD,
+                        Instant.now()
                 ))
                 .toList();
 
@@ -296,16 +298,16 @@ class CourtListPublishStatusServiceTest {
         CourtListPublishStatusEntity entity1 = new CourtListPublishStatusEntity(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
-                "PUBLISHED",
-                "DAILY",
-                LocalDateTime.now()
+                PublishStatus.COURT_LIST_REQUESTED,
+                CourtListType.STANDARD,
+                Instant.now()
         );
         CourtListPublishStatusEntity entity2 = new CourtListPublishStatusEntity(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
-                "PENDING",
-                "WEEKLY",
-                LocalDateTime.now()
+                PublishStatus.EXPORT_SUCCESSFUL,
+                CourtListType.PUBLIC,
+                Instant.now()
         );
 
         when(repository.findAll()).thenReturn(List.of(entity1, entity2));
@@ -315,10 +317,10 @@ class CourtListPublishStatusServiceTest {
 
         // Then
         assertThat(result).hasSize(2);
-        assertThat(result).extracting(CourtListPublishResponse::publishStatus)
-                .containsExactlyInAnyOrder("PUBLISHED", "PENDING");
-        assertThat(result).extracting(CourtListPublishResponse::courtListType)
-                .containsExactlyInAnyOrder("DAILY", "WEEKLY");
+        assertThat(result).extracting(r -> r.getPublishStatus())
+                .containsExactlyInAnyOrder(PublishStatus.COURT_LIST_REQUESTED, PublishStatus.EXPORT_SUCCESSFUL);
+        assertThat(result).extracting(r -> r.getCourtListType())
+                .containsExactlyInAnyOrder(CourtListType.fromValue("STANDARD"), CourtListType.fromValue("PUBLIC"));
         verify(repository).findAll();
     }
 }

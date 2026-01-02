@@ -11,11 +11,15 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.gov.hmcts.cp.domain.CourtListPublishStatusEntity;
-import uk.gov.hmcts.cp.dto.CourtListPublishRequest;
-import uk.gov.hmcts.cp.dto.CourtListPublishResponse;
+import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
+import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.openapi.model.PublishStatus;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -63,9 +67,9 @@ class CourtListPublishControllerTest {
         when(service.createOrUpdate(
                 any(UUID.class),
                 any(UUID.class),
-                any(String.class),
-                any(String.class)
-        )).thenReturn(CourtListPublishResponse.from(expectedEntity));
+                any(PublishStatus.class),
+                any(CourtListType.class)
+        )).thenReturn(toResponse(expectedEntity));
 
         // When & Then
         mockMvc.perform(post(PUBLISH_URL)
@@ -73,18 +77,18 @@ class CourtListPublishControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(CONTENT_TYPE_APPLICATION_VND_POST))
-                .andExpect(jsonPath("$.courtListId").value(request.courtListId().toString()))
-                .andExpect(jsonPath("$.courtCentreId").value(request.courtCentreId().toString()))
+                .andExpect(jsonPath("$.courtListId").value(request.getCourtListId().toString()))
+                .andExpect(jsonPath("$.courtCentreId").value(request.getCourtCentreId().toString()))
                 .andExpect(jsonPath("$.publishStatus").exists())
-                .andExpect(jsonPath("$.publishStatus").value(request.publishStatus()))
-                .andExpect(jsonPath("$.courtListType").value(request.courtListType()))
+                .andExpect(jsonPath("$.publishStatus").value(request.getPublishStatus().toString()))
+                .andExpect(jsonPath("$.courtListType").value(request.getCourtListType().toString()))
                 .andExpect(jsonPath("$.lastUpdated").exists());
 
         verify(service).createOrUpdate(
-                request.courtListId(),
-                request.courtCentreId(),
-                request.publishStatus(),
-                request.courtListType()
+                request.getCourtListId(),
+                request.getCourtCentreId(),
+                request.getPublishStatus(),
+                request.getCourtListType()
         );
     }
 
@@ -187,11 +191,11 @@ class CourtListPublishControllerTest {
     void findCourtListPublishByCourtCenterId_shouldReturnList_whenEntitiesExist() throws Exception {
         // Given
         UUID courtCentreId = UUID.randomUUID();
-        CourtListPublishStatusEntity entity1 = createEntity(UUID.randomUUID(), courtCentreId, "PUBLISHED", "DAILY");
-        CourtListPublishStatusEntity entity2 = createEntity(UUID.randomUUID(), courtCentreId, "PENDING", "WEEKLY");
+        CourtListPublishStatusEntity entity1 = createEntity(UUID.randomUUID(), courtCentreId, PublishStatus.COURT_LIST_REQUESTED, CourtListType.STANDARD);
+        CourtListPublishStatusEntity entity2 = createEntity(UUID.randomUUID(), courtCentreId, PublishStatus.COURT_LIST_PRODUCED, CourtListType.PUBLIC);
         List<CourtListPublishResponse> responses = List.of(
-                CourtListPublishResponse.from(entity1),
-                CourtListPublishResponse.from(entity2)
+                toResponse(entity1),
+                toResponse(entity2)
         );
 
         when(service.findByCourtCentreId(courtCentreId)).thenReturn(responses);
@@ -224,33 +228,57 @@ class CourtListPublishControllerTest {
         verify(service).findByCourtCentreId(courtCentreId);
     }
 
+    @SuppressWarnings("unchecked")
     private CourtListPublishRequest createValidRequest() {
+        CourtListType courtListTypeEnum = CourtListType.STANDARD;
+        // Use reflection to create request with enum
         return new CourtListPublishRequest(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
-                "PUBLISHED",
-                "DAILY"
+                PublishStatus.COURT_LIST_REQUESTED,
+                courtListTypeEnum
         );
     }
 
     private CourtListPublishStatusEntity createEntityFromRequest(CourtListPublishRequest request) {
         return new CourtListPublishStatusEntity(
-                request.courtListId(),
-                request.courtCentreId(),
-                request.publishStatus(),
-                request.courtListType(),
-                LocalDateTime.now()
+                request.getCourtListId(),
+                request.getCourtCentreId(),
+                request.getPublishStatus(),
+                request.getCourtListType(),
+                Instant.now()
         );
     }
 
     private CourtListPublishStatusEntity createEntity(UUID courtListId, UUID courtCentreId, 
-                                                      String publishStatus, String courtListType) {
+                                                      PublishStatus publishStatus, CourtListType courtListType) {
         return new CourtListPublishStatusEntity(
                 courtListId,
                 courtCentreId,
                 publishStatus,
                 courtListType,
-                LocalDateTime.now()
+                Instant.now()
+        );
+    }
+
+    private CourtListPublishResponse toResponse(CourtListPublishStatusEntity entity) {
+        OffsetDateTime lastUpdated = entity.getLastUpdated() != null
+                ? entity.getLastUpdated().atOffset(ZoneOffset.UTC)
+                : null;
+        
+        // Convert String publishStatus to PublishStatus enum
+        PublishStatus publishStatusEnum = entity.getPublishStatus();
+
+        return new CourtListPublishResponse(
+                entity.getCourtListId(),
+                entity.getCourtCentreId(),
+                publishStatusEnum,
+                entity.getCourtListType(),
+                lastUpdated,
+                entity.getCourtListFileId(),
+                entity.getFileName(),
+                entity.getErrorMessage(),
+                entity.getPublishDate()
         );
     }
 }

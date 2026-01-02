@@ -3,9 +3,11 @@ package uk.gov.hmcts.cp.repositories;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import uk.gov.hmcts.cp.domain.CourtListPublishStatusEntity;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.openapi.model.PublishStatus;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,9 +42,9 @@ class CourtListPublishStatusRepositoryTest {
         // Given
         UUID courtListId = UUID.randomUUID();
         UUID courtCentreId = UUID.randomUUID();
-        String publishStatus = "PUBLISHED";
-        String courtListType = "DAILY";
-        LocalDateTime lastUpdated = LocalDateTime.now();
+        PublishStatus publishStatus = PublishStatus.COURT_LIST_REQUESTED;
+        CourtListType courtListType = CourtListType.PUBLIC;
+        Instant lastUpdated = Instant.now();
 
         CourtListPublishStatusEntity entity = new CourtListPublishStatusEntity(
                 courtListId,
@@ -71,9 +73,9 @@ class CourtListPublishStatusRepositoryTest {
         // Given
         UUID courtListId = UUID.randomUUID();
         UUID courtCentreId = UUID.randomUUID();
-        String publishStatus = "PUBLISHED";
-        String courtListType = "DAILY";
-        LocalDateTime lastUpdated = LocalDateTime.now();
+        PublishStatus publishStatus = PublishStatus.COURT_LIST_REQUESTED;
+        CourtListType courtListType = CourtListType.PUBLIC;
+        Instant lastUpdated = Instant.now();
         UUID courtListFileId = UUID.randomUUID();
         String fileName = "court-list-2024-01-15.pdf";
         String errorMessage = null;
@@ -109,9 +111,9 @@ class CourtListPublishStatusRepositoryTest {
         // Given
         UUID courtListId = UUID.randomUUID();
         UUID courtCentreId = UUID.randomUUID();
-        String publishStatus = "PUBLISHED";
-        String courtListType = "DAILY";
-        LocalDateTime lastUpdated = LocalDateTime.now();
+        PublishStatus publishStatus = PublishStatus.COURT_LIST_REQUESTED;
+        CourtListType courtListType = CourtListType.PUBLIC;
+        Instant lastUpdated = Instant.now();
 
         CourtListPublishStatusEntity entity = new CourtListPublishStatusEntity(
                 courtListId,
@@ -151,9 +153,9 @@ class CourtListPublishStatusRepositoryTest {
         // Given
         UUID courtListId = UUID.randomUUID();
         UUID courtCentreId = UUID.randomUUID();
-        String publishStatus = "PUBLISHED";
-        String courtListType = "DAILY";
-        LocalDateTime lastUpdated = LocalDateTime.now();
+        PublishStatus publishStatus = PublishStatus.COURT_LIST_REQUESTED;
+        CourtListType courtListType = CourtListType.STANDARD;
+        Instant lastUpdated = Instant.now();
 
         CourtListPublishStatusEntity entity = new CourtListPublishStatusEntity(
                 courtListId,
@@ -188,23 +190,23 @@ class CourtListPublishStatusRepositoryTest {
         CourtListPublishStatusEntity entity1 = new CourtListPublishStatusEntity(
                 courtListId1,
                 courtCentreId,
-                "PUBLISHED",
-                "DAILY",
-                LocalDateTime.now()
+                PublishStatus.COURT_LIST_REQUESTED,
+                CourtListType.STANDARD,
+                Instant.now()
         );
         CourtListPublishStatusEntity entity2 = new CourtListPublishStatusEntity(
                 courtListId2,
                 courtCentreId,
-                "PENDING",
-                "WEEKLY",
-                LocalDateTime.now()
+                PublishStatus.COURT_LIST_REQUESTED,
+                CourtListType.STANDARD,
+                Instant.now()
         );
         CourtListPublishStatusEntity entity3 = new CourtListPublishStatusEntity(
                 courtListId3,
                 UUID.randomUUID(), // Different court centre
-                "PUBLISHED",
-                "DAILY",
-                LocalDateTime.now()
+                PublishStatus.COURT_LIST_REQUESTED,
+                CourtListType.STANDARD,
+                Instant.now()
         );
 
         entityManager.persist(entity1);
@@ -228,7 +230,7 @@ class CourtListPublishStatusRepositoryTest {
     void findByPublishStatus_shouldReturnAllEntities_whenMultipleEntitiesExistWithSameStatus() {
         // Given
         repository.deleteAll();
-        String publishStatus = "PUBLISHED";
+        PublishStatus publishStatus = PublishStatus.COURT_LIST_REQUESTED;
         UUID courtListId1 = UUID.randomUUID();
         UUID courtListId2 = UUID.randomUUID();
         UUID courtListId3 = UUID.randomUUID();
@@ -237,22 +239,22 @@ class CourtListPublishStatusRepositoryTest {
                 courtListId1,
                 UUID.randomUUID(),
                 publishStatus,
-                "DAILY",
-                LocalDateTime.now()
+                CourtListType.STANDARD,
+                Instant.now()
         );
         CourtListPublishStatusEntity entity2 = new CourtListPublishStatusEntity(
                 courtListId2,
                 UUID.randomUUID(),
                 publishStatus,
-                "WEEKLY",
-                LocalDateTime.now()
+                CourtListType.FINAL,
+                Instant.now()
         );
         CourtListPublishStatusEntity entity3 = new CourtListPublishStatusEntity(
                 courtListId3,
                 UUID.randomUUID(),
-                "PENDING", // Different status
-                "DAILY",
-                LocalDateTime.now()
+                PublishStatus.COURT_LIST_PRODUCED, // Different status
+                CourtListType.FIRM,
+                Instant.now()
         );
 
         entityManager.persist(entity1);
@@ -277,7 +279,7 @@ class CourtListPublishStatusRepositoryTest {
         // Given
         repository.deleteAll();
         UUID courtCentreId = UUID.randomUUID();
-        String publishStatus = "PUBLISHED";
+        PublishStatus publishStatus = PublishStatus.COURT_LIST_REQUESTED;
         UUID courtListId1 = UUID.randomUUID();
         UUID courtListId2 = UUID.randomUUID();
         UUID courtListId3 = UUID.randomUUID();
@@ -286,22 +288,22 @@ class CourtListPublishStatusRepositoryTest {
                 courtListId1,
                 courtCentreId,
                 publishStatus,
-                "DAILY",
-                LocalDateTime.now()
+                CourtListType.FINAL,
+                Instant.now()
         );
         CourtListPublishStatusEntity entity2 = new CourtListPublishStatusEntity(
                 courtListId2,
                 courtCentreId,
                 publishStatus,
-                "WEEKLY",
-                LocalDateTime.now()
+                CourtListType.FIRM,
+                Instant.now()
         );
         CourtListPublishStatusEntity entity3 = new CourtListPublishStatusEntity(
                 courtListId3,
                 courtCentreId,
-                "PENDING", // Different status
-                "DAILY",
-                LocalDateTime.now()
+                PublishStatus.COURT_LIST_PRODUCED, // Different status
+                CourtListType.STANDARD,
+                Instant.now()
         );
 
         entityManager.persist(entity1);
@@ -329,15 +331,15 @@ class CourtListPublishStatusRepositoryTest {
         // Given
         UUID courtListId = UUID.randomUUID();
         UUID courtCentreId = UUID.randomUUID();
-        String originalStatus = "PENDING";
-        String newStatus = "PUBLISHED";
-        LocalDateTime lastUpdated = LocalDateTime.now();
+        PublishStatus originalStatus = PublishStatus.COURT_LIST_REQUESTED;
+        PublishStatus newStatus = PublishStatus.EXPORT_SUCCESSFUL;
+        Instant lastUpdated = Instant.now();
 
         CourtListPublishStatusEntity entity = new CourtListPublishStatusEntity(
                 courtListId,
                 courtCentreId,
                 originalStatus,
-                "DAILY",
+                CourtListType.ONLINE_PUBLIC,
                 lastUpdated
         );
         entityManager.persistAndFlush(entity);
@@ -364,9 +366,9 @@ class CourtListPublishStatusRepositoryTest {
         // Given
         UUID courtListId = UUID.randomUUID();
         UUID courtCentreId = UUID.randomUUID();
-        String publishStatus = "PUBLISHED";
-        String courtListType = "DAILY";
-        LocalDateTime lastUpdated = LocalDateTime.now();
+        PublishStatus publishStatus = PublishStatus.COURT_LIST_REQUESTED;
+        CourtListType courtListType = CourtListType.DRAFT;
+        Instant lastUpdated = Instant.now();
 
         CourtListPublishStatusEntity entity = new CourtListPublishStatusEntity(
                 courtListId,
@@ -399,23 +401,23 @@ class CourtListPublishStatusRepositoryTest {
         CourtListPublishStatusEntity entity1 = new CourtListPublishStatusEntity(
                 courtListId1,
                 UUID.randomUUID(),
-                "PUBLISHED",
-                "DAILY",
-                LocalDateTime.now()
+                PublishStatus.COURT_LIST_REQUESTED,
+                CourtListType.FINAL,
+                Instant.now()
         );
         CourtListPublishStatusEntity entity2 = new CourtListPublishStatusEntity(
                 courtListId2,
                 UUID.randomUUID(),
-                "PENDING",
-                "WEEKLY",
-                LocalDateTime.now()
+                PublishStatus.COURT_LIST_REQUESTED,
+                CourtListType.ONLINE_PUBLIC,
+                Instant.now()
         );
         CourtListPublishStatusEntity entity3 = new CourtListPublishStatusEntity(
                 courtListId3,
                 UUID.randomUUID(),
-                "FAILED",
-                "DAILY",
-                LocalDateTime.now()
+                PublishStatus.COURT_LIST_REQUESTED,
+                CourtListType.ONLINE_PUBLIC,
+                Instant.now()
         );
 
         entityManager.persist(entity1);
@@ -446,26 +448,12 @@ class CourtListPublishStatusRepositoryTest {
     }
 
     @Test
-    void findByPublishStatus_shouldReturnEmptyList_whenNoEntitiesExistWithStatus() {
-        // Given
-        String nonExistentStatus = "NON_EXISTENT";
-
-        // When
-        List<CourtListPublishStatusEntity> foundEntities = repository.findByPublishStatus(nonExistentStatus);
-
-        // Then
-        assertThat(foundEntities).isEmpty();
-    }
-
-    @Test
     void findByCourtCentreIdAndPublishStatus_shouldReturnEmptyList_whenNoMatchingEntitiesExist() {
         // Given
         UUID courtCentreId = UUID.randomUUID();
-        String publishStatus = "PUBLISHED";
-
         // When
         List<CourtListPublishStatusEntity> foundEntities = repository.findByCourtCentreIdAndPublishStatus(
-                courtCentreId, publishStatus);
+                courtCentreId, PublishStatus.EXPORT_FAILED);
 
         // Then
         assertThat(foundEntities).isEmpty();
