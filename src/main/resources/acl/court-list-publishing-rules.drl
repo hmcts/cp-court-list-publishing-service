@@ -15,8 +15,8 @@ end
 rule "Allow LA – court-list-publish"
 when
   $o: Outcome()
-  $a: Action(name == "courtlistpublishing-service.court-list-publish.publish.post" || 
-             name == "courtlistpublishing-service.court-list-publish.court-centre.get")
+  $a: Action(name == "courtlistpublishing-service.publish.post" ||
+             name == "courtlistpublishing-service.publish.get")
   eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, "Legal Advisers","District Judge","System Users"))
 then
   $o.setSuccess(true);
