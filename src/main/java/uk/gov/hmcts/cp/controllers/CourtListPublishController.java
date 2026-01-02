@@ -33,7 +33,7 @@ public class CourtListPublishController {
 
     @PostMapping("/publish")
     public ResponseEntity<CourtListPublishResponse> publishCourtList(
-            @RequestBody CourtListPublishRequest request) {
+            @RequestBody final CourtListPublishRequest request) {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
         }
@@ -41,26 +41,26 @@ public class CourtListPublishController {
         LOG.atInfo().log("Creating or updating court list publish status for court list ID: {}",
                 request.courtListId());
 
-        CourtListPublishResponse response = service.createOrUpdate(
+        final CourtListPublishResponse response = service.createOrUpdate(
                 request.courtListId(),
                 request.courtCentreId(),
                 request.publishStatus(),
                 request.courtListType()
         );
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .contentType(MediaType.APPLICATION_JSON)
+        return ResponseEntity.ok()
+                .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.post+json"))
                 .body(response);
     }
 
     @GetMapping("/court-centre/{courtCentreId}")
     @SuppressWarnings("unused") // Method is used by Spring's request mapping
     public ResponseEntity<List<CourtListPublishResponse>> findCourtListPublishByCourtCenterId(
-            @PathVariable UUID courtCentreId) {
+            @PathVariable final UUID courtCentreId) {
         LOG.atInfo().log("Fetching court list publish statuses for court centre ID: {}", courtCentreId);
-        List<CourtListPublishResponse> responses = service.findByCourtCentreId(courtCentreId);
+        final List<CourtListPublishResponse> responses = service.findByCourtCentreId(courtCentreId);
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
                 .body(responses);
     }
 }
