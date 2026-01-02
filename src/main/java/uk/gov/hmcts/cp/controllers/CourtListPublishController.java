@@ -1,7 +1,8 @@
 package uk.gov.hmcts.cp.controllers;
 
-import uk.gov.hmcts.cp.dto.CourtListPublishRequest;
-import uk.gov.hmcts.cp.dto.CourtListPublishResponse;
+import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
+import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
+import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 
 import org.slf4j.Logger;
@@ -9,11 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -21,8 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping(path = "api/court-list-publish", produces = MediaType.APPLICATION_JSON_VALUE)
-public class CourtListPublishController {
+public class CourtListPublishController implements CourtListPublishApi {
 
     private final CourtListPublishStatusService service;
     private static final Logger LOG = LoggerFactory.getLogger(CourtListPublishController.class);
@@ -31,7 +28,7 @@ public class CourtListPublishController {
         this.service = service;
     }
 
-    @PostMapping("/publish")
+    @Override
     public ResponseEntity<CourtListPublishResponse> publishCourtList(
             @RequestBody final CourtListPublishRequest request) {
         if (request == null) {
@@ -39,13 +36,13 @@ public class CourtListPublishController {
         }
         
         LOG.atInfo().log("Creating or updating court list publish status for court list ID: {}",
-                request.courtListId());
+                request.getCourtListId());
 
         final CourtListPublishResponse response = service.createOrUpdate(
-                request.courtListId(),
-                request.courtCentreId(),
-                request.publishStatus(),
-                request.courtListType()
+                request.getCourtListId(),
+                request.getCourtCentreId(),
+                request.getPublishStatus(),
+                request.getCourtListType()
         );
 
         return ResponseEntity.ok()
@@ -53,7 +50,7 @@ public class CourtListPublishController {
                 .body(response);
     }
 
-    @GetMapping("/court-centre/{courtCentreId}")
+    @Override
     @SuppressWarnings("unused") // Method is used by Spring's request mapping
     public ResponseEntity<List<CourtListPublishResponse>> findCourtListPublishByCourtCenterId(
             @PathVariable final UUID courtCentreId) {
