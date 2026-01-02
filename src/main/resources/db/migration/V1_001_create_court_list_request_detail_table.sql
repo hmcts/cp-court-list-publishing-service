@@ -1,4 +1,4 @@
--- V1_002__create_court_list_request_detail_table.sql
+-- V1_001__create_court_list_request_detail_table.sql
 CREATE TABLE court_list_request_detail (
     court_list_id    UUID        PRIMARY KEY,
     court_centre_id  UUID        NOT NULL,

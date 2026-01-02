@@ -16,13 +16,15 @@ import uk.gov.hmcts.cp.dto.CourtListPublishResponse;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -40,6 +42,7 @@ class CourtListPublishControllerTest {
 
     private ObjectMapper objectMapper;
 
+    private static final String PUBLISH_URL = "/api/court-list-publish/publish";
     private static final String BASE_URL = "/api/court-list-publish";
 
     @BeforeEach
@@ -62,7 +65,7 @@ class CourtListPublishControllerTest {
         )).thenReturn(CourtListPublishResponse.from(expectedEntity));
 
         // When & Then
-        mockMvc.perform(post(BASE_URL)
+        mockMvc.perform(post(PUBLISH_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -85,7 +88,7 @@ class CourtListPublishControllerTest {
     @Test
     void createCourtList_shouldReturnBadRequest_whenRequestBodyIsNull() throws Exception {
         // When & Then
-        mockMvc.perform(post(BASE_URL)
+        mockMvc.perform(post(PUBLISH_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(""))
                 .andExpect(status().isBadRequest());
@@ -99,7 +102,7 @@ class CourtListPublishControllerTest {
                 "\"courtListType\":\"DAILY\"}";
 
         // When & Then
-        mockMvc.perform(post(BASE_URL)
+        mockMvc.perform(post(PUBLISH_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest());
@@ -113,7 +116,7 @@ class CourtListPublishControllerTest {
                 "\"courtListType\":\"DAILY\"}";
 
         // When & Then
-        mockMvc.perform(post(BASE_URL)
+        mockMvc.perform(post(PUBLISH_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest());
@@ -127,7 +130,7 @@ class CourtListPublishControllerTest {
                 "\"courtListType\":\"DAILY\"}";
 
         // When & Then
-        mockMvc.perform(post(BASE_URL)
+        mockMvc.perform(post(PUBLISH_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest());
@@ -142,7 +145,7 @@ class CourtListPublishControllerTest {
                 "\"courtListType\":\"DAILY\"}";
 
         // When & Then
-        mockMvc.perform(post(BASE_URL)
+        mockMvc.perform(post(PUBLISH_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest());
@@ -156,7 +159,7 @@ class CourtListPublishControllerTest {
                 "\"publishStatus\":\"PUBLISHED\"}";
 
         // When & Then
-        mockMvc.perform(post(BASE_URL)
+        mockMvc.perform(post(PUBLISH_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest());
@@ -171,137 +174,51 @@ class CourtListPublishControllerTest {
                 "\"courtListType\":\"   \"}";
 
         // When & Then
-        mockMvc.perform(post(BASE_URL)
+        mockMvc.perform(post(PUBLISH_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    void updateCourtListPublishStatus_shouldUpdateEntity_whenValidRequestProvided() throws Exception {
+    void findCourtListPublishByCourtCenterId_shouldReturnList_whenEntitiesExist() throws Exception {
         // Given
-        CourtListPublishRequest request = createValidRequest();
-        CourtListPublishStatusEntity expectedEntity = createEntityFromRequest(request);
+        UUID courtCentreId = UUID.randomUUID();
+        CourtListPublishStatusEntity entity1 = createEntity(UUID.randomUUID(), courtCentreId, "PUBLISHED", "DAILY");
+        CourtListPublishStatusEntity entity2 = createEntity(UUID.randomUUID(), courtCentreId, "PENDING", "WEEKLY");
+        List<CourtListPublishResponse> responses = List.of(
+                CourtListPublishResponse.from(entity1),
+                CourtListPublishResponse.from(entity2)
+        );
 
-        when(service.createOrUpdate(
-                any(UUID.class),
-                any(UUID.class),
-                any(String.class),
-                any(String.class)
-        )).thenReturn(CourtListPublishResponse.from(expectedEntity));
+        when(service.findByCourtCentreId(courtCentreId)).thenReturn(responses);
 
         // When & Then
-        mockMvc.perform(put(BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(get(BASE_URL + "/court-centre/" + courtCentreId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.courtListId").value(request.courtListId().toString()))
-                .andExpect(jsonPath("$.courtCentreId").value(request.courtCentreId().toString()))
-                .andExpect(jsonPath("$.publishStatus").value(request.publishStatus()))
-                .andExpect(jsonPath("$.courtListType").value(request.courtListType()));
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].courtCentreId").value(courtCentreId.toString()))
+                .andExpect(jsonPath("$[1].courtCentreId").value(courtCentreId.toString()));
 
-        verify(service).createOrUpdate(
-                request.courtListId(),
-                request.courtCentreId(),
-                request.publishStatus(),
-                request.courtListType()
-        );
+        verify(service).findByCourtCentreId(courtCentreId);
     }
 
     @Test
-    void updateCourtList_shouldReturnBadRequest_whenRequestBodyIsNull() throws Exception {
-        // When & Then
-        mockMvc.perform(put(BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(""))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void updateCourtListPublishStatus_shouldReturnBadRequest_whenCourtListIdIsMissing() throws Exception {
+    void findCourtListPublishByCourtCenterId_shouldReturnEmptyList_whenNoEntitiesExist() throws Exception {
         // Given
-        String requestBody = "{\"courtCentreId\":\"" + UUID.randomUUID() + "\"," +
-                "\"publishStatus\":\"PUBLISHED\"," +
-                "\"courtListType\":\"DAILY\"}";
+        UUID courtCentreId = UUID.randomUUID();
+        when(service.findByCourtCentreId(courtCentreId)).thenReturn(Collections.emptyList());
 
         // When & Then
-        mockMvc.perform(put(BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isBadRequest());
-    }
+        mockMvc.perform(get(BASE_URL + "/court-centre/" + courtCentreId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
 
-    @Test
-    void updateCourtListPublishStatus_shouldReturnBadRequest_whenCourtCentreIdIsMissing() throws Exception {
-        // Given
-        String requestBody = "{\"courtListId\":\"" + UUID.randomUUID() + "\"," +
-                "\"publishStatus\":\"PUBLISHED\"," +
-                "\"courtListType\":\"DAILY\"}";
-
-        // When & Then
-        mockMvc.perform(put(BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void updateCourtListPublishStatus_shouldReturnBadRequest_whenIsMissing() throws Exception {
-        // Given
-        String requestBody = "{\"courtListId\":\"" + UUID.randomUUID() + "\"," +
-                "\"courtCentreId\":\"" + UUID.randomUUID() + "\"," +
-                "\"courtListType\":\"DAILY\"}";
-
-        // When & Then
-        mockMvc.perform(put(BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void updateCourtListPublishStatus_shouldReturnBadRequest_whenIsBlank() throws Exception {
-        // Given
-        String requestBody = "{\"courtListId\":\"" + UUID.randomUUID() + "\"," +
-                "\"courtCentreId\":\"" + UUID.randomUUID() + "\"," +
-                "\"publishStatus\":\"   \"," +
-                "\"courtListType\":\"DAILY\"}";
-
-        // When & Then
-        mockMvc.perform(put(BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void updateCourtListPublishStatus_shouldReturnBadRequest_whenCourtListTypeIsMissing() throws Exception {
-        // Given
-        String requestBody = "{\"courtListId\":\"" + UUID.randomUUID() + "\"," +
-                "\"courtCentreId\":\"" + UUID.randomUUID() + "\"," +
-                "\"publishStatus\":\"PUBLISHED\"}";
-
-        // When & Then
-        mockMvc.perform(put(BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void updateCourtListPublishStatus_shouldReturnBadRequest_whenCourtListTypeIsBlank() throws Exception {
-        // Given
-        String requestBody = "{\"courtListId\":\"" + UUID.randomUUID() + "\"," +
-                "\"courtCentreId\":\"" + UUID.randomUUID() + "\"," +
-                "\"publishStatus\":\"PUBLISHED\"," +
-                "\"courtListType\":\"   \"}";
-
-        // When & Then
-        mockMvc.perform(put(BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isBadRequest());
+        verify(service).findByCourtCentreId(courtCentreId);
     }
 
     private CourtListPublishRequest createValidRequest() {
@@ -319,6 +236,17 @@ class CourtListPublishControllerTest {
                 request.courtCentreId(),
                 request.publishStatus(),
                 request.courtListType(),
+                LocalDateTime.now()
+        );
+    }
+
+    private CourtListPublishStatusEntity createEntity(UUID courtListId, UUID courtCentreId, 
+                                                      String publishStatus, String courtListType) {
+        return new CourtListPublishStatusEntity(
+                courtListId,
+                courtCentreId,
+                publishStatus,
+                courtListType,
                 LocalDateTime.now()
         );
     }

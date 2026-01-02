@@ -73,8 +73,9 @@ public class CourtListPublishStatusService {
     @Transactional
     public List<CourtListPublishResponse> findByCourtCentreId(final UUID courtCentreId) {
         validateCourtCentreId(courtCentreId);
-        LOG.atDebug().log("Fetching court list publish statuses for court centre ID: {}", courtCentreId);
+        LOG.atDebug().log("Fetching court list publish statuses for court centre ID: {} (limited to 10 records)", courtCentreId);
         return repository.findByCourtCentreId(courtCentreId).stream()
+                .limit(10)
                 .map(CourtListPublishResponse::from)
                 .collect(Collectors.toList());
     }

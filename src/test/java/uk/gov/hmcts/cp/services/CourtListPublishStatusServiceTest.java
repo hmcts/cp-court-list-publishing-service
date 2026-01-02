@@ -254,6 +254,30 @@ class CourtListPublishStatusServiceTest {
     }
 
     @Test
+    void findByCourtCentreId_shouldReturnLimitedTo10Records_whenMoreThan10EntitiesExist() {
+        // Given
+        UUID courtCentreId = UUID.randomUUID();
+        List<CourtListPublishStatusEntity> entities = java.util.stream.IntStream.range(0, 15)
+                .mapToObj(i -> new CourtListPublishStatusEntity(
+                        UUID.randomUUID(),
+                        courtCentreId,
+                        "PUBLISHED",
+                        "DAILY",
+                        LocalDateTime.now()
+                ))
+                .toList();
+
+        when(repository.findByCourtCentreId(courtCentreId)).thenReturn(entities);
+
+        // When
+        List<CourtListPublishResponse> result = service.findByCourtCentreId(courtCentreId);
+
+        // Then
+        assertThat(result).hasSize(10);
+        verify(repository).findByCourtCentreId(courtCentreId);
+    }
+
+    @Test
     void findByCourtCentreId_shouldThrowResponseStatusException_whenCourtCentreIdIsNull() {
         // When & Then
         assertThatThrownBy(() -> service.findByCourtCentreId(null))
