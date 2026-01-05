@@ -38,10 +38,10 @@ public class CourtListPublishController implements CourtListPublishApi {
         
         // Generate courtListId internally
         final UUID courtListId = UUID.randomUUID();
-        
+
         // Set initial publishStatus to COURT_LIST_REQUESTED
         final PublishStatus publishStatus = PublishStatus.COURT_LIST_REQUESTED;
-        
+
         LOG.atInfo().log("Creating court list publish status with generated court list ID: {} and initial status: {}",
                 courtListId, publishStatus);
 

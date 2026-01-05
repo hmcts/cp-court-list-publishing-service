@@ -197,7 +197,7 @@ class CourtListPublishControllerTest {
         OffsetDateTime lastUpdated = entity.getLastUpdated() != null
                 ? entity.getLastUpdated().atOffset(ZoneOffset.UTC)
                 : null;
-        
+
         // Convert String publishStatus to PublishStatus enum
         PublishStatus publishStatusEnum = entity.getPublishStatus();
 
