@@ -3,6 +3,7 @@ package uk.gov.hmcts.cp.controllers;
 import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
+import uk.gov.hmcts.cp.openapi.model.PublishStatus;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 
 import org.slf4j.Logger;
@@ -35,13 +36,19 @@ public class CourtListPublishController implements CourtListPublishApi {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
         }
         
-        LOG.atInfo().log("Creating or updating court list publish status for court list ID: {}",
-                request.getCourtListId());
+        // Generate courtListId internally
+        final UUID courtListId = UUID.randomUUID();
+        
+        // Set initial publishStatus to COURT_LIST_REQUESTED
+        final PublishStatus publishStatus = PublishStatus.COURT_LIST_REQUESTED;
+        
+        LOG.atInfo().log("Creating court list publish status with generated court list ID: {} and initial status: {}",
+                courtListId, publishStatus);
 
         final CourtListPublishResponse response = service.createOrUpdate(
-                request.getCourtListId(),
+                courtListId,
                 request.getCourtCentreId(),
-                request.getPublishStatus(),
+                publishStatus,
                 request.getCourtListType()
         );
 

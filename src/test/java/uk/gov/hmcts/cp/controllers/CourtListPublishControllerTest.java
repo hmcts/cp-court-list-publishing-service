@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -62,7 +63,13 @@ class CourtListPublishControllerTest {
     void createCourtListPublishStatus_shouldCreateEntity_whenValidRequestProvided() throws Exception {
         // Given
         CourtListPublishRequest request = createValidRequest();
-        CourtListPublishStatusEntity expectedEntity = createEntityFromRequest(request);
+        UUID expectedCourtListId = UUID.randomUUID();
+        CourtListPublishStatusEntity expectedEntity = createEntity(
+                expectedCourtListId,
+                request.getCourtCentreId(),
+                PublishStatus.COURT_LIST_REQUESTED,
+                request.getCourtListType()
+        );
 
         when(service.createOrUpdate(
                 any(UUID.class),
@@ -77,18 +84,18 @@ class CourtListPublishControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(CONTENT_TYPE_APPLICATION_VND_POST))
-                .andExpect(jsonPath("$.courtListId").value(request.getCourtListId().toString()))
+                .andExpect(jsonPath("$.courtListId").exists())
                 .andExpect(jsonPath("$.courtCentreId").value(request.getCourtCentreId().toString()))
                 .andExpect(jsonPath("$.publishStatus").exists())
-                .andExpect(jsonPath("$.publishStatus").value(request.getPublishStatus().toString()))
+                .andExpect(jsonPath("$.publishStatus").value(PublishStatus.COURT_LIST_REQUESTED.toString()))
                 .andExpect(jsonPath("$.courtListType").value(request.getCourtListType().toString()))
                 .andExpect(jsonPath("$.lastUpdated").exists());
 
         verify(service).createOrUpdate(
-                request.getCourtListId(),
-                request.getCourtCentreId(),
-                request.getPublishStatus(),
-                request.getCourtListType()
+                any(UUID.class),
+                eq(request.getCourtCentreId()),
+                eq(PublishStatus.COURT_LIST_REQUESTED),
+                eq(request.getCourtListType())
         );
     }
 
@@ -102,25 +109,9 @@ class CourtListPublishControllerTest {
     }
 
     @Test
-    void createCourtListPublishStatus_shouldReturnBadRequest_whenCourtListIdIsMissing() throws Exception {
-        // Given
-        String requestBody = "{\"courtCentreId\":\"" + UUID.randomUUID() + "\"," +
-                "\"publishStatus\":\"PUBLISHED\"," +
-                "\"courtListType\":\"DAILY\"}";
-
-        // When & Then
-        mockMvc.perform(post(PUBLISH_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     void createCourtListPublishStatus_shouldReturnBadRequest_whenCourtCentreIdIsMissing() throws Exception {
         // Given
-        String requestBody = "{\"courtListId\":\"" + UUID.randomUUID() + "\"," +
-                "\"publishStatus\":\"PUBLISHED\"," +
-                "\"courtListType\":\"DAILY\"}";
+        String requestBody = "{\"courtListType\":\"STANDARD\"}";
 
         // When & Then
         mockMvc.perform(post(PUBLISH_URL)
@@ -129,56 +120,12 @@ class CourtListPublishControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    @Test
-    void createCourtListPublishStatus_shouldReturnBadRequest_whenIsMissing() throws Exception {
-        // Given
-        String requestBody = "{\"courtListId\":\"" + UUID.randomUUID() + "\"," +
-                "\"courtCentreId\":\"" + UUID.randomUUID() + "\"," +
-                "\"courtListType\":\"DAILY\"}";
 
-        // When & Then
-        mockMvc.perform(post(PUBLISH_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void createCourtListPublishStatus_shouldReturnBadRequest_whenIsBlank() throws Exception {
-        // Given
-        String requestBody = "{\"courtListId\":\"" + UUID.randomUUID() + "\"," +
-                "\"courtCentreId\":\"" + UUID.randomUUID() + "\"," +
-                "\"publishStatus\":\"   \"," +
-                "\"courtListType\":\"DAILY\"}";
-
-        // When & Then
-        mockMvc.perform(post(PUBLISH_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isBadRequest());
-    }
 
     @Test
     void createCourtListPublishStatus_shouldReturnBadRequest_whenCourtListTypeIsMissing() throws Exception {
         // Given
-        String requestBody = "{\"courtListId\":\"" + UUID.randomUUID() + "\"," +
-                "\"courtCentreId\":\"" + UUID.randomUUID() + "\"," +
-                "\"publishStatus\":\"PUBLISHED\"}";
-
-        // When & Then
-        mockMvc.perform(post(PUBLISH_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void createCourtListPublishStatus_shouldReturnBadRequest_whenCourtListTypeIsBlank() throws Exception {
-        // Given
-        String requestBody = "{\"courtListId\":\"" + UUID.randomUUID() + "\"," +
-                "\"courtCentreId\":\"" + UUID.randomUUID() + "\"," +
-                "\"publishStatus\":\"PUBLISHED\"," +
-                "\"courtListType\":\"   \"}";
+        String requestBody = "{\"courtCentreId\":\"" + UUID.randomUUID() + "\"}";
 
         // When & Then
         mockMvc.perform(post(PUBLISH_URL)
@@ -228,25 +175,10 @@ class CourtListPublishControllerTest {
         verify(service).findByCourtCentreId(courtCentreId);
     }
 
-    @SuppressWarnings("unchecked")
     private CourtListPublishRequest createValidRequest() {
-        CourtListType courtListTypeEnum = CourtListType.STANDARD;
-        // Use reflection to create request with enum
         return new CourtListPublishRequest(
                 UUID.randomUUID(),
-                UUID.randomUUID(),
-                PublishStatus.COURT_LIST_REQUESTED,
-                courtListTypeEnum
-        );
-    }
-
-    private CourtListPublishStatusEntity createEntityFromRequest(CourtListPublishRequest request) {
-        return new CourtListPublishStatusEntity(
-                request.getCourtListId(),
-                request.getCourtCentreId(),
-                request.getPublishStatus(),
-                request.getCourtListType(),
-                Instant.now()
+                CourtListType.STANDARD
         );
     }
 
