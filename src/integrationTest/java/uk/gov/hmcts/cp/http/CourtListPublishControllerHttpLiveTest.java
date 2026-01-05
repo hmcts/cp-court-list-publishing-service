@@ -214,7 +214,7 @@ public class CourtListPublishControllerHttpLiveTest {
 
     private HttpEntity<String> createHttpEntity(String json) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.post+json"));
         return new HttpEntity<>(json, headers);
     }
 
@@ -224,7 +224,7 @@ public class CourtListPublishControllerHttpLiveTest {
 
     private ResponseEntity<String> getRequest(String url) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(java.util.List.of(MediaType.APPLICATION_JSON));
+        headers.setAccept(java.util.List.of(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json")));
         return http.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), String.class);
     }
 
