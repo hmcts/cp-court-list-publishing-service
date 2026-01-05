@@ -80,7 +80,7 @@ class CourtListPublishControllerTest {
 
         // When & Then
         mockMvc.perform(post(PUBLISH_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(CONTENT_TYPE_APPLICATION_VND_POST))
@@ -103,7 +103,7 @@ class CourtListPublishControllerTest {
     void createCourtList_shouldReturnBadRequest_whenRequestBodyIsNull() throws Exception {
         // When & Then
         mockMvc.perform(post(PUBLISH_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
                         .content(""))
                 .andExpect(status().isBadRequest());
     }
@@ -115,7 +115,7 @@ class CourtListPublishControllerTest {
 
         // When & Then
         mockMvc.perform(post(PUBLISH_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
                         .content(requestBody))
                 .andExpect(status().isBadRequest());
     }
@@ -129,7 +129,7 @@ class CourtListPublishControllerTest {
 
         // When & Then
         mockMvc.perform(post(PUBLISH_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
                         .content(requestBody))
                 .andExpect(status().isBadRequest());
     }
