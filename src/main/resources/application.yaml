@@ -18,6 +18,14 @@ spring:
     virtual:
       enabled: ${VIRTUAL_THREADS:false}
 
+# Common Platform Query API configuration
+common-platform-query-api:
+  base-url: ${CP_CLP_BASE_URL:http://localhost:8080}
+  ssl:
+    # Set to false to disable SSL certificate verification (development only)
+    # WARNING: Only use false in development environments!
+    verify: ${COMMON_PLATFORM_QUERY_API_SSL_VERIFY:false}
+
 # Temporarily commented out due to SpringDoc compatibility issues with Spring Boot 4.0.0-M3
 # springdoc:
 #   packagesToScan: uk.gov.hmcts.cp.controllers
