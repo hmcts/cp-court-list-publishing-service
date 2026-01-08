@@ -36,6 +36,8 @@ services:
       CP_CLP_AUTHZ_ENABLED: "false"
       CP_CLP_HTTP_AUDIT_ENABLED: "false"
       CP_CLP_AUDIT_ENABLED: "false"
+      # WireMock runs on the host machine, accessible via host.docker.internal
+      COMMON_PLATFORM_QUERY_API_BASE_URL: "http://host.docker.internal:8089"
     depends_on:
       db:
         condition: service_healthy
