@@ -16,6 +16,7 @@ import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.PublishStatus;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
+import uk.gov.hmcts.cp.services.PublishJobTriggerService;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -26,6 +27,8 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -45,6 +48,9 @@ class CourtListPublishControllerTest {
     @Mock
     private CourtListPublishStatusService service;
 
+    @Mock
+    private PublishJobTriggerService publishJobTriggerService;
+
     @InjectMocks
     private CourtListPublishController controller;
 
@@ -55,6 +61,8 @@ class CourtListPublishControllerTest {
 
     @BeforeEach
     void setUp() {
+        // Setup controller with mocked PublishJobTriggerService
+        controller = new CourtListPublishController(service, publishJobTriggerService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
         objectMapper = new ObjectMapper();
     }
@@ -97,6 +105,7 @@ class CourtListPublishControllerTest {
                 eq(PublishStatus.COURT_LIST_REQUESTED),
                 eq(request.getCourtListType())
         );
+        verify(publishJobTriggerService).triggerCourtListPublishingTask(eq(request));
     }
 
     @Test
@@ -173,6 +182,86 @@ class CourtListPublishControllerTest {
                 .andExpect(jsonPath("$.length()").value(0));
 
         verify(service).findByCourtCentreId(courtCentreId);
+    }
+
+    @Test
+    void createCourtListPublishStatus_shouldWork_whenPublishJobTriggerServiceIsNotAvailable() throws Exception {
+        // Given - controller without PublishJobTriggerService (null)
+        CourtListPublishController controllerWithoutTrigger = new CourtListPublishController(service, null);
+        MockMvc mockMvcWithoutTrigger = MockMvcBuilders.standaloneSetup(controllerWithoutTrigger).build();
+        
+        CourtListPublishRequest request = createValidRequest();
+        UUID expectedCourtListId = UUID.randomUUID();
+        CourtListPublishStatusEntity expectedEntity = createEntity(
+                expectedCourtListId,
+                request.getCourtCentreId(),
+                PublishStatus.COURT_LIST_REQUESTED,
+                request.getCourtListType()
+        );
+
+        when(service.createOrUpdate(
+                any(UUID.class),
+                any(UUID.class),
+                any(PublishStatus.class),
+                any(CourtListType.class)
+        )).thenReturn(toResponse(expectedEntity));
+
+        // When & Then - should still work without the trigger service
+        mockMvcWithoutTrigger.perform(post(PUBLISH_URL)
+                        .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(CONTENT_TYPE_APPLICATION_VND_POST))
+                .andExpect(jsonPath("$.courtListId").exists());
+
+        verify(service).createOrUpdate(
+                any(UUID.class),
+                eq(request.getCourtCentreId()),
+                eq(PublishStatus.COURT_LIST_REQUESTED),
+                eq(request.getCourtListType())
+        );
+        // Note: publishJobTriggerService is null in this test, so it won't be called
+        // This test verifies the controller handles null gracefully
+    }
+
+    @Test
+    void createCourtListPublishStatus_shouldContinue_whenPublishJobTriggerServiceThrowsException() throws Exception {
+        // Given
+        CourtListPublishRequest request = createValidRequest();
+        UUID expectedCourtListId = UUID.randomUUID();
+        CourtListPublishStatusEntity expectedEntity = createEntity(
+                expectedCourtListId,
+                request.getCourtCentreId(),
+                PublishStatus.COURT_LIST_REQUESTED,
+                request.getCourtListType()
+        );
+
+        when(service.createOrUpdate(
+                any(UUID.class),
+                any(UUID.class),
+                any(PublishStatus.class),
+                any(CourtListType.class)
+        )).thenReturn(toResponse(expectedEntity));
+        
+        // Simulate exception in trigger service
+        org.mockito.Mockito.doThrow(new RuntimeException("Task trigger failed"))
+                .when(publishJobTriggerService).triggerCourtListPublishingTask(any(CourtListPublishRequest.class));
+
+        // When & Then - should still return success even if trigger fails
+        mockMvc.perform(post(PUBLISH_URL)
+                        .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(CONTENT_TYPE_APPLICATION_VND_POST))
+                .andExpect(jsonPath("$.courtListId").exists());
+
+        verify(service).createOrUpdate(
+                any(UUID.class),
+                eq(request.getCourtCentreId()),
+                eq(PublishStatus.COURT_LIST_REQUESTED),
+                eq(request.getCourtListType())
+        );
+        verify(publishJobTriggerService).triggerCourtListPublishingTask(eq(request));
     }
 
     private CourtListPublishRequest createValidRequest() {

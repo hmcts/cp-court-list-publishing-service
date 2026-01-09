@@ -5,9 +5,11 @@ import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.PublishStatus;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
+import uk.gov.hmcts.cp.services.PublishJobTriggerService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,16 +19,21 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
 public class CourtListPublishController implements CourtListPublishApi {
 
     private final CourtListPublishStatusService service;
+    private final Optional<PublishJobTriggerService> publishJobTriggerService;
     private static final Logger LOG = LoggerFactory.getLogger(CourtListPublishController.class);
 
-    public CourtListPublishController(final CourtListPublishStatusService service) {
+    public CourtListPublishController(
+            final CourtListPublishStatusService service,
+            @Autowired(required = false) final PublishJobTriggerService publishJobTriggerService) {
         this.service = service;
+        this.publishJobTriggerService = Optional.ofNullable(publishJobTriggerService);
     }
 
     @Override
@@ -51,6 +58,17 @@ public class CourtListPublishController implements CourtListPublishApi {
                 publishStatus,
                 request.getCourtListType()
         );
+
+        // Trigger the court list publishing task asynchronously
+        publishJobTriggerService.ifPresent(triggerService -> {
+            try {
+                triggerService.triggerCourtListPublishingTask(request);
+                LOG.atInfo().log("Court list publishing task triggered for court list ID: {}", courtListId);
+            } catch (Exception e) {
+                LOG.atError().log("Failed to trigger court list publishing task for court list ID: {}", 
+                        courtListId, e);
+            }
+        });
 
         return ResponseEntity.ok()
                 .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.post+json"))

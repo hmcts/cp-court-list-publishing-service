@@ -37,3 +37,9 @@ flyway:
   locations: classpath:db/migration
   baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
 
+# Liquibase configuration for jobstore (task manager)
+# jobstore-liquibase manages its own changelog separately from Flyway
+# It uses its own default changelog from the dependency, so we just enable it
+liquibase:
+  enabled: true
+

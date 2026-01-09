@@ -95,6 +95,10 @@ dependencies {
     implementation 'io.swagger.core.v3:swagger-core:2.2.38'
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
 
+    // Task Manager Service
+    implementation 'com.jobscheduler:task-manager-service:1.0.1'
+    implementation 'com.jobscheduler:jobstore-liquibase:1.0.1'
+
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 
