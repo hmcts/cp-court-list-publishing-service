@@ -38,3 +38,9 @@ logging:
   level:
     root: INFO
     uk.gov.hmcts.cp: DEBUG
+
+# Override common platform query API base URL for integration tests
+# Note: The test sets COMMON_PLATFORM_QUERY_API_BASE_URL system property in a static block
+# If the server is already running, you may need to restart it or set this as an environment variable
+common-platform-query-api:
+  base-url: ${COMMON_PLATFORM_QUERY_API_BASE_URL:http://localhost:8080}
