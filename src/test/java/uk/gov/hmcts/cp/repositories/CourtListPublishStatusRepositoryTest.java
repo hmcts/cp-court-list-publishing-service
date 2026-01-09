@@ -476,4 +476,3 @@ class CourtListPublishStatusRepositoryTest {
         }
     }
 }
-

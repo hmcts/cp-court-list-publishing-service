@@ -100,7 +100,7 @@ dependencies {
 
     // Task Manager Service
     implementation 'uk.gov.hmcts.cp:task-manager-service:1.0.2'
-    //implementation 'uk.gov.hmcts.cp:jobstore-liquibase:1.0.2'
+    implementation 'uk.gov.hmcts.cp:jobstore-liquibase:1.0.2'
 
     // --- Observability / Actuator / OTEL / Prometheus ---
     implementation 'org.springframework.boot:spring-boot-starter-actuator'

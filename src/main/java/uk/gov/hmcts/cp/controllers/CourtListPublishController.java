@@ -61,7 +61,6 @@ public class CourtListPublishController implements CourtListPublishApi {
         );
 
         // Trigger the court list publishing task asynchronously
-
         try {
             publishJobTriggerService.triggerCourtListPublishingTask(request);
             LOG.atInfo().log("Court list publishing task triggered for court list ID: {}", courtListId);

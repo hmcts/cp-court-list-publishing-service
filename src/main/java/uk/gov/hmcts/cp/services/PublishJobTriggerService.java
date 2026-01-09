@@ -64,4 +64,3 @@ public class PublishJobTriggerService {
         LOG.atInfo().log("Court list publishing task triggered successfully");
     }
 }
-

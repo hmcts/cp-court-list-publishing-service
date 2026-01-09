@@ -26,4 +26,3 @@ public class CourtListPublishTask implements ExecutableTask {
                 .build();
     }
 }
-
