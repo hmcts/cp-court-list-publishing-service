@@ -19,8 +19,7 @@ public class CourtListPublishTask implements ExecutableTask {
 
     @Override
     public ExecutionInfo execute(ExecutionInfo executionInfo) {
-        logger.info("COURT_LIST_PUBLISH_TASK [job {}]", executionInfo);
-
+        logger.info("==================COURT_LIST_PUBLISH_TASK [job {}]", executionInfo);
         return executionInfo().from(executionInfo)
                 .withExecutionStatus(COMPLETED)
                 .build();
