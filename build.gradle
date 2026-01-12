@@ -98,6 +98,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 
+    // Task Manager Service
+    implementation 'uk.gov.hmcts.cp:task-manager-service:1.0.3'
+
     // --- Observability / Actuator / OTEL / Prometheus ---
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
@@ -337,7 +340,7 @@ tasks.register('integration', Test) {
     useJUnitPlatform()
 
     dependsOn tasks.composeUp
-    finalizedBy tasks.composeDown
+    //finalizedBy tasks.composeDown
 
     systemProperty 'app.baseUrl', "http://localhost:${serverPort}/courtlistpublishing-service"
 
