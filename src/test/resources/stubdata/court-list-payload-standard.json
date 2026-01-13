@@ -1,0 +1,74 @@
+{
+  "listType": "standard",
+  "courtCentreName": "Test Court Centre",
+  "courtCentreDefaultStartTime": "10:00:00",
+  "courtCentreAddress1": "123 Test Street",
+  "courtCentreAddress2": "Test City",
+  "welshCourtCentreName": "Llys Profi",
+  "welshCourtCentreAddress1": "",
+  "welshCourtCentreAddress2": "Test City",
+  "hearingDates": [
+    {
+      "hearingDate": "2026-01-05",
+      "hearingDateWelsh": "5 Ionawr 2026",
+      "courtRooms": [
+        {
+          "courtRoomName": "Courtroom 01",
+          "welshCourtRoomName": "Courtroom 01",
+          "judiciaryNames": "",
+          "welshJudiciaryNames": "",
+          "timeslots": [
+            {
+              "hearings": [
+                {
+                  "id": "test-hearing-id",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:30",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "TEST123456",
+                  "caseId": "test-case-id",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "test-defendant-id",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "John",
+                      "surname": "Doe",
+                      "welshSurname": "Doe",
+                      "dateOfBirth": "5 Jan 2006",
+                      "age": "20",
+                      "nationality": "",
+                      "address": {
+                        "address1": "40 Market Place",
+                        "address2": "Market Place",
+                        "address3": "Bristol",
+                        "postcode": "NW1 5BR"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "test-offence-id",
+                          "offenceTitle": "Attempt theft of motor vehicle",
+                          "welshOffenceTitle": "Ymgais i ddwyn cerbyd modur",
+                          "offenceWording": "Attempt theft to vehicle"
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "templateName": "BenchAndStandardCourtList"
+}
+

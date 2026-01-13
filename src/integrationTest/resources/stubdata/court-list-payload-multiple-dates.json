@@ -1,0 +1,89 @@
+{
+  "listType": "standard",
+  "courtCentreName": "Test Court Centre",
+  "courtCentreDefaultStartTime": "10:00:00",
+  "hearingDates": [
+    {
+      "hearingDate": "2026-01-05",
+      "hearingDateWelsh": "5 Ionawr 2026",
+      "courtRooms": [
+        {
+          "courtRoomName": "Courtroom 01",
+          "timeslots": [
+            {
+              "hearings": [
+                {
+                  "id": "hearing-1",
+                  "caseNumber": "CASE001",
+                  "startTime": "10:00",
+                  "prosecutorType": "CITYPF",
+                  "defendants": [
+                    {
+                      "id": "def-1",
+                      "firstName": "John",
+                      "surname": "Doe",
+                      "dateOfBirth": "5 Jan 2006",
+                      "age": "20",
+                      "address": {
+                        "address1": "123 Test St",
+                        "postcode": "SW1A 1AA"
+                      },
+                      "offences": [
+                        {
+                          "offenceTitle": "Test Offence",
+                          "offenceWording": "Test wording"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "hearingDate": "2026-01-06",
+      "hearingDateWelsh": "6 Ionawr 2026",
+      "courtRooms": [
+        {
+          "courtRoomName": "Courtroom 02",
+          "timeslots": [
+            {
+              "hearings": [
+                {
+                  "id": "hearing-2",
+                  "caseNumber": "CASE002",
+                  "startTime": "11:00",
+                  "prosecutorType": "CITYPF",
+                  "defendants": [
+                    {
+                      "id": "def-2",
+                      "firstName": "Jane",
+                      "surname": "Smith",
+                      "dateOfBirth": "15 Mar 1985",
+                      "age": "39",
+                      "address": {
+                        "address1": "456 Test Ave",
+                        "postcode": "SW1A 1BB"
+                      },
+                      "offences": [
+                        {
+                          "offenceTitle": "Another Offence",
+                          "offenceWording": "Another wording"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "templateName": "BenchAndStandardCourtList"
+}
+

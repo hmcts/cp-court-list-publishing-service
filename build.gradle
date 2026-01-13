@@ -164,6 +164,7 @@ dependencies {
         exclude group: 'junit', module: 'junit'
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
+    integrationTestImplementation 'org.wiremock:wiremock-standalone:3.9.1'
     integrationTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     integrationTestCompileOnly "org.projectlombok:lombok:${lombokVersion}"
     integrationTestAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"

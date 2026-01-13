@@ -1,0 +1,95 @@
+{
+  "document": {
+    "info": {
+      "start_time": "10:00:00"
+    },
+    "data": {
+      "job": {
+        "printdate": "{{PRINTDATE}}",
+        "sessions": {
+          "session": [
+            {
+              "lja": "Test Court Centre",
+              "court": "Test Court Centre",
+              "room": 1,
+              "sstart": "10:00",
+              "blocks": {
+                "block": [
+                  {
+                    "bstart": "10:00",
+                    "cases": {
+                      "case": [
+                        {
+                          "caseno": "CASE001",
+                          "def_name": "John Doe",
+                          "def_dob": "05/01/2006",
+                          "def_age": 20,
+                          "def_addr": {
+                            "line1": "123 Test St",
+                            "pcode": "SW1A 1AA"
+                          },
+                          "inf": "CITYPF",
+                          "offences": {
+                            "offence": [
+                              {
+                                "code": "",
+                                "title": "Test Offence",
+                                "cy_title": null,
+                                "sum": "Test wording",
+                                "cy_sum": ""
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "lja": "Test Court Centre",
+              "court": "Test Court Centre",
+              "room": 2,
+              "sstart": "11:00",
+              "blocks": {
+                "block": [
+                  {
+                    "bstart": "11:00",
+                    "cases": {
+                      "case": [
+                        {
+                          "caseno": "CASE002",
+                          "def_name": "Jane Smith",
+                          "def_dob": "15/03/1985",
+                          "def_age": 39,
+                          "def_addr": {
+                            "line1": "456 Test Ave",
+                            "pcode": "SW1A 1BB"
+                          },
+                          "inf": "CITYPF",
+                          "offences": {
+                            "offence": [
+                              {
+                                "code": "",
+                                "title": "Another Offence",
+                                "cy_title": null,
+                                "sum": "Another wording",
+                                "cy_sum": ""
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
