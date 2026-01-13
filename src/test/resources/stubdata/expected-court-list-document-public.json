@@ -1,0 +1,106 @@
+{
+  "document": {
+    "info": {
+      "start_time": "10:00:00"
+    },
+    "data": {
+      "job": {
+        "printdate": "{{PRINTDATE}}",
+        "sessions": {
+          "session": [
+            {
+              "lja": "Lavender Hill Magistrates' Court",
+              "court": "Lavender Hill Magistrates' Court",
+              "room": 1,
+              "sstart": "10:30",
+              "blocks": {
+                "block": [
+                  {
+                    "bstart": "10:30",
+                    "cases": {
+                      "case": [
+                        {
+                          "caseno": "EK121443449",
+                          "def_name": "Tommie Bogisich",
+                          "def_dob": null,
+                          "def_age": null,
+                          "def_addr": null,
+                          "inf": null,
+                          "offences": null
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "lja": "Lavender Hill Magistrates' Court",
+              "court": "Lavender Hill Magistrates' Court",
+              "room": 3,
+              "sstart": "10:00",
+              "blocks": {
+                "block": [
+                  {
+                    "bstart": "10:00",
+                    "cases": {
+                      "case": [
+                        {
+                          "caseno": "QZ141205473",
+                          "def_name": "Cindi Mertz",
+                          "def_dob": null,
+                          "def_age": null,
+                          "def_addr": null,
+                          "inf": null,
+                          "offences": null
+                        },
+                        {
+                          "caseno": "UD133718536",
+                          "def_name": "Hyman Mraz",
+                          "def_dob": null,
+                          "def_age": null,
+                          "def_addr": null,
+                          "inf": null,
+                          "offences": null
+                        },
+                        {
+                          "caseno": "WX141203286",
+                          "def_name": "Jerlene Koch",
+                          "def_dob": null,
+                          "def_age": null,
+                          "def_addr": null,
+                          "inf": null,
+                          "offences": null
+                        },
+                        {
+                          "caseno": "FX141202987",
+                          "def_name": "Gordon Jenkins",
+                          "def_dob": null,
+                          "def_age": null,
+                          "def_addr": null,
+                          "inf": null,
+                          "offences": null
+                        },
+                        {
+                          "caseno": "HG133712387",
+                          "def_name": "Abby Osinski",
+                          "def_dob": null,
+                          "def_age": null,
+                          "def_addr": null,
+                          "inf": null,
+                          "offences": null
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+

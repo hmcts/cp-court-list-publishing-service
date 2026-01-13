@@ -1,0 +1,308 @@
+{
+  "listType": "public",
+  "courtCentreName": "Lavender Hill Magistrates' Court",
+  "courtCentreDefaultStartTime": "10:00:00",
+  "courtCentreAddress1": "176A Lavender Hill London",
+  "courtCentreAddress2": "   SW11 1JU",
+  "welshCourtCentreName": "Llys Ynadon Lavender Hill",
+  "welshCourtCentreAddress1": " ",
+  "welshCourtCentreAddress2": "   SW11 1JU",
+  "hearingDates": [
+    {
+      "hearingDate": "2026-01-05",
+      "hearingDateWelsh": "5 Ionawr 2026",
+      "courtRooms": [
+        {
+          "courtRoomName": "Courtroom 01",
+          "welshCourtRoomName": "Courtroom 01",
+          "judiciaryNames": "",
+          "welshJudiciaryNames": "",
+          "timeslots": [
+            {
+              "hearings": [
+                {
+                  "id": "887ddce4-0ee1-4c5f-a5a4-af8a24820792",
+                  "sequence": 1,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:30",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "EK121443449",
+                  "caseId": "aa5c0b37-12da-428d-abd0-3c808a916948",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "1b4ffa2a-aeb4-4d03-993e-b40e2e404c7d",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Tommie",
+                      "surname": "Bogisich",
+                      "welshSurname": "Bogisich",
+                      "dateOfBirth": "5 Jan 2006",
+                      "age": "20",
+                      "nationality": "",
+                      "address": {
+                        "address1": "40 Market Place",
+                        "address2": "Market Place",
+                        "address3": "Bristol",
+                        "postcode": "NW1 5BR"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "8d6bee74-73d8-4b5c-b8c3-fecbc0b0e75e",
+                          "offenceTitle": "Attempt theft of motor vehicle",
+                          "welshOffenceTitle": "Ymgais i ddwyn cerbyd modur",
+                          "offenceWording": "Attempt theft to vehicle"
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "hearingDate": "2026-01-06",
+      "hearingDateWelsh": "6 Ionawr 2026",
+      "courtRooms": [
+        {
+          "courtRoomName": "Courtroom 03",
+          "welshCourtRoomName": "Courtroom 03",
+          "judiciaryNames": "",
+          "welshJudiciaryNames": "",
+          "timeslots": [
+            {
+              "hearings": [
+                {
+                  "id": "45e40b36-779f-4770-88d9-70aca415a3e7",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Plea",
+                  "welshHearingType": "Ple",
+                  "caseNumber": "QZ141205473",
+                  "caseId": "841ee246-2e3f-4d3e-bf49-6d73ec7b2e9a",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "d550bd1d-ca77-4c8b-9e64-56476c6f60db",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Cindi",
+                      "surname": "Mertz",
+                      "welshSurname": "Mertz",
+                      "dateOfBirth": "5 Jan 1995",
+                      "age": "31",
+                      "nationality": "",
+                      "address": {
+                        "address1": "80 Queen's Road",
+                        "address2": "Queen's Road",
+                        "address3": "Brighton",
+                        "address4": "East Sussex",
+                        "postcode": "NW1 5BR"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "b83c050c-c9ec-4476-9a49-dc56d8a19860",
+                          "offenceTitle": "Attempt theft of motor vehicle",
+                          "welshOffenceTitle": "Ymgais i ddwyn cerbyd modur",
+                          "offenceWording": "Attempt theft to vehicle"
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "d7f6855b-fc28-4ffb-a257-610eef9f1e46",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Plea",
+                  "welshHearingType": "Ple",
+                  "caseNumber": "UD133718536",
+                  "caseId": "9c400000-fe29-459f-bba8-08573b2c6c68",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "3a808c4f-60c9-4951-b179-df3ba6cd208e",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Hyman",
+                      "surname": "Mraz",
+                      "welshSurname": "Mraz",
+                      "dateOfBirth": "5 Jan 1959",
+                      "age": "67",
+                      "nationality": "",
+                      "address": {
+                        "address1": "10 Downing Street",
+                        "address2": "Downing Street",
+                        "address3": "Westminster",
+                        "address4": "Greater London",
+                        "address5": "London",
+                        "postcode": "NW1 5BR"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "f3dc3361-38b2-4174-90b2-c8ddeaa756ae",
+                          "offenceTitle": "Attempt theft of motor vehicle",
+                          "welshOffenceTitle": "Ymgais i ddwyn cerbyd modur",
+                          "offenceWording": "Attempt theft to vehicle"
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "c909d1f4-90d1-4076-8f02-1a342cdebe13",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Plea",
+                  "welshHearingType": "Ple",
+                  "caseNumber": "WX141203286",
+                  "caseId": "1f6a4432-7c79-4fcc-a478-766984fb3083",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "b1552925-8b51-438c-a59e-e11b3081bcc4",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Jerlene",
+                      "surname": "Koch",
+                      "welshSurname": "Koch",
+                      "dateOfBirth": "5 Jan 1969",
+                      "age": "57",
+                      "nationality": "",
+                      "address": {
+                        "address1": "50 Main Street",
+                        "address2": "Main Street",
+                        "address3": "Liverpool",
+                        "address4": "Merseyside",
+                        "postcode": "NW1 5BR"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "55704667-4762-4dd2-b78c-f809e9f084ff",
+                          "offenceTitle": "Attempt theft of motor vehicle",
+                          "welshOffenceTitle": "Ymgais i ddwyn cerbyd modur",
+                          "offenceWording": "Attempt theft to vehicle"
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "c40af1f4-3d83-4e14-8d5f-1da5d7d3c4d4",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Plea",
+                  "welshHearingType": "Ple",
+                  "caseNumber": "FX141202987",
+                  "caseId": "a40cc8ae-dc1b-4d62-bf92-5b0897273814",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "3727fae0-2c16-4a34-b85a-5b8460ba685c",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Gordon",
+                      "surname": "Jenkins",
+                      "welshSurname": "Jenkins",
+                      "dateOfBirth": "5 Jan 1957",
+                      "age": "69",
+                      "nationality": "",
+                      "address": {
+                        "address1": "25 Park Avenue",
+                        "address2": "Park Avenue",
+                        "address3": "Birmingham",
+                        "address4": "West Midlands",
+                        "postcode": "NW1 5BR"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "84849eca-edbe-4cd6-810b-f07d7214e896",
+                          "offenceTitle": "Attempt theft of motor vehicle",
+                          "welshOffenceTitle": "Ymgais i ddwyn cerbyd modur",
+                          "offenceWording": "Attempt theft to vehicle"
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "84ea1aa0-56ae-44d3-9e02-e41ca652dd49",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Plea",
+                  "welshHearingType": "Ple",
+                  "caseNumber": "HG133712387",
+                  "caseId": "125b6ed7-e022-45bc-a365-d3171d6450f1",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "e54519f7-e711-4bd3-83d8-ef525a5b88a9",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Abby",
+                      "surname": "Osinski",
+                      "welshSurname": "Osinski",
+                      "dateOfBirth": "5 Jan 1961",
+                      "age": "65",
+                      "nationality": "",
+                      "address": {
+                        "address1": "25 Park Avenue",
+                        "address2": "Park Avenue",
+                        "address3": "Birmingham",
+                        "address4": "West Midlands",
+                        "postcode": "NW1 5BR"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "5cedbb6f-72b9-4f12-89de-bc821b7c59de",
+                          "offenceTitle": "Attempt theft of motor vehicle",
+                          "welshOffenceTitle": "Ymgais i ddwyn cerbyd modur",
+                          "offenceWording": "Attempt theft to vehicle"
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "templateName": "PublicCourtList"
+}
+
