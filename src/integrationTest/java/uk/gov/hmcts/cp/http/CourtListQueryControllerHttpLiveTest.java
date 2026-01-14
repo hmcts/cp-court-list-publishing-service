@@ -140,6 +140,32 @@ public class CourtListQueryControllerHttpLiveTest {
         assertThat(actualResponse).isEqualTo(expectedResponse);
     }
 
+    @Test
+    void queryCourtList_returnsPublicTransformedDocument_whenListIdIsPublic() throws Exception {
+        // Given
+        String listId = "PUBLIC";
+        String courtCentreId = "f8254db1-1683-483e-afb3-b87fde5a0a26";
+        String startDate = "2026-01-05";
+        String endDate = "2026-01-12";
+
+        // Setup stub with public court list mock data
+        setupStubForPublicResponse();
+
+        // When
+        ResponseEntity<String> response = getRequest(QUERY_ENDPOINT, listId, courtCentreId, startDate, endDate);
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_JSON);
+        assertThat(response.getBody()).isNotNull();
+
+        JsonNode actualResponse = parseResponse(response);
+        JsonNode expectedResponse = buildExpectedResponse("stubdata/expected-court-list-document-public.json", actualResponse);
+        
+        // Compare the entire responses
+        assertThat(actualResponse).isEqualTo(expectedResponse);
+    }
+
     // Helper methods - Stub setup methods
 
     /**
@@ -169,6 +195,20 @@ public class CourtListQueryControllerHttpLiveTest {
                         .withHeader("Content-Type", "application/json")
                         .withBody(mockApiResponse)));
         System.out.println("✓ WireMock stub configured for multiple dates response at http://host.docker.internal:" + wireMockPort);
+    }
+
+    /**
+     * Sets up WireMock stub for public court list response
+     */
+    private void setupStubForPublicResponse() {
+        String mockApiResponse = loadStubData("stubdata/court-list-payload-public.json");
+        // Use urlMatching to catch any request to this path, regardless of query parameters
+        wireMockServer.stubFor(get(urlMatching("/listing-query-api/query/api/rest/listing/courtlistpayload.*"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(mockApiResponse)));
+        System.out.println("✓ WireMock stub configured for public response at http://host.docker.internal:" + wireMockPort);
     }
 
 
