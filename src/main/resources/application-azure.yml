@@ -6,6 +6,8 @@ azure:
     enabled: ${AZURE_STORAGE_ENABLED:false}
     container-name: schedulelistinginput
     account-name: ${AZURE_STORAGE_ACCOUNT_NAME}
+    account-key: ${AZURE_STORAGE_ACCOUNT_KEY:}
+    sas-url-expiry-minutes: ${AZURE_STORAGE_SAS_URL_EXPIRY_MINUTES:120}
   client-id: ${AZURE_CLIENT_ID}
   tenant-id: ${AZURE_TENANT_ID}
 
