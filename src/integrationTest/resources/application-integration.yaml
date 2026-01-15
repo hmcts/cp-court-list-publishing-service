@@ -44,3 +44,9 @@ logging:
 # If the server is already running, you may need to restart it or set this as an environment variable
 common-platform-query-api:
   base-url: ${COMMON_PLATFORM_QUERY_API_BASE_URL:http://localhost:8080}
+
+# CaTH endpoint configuration for integration tests
+# WireMock runs on the host machine, accessible via host.docker.internal
+cath:
+  base-url: ${CATH_BASE_URL:http://host.docker.internal:8090}
+  endpoint: ${CATH_ENDPOINT:/api/cath/court-list}

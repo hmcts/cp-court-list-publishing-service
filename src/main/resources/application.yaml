@@ -26,6 +26,11 @@ common-platform-query-api:
     # WARNING: Only use false in development environments!
     verify: ${COMMON_PLATFORM_QUERY_API_SSL_VERIFY:false}
 
+# CaTH endpoint configuration
+cath:
+  base-url: ${CATH_BASE_URL:http://localhost:8080}
+  endpoint: ${CATH_ENDPOINT:/api/cath/court-list}
+
 # Temporarily commented out due to SpringDoc compatibility issues with Spring Boot 4.0.0-M3
 # springdoc:
 #   packagesToScan: uk.gov.hmcts.cp.controllers

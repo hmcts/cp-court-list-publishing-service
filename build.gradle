@@ -266,7 +266,7 @@ tasks.named('composeBuild') { dependsOn tasks.named('bootJar') }
 
 dockerCompose {
     useComposeFiles = ['docker/docker-compose.integration.yml']
-    startedServices = ['app', 'db']
+    startedServices = ['app', 'db', 'wiremock']
 
     buildBeforeUp = true
     waitForTcpPorts = true
@@ -341,7 +341,7 @@ tasks.register('integration', Test) {
     useJUnitPlatform()
 
     dependsOn tasks.composeUp
-    //finalizedBy tasks.composeDown
+    finalizedBy tasks.composeDown
 
     systemProperty 'app.baseUrl', "http://localhost:${serverPort}/courtlistpublishing-service"
 
