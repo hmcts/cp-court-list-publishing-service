@@ -1,0 +1,371 @@
+{
+  "document": {
+    "publicationDate":"2020-09-13T23:30:00Z"
+  },
+  "venue": {
+    "venueAddress": {
+      "line": [
+        "THE LAW COURTS",
+        "",
+        "Main Road"
+      ],
+      "postCode": "PR1 2LL"
+    }
+  },
+  "courtLists": [
+    {
+      "courtHouse": {
+        "courtHouseName": "PRESTON",
+        "courtRoom": [
+          {
+            "courtRoomName": "1",
+            "session": [
+              {
+                "judiciary": [
+                  {
+                    "johKnownAs": "Judge KnownAs"
+                  },
+                  {
+                    "johKnownAs": "Judge KnownAs 2"
+                  }
+                ],
+                "sittings": [
+                  {
+                    "sittingStart": "2022-07-27T09:40:00Z",
+                    "hearing": [
+                      {
+                        "hearingType": "FHDRA1 (First Hearing and Dispute Resolution Appointment)",
+                        "case": [
+                          {
+                            "caseNumber": "12345678",
+                            "party": [
+                              {
+                                "partyRole": "PROSECUTING_AUTHORITY",
+                                "organisationDetails": {
+                                  "organisationName": "Pro_Auth"
+                                }
+                              },
+                              {
+                                "partyRole":"DEFENDANT",
+                                "individualDetails":{
+                                  "individualForenames":"Forename 1",
+                                  "individualSurname":"Surname 1"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "caseUrn": "112233445",
+                            "party": [
+                              {
+                                "partyRole": "PROSECUTING_AUTHORITY",
+                                "organisationDetails": {
+                                  "organisationName": "Pro_Auth"
+                                }
+                              },
+
+                              {
+                                "partyRole":"DEFENDANT",
+                                "individualDetails":{
+                                  "individualForenames":"Forename 2",
+                                  "individualSurname":"Surname 2"
+                                }
+                              }
+                            ]
+                          }
+                        ],
+                        "application": [
+                          {
+                            "applicationReference": "12345678",
+                            "applicationType": "Application Type 1",
+                            "party": [
+                              {
+                                "partyRole": "DEFENDANT",
+                                "subject": true,
+                                "individualDetails": {
+                                  "individualForenames": "Forename1",
+                                  "individualSurname": "Surname1"
+                                },
+                                "offence": [
+                                  {
+                                    "offenceTitle": "drink driving"
+                                  },
+                                  {
+                                    "offenceTitle": "Assault by beating"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "hearingType": "FHDRA1 (First Hearing and Dispute Resolution Appointment)",
+                        "case": [
+                          {
+                            "caseUrn": "112233445"
+                          }
+                        ],
+                        "channel": [
+                          "Remote",
+                          "Teams"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "sittingStart": "2022-01-27T08:00:00Z",
+                    "hearing": [
+                      {
+                        "hearingType": "FHDRA1 (First Hearing and Dispute Resolution Appointment)",
+                        "case": [
+                          {
+                            "caseUrn": "12345678"
+                          }
+                        ]
+                      },
+                      {
+                        "hearingType": "FHDRA1 (First Hearing and Dispute Resolution Appointment)",
+                        "case": [
+                          {
+                            "caseUrn": "112233445"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "courtRoomName": "to be allocated",
+            "session": [
+              {
+                "judiciary": [
+                  {
+                    "johKnownAs": "Judge KnownAs"
+                  },
+                  {
+                    "johKnownAs": "Judge KnownAs 2"
+                  }
+                ],
+                "sittings": [
+                  {
+                    "sittingStart": "2022-07-27T09:40:00Z",
+                    "hearing": [
+                      {
+                        "hearingType": "FHDRA1 (First Hearing and Dispute Resolution Appointment)",
+                        "case": [
+                          {
+                            "caseUrn": "12345678",
+                            "party":[
+                              {
+                                "partyRole": "PROSECUTING_AUTHORITY",
+                                "organisationDetails": {
+                                  "organisationName": "PROSECUTING_AUTHORITY"
+                                }
+                              },
+                              {
+                                "partyRole":"DEFENDANT",
+                                "individualDetails":{
+                                  "individualSurname":"Surname 3"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "caseUrn": "112233445",
+                            "party":[
+                              {
+                                "partyRole": "PROSECUTING_AUTHORITY",
+                                "organisationDetails": {
+                                  "organisationName": "PROSECUTING_AUTHORITY"
+                                }
+                              },
+                              {
+                                "partyRole":"DEFENDANT",
+                                "individualDetails":{
+                                  "individualSurname":"Surname 4"
+                                }
+                              }
+                            ]
+                          }
+                        ],
+                        "application": [
+                          {
+                            "applicationReference": "789456123",
+                            "applicationType": "Application Type 2",
+                            "party": [
+                              {
+                                "partyRole": "DEFENDANT",
+                                "subject": false,
+                                "individualDetails": {
+                                  "individualForenames": "Forename1",
+                                  "individualSurname": "Surname1"
+                                },
+                                "offence": [
+                                  {
+                                    "offenceTitle": "drink driving"
+                                  },
+                                  {
+                                    "offenceTitle": "Assault by beating"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "hearingType": "FHDRA1 (First Hearing and Dispute Resolution Appointment)",
+                        "case": [
+                          {
+                            "caseUrn": "112233445"
+                          }
+                        ],
+                        "channel": [
+                          "Remote",
+                          "Teams"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "sittingStart": "2022-01-27T08:05:00Z",
+                    "hearing": [
+                      {
+                        "hearingType": "FHDRA1 (First Hearing and Dispute Resolution Appointment)",
+                        "case": [
+                          {
+                            "caseUrn": "12345678"
+                          }
+                        ]
+                      },
+                      {
+                        "hearingType": "FHDRA1 (First Hearing and Dispute Resolution Appointment)",
+                        "case": [
+                          {
+                            "caseUrn": "112233445"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "courtHouse": {
+        "courtRoom": [
+          {
+            "courtRoomName": "CourtRoom 1",
+            "session": [
+              {
+                "sittings": [
+                  {
+                    "sittingStart": "2022-01-27T09:00:00Z",
+                    "hearing": [
+                      {
+                        "hearingType": "FHDRA1 (First Hearing and Dispute Resolution Appointment)",
+                        "case": [
+                          {
+                            "caseUrn": "12345678"
+                          }
+                        ],
+                        "channel": [
+                          "Remote",
+                          "Teams"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "courtHouse": {
+        "courtRoom": [
+          {
+            "courtRoomName": "1",
+            "session": [
+              {
+                "judiciary": [
+                  {
+                    "johKnownAs": "Judge KnownAs"
+                  }
+                ],
+                "sittings": [
+                  {
+                    "sittingStart": "2022-01-27T13:00:00Z",
+                    "hearing": [
+                      {
+                        "hearingType": "FHDRA1 (First Hearing and Dispute Resolution Appointment)",
+                        "case": [
+                          {
+                            "caseUrn": "12345678"
+                          }
+                        ],
+                        "channel": [
+                          "Remote",
+                          "Teams"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "courtHouse": {
+        "courtHouseName": "Court B",
+        "courtRoom": [
+          {
+            "courtRoomName": "1",
+            "session": [
+              {
+                "judiciary": [
+                  {
+                    "johKnownAs": "Judge KnownAs"
+                  }
+                ],
+                "sittings": [
+                  {
+                    "sittingStart": "2022-01-27T15:00:00Z",
+                    "hearing": [
+                      {
+                        "hearingType": "FHDRA1 (First Hearing and Dispute Resolution Appointment)",
+                        "case": [
+                          {
+                            "caseUrn": "12345678",
+                            "caseSequenceIndicator": "2 of 3"
+                          }
+                        ],
+                        "channel": [
+                          "Remote",
+                          "Teams"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
