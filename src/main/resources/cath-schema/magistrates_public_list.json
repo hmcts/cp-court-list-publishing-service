@@ -244,7 +244,7 @@
                           },
                           "sittings": {
                             "title": "Sittings",
-                            "type": "array", ,
+                            "type": "array",
                             "items":{
                               "type": "object",
                               "required": ["sittingStart", "hearing"],
