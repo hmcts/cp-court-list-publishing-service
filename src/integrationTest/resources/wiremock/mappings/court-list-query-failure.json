@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/listing-query-api/query/api/rest/listing/courtlistpayload.*"
+  },
+  "response": {
+    "status": 500,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"error\": \"Internal Server Error\"}"
+  },
+  "priority": 3
+}

@@ -7,11 +7,15 @@ import org.springframework.stereotype.Component;
 import uk.gov.hmcts.cp.domain.CourtListPublishStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.PublishStatus;
 import uk.gov.hmcts.cp.repositories.CourtListPublishStatusRepository;
+import uk.gov.hmcts.cp.services.CaTHService;
+import uk.gov.hmcts.cp.services.CourtListQueryService;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 import uk.gov.hmcts.cp.taskmanager.service.task.ExecutableTask;
 import uk.gov.hmcts.cp.taskmanager.service.task.Task;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
@@ -24,16 +28,33 @@ public class CourtListPublishTask implements ExecutableTask {
 
     private static final Logger logger = LoggerFactory.getLogger(CourtListPublishTask.class);
     private static final String COURT_LIST_ID_KEY = "courtListId";
+    private static final String COURT_CENTRE_ID_KEY = "courtCentreId";
+    private static final String COURT_LIST_TYPE_KEY = "courtListType";
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final String GENISIS_USER_ID = "7aee5dea-b0de-4604-b49b-86c7788cfc4b";
 
     private final CourtListPublishStatusRepository repository;
+    private final CourtListQueryService courtListQueryService;
+    private final CaTHService cathService;
 
-    public CourtListPublishTask(CourtListPublishStatusRepository repository) {
+    public CourtListPublishTask(CourtListPublishStatusRepository repository,
+                                CourtListQueryService courtListQueryService,
+                                CaTHService cathService) {
         this.repository = repository;
+        this.courtListQueryService = courtListQueryService;
+        this.cathService = cathService;
     }
 
     @Override
     public ExecutionInfo execute(ExecutionInfo executionInfo) {
         logger.info("Executing COURT_LIST_PUBLISH_TASK [job {}]", executionInfo);
+        
+        try {
+            // Query and send court list data to CaTH
+            queryAndSendCourtListToCaTH(executionInfo);
+        } catch (Exception e) {
+            logger.error("Error querying or sending court list to CaTH", e);
+        }
         
         try {
             updateStatusToExportSuccessful(executionInfo);
@@ -44,6 +65,65 @@ public class CourtListPublishTask implements ExecutableTask {
         return executionInfo().from(executionInfo)
                 .withExecutionStatus(COMPLETED)
                 .build();
+    }
+
+    private void queryAndSendCourtListToCaTH(ExecutionInfo executionInfo) {
+        JsonObject jobData = executionInfo.getJobData();
+        if (jobData == null) {
+            logger.warn("Job data is null in execution info, cannot query court list");
+            return;
+        }
+
+        // Extract parameters from jobData
+        String listId = extractListId(jobData);
+        String courtCentreId = extractCourtCentreId(jobData);
+        
+        if (listId == null || courtCentreId == null) {
+            logger.warn("Missing required parameters: listId={}, courtCentreId={}", listId, courtCentreId);
+            return;
+        }
+
+        // Get today's date for startDate and endDate
+        String todayDate = LocalDate.now().format(DATE_FORMATTER);
+        logger.info("Querying court list with listId={}, courtCentreId={}, startDate={}, endDate={}", 
+                listId, courtCentreId, todayDate, todayDate);
+
+        try {
+            // Query court list using CourtListQueryService
+            var courtListDocument = courtListQueryService.queryCourtList(
+                    listId, 
+                    courtCentreId, 
+                    todayDate, 
+                    todayDate, 
+                    GENISIS_USER_ID
+            );
+
+            // Send transformed data to CaTH endpoint
+            logger.info("Sending transformed court list document to CaTH endpoint");
+            cathService.sendCourtListToCaTH(courtListDocument);
+            logger.info("Successfully sent court list document to CaTH endpoint");
+        } catch (Exception e) {
+            logger.error("Error querying or sending court list to CaTH", e);
+            throw new RuntimeException("Failed to query and send court list to CaTH: " + e.getMessage(), e);
+        }
+    }
+
+    private String extractListId(JsonObject jobData) {
+        try {
+            return jobData.getString(COURT_LIST_TYPE_KEY, null);
+        } catch (Exception e) {
+            logger.warn("Could not extract listId (courtListType) from JsonObject", e);
+            return null;
+        }
+    }
+
+    private String extractCourtCentreId(JsonObject jobData) {
+        try {
+            return jobData.getString(COURT_CENTRE_ID_KEY, null);
+        } catch (Exception e) {
+            logger.warn("Could not extract courtCentreId from JsonObject", e);
+            return null;
+        }
     }
 
     private void updateStatusToExportSuccessful(ExecutionInfo executionInfo) {

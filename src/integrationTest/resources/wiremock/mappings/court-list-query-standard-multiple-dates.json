@@ -1,0 +1,29 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/listing-query-api/query/api/rest/listing/courtlistpayload.*",
+    "queryParameters": {
+      "listId": {
+        "equalTo": "STANDARD"
+      },
+      "courtCentreId": {
+        "equalTo": "f8254db1-1683-483e-afb3-b87fde5a0a26"
+      },
+      "startDate": {
+        "equalTo": "2026-01-05"
+      },
+      "endDate": {
+        "equalTo": "2026-01-12"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Accept": "application/vnd.listing.search.court.list.payload+json"
+    },
+    "bodyFileName": "court-list-payload-multiple-dates.json"
+  },
+  "priority": 1
+}

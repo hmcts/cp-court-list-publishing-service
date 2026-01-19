@@ -1,17 +1,20 @@
 package uk.gov.hmcts.cp.services;
 
+import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus;
-import uk.gov.hmcts.cp.taskmanager.domain.converter.JsonObjectConverter;
 import uk.gov.hmcts.cp.taskmanager.service.ExecutionService;
+
+import java.util.UUID;
 
 import static java.time.ZonedDateTime.now;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
@@ -28,14 +31,12 @@ public class PublishJobTriggerService {
     @Autowired
     ExecutionService executionService;
 
-    @Autowired
-    JsonObjectConverter objectConverter;
-
 
     /**
      * Triggers the court list publishing task asynchronously.
      */
-    public void triggerCourtListPublishingTask(final CourtListPublishRequest request) {
+    @Transactional
+    public void triggerCourtListPublishingTask(final CourtListPublishRequest request, final UUID courtListId) {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request is required");
         }
@@ -45,11 +46,19 @@ public class PublishJobTriggerService {
         if (request.getCourtListType() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ERROR_COURT_LIST_TYPE_REQUIRED);
         }
+        if (courtListId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Court list ID is required");
+        }
 
-        LOG.atInfo().log("Triggering court list publishing task for court centre ID: {} and type: {}",
-                request.getCourtCentreId(), request.getCourtListType());
+        LOG.atInfo().log("Triggering court list publishing task for court list ID: {}, court centre ID: {} and type: {}",
+                courtListId, request.getCourtCentreId(), request.getCourtListType());
 
-        JsonObject jobData = objectConverter.convertFromObject(new CourtListPublishRequest(request.getCourtCentreId(), request.getCourtListType()));
+        // Create jobData with courtListId, courtCentreId, and courtListType
+        JsonObject jobData = Json.createObjectBuilder()
+                .add("courtListId", courtListId.toString())
+                .add("courtCentreId", request.getCourtCentreId().toString())
+                .add("courtListType", request.getCourtListType().toString())
+                .build();
 
         ExecutionInfo executionInfo = executionInfo()
                 .withJobData(jobData)
@@ -59,8 +68,13 @@ public class PublishJobTriggerService {
                 .withShouldRetry(false)
                 .build();
 
-        executionService.executeWith(executionInfo);
-
-        LOG.atInfo().log("Court list publishing task triggered successfully");
+        try {
+            executionService.executeWith(executionInfo);
+            LOG.atInfo().log("Court list publishing task triggered successfully");
+        } catch (Exception e) {
+            LOG.atError().log("Failed to execute task via ExecutionService: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
+                    "Failed to trigger court list publishing task: " + e.getMessage(), e);
+        }
     }
 }

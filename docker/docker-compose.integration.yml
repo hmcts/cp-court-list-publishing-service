@@ -14,6 +14,21 @@ services:
       timeout: 3s
       retries: 30
 
+  wiremock:
+    image: wiremock/wiremock:3.9.1
+    container_name: CP_CLP_wiremock
+    ports:
+      - "8089:8080"
+    volumes:
+      - ../src/integrationTest/resources/wiremock/mappings:/home/wiremock/mappings
+      - ../src/integrationTest/resources/wiremock/__files:/home/wiremock/__files
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/__admin/health || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
   app:
     container_name: CP_CLP_app_it
     build:
@@ -36,11 +51,14 @@ services:
       CP_CLP_AUTHZ_ENABLED: "false"
       CP_CLP_HTTP_AUDIT_ENABLED: "false"
       CP_CLP_AUDIT_ENABLED: "false"
-      # WireMock runs on the host machine, accessible via host.docker.internal
-      COMMON_PLATFORM_QUERY_API_BASE_URL: "http://host.docker.internal:8089"
+      # WireMock service running in Docker container
+      COMMON_PLATFORM_QUERY_API_BASE_URL: "http://wiremock:8080"
+      CATH_BASE_URL: "http://wiremock:8080"
     depends_on:
       db:
         condition: service_healthy
+      wiremock:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:${SERVER_PORT:-8082}/courtlistpublishing-service/actuator/health || exit 1"]
       interval: 10s

@@ -1,0 +1,20 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/listing-query-api/query/api/rest/listing/courtlistpayload.*",
+    "queryParameters": {
+      "listId": {
+        "equalTo": "STANDARD"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Accept": "application/vnd.listing.search.court.list.payload+json"
+    },
+    "bodyFileName": "court-list-payload-standard.json"
+  },
+  "priority": 2
+}

@@ -2,10 +2,6 @@ package uk.gov.hmcts.cp.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
@@ -19,7 +15,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CourtListQueryControllerHttpLiveTest {
@@ -30,72 +25,14 @@ public class CourtListQueryControllerHttpLiveTest {
 
     private final RestTemplate http = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
-    private static WireMockServer wireMockServer;
-    private static int wireMockPort;
-    private static final int WIREMOCK_PORT = 8089;
-
-    static {
-        try {
-            WireMockConfiguration config = WireMockConfiguration.options()
-                    .port(WIREMOCK_PORT)
-                    .bindAddress("0.0.0.0") // Bind to all interfaces so Docker can access it
-                    .disableRequestJournal() // Disable request journal for better performance
-                    .asynchronousResponseEnabled(true) // Enable async responses for better performance
-                    .asynchronousResponseThreads(10); // Configure thread pool for async responses
-            
-            wireMockServer = new WireMockServer(config);
-            wireMockServer.start();
-            wireMockPort = wireMockServer.port();
-            
-            System.out.println("✓ WireMock server started on port " + wireMockPort + " (bound to 0.0.0.0)");
-            System.out.println("✓ WireMock URL for Docker: http://host.docker.internal:" + wireMockPort);
-            
-            // Register shutdown hook for graceful cleanup
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                if (wireMockServer != null && wireMockServer.isRunning()) {
-                    try {
-                        wireMockServer.stop();
-                        System.out.println("WireMock server stopped via shutdown hook");
-                    } catch (Exception e) {
-                        System.err.println("Warning: Failed to stop WireMock server: " + e.getMessage());
-                    }
-                }
-            }));
-            
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to initialize WireMock server", e);
-        }
-    }
-
-    @BeforeEach
-    void setUp() {
-        // Reset WireMock stubs and scenarios for each test to ensure test isolation
-        if (wireMockServer != null && wireMockServer.isRunning()) {
-            wireMockServer.resetAll();
-            wireMockServer.resetScenarios();
-            System.out.println("✓ WireMock reset for test isolation");
-        }
-    }
-
-    @AfterEach
-    void tearDown() {
-        // Clean up stubs after each test to prevent test interference
-        if (wireMockServer != null && wireMockServer.isRunning()) {
-            wireMockServer.resetAll();
-        }
-    }
 
     @Test
     void queryCourtList_returnsTransformedDocument_whenValidParametersProvided() throws Exception {
-        // Given
+        // Given - Using different parameters than the multiple-dates test to match the standard mapping
         String listId = "STANDARD";
         String courtCentreId = "f8254db1-1683-483e-afb3-b87fde5a0a26";
-        String startDate = "2026-01-05";
-        String endDate = "2026-01-12";
-
-        // Setup stub with mock data
-        setupStubForStandardResponse(listId, courtCentreId, startDate, endDate);
+        String startDate = "2026-01-06";
+        String endDate = "2026-01-13";
 
         // When
         ResponseEntity<String> response = getRequest(QUERY_ENDPOINT, listId, courtCentreId, startDate, endDate);
@@ -116,14 +53,11 @@ public class CourtListQueryControllerHttpLiveTest {
 
     @Test
     void queryCourtList_handlesMultipleHearingDates() throws Exception {
-        // Given
+        // Given - Using specific parameters that match the multiple-dates mapping
         String listId = "STANDARD";
         String courtCentreId = "f8254db1-1683-483e-afb3-b87fde5a0a26";
         String startDate = "2026-01-05";
         String endDate = "2026-01-12";
-
-        // Setup stub with multiple hearing dates mock data
-        setupStubForMultipleDatesResponse();
 
         // When
         ResponseEntity<String> response = getRequest(QUERY_ENDPOINT, listId, courtCentreId, startDate, endDate);
@@ -148,9 +82,6 @@ public class CourtListQueryControllerHttpLiveTest {
         String startDate = "2026-01-05";
         String endDate = "2026-01-12";
 
-        // Setup stub with public court list mock data
-        setupStubForPublicResponse();
-
         // When
         ResponseEntity<String> response = getRequest(QUERY_ENDPOINT, listId, courtCentreId, startDate, endDate);
 
@@ -166,63 +97,7 @@ public class CourtListQueryControllerHttpLiveTest {
         assertThat(actualResponse).isEqualTo(expectedResponse);
     }
 
-    // Helper methods - Stub setup methods
-
-    /**
-     * Sets up WireMock stub for standard response with single hearing date
-     */
-    private void setupStubForStandardResponse(String listId, String courtCentreId, 
-                                               String startDate, String endDate) {
-        String mockApiResponse = loadStubData("stubdata/court-list-payload-standard.json");
-        // Use urlMatching to catch any request to this path, regardless of query parameters
-        wireMockServer.stubFor(get(urlMatching("/listing-query-api/query/api/rest/listing/courtlistpayload.*"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(mockApiResponse)));
-        System.out.println("✓ WireMock stub configured for standard response at http://host.docker.internal:" + wireMockPort);
-    }
-
-    /**
-     * Sets up WireMock stub for response with multiple hearing dates
-     */
-    private void setupStubForMultipleDatesResponse() {
-        String mockApiResponse = loadStubData("stubdata/court-list-payload-multiple-dates.json");
-        // Use urlMatching to catch any request to this path, regardless of query parameters
-        wireMockServer.stubFor(get(urlMatching("/listing-query-api/query/api/rest/listing/courtlistpayload.*"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(mockApiResponse)));
-        System.out.println("✓ WireMock stub configured for multiple dates response at http://host.docker.internal:" + wireMockPort);
-    }
-
-    /**
-     * Sets up WireMock stub for public court list response
-     */
-    private void setupStubForPublicResponse() {
-        String mockApiResponse = loadStubData("stubdata/court-list-payload-public.json");
-        // Use urlMatching to catch any request to this path, regardless of query parameters
-        wireMockServer.stubFor(get(urlMatching("/listing-query-api/query/api/rest/listing/courtlistpayload.*"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(mockApiResponse)));
-        System.out.println("✓ WireMock stub configured for public response at http://host.docker.internal:" + wireMockPort);
-    }
-
-
-    /**
-     * Loads stub data from a resource file
-     */
-    private String loadStubData(String resourcePath) {
-        try {
-            ClassPathResource resource = new ClassPathResource(resourcePath);
-            return StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to load stub data from: " + resourcePath, e);
-        }
-    }
+    // Helper methods
 
     // Helper methods - HTTP request methods
 
@@ -252,6 +127,18 @@ public class CourtListQueryControllerHttpLiveTest {
 
     private JsonNode parseResponse(ResponseEntity<String> response) throws Exception {
         return objectMapper.readTree(response.getBody());
+    }
+
+    /**
+     * Loads stub data from a resource file
+     */
+    private String loadStubData(String resourcePath) {
+        try {
+            ClassPathResource resource = new ClassPathResource(resourcePath);
+            return StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load stub data from: " + resourcePath, e);
+        }
     }
 
     /**
