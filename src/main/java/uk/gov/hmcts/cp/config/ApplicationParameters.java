@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class ApplicationParameters {
 
     @Value("${publishing-hub.url.v2:https://spnl-apim-int-gw.cpp.nonlive/publishing-hub/v2/publication}")
-    private String publishingHubUrlV2;
+    private String publishingToCathUrl;
 
     @Value("${azure.local.mi.apimAuth.clientId:}")
     private String azureLocalMiApimAuthClientId;
