@@ -121,6 +121,13 @@ dependencies {
     implementation 'org.hibernate.validator:hibernate-validator:9.0.1.Final'
     implementation 'org.apache.commons:commons-text:1.14.0'
 
+    // RestEasy and JAX-RS for Publishing Hub integration
+    implementation 'org.jboss.resteasy:resteasy-client:6.2.8.Final'
+    implementation 'org.jboss.resteasy:resteasy-client-api:6.2.8.Final'
+    implementation 'org.jboss.resteasy:resteasy-json-binding-provider:6.2.8.Final'
+    implementation 'jakarta.ws.rs:jakarta.ws.rs-api:4.0.0'
+    implementation 'com.google.guava:guava:33.3.1-jre'
+
     // Azure Blob Storage
     implementation 'com.azure:azure-storage-blob:12.25.1'
     implementation 'com.azure:azure-identity:1.14.0'
