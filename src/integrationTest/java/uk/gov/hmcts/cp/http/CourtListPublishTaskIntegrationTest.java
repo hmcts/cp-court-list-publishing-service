@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -15,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+@Slf4j
 public class CourtListPublishTaskIntegrationTest {
 
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
@@ -88,18 +90,18 @@ public class CourtListPublishTaskIntegrationTest {
         assertThat(publishResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode publishBody = parseResponse(publishResponse);
         UUID courtListId = UUID.fromString(publishBody.get("courtListId").asText());
-        System.out.println("Created court list with ID: " + courtListId);
-        System.out.println("Initial status: " + publishBody.get("publishStatus").asText());
+        log.info("Created court list with ID: {}", courtListId);
+        log.info("Initial status: {}", publishBody.get("publishStatus").asText());
         
         // Immediately verify the record exists
         try {
             ResponseEntity<String> immediateStatus = getStatusRequest(courtListId, courtCentreId);
             if (immediateStatus.getStatusCode().is2xxSuccessful()) {
                 JsonNode immediateBody = parseResponse(immediateStatus);
-                System.out.println("Immediate status check: " + immediateBody.get("publishStatus").asText());
+                log.info("Immediate status check: {}", immediateBody.get("publishStatus").asText());
             }
         } catch (Exception e) {
-            System.err.println("ERROR: Could not retrieve status immediately after creation: " + e.getMessage());
+            log.error("ERROR: Could not retrieve status immediately after creation: {}", e.getMessage(), e);
             throw new AssertionError("Record was not created or is not accessible", e);
         }
         
@@ -180,7 +182,7 @@ public class CourtListPublishTaskIntegrationTest {
         long pollInterval = 500; // Poll every 500ms
         int pollCount = 0;
         
-        System.out.println("Waiting for task completion for courtListId: " + courtListId);
+        log.info("Waiting for task completion for courtListId: {}", courtListId);
         
         while (System.currentTimeMillis() - startTime < timeoutMs) {
             try {
@@ -188,35 +190,35 @@ public class CourtListPublishTaskIntegrationTest {
                 if (statusResponse.getStatusCode().is2xxSuccessful()) {
                     JsonNode statusBody = parseResponse(statusResponse);
                     String publishStatus = statusBody.get("publishStatus").asText();
-                    System.out.println("Poll #" + pollCount + ": Status = " + publishStatus);
+                    log.debug("Poll #{}: Status = {}", pollCount, publishStatus);
                     
                     if ("EXPORT_SUCCESSFUL".equals(publishStatus) || "EXPORT_FAILED".equals(publishStatus)) {
                         // Task has completed (either successfully or with failure)
-                        System.out.println("Task completed with status: " + publishStatus);
+                        log.info("Task completed with status: {}", publishStatus);
                         return;
                     }
                 } else {
-                    System.out.println("Poll #" + pollCount + ": Status endpoint returned " + statusResponse.getStatusCode());
+                    log.debug("Poll #{}: Status endpoint returned {}", pollCount, statusResponse.getStatusCode());
                 }
             } catch (Exception e) {
                 // Status endpoint might not be available yet, continue polling
                 if (pollCount % 10 == 0) { // Log every 5 seconds
-                    System.out.println("Poll #" + pollCount + ": Error checking status - " + e.getMessage());
+                    log.warn("Poll #{}: Error checking status - {}", pollCount, e.getMessage());
                 }
             }
             pollCount++;
             Thread.sleep(pollInterval);
         }
         // Timeout reached - task may still be running
-        System.err.println("Timeout reached after " + timeoutMs + "ms. Task may still be running.");
+        log.error("Timeout reached after {}ms. Task may still be running.", timeoutMs);
         try {
             ResponseEntity<String> finalStatus = getStatusRequest(courtListId, courtCentreId);
             if (finalStatus.getStatusCode().is2xxSuccessful()) {
                 JsonNode statusBody = parseResponse(finalStatus);
-                System.err.println("Final status: " + statusBody.get("publishStatus").asText());
+                log.error("Final status: {}", statusBody.get("publishStatus").asText());
             }
         } catch (Exception e) {
-            System.err.println("Could not get final status: " + e.getMessage());
+            log.error("Could not get final status: {}", e.getMessage(), e);
         }
     }
 }
