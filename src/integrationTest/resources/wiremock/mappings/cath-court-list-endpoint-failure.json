@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "urlPath": "/api/cath/court-list",
+    "urlPath": "/courtlistpublisher/publication",
     "headers": {
       "Content-Type": {
         "contains": "application/json"
