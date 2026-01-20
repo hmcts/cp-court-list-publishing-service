@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.cp.domain.Meta;
+import uk.gov.hmcts.cp.services.AzureIdentityService;
 import uk.gov.hmcts.cp.services.PublishingService;
 
 /**
@@ -21,6 +22,7 @@ import uk.gov.hmcts.cp.services.PublishingService;
 public class TestAuthController {
 
     private final PublishingService publishingService;
+    private final AzureIdentityService azureIdentityService;
 
     /**
      * Test endpoint for publishing data to the Publishing Hub.
@@ -42,7 +44,38 @@ public class TestAuthController {
         log.info("Test auth endpoint called with payload length: {}", 
                 request.getPayload() != null ? request.getPayload().length() : 0);
         
-        Meta metadata = Meta.builder()
+        // Fetch local token independently with try/catch
+        Integer statusCode = 200;
+        String localToken = null;
+        try {
+            log.info("Attempting to fetch local token...");
+            localToken = azureIdentityService.getTokenFromLocalClientSecretCredentials();
+            if (localToken != null) {
+                log.info("Successfully fetched local token: {}", localToken);
+            } else {
+                log.warn("Local token fetch returned null");
+            }
+        } catch (Exception e) {
+            log.error("Failed to fetch local token: "+e.getMessage(), e);
+            statusCode = 500;
+        }
+        
+        // Fetch remote token independently with try/catch
+        String remoteToken = null;
+        try {
+            log.info("Attempting to fetch remote token...");
+            remoteToken = azureIdentityService.getTokenFromRemoteClientSecretCredentials();
+            if (remoteToken != null) {
+                log.info("Successfully fetched remote token: {}", remoteToken);
+            } else {
+                log.warn("Remote token fetch returned null");
+            }
+        } catch (Exception e) {
+            log.error("Failed to fetch remote token: "+e.getMessage(), e);
+            statusCode = 500;
+        }
+        
+/*        Meta metadata = Meta.builder()
                 .provenance(request.getProvenance())
                 .type(request.getType())
                 .listType(request.getListType())
@@ -52,9 +85,9 @@ public class TestAuthController {
                 .sensitivity(request.getSensitivity())
                 .displayFrom(request.getDisplayFrom())
                 .displayTo(request.getDisplayTo())
-                .build();
+                .build();*/
         
-        Integer statusCode = publishingService.sendData(request.getPayload(), metadata);
+        //statusCode = publishingService.sendData(request.getPayload(), metadata);
         
         log.info("Test auth completed with status code: {}", statusCode);
         return ResponseEntity.ok()
