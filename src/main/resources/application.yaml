@@ -28,8 +28,8 @@ common-platform-query-api:
 
 # CaTH endpoint configuration
 cath:
-  base-url: ${CATH_BASE_URL:http://localhost:8080}
-  endpoint: ${CATH_ENDPOINT:/api/cath/court-list}
+  base-url: ${CATH_BASE_URL:https://spnl-apim-int-gw.cpp.nonlive}
+  endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
 
 # Temporarily commented out due to SpringDoc compatibility issues with Spring Boot 4.0.0-M3
 # springdoc:

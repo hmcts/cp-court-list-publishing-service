@@ -42,8 +42,8 @@ class CaTHServiceTest {
     @BeforeEach
     void setUp() {
         // Use reflection to set the base URL and endpoint for testing
-        baseUrl = "https://test-cath.example.com";
-        endpoint = "/api/cath/court-list";
+        baseUrl = "https://spnl-apim-int-gw.cpp.nonlive";
+        endpoint = "/courtlistpublisher/publication";
         try {
             java.lang.reflect.Field baseUrlField = CaTHService.class.getDeclaredField("cathBaseUrl");
             baseUrlField.setAccessible(true);

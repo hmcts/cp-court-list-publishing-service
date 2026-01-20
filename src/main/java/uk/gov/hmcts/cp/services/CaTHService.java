@@ -21,10 +21,10 @@ public class CaTHService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${cath.base-url:http://localhost:8080}")
+    @Value("${cath.base-url:https://spnl-apim-int-gw.cpp.nonlive}")
     private String cathBaseUrl;
 
-    @Value("${cath.endpoint:/api/cath/court-list}")
+    @Value("${cath.endpoint:/courtlistpublisher/publication}")
     private String cathEndpoint;
 
     public void sendCourtListToCaTH(CourtListDocument courtListDocument) {
