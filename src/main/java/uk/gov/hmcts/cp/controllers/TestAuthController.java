@@ -32,14 +32,14 @@ public class TestAuthController {
      * 
      * <p>This endpoint is publicly accessible (no authentication required).
      * 
-     * <p>This endpoint consumes and produces only application/vnd.courtlistpublishing-service.test-auth.post
+     * <p>This endpoint consumes and produces only application/vnd.courtlistpublishing-service.test-auth.post+json
      * 
      * @param request the test publish request containing payload and metadata
      * @return the HTTP status code returned from the Publishing Hub
      */
     @PostMapping(value = "/test-auth", 
-                 consumes = "application/vnd.courtlistpublishing-service.test-auth.post",
-                 produces = "application/vnd.courtlistpublishing-service.test-auth.post")
+                 consumes = "application/vnd.courtlistpublishing-service.test-auth.post+json",
+                 produces = "application/vnd.courtlistpublishing-service.test-auth.post+json")
     public ResponseEntity<Integer> testAuth(@RequestBody TestPublishRequest request) {
         log.info("Test auth endpoint called with payload length: {}", 
                 request.getPayload() != null ? request.getPayload().length() : 0);
@@ -91,7 +91,7 @@ public class TestAuthController {
         
         log.info("Test auth completed with status code: {}", statusCode);
         return ResponseEntity.ok()
-                .contentType(new MediaType("application", "vnd.courtlistpublishing-service.test-auth.post"))
+                .contentType(new MediaType("application", "vnd.courtlistpublishing-service.test-auth.post+json"))
                 .body(statusCode);
     }
 
