@@ -2,6 +2,7 @@ package uk.gov.hmcts.cp.controllers;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,7 +18,7 @@ import uk.gov.hmcts.cp.services.PublishingService;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-public class TestPublishController {
+public class TestAuthController {
 
     private final PublishingService publishingService;
 
@@ -27,12 +28,18 @@ public class TestPublishController {
      * <p>This endpoint accepts a payload and metadata, then calls the PublishingService
      * to send the data to the Publishing Hub V2 endpoint.
      * 
+     * <p>This endpoint is publicly accessible (no authentication required).
+     * 
+     * <p>This endpoint consumes and produces only application/vnd.courtlistpublishing-service.test-auth.post
+     * 
      * @param request the test publish request containing payload and metadata
      * @return the HTTP status code returned from the Publishing Hub
      */
-    @PostMapping("/test-publish")
-    public ResponseEntity<Integer> testPublish(@RequestBody TestPublishRequest request) {
-        log.info("Test publish endpoint called with payload length: {}", 
+    @PostMapping(value = "/test-auth", 
+                 consumes = "application/vnd.courtlistpublishing-service.test-auth.post",
+                 produces = "application/vnd.courtlistpublishing-service.test-auth.post")
+    public ResponseEntity<Integer> testAuth(@RequestBody TestPublishRequest request) {
+        log.info("Test auth endpoint called with payload length: {}", 
                 request.getPayload() != null ? request.getPayload().length() : 0);
         
         Meta metadata = Meta.builder()
@@ -49,8 +56,10 @@ public class TestPublishController {
         
         Integer statusCode = publishingService.sendData(request.getPayload(), metadata);
         
-        log.info("Test publish completed with status code: {}", statusCode);
-        return ResponseEntity.ok(statusCode);
+        log.info("Test auth completed with status code: {}", statusCode);
+        return ResponseEntity.ok()
+                .contentType(new MediaType("application", "vnd.courtlistpublishing-service.test-auth.post"))
+                .body(statusCode);
     }
 
     /**
