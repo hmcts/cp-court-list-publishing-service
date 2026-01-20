@@ -142,7 +142,7 @@ jobs:
             -DGITHUB_TOKEN=$GITHUB_TOKEN \
             -DAZURE_DEVOPS_ARTIFACT_USERNAME=$AZURE_DEVOPS_ARTIFACT_USERNAME \
             -DAZURE_DEVOPS_ARTIFACT_TOKEN=$AZURE_DEVOPS_ARTIFACT_TOKEN
-
+  
   Deploy:
     needs: [ Provider-Deploy, Build, Artefact-Version ]
     if: ${{ inputs.trigger_deploy }}
