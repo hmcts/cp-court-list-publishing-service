@@ -24,19 +24,24 @@ public class ListingQueryService {
     @Value("${common-platform-query-api.base-url}")
     private String commonPlatformQueryApiBaseUrl;
 
-    public CourtListPayload getCourtListPayload(String listId, String courtCentreId, String startDate, String endDate, String cjscppuid) {
-        log.info("Fetching court list payload for listId: {}, courtCentreId: {}, startDate: {}, endDate: {}",
-                listId, courtCentreId, startDate, endDate);
+    public CourtListPayload getCourtListPayload(String listId, String courtCentreId, String courtRoomId, String startDate, String endDate, String cjscppuid) {
+        log.info("Fetching court list payload for listId: {}, courtCentreId: {}, courtRoomId: {}, startDate: {}, endDate: {}",
+                listId, courtCentreId, courtRoomId, startDate, endDate);
 
-        URI uri = UriComponentsBuilder
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder
                 .fromUriString(commonPlatformQueryApiBaseUrl)
                 .path("/listing-query-api/query/api/rest/listing/courtlistpayload")
                 .queryParam("listId", listId)
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate)
-                .queryParam("endDate", endDate)
-                .build()
-                .toUri();
+                .queryParam("endDate", endDate);
+
+        // Add courtRoomId query parameter if it's not null or empty
+        if (courtRoomId != null && !courtRoomId.trim().isEmpty()) {
+            uriBuilder.queryParam("courtRoomId", courtRoomId.trim());
+        }
+
+        URI uri = uriBuilder.build().toUri();
 
         log.debug("Calling listing-query-api with URI: {}", uri);
 

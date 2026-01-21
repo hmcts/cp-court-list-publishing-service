@@ -125,9 +125,7 @@ public class CourtListPublisherBlobClientService {
         return blobClient.getBlobUrl() + "?" + sasToken;
     }
 
-    /**
-     * Generates a unique blob name
-     */
+
     private String generateBlobName(String folderPath) {
         String fileName = UUID.randomUUID() + "." + "pdf";
         if (folderPath != null && !folderPath.isEmpty()) {

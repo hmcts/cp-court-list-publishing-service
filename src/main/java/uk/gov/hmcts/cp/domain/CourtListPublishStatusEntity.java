@@ -31,6 +31,10 @@ public class CourtListPublishStatusEntity {
     @Column(name = "court_centre_id", nullable = false)
     private UUID courtCentreId;
 
+    @Setter
+    @Column(name = "court_room_id")
+    private UUID courtRoomId;
+
     @Enumerated(STRING)
     @Setter
     @Column(name = "publish_status", nullable = false)
@@ -67,11 +71,13 @@ public class CourtListPublishStatusEntity {
     public CourtListPublishStatusEntity(
             final UUID courtListId,
             final UUID courtCentreId,
+            final UUID courtRoomId,
             final PublishStatus publishStatus,
             final CourtListType courtListType,
             final Instant lastUpdated) {
         this.courtListId = Objects.requireNonNull(courtListId);
         this.courtCentreId = Objects.requireNonNull(courtCentreId);
+        this.courtRoomId = courtRoomId;
         this.publishStatus = publishStatus;
         this.courtListType = Objects.requireNonNull(courtListType);
         this.lastUpdated = Objects.requireNonNull(lastUpdated);

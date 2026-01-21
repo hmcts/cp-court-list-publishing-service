@@ -2,6 +2,7 @@
 CREATE TABLE court_list_publish_status (
     court_list_id    UUID        PRIMARY KEY,
     court_centre_id  UUID        NOT NULL,
+    court_room_id    UUID,
     publish_status   TEXT        NOT NULL,
     court_list_type  TEXT        NOT NULL,
     last_updated     TIMESTAMP WITH TIME ZONE NOT NULL,

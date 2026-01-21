@@ -86,7 +86,7 @@ class ListingQueryServiceTest {
         )).thenReturn(responseEntity);
 
         // When
-        CourtListPayload result = listingQueryService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
+        CourtListPayload result = listingQueryService.getCourtListPayload(listId, courtCentreId, null, startDate, endDate, cjscppuid);
 
         // Then - Verify the result
         assertThat(result).isNotNull();
@@ -134,7 +134,7 @@ class ListingQueryServiceTest {
         )).thenThrow(new RestClientException("Connection failed"));
 
         // When & Then
-        assertThatThrownBy(() -> listingQueryService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid))
+        assertThatThrownBy(() -> listingQueryService.getCourtListPayload(listId, courtCentreId, null, startDate, endDate, cjscppuid))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to fetch court list payload from common-platform-query-api");
     }

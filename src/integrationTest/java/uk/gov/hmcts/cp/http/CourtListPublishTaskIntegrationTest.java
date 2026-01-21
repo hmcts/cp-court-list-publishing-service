@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -39,17 +40,17 @@ public class CourtListPublishTaskIntegrationTest {
         assertThat(publishResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode publishBody = parseResponse(publishResponse);
         UUID courtListId = UUID.fromString(publishBody.get("courtListId").asText());
-        assertThat(publishBody.get("publishStatus").asText()).isEqualTo("COURT_LIST_REQUESTED");
+        assertThat(publishBody.get("publishStatus").asText()).isEqualTo("PUBLISH_REQUESTED");
         
         // Wait for async task to complete (task execution is asynchronous)
         // Task manager polls and executes tasks, so we need to wait longer (30 seconds)
         waitForTaskCompletion(courtListId, courtCentreId, 30000);
         
-        // Verify status was updated to EXPORT_SUCCESSFUL
+        // Verify status was updated to PUBLISH_SUCCESSFUL
         ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
-        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("EXPORT_SUCCESSFUL");
+        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("PUBLISH_SUCCESSFUL");
     }
 
     @Test
@@ -69,12 +70,12 @@ public class CourtListPublishTaskIntegrationTest {
         // Wait for async task to complete
         waitForTaskCompletion(courtListId, courtCentreId, 30000);
         
-        // Verify status was still updated to EXPORT_SUCCESSFUL (status update happens even if CaTH fails)
+        // Verify status was still updated to PUBLISH_SUCCESSFUL (status update happens even if CaTH fails)
         // Note: WireMock verification removed as we're using static mappings
         ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
-        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("EXPORT_SUCCESSFUL");
+        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("PUBLISH_SUCCESSFUL");
     }
 
     @Test
@@ -108,12 +109,12 @@ public class CourtListPublishTaskIntegrationTest {
         // Wait for async task to complete
         waitForTaskCompletion(courtListId, courtCentreId, 30000);
         
-        // Verify status was still updated to EXPORT_SUCCESSFUL
+        // Verify status was still updated to PUBLISH_SUCCESSFUL
         // Note: WireMock verification removed as we're using static mappings
         ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
-        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("EXPORT_SUCCESSFUL");
+        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("PUBLISH_SUCCESSFUL");
     }
 
     // Helper methods
@@ -122,6 +123,8 @@ public class CourtListPublishTaskIntegrationTest {
         return """
             {
                 "courtCentreId": "%s",
+                "startDate": "2026-01-20",
+                "endDate": "2026-01-27",
                 "courtListType": "%s"
             }
             """.formatted(courtCentreId, courtListType);
@@ -192,7 +195,7 @@ public class CourtListPublishTaskIntegrationTest {
                     String publishStatus = statusBody.get("publishStatus").asText();
                     log.debug("Poll #{}: Status = {}", pollCount, publishStatus);
                     
-                    if ("EXPORT_SUCCESSFUL".equals(publishStatus) || "EXPORT_FAILED".equals(publishStatus)) {
+                    if ("PUBLISH_SUCCESSFUL".equals(publishStatus) || "EXPORT_FAILED".equals(publishStatus)) {
                         // Task has completed (either successfully or with failure)
                         log.info("Task completed with status: {}", publishStatus);
                         return;

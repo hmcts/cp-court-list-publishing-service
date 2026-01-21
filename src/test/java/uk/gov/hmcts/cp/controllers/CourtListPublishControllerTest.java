@@ -1,7 +1,9 @@
 package uk.gov.hmcts.cp.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,6 +20,7 @@ import uk.gov.hmcts.cp.openapi.model.PublishStatus;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
@@ -56,7 +59,7 @@ class CourtListPublishControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
-        objectMapper = new ObjectMapper();
+        objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     @Test
@@ -67,7 +70,8 @@ class CourtListPublishControllerTest {
         CourtListPublishStatusEntity expectedEntity = createEntity(
                 expectedCourtListId,
                 request.getCourtCentreId(),
-                PublishStatus.COURT_LIST_REQUESTED,
+                null,
+                PublishStatus.PUBLISH_REQUESTED,
                 request.getCourtListType()
         );
 
@@ -87,14 +91,14 @@ class CourtListPublishControllerTest {
                 .andExpect(jsonPath("$.courtListId").exists())
                 .andExpect(jsonPath("$.courtCentreId").value(request.getCourtCentreId().toString()))
                 .andExpect(jsonPath("$.publishStatus").exists())
-                .andExpect(jsonPath("$.publishStatus").value(PublishStatus.COURT_LIST_REQUESTED.toString()))
+                .andExpect(jsonPath("$.publishStatus").value(PublishStatus.PUBLISH_REQUESTED.toString()))
                 .andExpect(jsonPath("$.courtListType").value(request.getCourtListType().toString()))
                 .andExpect(jsonPath("$.lastUpdated").exists());
 
         verify(service).createOrUpdate(
                 any(UUID.class),
                 eq(request.getCourtCentreId()),
-                eq(PublishStatus.COURT_LIST_REQUESTED),
+                eq(PublishStatus.PUBLISH_REQUESTED),
                 eq(request.getCourtListType())
         );
     }
@@ -138,8 +142,8 @@ class CourtListPublishControllerTest {
     void findCourtListPublishByCourtCenterId_shouldReturnList_whenEntitiesExist() throws Exception {
         // Given
         UUID courtCentreId = UUID.randomUUID();
-        CourtListPublishStatusEntity entity1 = createEntity(UUID.randomUUID(), courtCentreId, PublishStatus.COURT_LIST_REQUESTED, CourtListType.STANDARD);
-        CourtListPublishStatusEntity entity2 = createEntity(UUID.randomUUID(), courtCentreId, PublishStatus.COURT_LIST_PRODUCED, CourtListType.PUBLIC);
+        CourtListPublishStatusEntity entity1 = createEntity(UUID.randomUUID(), courtCentreId, null, PublishStatus.PUBLISH_REQUESTED, CourtListType.STANDARD);
+        CourtListPublishStatusEntity entity2 = createEntity(UUID.randomUUID(), courtCentreId, null, PublishStatus.PUBLISH_REQUESTED, CourtListType.PUBLIC);
         List<CourtListPublishResponse> responses = List.of(
                 toResponse(entity1),
                 toResponse(entity2)
@@ -178,15 +182,19 @@ class CourtListPublishControllerTest {
     private CourtListPublishRequest createValidRequest() {
         return new CourtListPublishRequest(
                 UUID.randomUUID(),
+                UUID.randomUUID(),
+                LocalDate.now(),
+                LocalDate.now(),
                 CourtListType.STANDARD
         );
     }
 
-    private CourtListPublishStatusEntity createEntity(UUID courtListId, UUID courtCentreId, 
+    private CourtListPublishStatusEntity createEntity(UUID courtListId, UUID courtCentreId, UUID courtRoomId,
                                                       PublishStatus publishStatus, CourtListType courtListType) {
         return new CourtListPublishStatusEntity(
                 courtListId,
                 courtCentreId,
+                courtRoomId,
                 publishStatus,
                 courtListType,
                 Instant.now()

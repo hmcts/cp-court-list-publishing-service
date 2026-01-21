@@ -143,6 +143,7 @@ public class CourtListPublishStatusService {
         return new CourtListPublishStatusEntity(
                 courtListId,
                 courtCentreId,
+                null, // courtRoomId - nullable
                 publishStatus,
                 courtListType,
                 Instant.now()

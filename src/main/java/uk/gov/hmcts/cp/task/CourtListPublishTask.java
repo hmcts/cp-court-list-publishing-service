@@ -1,21 +1,20 @@
 package uk.gov.hmcts.cp.task;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.cp.domain.CourtListPublishStatusEntity;
+import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 import uk.gov.hmcts.cp.openapi.model.PublishStatus;
 import uk.gov.hmcts.cp.repositories.CourtListPublishStatusRepository;
 import uk.gov.hmcts.cp.services.CaTHService;
-import uk.gov.hmcts.cp.services.CourtListQueryService;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 import uk.gov.hmcts.cp.taskmanager.service.task.ExecutableTask;
 import uk.gov.hmcts.cp.taskmanager.service.task.Task;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
@@ -27,35 +26,32 @@ import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 public class CourtListPublishTask implements ExecutableTask {
 
     private static final Logger logger = LoggerFactory.getLogger(CourtListPublishTask.class);
+    private static final String PAYLOAD_KEY = "payload";
     private static final String COURT_LIST_ID_KEY = "courtListId";
-    private static final String COURT_CENTRE_ID_KEY = "courtCentreId";
-    private static final String COURT_LIST_TYPE_KEY = "courtListType";
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final String GENISIS_USER_ID = "7aee5dea-b0de-4604-b49b-86c7788cfc4b";
-
     private final CourtListPublishStatusRepository repository;
-    private final CourtListQueryService courtListQueryService;
     private final CaTHService cathService;
 
+    private final ObjectMapper objectMapper;
+
     public CourtListPublishTask(CourtListPublishStatusRepository repository,
-                                CourtListQueryService courtListQueryService,
-                                CaTHService cathService) {
+                                CaTHService cathService,
+                                ObjectMapper objectMapper) {
         this.repository = repository;
-        this.courtListQueryService = courtListQueryService;
         this.cathService = cathService;
+        this.objectMapper = objectMapper;
     }
 
     @Override
     public ExecutionInfo execute(ExecutionInfo executionInfo) {
         logger.info("Executing COURT_LIST_PUBLISH_TASK [job {}]", executionInfo);
-        
+
         try {
             // Query and send court list data to CaTH
             queryAndSendCourtListToCaTH(executionInfo);
         } catch (Exception e) {
             logger.error("Error querying or sending court list to CaTH", e);
         }
-        
+
         try {
             updateStatusToExportSuccessful(executionInfo);
         } catch (Exception e) {
@@ -70,58 +66,38 @@ public class CourtListPublishTask implements ExecutableTask {
     private void queryAndSendCourtListToCaTH(ExecutionInfo executionInfo) {
         JsonObject jobData = executionInfo.getJobData();
         if (jobData == null) {
-            logger.warn("Job data is null in execution info, cannot query court list");
+            logger.warn("Job data is null in execution info, cannot send court list to CaTH");
             return;
         }
-
-        // Extract parameters from jobData
-        String listId = extractListId(jobData);
-        String courtCentreId = extractCourtCentreId(jobData);
-        
-        if (listId == null || courtCentreId == null) {
-            logger.warn("Missing required parameters: listId={}, courtCentreId={}", listId, courtCentreId);
-            return;
-        }
-
-        // Get today's date for startDate and endDate
-        String todayDate = LocalDate.now().format(DATE_FORMATTER);
-        logger.info("Querying court list with listId={}, courtCentreId={}, startDate={}, endDate={}", 
-                listId, courtCentreId, todayDate, todayDate);
 
         try {
-            // Query court list using CourtListQueryService
-            var courtListDocument = courtListQueryService.queryCourtList(
-                    listId, 
-                    courtCentreId, 
-                    todayDate, 
-                    todayDate, 
-                    GENISIS_USER_ID
-            );
+            JsonObject payload = jobData.getJsonObject(PAYLOAD_KEY);
+            if (payload == null) {
+                logger.warn("Payload is missing in job data, cannot send court list to CaTH");
+                return;
+            }
 
-            // Send transformed data to CaTH endpoint
+            CourtListDocument courtListDocument = extractCourtListDocument(payload);
+            if (courtListDocument == null) {
+                logger.warn("Could not extract court list document from payload");
+                return;
+            }
+
             logger.info("Sending transformed court list document to CaTH endpoint");
             cathService.sendCourtListToCaTH(courtListDocument);
             logger.info("Successfully sent court list document to CaTH endpoint");
         } catch (Exception e) {
-            logger.error("Error querying or sending court list to CaTH", e);
-            throw new RuntimeException("Failed to query and send court list to CaTH: " + e.getMessage(), e);
+            logger.error("Error sending court list to CaTH", e);
+            throw new RuntimeException("Failed to send court list to CaTH: " + e.getMessage(), e);
         }
     }
 
-    private String extractListId(JsonObject jobData) {
+    private CourtListDocument extractCourtListDocument(JsonObject payload) {
         try {
-            return jobData.getString(COURT_LIST_TYPE_KEY, null);
+            String jsonString = payload.toString();
+            return objectMapper.readValue(jsonString, CourtListDocument.class);
         } catch (Exception e) {
-            logger.warn("Could not extract listId (courtListType) from JsonObject", e);
-            return null;
-        }
-    }
-
-    private String extractCourtCentreId(JsonObject jobData) {
-        try {
-            return jobData.getString(COURT_CENTRE_ID_KEY, null);
-        } catch (Exception e) {
-            logger.warn("Could not extract courtCentreId from JsonObject", e);
+            logger.error("Error extracting court list document from payload", e);
             return null;
         }
     }
@@ -145,10 +121,10 @@ public class CourtListPublishTask implements ExecutableTask {
             return;
         }
 
-        existingCourtListPublishEntity.setPublishStatus(PublishStatus.EXPORT_SUCCESSFUL);
+        existingCourtListPublishEntity.setPublishStatus(PublishStatus.PUBLISH_SUCCESSFUL);
         existingCourtListPublishEntity.setLastUpdated(Instant.now());
         repository.save(existingCourtListPublishEntity);
-        logger.info("Successfully updated status to EXPORT_SUCCESSFUL for court list ID: {}", courtListId);
+        logger.info("Successfully updated status to PUBLISH_SUCCESSFUL for court list ID: {}", courtListId);
     }
 
     private UUID extractCourtListId(JsonObject jobData) {
