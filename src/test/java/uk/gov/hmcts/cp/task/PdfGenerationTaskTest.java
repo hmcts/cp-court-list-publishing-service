@@ -1,15 +1,10 @@
 package uk.gov.hmcts.cp.task;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
-import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.INPROGRESS;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
@@ -43,14 +38,13 @@ class PdfGenerationTaskTest {
     private PdfGenerationTask task;
 
     private UUID courtListId;
-    private UUID courtCentreId;
     private CourtListPublishStatusEntity entity;
     private JsonObject payload;
 
     @BeforeEach
     void setUp() {
         courtListId = UUID.randomUUID();
-        courtCentreId = UUID.randomUUID();
+        UUID courtCentreId = UUID.randomUUID();
         entity = new CourtListPublishStatusEntity(
                 courtListId,
                 courtCentreId,
@@ -72,7 +66,7 @@ class PdfGenerationTaskTest {
         JsonObject jobData = createJobDataWithPayload(courtListId, payload);
         
         when(executionInfo.getJobData()).thenReturn(jobData);
-        when(pdfGenerationService.generateAndUploadPdf(eq(payload), eq(courtListId), isNull()))
+        when(pdfGenerationService.generateAndUploadPdf(eq(payload), eq(courtListId)))
                 .thenReturn(expectedSasUrl);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
 
@@ -85,7 +79,7 @@ class PdfGenerationTaskTest {
         assertThat(result.getJobData()).isNotNull();
         assertThat(result.getJobData().getString("sasUrl")).isEqualTo(expectedSasUrl);
         assertThat(entity.getFileName()).isEqualTo(expectedSasUrl);
-        verify(pdfGenerationService).generateAndUploadPdf(eq(payload), eq(courtListId), isNull());
+        verify(pdfGenerationService).generateAndUploadPdf(eq(payload), eq(courtListId));
         verify(repository).getByCourtListId(courtListId);
         verify(repository).save(entity);
     }
@@ -97,7 +91,7 @@ class PdfGenerationTaskTest {
         JsonObject jobData = createJobDataWithPayload(courtListId, payload);
         
         when(executionInfo.getJobData()).thenReturn(jobData);
-        when(pdfGenerationService.generateAndUploadPdf(eq(payload), eq(courtListId), isNull()))
+        when(pdfGenerationService.generateAndUploadPdf(eq(payload), eq(courtListId)))
                 .thenReturn(expectedSasUrl);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
         when(repository.save(entity)).thenThrow(new RuntimeException("Database error"));
@@ -109,7 +103,7 @@ class PdfGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         assertThat(result.getJobData().getString("sasUrl")).isEqualTo(expectedSasUrl);
-        verify(pdfGenerationService).generateAndUploadPdf(eq(payload), eq(courtListId), isNull());
+        verify(pdfGenerationService).generateAndUploadPdf(eq(payload), eq(courtListId));
         verify(repository).getByCourtListId(courtListId);
         verify(repository).save(entity);
     }
@@ -121,7 +115,7 @@ class PdfGenerationTaskTest {
         JsonObject jobData = createJobDataWithPayload(courtListId, payload);
         
         when(executionInfo.getJobData()).thenReturn(jobData);
-        when(pdfGenerationService.generateAndUploadPdf(eq(payload), eq(courtListId), isNull()))
+        when(pdfGenerationService.generateAndUploadPdf(eq(payload), eq(courtListId)))
                 .thenReturn(expectedSasUrl);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
 
@@ -142,7 +136,7 @@ class PdfGenerationTaskTest {
         JsonObject jobData = createJobDataWithPayload(courtListId, payload);
         
         when(executionInfo.getJobData()).thenReturn(jobData);
-        when(pdfGenerationService.generateAndUploadPdf(eq(payload), eq(courtListId), isNull()))
+        when(pdfGenerationService.generateAndUploadPdf(eq(payload), eq(courtListId)))
                 .thenReturn(null);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
 

@@ -20,11 +20,13 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URI;
 import java.util.UUID;
 
 import static java.lang.String.format;
@@ -40,33 +42,30 @@ public class PdfGenerationService {
     private static final Logger LOGGER = LoggerFactory.getLogger(PdfGenerationService.class);
 
     // Constants for document generator service
-    private static final String BASE_URI_TEMPLATE = "http://localhost:%s/systemdocgenerator-command-api/command/api/rest/systemdocgenerator";
+    private static final String BASE_URI_TEMPLATE = "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator";
     private static final String TEMPLATE_NAME = "PublicCourtList";
     private static final String KEY_TEMPLATE_PAYLOAD = "templatePayload";
     private static final String KEY_CONVERSION_FORMAT = "conversionFormat";
     private static final String DOCUMENT_CONVERSION_FORMAT_PDF = "PDF";
-    private static final String USER_ID_HEADER = "userId";
     private static final String URL_ENDS_WITH = "/documents/generate";
+    private static final String GENISIS_USER_ID = "7aee5dea-b0de-4604-b49b-86c7788cfc4b";
 
     private final CourtListPublisherBlobClientService blobClientService;
     private final HttpClientFactory httpClientFactory;
 
-    @Value("${server.port:8082}")
-    private int serverPort;
+    @Value("${common-platform-query-api.base-url}")
+    private String commonPlatformQueryApiBaseUrl;
 
     /**
      * Generates a PDF file from the provided payload data, uploads it to Azure Blob Storage, and returns the SAS URL
      */
-    public String generateAndUploadPdf(JsonObject payload, UUID courtListId, UUID userId) throws IOException {
+    public String generateAndUploadPdf(JsonObject payload, UUID courtListId) throws IOException {
         LOGGER.info("Generating PDF for court list ID: {}", courtListId);
         
-        // Use system user if userId not provided
-        UUID systemUserId = userId != null ? userId : getSystemUserId();
-
         // Generate PDF using document generator service
         byte[] pdfBytes;
         try {
-            pdfBytes = generatePdfDocument(payload, TEMPLATE_NAME, systemUserId);
+            pdfBytes = generatePdfDocument(payload, TEMPLATE_NAME);
             LOGGER.info("Successfully generated PDF for court list ID: {}, size: {} bytes", 
                     courtListId, pdfBytes.length);
         } catch (Exception e) {
@@ -87,13 +86,6 @@ public class PdfGenerationService {
     }
 
     /**
-     * Gets system user ID for document generation
-     */
-    private UUID getSystemUserId() {
-        return UUID.fromString("00000000-0000-0000-0000-000000000000");
-    }
-
-    /**
      * Generates a blob name for the PDF file
      */
     private String generateBlobName(UUID courtListId, String folderPath) {
@@ -111,10 +103,10 @@ public class PdfGenerationService {
         return pdfOutputStream.size();
     }
 
-    public byte[] generatePdfDocument(final JsonObject jsonData, final String templateIdentifier, final UUID userId) throws IOException {
+    public byte[] generatePdfDocument(final JsonObject jsonData, final String templateIdentifier) throws IOException {
         try {
             RestTemplate restTemplate = httpClientFactory.getClient();
-            ResponseEntity<byte[]> response = callDocumentGeneratorPDFService(restTemplate, jsonData, templateIdentifier, userId);
+            ResponseEntity<byte[]> response = callDocumentGeneratorPDFService(restTemplate, jsonData, templateIdentifier);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 return response.getBody();
@@ -140,7 +132,7 @@ public class PdfGenerationService {
     }
 
     private ResponseEntity<byte[]> callDocumentGeneratorPDFService(final RestTemplate restTemplate, final JsonObject jsonData,
-                                                                   final String templateIdentifier, final UUID userId) {
+                                                                   final String templateIdentifier) {
 
         JsonObject templatePayload = jsonData != null ? jsonData : Json.createObjectBuilder().build();
 
@@ -151,12 +143,16 @@ public class PdfGenerationService {
                 .build();
 
         // Build the URL using the base URI template
-        String url = createBaseUri() + URL_ENDS_WITH;
+        String URL = BASE_URI_TEMPLATE + URL_ENDS_WITH;
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder
+                .fromUriString(commonPlatformQueryApiBaseUrl)
+                .path(URL);
 
+        URI uri = uriBuilder.build().toUri();
         // Set up headers
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set(USER_ID_HEADER, userId.toString());
+        headers.set("CJSCPPUID", GENISIS_USER_ID);
 
         // Convert JsonObject to JSON string
         String jsonPayload = jsonObjectToString(payload);
@@ -164,22 +160,15 @@ public class PdfGenerationService {
         // Create request entity
         HttpEntity<String> requestEntity = new HttpEntity<>(jsonPayload, headers);
 
-        LOGGER.info("Calling PDF service at {} with template identifier: {}", url, templateIdentifier);
+        LOGGER.info("Calling PDF service at {} with template identifier: {}", uri, templateIdentifier);
 
         // Make the REST call
         return restTemplate.exchange(
-            url,
+                uri,
             HttpMethod.POST,
             requestEntity,
             byte[].class
         );
-    }
-
-    /**
-     * Creates the base URI for the document generator service
-     */
-    private String createBaseUri() {
-        return format(BASE_URI_TEMPLATE, serverPort);
     }
 
     /**

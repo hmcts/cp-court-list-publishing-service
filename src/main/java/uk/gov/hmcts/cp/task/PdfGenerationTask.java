@@ -94,7 +94,7 @@ public class PdfGenerationTask implements ExecutableTask {
         JsonObject payload = jobData.getJsonObject(PAYLOAD_KEY);
 
         logger.info("Generating and uploading PDF for court list ID: {}", courtListId);
-        String sasUrl = pdfGenerationService.generateAndUploadPdf(payload, courtListId,null);
+        String sasUrl = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
         logger.info("Successfully generated and uploaded PDF for court list ID: {}. SAS URL: {}", courtListId, sasUrl);
         
         return sasUrl;
