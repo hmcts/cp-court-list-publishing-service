@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Getter
-public class ApplicationParameters {
+public class DtsAzureConfig {
 
     @Value("${azure.local.dts.apimUrl:https://spnl-apim-int-gw.cpp.nonlive/publishing-hub/v2/publication}")
     private String azureLocalDtsApimUrl;

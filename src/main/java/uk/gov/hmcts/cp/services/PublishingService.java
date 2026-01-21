@@ -3,7 +3,7 @@ package uk.gov.hmcts.cp.services;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import uk.gov.hmcts.cp.config.ApplicationParameters;
+import uk.gov.hmcts.cp.config.DtsAzureConfig;
 import uk.gov.hmcts.cp.domain.Meta;
 
 import jakarta.ws.rs.core.Response;
@@ -21,7 +21,7 @@ public class PublishingService {
 
     private static final String APIM_LOGGER = "APIM {} called and received status response: {}";
 
-    private final ApplicationParameters applicationParameters;
+    private final DtsAzureConfig applicationParameters;
     private final RestEasyClientService restEasyClientService;
     private final AzureIdentityService azureIdentityService;
 

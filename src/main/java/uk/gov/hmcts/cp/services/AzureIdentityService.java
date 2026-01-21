@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import uk.gov.hmcts.cp.config.ApplicationParameters;
+import uk.gov.hmcts.cp.config.DtsAzureConfig;
 
 /**
  * Service for obtaining Azure managed identity tokens.
@@ -25,7 +25,7 @@ public class AzureIdentityService {
     public static final String AZURE_CLIENT_ID = "AZURE_CLIENT_ID";
     public static final String AZURE_TENANT_ID = "AZURE_TENANT_ID";
     
-    private final ApplicationParameters applicationParameters;
+    private final DtsAzureConfig applicationParameters;
 
     /**
      * Gets a token from local client secret credentials.
