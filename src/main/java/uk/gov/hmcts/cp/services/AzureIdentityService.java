@@ -37,8 +37,8 @@ public class AzureIdentityService {
         
         try {
             final Configuration configuration = new Configuration();
-            configuration.put(AZURE_CLIENT_ID, applicationParameters.getAzureLocalMiApimAuthClientId());
-            configuration.put(AZURE_TENANT_ID, applicationParameters.getAzureLocalMiTenantId());
+            configuration.put(AZURE_CLIENT_ID, applicationParameters.getAzureLocalDtsClientId());
+            configuration.put(AZURE_TENANT_ID, applicationParameters.getAzureLocalDtsTenantId());
             final ManagedIdentityCredential managedIdentityCredential = new ManagedIdentityCredentialBuilder()
                     .configuration(configuration)
                     .build();
@@ -64,8 +64,8 @@ public class AzureIdentityService {
         
         try {
             final Configuration configuration = new Configuration();
-            configuration.put(AZURE_CLIENT_ID, applicationParameters.getAzureDtsFiClientId());
-            configuration.put(AZURE_TENANT_ID, applicationParameters.getAzureDtsFiTenantId());
+            configuration.put(AZURE_CLIENT_ID, applicationParameters.getAzureRemoteDtsClientId());
+            configuration.put(AZURE_TENANT_ID, applicationParameters.getAzureRemoteDtsTenantId());
             
             final ManagedIdentityCredential managedIdentityCredential = new ManagedIdentityCredentialBuilder()
                     .configuration(configuration)
@@ -84,7 +84,7 @@ public class AzureIdentityService {
 
     private TokenRequestContext getTokenRequestContext() {
         return new TokenRequestContext()
-                .addScopes(applicationParameters.getAzureLocalScope());
+                .addScopes(applicationParameters.getAzureLocalDtsScope());
     }
 
     private TokenRequestContext getRemoteTokenRequestContext() {
@@ -93,6 +93,6 @@ public class AzureIdentityService {
     }
 
     private String getRemoteScope() {
-        return "api://" + applicationParameters.getAzureDtsAppRegistrationId() + "/.default";
+        return "api://" + applicationParameters.getAzureRemoteDtsAppRegistrationId() + "/.default";
     }
 }

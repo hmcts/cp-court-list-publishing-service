@@ -34,13 +34,13 @@ public class PublishingService {
      */
     public Integer sendData(final String payload, final Meta metadata) {
         final Response response = restEasyClientService.post(
-                applicationParameters.getPublishingToCathUrl(),
+                applicationParameters.getAzureLocalDtsApimUrl(),
                 payload,
                 azureIdentityService.getTokenFromLocalClientSecretCredentials(),
                 azureIdentityService.getTokenFromRemoteClientSecretCredentials(),
                 metadata
         );
-        log.info(APIM_LOGGER, applicationParameters.getPublishingToCathUrl(), response.getStatus());
+        log.info(APIM_LOGGER, applicationParameters.getAzureLocalDtsApimUrl(), response.getStatus());
         return response.getStatus();
     }
 }

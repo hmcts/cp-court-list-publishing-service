@@ -14,24 +14,26 @@ import org.springframework.stereotype.Component;
 @Getter
 public class ApplicationParameters {
 
-    @Value("${publishing-hub.url.v2:https://spnl-apim-int-gw.cpp.nonlive/publishing-hub/v2/publication}")
-    private String publishingToCathUrl;
+    @Value("${azure.local.dts.apimUrl:https://spnl-apim-int-gw.cpp.nonlive/publishing-hub/v2/publication}")
+    private String azureLocalDtsApimUrl;
 
-    @Value("${azure.local.mi.apimAuth.clientId:}")
-    private String azureLocalMiApimAuthClientId;
+    @Value("${azure.local.dts.clientId:}")
+    private String azureLocalDtsClientId;
 
-    @Value("${azure.local.mi.tenantId:}")
-    private String azureLocalMiTenantId;
+    @Value("${azure.local.dts.tenantId:}")
+    private String azureLocalDtsTenantId;
 
-    @Value("${azure.dts.fi.clientId:}")
-    private String azureDtsFiClientId;
+    @Value("${azure.local.dts.scope:https://management.azure.com/.default}")
+    private String azureLocalDtsScope;
 
-    @Value("${azure.dts.fi.tenantId:}")
-    private String azureDtsFiTenantId;
+    @Value("${azure.remote.dts.clientId:}")
+    private String azureRemoteDtsClientId;
 
-    @Value("${azure.dts.appRegistration.id:}")
-    private String azureDtsAppRegistrationId;
+    @Value("${azure.remote.dts.tenantId:}")
+    private String azureRemoteDtsTenantId;
 
-    @Value("${azure.local.scope:https://management.azure.com/.default}")
-    private String azureLocalScope;
+    @Value("${azure.remote.dts.appRegistration.id:}")
+    private String azureRemoteDtsAppRegistrationId;
+
+
 }
