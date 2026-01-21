@@ -132,7 +132,7 @@ public class TestAuthController {
             .provenance("COMMON_PLATFORM")
             .type("LIST")
             .listType("MAGISTRATES_PUBLIC_ADULT_COURT_LIST_DAILY")
-            .courtId("0")
+            .courtId("0")// This should be court ID, a 3 digit string from refData
             .contentDate("2024-03-27T12:39:41.362Z")
             .language("ENGLISH")
             .sensitivity("PUBLIC")
