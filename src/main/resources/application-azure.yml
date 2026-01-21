@@ -10,4 +10,16 @@ azure:
     sas-url-expiry-minutes: ${AZURE_STORAGE_SAS_URL_EXPIRY_MINUTES:120}
   client-id: ${AZURE_CLIENT_ID}
   tenant-id: ${AZURE_TENANT_ID}
+  local:
+    dts:
+      apimUrl: ${AZURE_LOCAL_DTS_APIMURL:https://spnl-apim-int-gw.cpp.nonlive/publishing-hub/v2/publication}
+      clientId: ${AZURE_LOCAL_DTS_CLIENTID:}
+      tenantId: ${AZURE_LOCAL_DTS_TENANTID:}
+      scope: ${AZURE_LOCAL_DTS_SCOPE:https://management.azure.com/.default}
+  remote:
+    dts:
+      clientId: ${AZURE_REMOTE_DTS_CLIENTID:}
+      tenantId: ${AZURE_REMOTE_DTS_TENANTID:}
+      appRegistration:
+        id: ${AZURE_REMOTE_DTS_APPREGISTRATION_ID:}
 
