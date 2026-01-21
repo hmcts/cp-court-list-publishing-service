@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
+import uk.gov.hmcts.cp.openapi.model.PublishStatus;
 
 @Slf4j
 public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
@@ -191,13 +192,18 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
                 ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
                 if (statusResponse.getStatusCode().is2xxSuccessful()) {
                     JsonNode statusBody = parseResponse(statusResponse);
-                    String publishStatus = statusBody.get("publishStatus").asText();
-                    log.debug("Poll #{}: Status = {}", pollCount, publishStatus);
+                    String publishStatusStr = statusBody.get("publishStatus").asText();
+                    log.debug("Poll #{}: Status = {}", pollCount, publishStatusStr);
                     
-                    if ("PUBLISH_SUCCESSFUL".equals(publishStatus) || "PUBLISH_FAILED".equals(publishStatus)) {
-                        // Task has completed (either successfully or with failure)
-                        log.info("Task completed with status: {}", publishStatus);
-                        return;
+                    try {
+                        PublishStatus publishStatus = PublishStatus.valueOf(publishStatusStr);
+                        if (PublishStatus.PUBLISH_SUCCESSFUL.equals(publishStatus) || PublishStatus.PUBLISH_FAILED.equals(publishStatus)) {
+                            // Task has completed (either successfully or with failure)
+                            log.info("Task completed with status: {}", publishStatus);
+                            return;
+                        }
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Invalid publish status value: {}", publishStatusStr);
                     }
                 } else {
                     log.debug("Poll #{}: Status endpoint returned {}", pollCount, statusResponse.getStatusCode());
