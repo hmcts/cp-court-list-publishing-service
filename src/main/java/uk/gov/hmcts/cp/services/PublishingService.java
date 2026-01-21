@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.config.DtsAzureConfig;
-import uk.gov.hmcts.cp.domain.Meta;
+import uk.gov.hmcts.cp.domain.DtsMeta;
 
 import jakarta.ws.rs.core.Response;
 
@@ -32,7 +32,7 @@ public class PublishingService {
      * @param metadata the metadata for the publication
      * @return the HTTP status code of the response
      */
-    public Integer sendData(final String payload, final Meta metadata) {
+    public Integer sendData(final String payload, final DtsMeta metadata) {
         final Response response = restEasyClientService.post(
                 applicationParameters.getAzureLocalDtsApimUrl(),
                 payload,

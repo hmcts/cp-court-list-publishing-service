@@ -11,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @Builder
-public class Meta {
+public class DtsMeta {
     
     private final String provenance;
     private final String type;

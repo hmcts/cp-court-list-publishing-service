@@ -3,7 +3,7 @@ package uk.gov.hmcts.cp.services;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import uk.gov.hmcts.cp.domain.Meta;
+import uk.gov.hmcts.cp.domain.DtsMeta;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.client.Entity;
@@ -43,7 +43,9 @@ public class RestEasyClientService {
     public static final String X_DISPLAY_FROM = "x-display-from";
     public static final String X_DISPLAY_TO = "x-display-to";
 
-    @Value("${publishing-hub.rest-client.connection-pool-size:10}")
+
+    //Make it consistant. Why restEasy here and restTemplate at other places? Use the same client everywhere LPT-2033
+    @Value("${publishing.rest-client.connection-pool-size:10}")
     private String restEasyClientConnectionPoolSize;
 
     private ResteasyClient client;
@@ -69,7 +71,7 @@ public class RestEasyClientService {
     public Response post(final String url, final String payload, 
                         final String localServiceAccessToken, 
                         final String remoteServiceAccessToken, 
-                        final Meta meta) {
+                        final DtsMeta meta) {
         final Invocation.Builder request = this.client.target(url).request();
         final MultivaluedHashMap<String, Object> headers = new MultivaluedHashMap<>();
         getHeaders(localServiceAccessToken, remoteServiceAccessToken, meta)
@@ -80,7 +82,7 @@ public class RestEasyClientService {
 
     private Map<String, String> getHeaders(final String localServiceAccessToken, 
                                           final String remoteServiceAccessToken, 
-                                          final Meta meta) {
+                                          final DtsMeta meta) {
         return ImmutableMap.<String, String>builder()
                 .put(AUTHORIZATION, String.format(BEARER_TOKEN, localServiceAccessToken))
                 .put("Accept", MediaType.APPLICATION_JSON)
