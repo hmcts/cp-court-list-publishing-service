@@ -88,25 +88,6 @@ public class TestAuthController {
                 .body(statusCode);
     }
 
-    /**
-     * Request DTO for test publish endpoint.
-     */
-    @lombok.Data
-    @lombok.NoArgsConstructor
-    @lombok.AllArgsConstructor
-    public static class TestPublishRequest {
-        private String payload;
-        private String provenance;
-        private String type;
-        private String listType;
-        private String courtId;
-        private String contentDate;
-        private String language;
-        private String sensitivity;
-        private String displayFrom;
-        private String displayTo;
-    }
-
     private static final String DUMMY_LIST = """
             {
               "document": {
