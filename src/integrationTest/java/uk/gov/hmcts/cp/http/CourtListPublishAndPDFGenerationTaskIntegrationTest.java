@@ -7,7 +7,6 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,7 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
-public class CourtListPublishTaskIntegrationTest {
+public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
 
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private static final String PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publish";
@@ -195,7 +194,7 @@ public class CourtListPublishTaskIntegrationTest {
                     String publishStatus = statusBody.get("publishStatus").asText();
                     log.debug("Poll #{}: Status = {}", pollCount, publishStatus);
                     
-                    if ("PUBLISH_SUCCESSFUL".equals(publishStatus) || "EXPORT_FAILED".equals(publishStatus)) {
+                    if ("PUBLISH_SUCCESSFUL".equals(publishStatus) || "PUBLISH_FAILED".equals(publishStatus)) {
                         // Task has completed (either successfully or with failure)
                         log.info("Task completed with status: {}", publishStatus);
                         return;

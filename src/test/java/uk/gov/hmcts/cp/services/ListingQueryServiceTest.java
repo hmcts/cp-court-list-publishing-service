@@ -39,12 +39,11 @@ class ListingQueryServiceTest {
     private String startDate;
     private String endDate;
     private String cjscppuid;
-    private String baseUrl;
 
     @BeforeEach
     void setUp() {
         // Use reflection to set the base URL for testing
-        baseUrl = "https://test.example.com";
+        String baseUrl = "https://test.example.com";
         try {
             java.lang.reflect.Field field = ListingQueryService.class.getDeclaredField("commonPlatformQueryApiBaseUrl");
             field.setAccessible(true);
@@ -86,7 +85,7 @@ class ListingQueryServiceTest {
         )).thenReturn(responseEntity);
 
         // When
-        CourtListPayload result = listingQueryService.getCourtListPayload(listId, courtCentreId, null, startDate, endDate, cjscppuid);
+        CourtListPayload result = listingQueryService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
 
         // Then - Verify the result
         assertThat(result).isNotNull();
@@ -134,7 +133,7 @@ class ListingQueryServiceTest {
         )).thenThrow(new RestClientException("Connection failed"));
 
         // When & Then
-        assertThatThrownBy(() -> listingQueryService.getCourtListPayload(listId, courtCentreId, null, startDate, endDate, cjscppuid))
+        assertThatThrownBy(() -> listingQueryService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to fetch court list payload from common-platform-query-api");
     }

@@ -3,7 +3,6 @@ package uk.gov.hmcts.cp.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,7 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import uk.gov.hmcts.cp.domain.CourtListPublishStatusEntity;
+import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
@@ -67,11 +66,9 @@ class CourtListPublishControllerTest {
         // Given
         CourtListPublishRequest request = createValidRequest();
         UUID expectedCourtListId = UUID.randomUUID();
-        CourtListPublishStatusEntity expectedEntity = createEntity(
+        CourtListStatusEntity expectedEntity = createEntity(
                 expectedCourtListId,
                 request.getCourtCentreId(),
-                null,
-                PublishStatus.PUBLISH_REQUESTED,
                 request.getCourtListType()
         );
 
@@ -142,8 +139,8 @@ class CourtListPublishControllerTest {
     void findCourtListPublishByCourtCenterId_shouldReturnList_whenEntitiesExist() throws Exception {
         // Given
         UUID courtCentreId = UUID.randomUUID();
-        CourtListPublishStatusEntity entity1 = createEntity(UUID.randomUUID(), courtCentreId, null, PublishStatus.PUBLISH_REQUESTED, CourtListType.STANDARD);
-        CourtListPublishStatusEntity entity2 = createEntity(UUID.randomUUID(), courtCentreId, null, PublishStatus.PUBLISH_REQUESTED, CourtListType.PUBLIC);
+        CourtListStatusEntity entity1 = createEntity(UUID.randomUUID(), courtCentreId, CourtListType.STANDARD);
+        CourtListStatusEntity entity2 = createEntity(UUID.randomUUID(), courtCentreId, CourtListType.PUBLIC);
         List<CourtListPublishResponse> responses = List.of(
                 toResponse(entity1),
                 toResponse(entity2)
@@ -189,19 +186,18 @@ class CourtListPublishControllerTest {
         );
     }
 
-    private CourtListPublishStatusEntity createEntity(UUID courtListId, UUID courtCentreId, UUID courtRoomId,
-                                                      PublishStatus publishStatus, CourtListType courtListType) {
-        return new CourtListPublishStatusEntity(
+    private CourtListStatusEntity createEntity(UUID courtListId, UUID courtCentreId,
+                                               CourtListType courtListType) {
+        return new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
-                courtRoomId,
-                publishStatus,
+                PublishStatus.PUBLISH_REQUESTED,
                 courtListType,
                 Instant.now()
         );
     }
 
-    private CourtListPublishResponse toResponse(CourtListPublishStatusEntity entity) {
+    private CourtListPublishResponse toResponse(CourtListStatusEntity entity) {
         OffsetDateTime lastUpdated = entity.getLastUpdated() != null
                 ? entity.getLastUpdated().atOffset(ZoneOffset.UTC)
                 : null;

@@ -21,7 +21,7 @@ import lombok.Setter;
 @Getter
 @Entity
 @Table(name = "court_list_publish_status")
-public class CourtListPublishStatusEntity {
+public class CourtListStatusEntity {
 
     @Id
     @Column(name = "court_list_id", nullable = false)
@@ -30,10 +30,6 @@ public class CourtListPublishStatusEntity {
     @Setter
     @Column(name = "court_centre_id", nullable = false)
     private UUID courtCentreId;
-
-    @Setter
-    @Column(name = "court_room_id")
-    private UUID courtRoomId;
 
     @Enumerated(STRING)
     @Setter
@@ -65,19 +61,17 @@ public class CourtListPublishStatusEntity {
     @Column(name = "publish_date")
     private LocalDate publishDate;
 
-    protected CourtListPublishStatusEntity() {
+    protected CourtListStatusEntity() {
     }
 
-    public CourtListPublishStatusEntity(
+    public CourtListStatusEntity(
             final UUID courtListId,
             final UUID courtCentreId,
-            final UUID courtRoomId,
             final PublishStatus publishStatus,
             final CourtListType courtListType,
             final Instant lastUpdated) {
         this.courtListId = Objects.requireNonNull(courtListId);
         this.courtCentreId = Objects.requireNonNull(courtCentreId);
-        this.courtRoomId = courtRoomId;
         this.publishStatus = publishStatus;
         this.courtListType = Objects.requireNonNull(courtListType);
         this.lastUpdated = Objects.requireNonNull(lastUpdated);

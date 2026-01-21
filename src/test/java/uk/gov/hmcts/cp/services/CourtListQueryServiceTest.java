@@ -46,13 +46,13 @@ class CourtListQueryServiceTest {
     @Test
     void queryCourtList_shouldUseStandardTransformation_whenListIdIsNotPublic() {
         // Given
-        when(listingQueryService.getCourtListPayload("STANDARD", "courtId", null, "2026-01-05", "2026-01-12", "cjscppuid"))
+        when(listingQueryService.getCourtListPayload("STANDARD", "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
                 .thenReturn(payload);
         when(transformationService.transform(payload))
                 .thenReturn(standardDocument);
 
         // When
-        CourtListDocument result = courtListQueryService.queryCourtList("STANDARD", "courtId", null,"2026-01-05", "2026-01-12", "cjscppuid");
+        CourtListDocument result = courtListQueryService.queryCourtList("STANDARD", "courtId", "2026-01-05", "2026-01-12", "cjscppuid");
 
         // Then
         assertThat(result).isEqualTo(standardDocument);
@@ -63,13 +63,13 @@ class CourtListQueryServiceTest {
     @Test
     void queryCourtList_shouldUsePublicTransformation_whenListIdIsPublic() {
         // Given
-        when(listingQueryService.getCourtListPayload("PUBLIC", "courtId", null,"2026-01-05", "2026-01-12", "cjscppuid"))
+        when(listingQueryService.getCourtListPayload("PUBLIC", "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
                 .thenReturn(payload);
         when(publicCourtListTransformationService.transform(payload))
                 .thenReturn(publicDocument);
 
         // When
-        CourtListDocument result = courtListQueryService.queryCourtList("PUBLIC", "courtId", null,"2026-01-05", "2026-01-12", "cjscppuid");
+        CourtListDocument result = courtListQueryService.queryCourtList("PUBLIC", "courtId", "2026-01-05", "2026-01-12", "cjscppuid");
 
         // Then
         assertThat(result).isEqualTo(publicDocument);

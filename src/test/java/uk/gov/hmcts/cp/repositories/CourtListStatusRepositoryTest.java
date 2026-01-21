@@ -2,7 +2,7 @@ package uk.gov.hmcts.cp.repositories;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import uk.gov.hmcts.cp.domain.CourtListPublishStatusEntity;
+import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.PublishStatus;
 
@@ -22,13 +22,13 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(properties = {
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
-class CourtListPublishStatusRepositoryTest {
+class CourtListStatusRepositoryTest {
 
     @Autowired
     private TestEntityManager entityManager;
 
     @Autowired
-    private CourtListPublishStatusRepository repository;
+    private CourtListStatusRepository repository;
 
     @AfterEach
     void clearData() {
@@ -45,17 +45,16 @@ class CourtListPublishStatusRepositoryTest {
         CourtListType courtListType = CourtListType.PUBLIC;
         Instant lastUpdated = Instant.now();
 
-        CourtListPublishStatusEntity entity = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity = new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
-                null, // courtRoomId
                 publishStatus,
                 courtListType,
                 lastUpdated
         );
 
         // When
-        CourtListPublishStatusEntity savedEntity = repository.save(entity);
+        CourtListStatusEntity savedEntity = repository.save(entity);
         entityManager.flush();
         entityManager.clear();
 
@@ -81,10 +80,9 @@ class CourtListPublishStatusRepositoryTest {
         String errorMessage = null;
         LocalDate publishDate = LocalDate.now();
 
-        CourtListPublishStatusEntity entity = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity = new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
-                null, // courtRoomId
                 publishStatus,
                 courtListType,
                 lastUpdated
@@ -95,12 +93,12 @@ class CourtListPublishStatusRepositoryTest {
         entity.setPublishDate(publishDate);
 
         // When
-        CourtListPublishStatusEntity savedEntity = repository.save(entity);
+        CourtListStatusEntity savedEntity = repository.save(entity);
         entityManager.flush();
         entityManager.clear();
 
         // Then
-        CourtListPublishStatusEntity retrievedEntity = repository.findById(courtListId).orElseThrow();
+        CourtListStatusEntity retrievedEntity = repository.findById(courtListId).orElseThrow();
         assertThat(retrievedEntity.getCourtListFileId()).isEqualTo(courtListFileId);
         assertThat(retrievedEntity.getFileName()).isEqualTo(fileName);
         assertThat(retrievedEntity.getErrorMessage()).isNull();
@@ -116,10 +114,9 @@ class CourtListPublishStatusRepositoryTest {
         CourtListType courtListType = CourtListType.PUBLIC;
         Instant lastUpdated = Instant.now();
 
-        CourtListPublishStatusEntity entity = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity = new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
-                null, // courtRoomId
                 publishStatus,
                 courtListType,
                 lastUpdated
@@ -128,7 +125,7 @@ class CourtListPublishStatusRepositoryTest {
         entityManager.clear();
 
         // When
-        Optional<CourtListPublishStatusEntity> foundEntity = repository.findById(courtListId);
+        Optional<CourtListStatusEntity> foundEntity = repository.findById(courtListId);
 
         // Then
         assertThat(foundEntity).isPresent();
@@ -144,7 +141,7 @@ class CourtListPublishStatusRepositoryTest {
         UUID nonExistentCourtListId = UUID.randomUUID();
 
         // When
-        Optional<CourtListPublishStatusEntity> foundEntity = repository.findById(nonExistentCourtListId);
+        Optional<CourtListStatusEntity> foundEntity = repository.findById(nonExistentCourtListId);
 
         // Then
         assertThat(foundEntity).isEmpty();
@@ -159,10 +156,9 @@ class CourtListPublishStatusRepositoryTest {
         CourtListType courtListType = CourtListType.STANDARD;
         Instant lastUpdated = Instant.now();
 
-        CourtListPublishStatusEntity entity = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity = new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
-                null, // courtRoomId
                 publishStatus,
                 courtListType,
                 lastUpdated
@@ -171,7 +167,7 @@ class CourtListPublishStatusRepositoryTest {
         entityManager.clear();
 
         // When
-        CourtListPublishStatusEntity foundEntity = repository.getByCourtListId(courtListId);
+        CourtListStatusEntity foundEntity = repository.getByCourtListId(courtListId);
 
         // Then
         assertThat(foundEntity).isNotNull();
@@ -190,26 +186,23 @@ class CourtListPublishStatusRepositoryTest {
         UUID courtListId2 = UUID.randomUUID();
         UUID courtListId3 = UUID.randomUUID();
 
-        CourtListPublishStatusEntity entity1 = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity1 = new CourtListStatusEntity(
                 courtListId1,
                 courtCentreId,
-                null, // courtRoomId
                 PublishStatus.PUBLISH_REQUESTED,
                 CourtListType.STANDARD,
                 Instant.now()
         );
-        CourtListPublishStatusEntity entity2 = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity2 = new CourtListStatusEntity(
                 courtListId2,
                 courtCentreId,
-                null, // courtRoomId
                 PublishStatus.PUBLISH_REQUESTED,
                 CourtListType.STANDARD,
                 Instant.now()
         );
-        CourtListPublishStatusEntity entity3 = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity3 = new CourtListStatusEntity(
                 courtListId3,
                 UUID.randomUUID(), // Different court centre
-                null, // courtRoomId
                 PublishStatus.PUBLISH_REQUESTED,
                 CourtListType.STANDARD,
                 Instant.now()
@@ -222,13 +215,13 @@ class CourtListPublishStatusRepositoryTest {
         entityManager.clear();
 
         // When
-        List<CourtListPublishStatusEntity> foundEntities = repository.findByCourtCentreId(courtCentreId);
+        List<CourtListStatusEntity> foundEntities = repository.findByCourtCentreId(courtCentreId);
 
         // Then
         assertThat(foundEntities).hasSize(2);
-        assertThat(foundEntities).extracting(CourtListPublishStatusEntity::getCourtListId)
+        assertThat(foundEntities).extracting(CourtListStatusEntity::getCourtListId)
                 .containsExactlyInAnyOrder(courtListId1, courtListId2);
-        assertThat(foundEntities).extracting(CourtListPublishStatusEntity::getCourtCentreId)
+        assertThat(foundEntities).extracting(CourtListStatusEntity::getCourtCentreId)
                 .containsOnly(courtCentreId);
     }
 
@@ -240,18 +233,16 @@ class CourtListPublishStatusRepositoryTest {
         UUID courtListId1 = UUID.randomUUID();
         UUID courtListId2 = UUID.randomUUID();
 
-        CourtListPublishStatusEntity entity1 = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity1 = new CourtListStatusEntity(
                 courtListId1,
                 UUID.randomUUID(),
-                null, // courtRoomId
                 publishStatus,
                 CourtListType.STANDARD,
                 Instant.now()
         );
-        CourtListPublishStatusEntity entity2 = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity2 = new CourtListStatusEntity(
                 courtListId2,
                 UUID.randomUUID(),
-                null, // courtRoomId
                 publishStatus,
                 CourtListType.FINAL,
                 Instant.now()
@@ -263,13 +254,13 @@ class CourtListPublishStatusRepositoryTest {
         entityManager.clear();
 
         // When
-        List<CourtListPublishStatusEntity> foundEntities = repository.findByPublishStatus(publishStatus);
+        List<CourtListStatusEntity> foundEntities = repository.findByPublishStatus(publishStatus);
 
         // Then
         assertThat(foundEntities).hasSize(2);
-        assertThat(foundEntities).extracting(CourtListPublishStatusEntity::getCourtListId)
+        assertThat(foundEntities).extracting(CourtListStatusEntity::getCourtListId)
                 .containsExactlyInAnyOrder(courtListId1, courtListId2);
-        assertThat(foundEntities).extracting(CourtListPublishStatusEntity::getPublishStatus)
+        assertThat(foundEntities).extracting(CourtListStatusEntity::getPublishStatus)
                 .containsOnly(publishStatus);
     }
 
@@ -282,18 +273,16 @@ class CourtListPublishStatusRepositoryTest {
         UUID courtListId1 = UUID.randomUUID();
         UUID courtListId2 = UUID.randomUUID();
 
-        CourtListPublishStatusEntity entity1 = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity1 = new CourtListStatusEntity(
                 courtListId1,
                 courtCentreId,
-                null, // courtRoomId
                 publishStatus,
                 CourtListType.FINAL,
                 Instant.now()
         );
-        CourtListPublishStatusEntity entity2 = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity2 = new CourtListStatusEntity(
                 courtListId2,
                 courtCentreId,
-                null, // courtRoomId
                 publishStatus,
                 CourtListType.FIRM,
                 Instant.now()
@@ -305,16 +294,16 @@ class CourtListPublishStatusRepositoryTest {
         entityManager.clear();
 
         // When
-        List<CourtListPublishStatusEntity> foundEntities = repository.findByCourtCentreIdAndPublishStatus(
+        List<CourtListStatusEntity> foundEntities = repository.findByCourtCentreIdAndPublishStatus(
                 courtCentreId, publishStatus);
 
         // Then
         assertThat(foundEntities).hasSize(2);
-        assertThat(foundEntities).extracting(CourtListPublishStatusEntity::getCourtListId)
+        assertThat(foundEntities).extracting(CourtListStatusEntity::getCourtListId)
                 .containsExactlyInAnyOrder(courtListId1, courtListId2);
-        assertThat(foundEntities).extracting(CourtListPublishStatusEntity::getCourtCentreId)
+        assertThat(foundEntities).extracting(CourtListStatusEntity::getCourtCentreId)
                 .containsOnly(courtCentreId);
-        assertThat(foundEntities).extracting(CourtListPublishStatusEntity::getPublishStatus)
+        assertThat(foundEntities).extracting(CourtListStatusEntity::getPublishStatus)
                 .containsOnly(publishStatus);
     }
 
@@ -327,10 +316,9 @@ class CourtListPublishStatusRepositoryTest {
         PublishStatus newStatus = PublishStatus.PUBLISH_SUCCESSFUL;
         Instant lastUpdated = Instant.now();
 
-        CourtListPublishStatusEntity entity = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity = new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
-                null, // courtRoomId
                 originalStatus,
                 CourtListType.ONLINE_PUBLIC,
                 lastUpdated
@@ -339,16 +327,16 @@ class CourtListPublishStatusRepositoryTest {
         entityManager.clear();
 
         // When
-        CourtListPublishStatusEntity existingEntity = repository.findById(courtListId).orElseThrow();
+        CourtListStatusEntity existingEntity = repository.findById(courtListId).orElseThrow();
         existingEntity.setPublishStatus(newStatus);
         existingEntity.setFileName("updated-file.pdf");
         existingEntity.setErrorMessage(null);
-        CourtListPublishStatusEntity updatedEntity = repository.save(existingEntity);
+        CourtListStatusEntity updatedEntity = repository.save(existingEntity);
         entityManager.flush();
         entityManager.clear();
 
         // Then
-        CourtListPublishStatusEntity retrievedEntity = repository.findById(courtListId).orElseThrow();
+        CourtListStatusEntity retrievedEntity = repository.findById(courtListId).orElseThrow();
         assertThat(retrievedEntity.getPublishStatus()).isEqualTo(newStatus);
         assertThat(retrievedEntity.getFileName()).isEqualTo("updated-file.pdf");
         assertThat(retrievedEntity.getCourtListId()).isEqualTo(courtListId);
@@ -363,10 +351,9 @@ class CourtListPublishStatusRepositoryTest {
         CourtListType courtListType = CourtListType.DRAFT;
         Instant lastUpdated = Instant.now();
 
-        CourtListPublishStatusEntity entity = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity = new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
-                null, // courtRoomId
                 publishStatus,
                 courtListType,
                 lastUpdated
@@ -380,7 +367,7 @@ class CourtListPublishStatusRepositoryTest {
         entityManager.clear();
 
         // Then
-        Optional<CourtListPublishStatusEntity> deletedEntity = repository.findById(courtListId);
+        Optional<CourtListStatusEntity> deletedEntity = repository.findById(courtListId);
         assertThat(deletedEntity).isEmpty();
     }
 
@@ -392,26 +379,23 @@ class CourtListPublishStatusRepositoryTest {
         UUID courtListId2 = UUID.randomUUID();
         UUID courtListId3 = UUID.randomUUID();
 
-        CourtListPublishStatusEntity entity1 = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity1 = new CourtListStatusEntity(
                 courtListId1,
                 UUID.randomUUID(),
-                null, // courtRoomId
                 PublishStatus.PUBLISH_REQUESTED,
                 CourtListType.FINAL,
                 Instant.now()
         );
-        CourtListPublishStatusEntity entity2 = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity2 = new CourtListStatusEntity(
                 courtListId2,
                 UUID.randomUUID(),
-                null, // courtRoomId
                 PublishStatus.PUBLISH_REQUESTED,
                 CourtListType.ONLINE_PUBLIC,
                 Instant.now()
         );
-        CourtListPublishStatusEntity entity3 = new CourtListPublishStatusEntity(
+        CourtListStatusEntity entity3 = new CourtListStatusEntity(
                 courtListId3,
                 UUID.randomUUID(),
-                null, // courtRoomId
                 PublishStatus.PUBLISH_REQUESTED,
                 CourtListType.ONLINE_PUBLIC,
                 Instant.now()
@@ -424,11 +408,11 @@ class CourtListPublishStatusRepositoryTest {
         entityManager.clear();
 
         // When
-        List<CourtListPublishStatusEntity> allEntities = repository.findAll();
+        List<CourtListStatusEntity> allEntities = repository.findAll();
 
         // Then
         assertThat(allEntities).hasSize(3);
-        assertThat(allEntities).extracting(CourtListPublishStatusEntity::getCourtListId)
+        assertThat(allEntities).extracting(CourtListStatusEntity::getCourtListId)
                 .containsExactlyInAnyOrder(courtListId1, courtListId2, courtListId3);
     }
 
@@ -438,7 +422,7 @@ class CourtListPublishStatusRepositoryTest {
         UUID nonExistentCourtCentreId = UUID.randomUUID();
 
         // When
-        List<CourtListPublishStatusEntity> foundEntities = repository.findByCourtCentreId(nonExistentCourtCentreId);
+        List<CourtListStatusEntity> foundEntities = repository.findByCourtCentreId(nonExistentCourtCentreId);
 
         // Then
         assertThat(foundEntities).isEmpty();
@@ -449,7 +433,7 @@ class CourtListPublishStatusRepositoryTest {
         // Given
         UUID courtCentreId = UUID.randomUUID();
         // When
-        List<CourtListPublishStatusEntity> foundEntities = repository.findByCourtCentreIdAndPublishStatus(
+        List<CourtListStatusEntity> foundEntities = repository.findByCourtCentreIdAndPublishStatus(
                 courtCentreId, PublishStatus.PUBLISH_FAILED);
 
         // Then
