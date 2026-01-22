@@ -20,6 +20,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 
 public class CourtListPublishControllerHttpLiveTest {
 
@@ -31,7 +32,7 @@ public class CourtListPublishControllerHttpLiveTest {
     private static final String COURT_LIST_TYPE_FINAL = CourtListType.FINAL.toString();
 
     private final RestTemplate http = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
 
     @Test
     void postCourtListPublish_creates_court_list_publish_status_successfully() throws Exception {

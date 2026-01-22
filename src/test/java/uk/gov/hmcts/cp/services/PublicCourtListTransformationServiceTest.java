@@ -2,6 +2,7 @@ package uk.gov.hmcts.cp.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
@@ -16,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PublicCourtListTransformationServiceTest {
 
     private PublicCourtListTransformationService transformationService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
     private CourtListPayload payload;
 
     @BeforeEach

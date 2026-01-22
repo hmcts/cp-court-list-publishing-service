@@ -11,9 +11,13 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 @Slf4j
 public class CourtListQueryService {
 
+    private static final String COURT_LIST_SCHEMA_PATH = "schema/court-list-schema.json";
+    private static final String PUBLIC_COURT_LIST_SCHEMA_PATH = "schema/public-court-list-schema.json";
+
     private final ListingQueryService listingQueryService;
     private final CourtListTransformationService transformationService;
     private final PublicCourtListTransformationService publicCourtListTransformationService;
+    private final JsonSchemaValidatorService jsonSchemaValidatorService;
 
     public CourtListDocument queryCourtList(CourtListType listId, String courtCentreId, String startDate, String endDate, String cjscppuid) {
         try {
@@ -25,9 +29,13 @@ public class CourtListQueryService {
             if ("PUBLIC".equalsIgnoreCase(listId.name())) {
                 log.info("Using PublicCourtListTransformationService for PUBLIC list type");
                 document = publicCourtListTransformationService.transform(payload);
+                // Validate the transformed document against JSON schema
+                jsonSchemaValidatorService.validate(document, PUBLIC_COURT_LIST_SCHEMA_PATH);
             } else {
                 log.info("Using CourtListTransformationService for list type: {}", listId);
                 document = transformationService.transform(payload);
+                // Validate the transformed document against JSON schema
+                jsonSchemaValidatorService.validate(document, COURT_LIST_SCHEMA_PATH);
             }
 
             return document;

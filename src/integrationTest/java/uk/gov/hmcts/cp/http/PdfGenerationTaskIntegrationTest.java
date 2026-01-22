@@ -3,6 +3,7 @@ package uk.gov.hmcts.cp.http;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
@@ -28,7 +29,7 @@ public class PdfGenerationTaskIntegrationTest {
     private static final String COURT_LIST_TYPE_PUBLIC = "PUBLIC";
 
     private final RestTemplate http = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
 
     @Test
     void publishCourtList_shouldTriggerPdfGeneration_whenCourtListDataAvailable() throws Exception {
