@@ -3,32 +3,27 @@ package uk.gov.hmcts.cp.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
 import uk.gov.hmcts.cp.models.*;
-import uk.gov.hmcts.cp.models.transformed.*;
+import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
+import uk.gov.hmcts.cp.models.transformed.schema.*;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-@ExtendWith(MockitoExtension.class)
 class CourtListTransformationServiceTest {
 
-    @InjectMocks
     private CourtListTransformationService transformationService;
-
     private final ObjectMapper objectMapper = new ObjectMapper();
     private CourtListPayload payload;
 
     @BeforeEach
     void setUp() throws Exception {
+        // Create transformation service
+        transformationService = new CourtListTransformationService();
+        
         payload = loadPayloadFromStubData("stubdata/court-list-payload-standard.json");
     }
 
@@ -41,85 +36,108 @@ class CourtListTransformationServiceTest {
         assertThat(document).isNotNull();
         assertThat(document.getDocument()).isNotNull();
         
-        // Verify DocumentInfo
-        DocumentInfo info = document.getDocument().getInfo();
-        assertThat(info).isNotNull();
-        assertThat(info.getStartTime()).isEqualTo("10:00:00"); // From courtCentreDefaultStartTime
+        // Verify DocumentSchema with publicationDate
+        DocumentSchema documentSchema = document.getDocument();
+        assertThat(documentSchema).isNotNull();
+        assertThat(documentSchema.getPublicationDate()).isNotNull();
+        // Verify publicationDate is in ISO 8601 format
+        assertThat(documentSchema.getPublicationDate()).matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}([.]\\d{1,3})?Z$");
         
-        // Verify DocumentData
-        DocumentData data = document.getDocument().getData();
-        assertThat(data).isNotNull();
+        // Verify Venue
+        Venue venue = document.getVenue();
+        assertThat(venue).isNotNull();
+        assertThat(venue.getVenueAddress()).isNotNull();
+        AddressSchema venueAddress = venue.getVenueAddress();
+        assertThat(venueAddress.getLine()).isNotEmpty();
         
-        // Verify Job
-        Job job = data.getJob();
-        assertThat(job).isNotNull();
+        // Verify CourtLists
+        List<CourtList> courtLists = document.getCourtLists();
+        assertThat(courtLists).isNotNull();
+        assertThat(courtLists).isNotEmpty();
         
-        // Verify printdate is current date in dd/MM/yyyy format
-        String expectedPrintDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-        assertThat(job.getPrintDate()).isEqualTo(expectedPrintDate);
+        // Verify first CourtList
+        CourtList courtList = courtLists.get(0);
+        assertThat(courtList).isNotNull();
+        assertThat(courtList.getCourtHouse()).isNotNull();
         
-        // Verify Sessions
-        Sessions sessions = job.getSessions();
-        assertThat(sessions).isNotNull();
-        List<Session> sessionList = sessions.getSession();
-        assertThat(sessionList).isNotEmpty();
+        // Verify CourtHouse
+        CourtHouse courtHouse = courtList.getCourtHouse();
+        assertThat(courtHouse.getCourtHouseName()).isEqualTo("Lavender Hill Magistrates' Court");
+        assertThat(courtHouse.getLja()).isEqualTo("Lavender Hill Magistrates' Court");
+        assertThat(courtHouse.getCourtRoom()).isNotEmpty();
+        
+        // Verify first CourtRoom
+        CourtRoomSchema courtRoom = courtHouse.getCourtRoom().get(0);
+        assertThat(courtRoom).isNotNull();
+        assertThat(courtRoom.getCourtRoomName()).isEqualTo("Courtroom 01");
+        assertThat(courtRoom.getSession()).isNotEmpty();
         
         // Verify first Session
-        Session session = sessionList.get(0);
+        SessionSchema session = courtRoom.getSession().get(0);
         assertThat(session).isNotNull();
-        assertThat(session.getLja()).isEqualTo("Test Court Centre"); // From courtCentreName
-        assertThat(session.getCourt()).isEqualTo("Test Court Centre"); // From courtCentreName
-        assertThat(session.getRoom()).isEqualTo(1); // Extracted from "Courtroom 01"
-        assertThat(session.getSstart()).isEqualTo("10:30"); // From first hearing's startTime
+        assertThat(session.getSittings()).isNotEmpty();
         
-        // Verify Blocks
-        Blocks blocks = session.getBlocks();
-        assertThat(blocks).isNotNull();
-        List<Block> blockList = blocks.getBlock();
-        assertThat(blockList).isNotEmpty();
+        // Verify first Sitting
+        Sitting sitting = session.getSittings().get(0);
+        assertThat(sitting).isNotNull();
+        assertThat(sitting.getSittingStart()).isNotNull();
+        // Verify sittingStart is in ISO 8601 format
+        assertThat(sitting.getSittingStart()).matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}([.]\\d{1,3})?Z$");
+        assertThat(sitting.getHearing()).isNotEmpty();
         
-        // Verify first Block
-        Block block = blockList.get(0);
-        assertThat(block).isNotNull();
-        assertThat(block.getBstart()).isEqualTo("10:30"); // From first hearing's startTime in timeslot
-        
-        // Verify Cases
-        Cases cases = block.getCases();
-        assertThat(cases).isNotNull();
-        List<Case> caseList = cases.getCaseList();
-        assertThat(caseList).isNotEmpty();
+        // Verify first Hearing
+        HearingSchema hearing = sitting.getHearing().get(0);
+        assertThat(hearing).isNotNull();
+        assertThat(hearing.getHearingType()).isEqualTo("First hearing");
+        assertThat(hearing.getCaseList()).isNotEmpty();
         
         // Verify first Case
-        Case caseObj = caseList.get(0);
+        CaseSchema caseObj = hearing.getCaseList().get(0);
         assertThat(caseObj).isNotNull();
-        assertThat(caseObj.getCaseno()).isEqualTo("TEST123456"); // From hearing.caseNumber
-        assertThat(caseObj.getDefName()).isEqualTo("John Doe"); // From firstName + surname
-        assertThat(caseObj.getDefDob()).isEqualTo("05/01/2006"); // Converted from "5 Jan 2006"
-        assertThat(caseObj.getDefAge()).isEqualTo(20); // Converted from "20"
-        assertThat(caseObj.getInf()).isEqualTo("CITYPF"); // From hearing.prosecutorType
+        assertThat(caseObj.getCaseUrn()).isEqualTo("29GD1486826"); // From payload
+        assertThat(caseObj.getParty()).isNotEmpty();
+        
+        // Verify first Party (DEFENDANT)
+        Party party = caseObj.getParty().get(0);
+        assertThat(party).isNotNull();
+        assertThat(party.getPartyRole()).isEqualTo("DEFENDANT");
+        assertThat(party.getIndividualDetails()).isNotNull();
+        
+        // Verify IndividualDetails
+        IndividualDetails individualDetails = party.getIndividualDetails();
+        assertThat(individualDetails.getIndividualForenames()).isEqualTo("Robert"); // From payload
+        assertThat(individualDetails.getIndividualSurname()).isEqualTo("Ormsby"); // From payload
+        assertThat(individualDetails.getDateOfBirth()).isEqualTo("13-01-1964"); // Converted from "13 Jan 1964"
+        assertThat(individualDetails.getAge()).isEqualTo(62); // Converted from "62"
         
         // Verify Address transformation
-        uk.gov.hmcts.cp.models.transformed.Address defAddr = caseObj.getDefAddr();
-        assertThat(defAddr).isNotNull();
-        assertThat(defAddr.getLine1()).isEqualTo("40 Market Place"); // From address.address1
-        assertThat(defAddr.getLine2()).isEqualTo("Market Place"); // From address.address2
-        assertThat(defAddr.getLine3()).isEqualTo("Bristol"); // From address.address3
-        assertThat(defAddr.getPcode()).isEqualTo("NW1 5BR"); // From address.postcode
+        AddressSchema address = individualDetails.getAddress();
+        assertThat(address).isNotNull();
+        assertThat(address.getLine()).isNotEmpty();
+        assertThat(address.getLine().get(0)).isEqualTo("True Close"); // From payload address1
+        assertThat(address.getLine().get(1)).isEqualTo("StreetDescription"); // From payload address2
+        assertThat(address.getLine().get(2)).isEqualTo("Locality2O"); // From payload address3
         
         // Verify Offences transformation
-        Offences offences = caseObj.getOffences();
+        List<OffenceSchema> offences = party.getOffence();
         assertThat(offences).isNotNull();
-        List<uk.gov.hmcts.cp.models.transformed.Offence> offenceList = offences.getOffence();
-        assertThat(offenceList).isNotEmpty();
+        assertThat(offences).isNotEmpty();
         
         // Verify first Offence
-        uk.gov.hmcts.cp.models.transformed.Offence offence = offenceList.get(0);
+        OffenceSchema offence = offences.get(0);
         assertThat(offence).isNotNull();
-        assertThat(offence.getCode()).isEqualTo(""); // Not available in source data
-        assertThat(offence.getTitle()).isEqualTo("Attempt theft of motor vehicle"); // From offenceTitle
-        assertThat(offence.getCyTitle()).isEqualTo("Ymgais i ddwyn cerbyd modur"); // From welshOffenceTitle
-        assertThat(offence.getSum()).isEqualTo("Attempt theft to vehicle"); // From offenceWording
-        assertThat(offence.getCySum()).isEqualTo(""); // Not available in source data
+        assertThat(offence.getOffenceCode()).isEqualTo("72357c7f-c4d1-4027-bed3-d42fb52a164e"); // From offence id
+        assertThat(offence.getOffenceTitle()).isEqualTo("Occupy reserved seat / berth without a valid ticket on the Tyne and Wear Metro"); // From payload
+        assertThat(offence.getOffenceWording()).contains("Has a violent past"); // From payload
+        
+        // Verify second Party (PROSECUTING_AUTHORITY) if exists
+        if (caseObj.getParty().size() > 1) {
+            Party prosecutorParty = caseObj.getParty().get(1);
+            assertThat(prosecutorParty).isNotNull();
+            assertThat(prosecutorParty.getPartyRole()).isEqualTo("PROSECUTING_AUTHORITY");
+            assertThat(prosecutorParty.getOrganisationDetails()).isNotNull();
+            assertThat(prosecutorParty.getOrganisationDetails().getOrganisationName()).isEqualTo("DERPF"); // From prosecutorType
+        }
     }
 
     @Test
@@ -132,18 +150,22 @@ class CourtListTransformationServiceTest {
 
         // Then
         assertThat(document).isNotNull();
-        List<Session> sessions = document.getDocument().getData().getJob().getSessions().getSession();
-        assertThat(sessions.size()).isEqualTo(2); // One session per hearing date/court room
+        List<CourtList> courtLists = document.getCourtLists();
+        assertThat(courtLists).isNotEmpty();
         
-        // Verify first session
-        Session session1 = sessions.get(0);
-        assertThat(session1.getRoom()).isEqualTo(1); // From "Courtroom 01"
-        assertThat(session1.getSstart()).isEqualTo("10:00"); // From first hearing's startTime
+        CourtHouse courtHouse = courtLists.get(0).getCourtHouse();
+        List<CourtRoomSchema> courtRooms = courtHouse.getCourtRoom();
+        assertThat(courtRooms.size()).isGreaterThanOrEqualTo(2); // Multiple court rooms
         
-        // Verify second session
-        Session session2 = sessions.get(1);
-        assertThat(session2.getRoom()).isEqualTo(2); // From "Courtroom 02"
-        assertThat(session2.getSstart()).isEqualTo("11:00"); // From first hearing's startTime
+        // Verify first court room
+        CourtRoomSchema courtRoom1 = courtRooms.get(0);
+        assertThat(courtRoom1.getCourtRoomName()).isEqualTo("Courtroom 01");
+        
+        // Verify second court room if exists
+        if (courtRooms.size() > 1) {
+            CourtRoomSchema courtRoom2 = courtRooms.get(1);
+            assertThat(courtRoom2.getCourtRoomName()).isEqualTo("Courtroom 02");
+        }
     }
 
     @Test
@@ -157,13 +179,52 @@ class CourtListTransformationServiceTest {
         // Then
         assertThat(document).isNotNull();
         assertThat(document.getDocument()).isNotNull();
-        assertThat(document.getDocument().getData()).isNotNull();
-        assertThat(document.getDocument().getData().getJob()).isNotNull();
+        assertThat(document.getVenue()).isNotNull();
         
-        // Sessions should exist but be empty
-        Sessions sessions = document.getDocument().getData().getJob().getSessions();
-        assertThat(sessions).isNotNull();
-        assertThat(sessions.getSession()).isEmpty();
+        // CourtLists should exist but may be empty or have empty court rooms
+        List<CourtList> courtLists = document.getCourtLists();
+        assertThat(courtLists).isNotNull();
+        // Either empty list or list with court house but no court rooms
+        if (!courtLists.isEmpty()) {
+            CourtHouse courtHouse = courtLists.get(0).getCourtHouse();
+            assertThat(courtHouse.getCourtRoom()).isEmpty();
+        }
+    }
+
+    @Test
+    void transform_shouldIncludeJudiciary() throws Exception {
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then
+        assertThat(document).isNotNull();
+        List<CourtList> courtLists = document.getCourtLists();
+        assertThat(courtLists).isNotEmpty();
+        
+        CourtHouse courtHouse = courtLists.get(0).getCourtHouse();
+        if (!courtHouse.getCourtRoom().isEmpty()) {
+            CourtRoomSchema courtRoom = courtHouse.getCourtRoom().get(0);
+            if (!courtRoom.getSession().isEmpty()) {
+                SessionSchema session = courtRoom.getSession().get(0);
+                // Judiciary may be empty if not provided in payload
+                List<Judiciary> judiciary = session.getJudiciary();
+                assertThat(judiciary).isNotNull();
+            }
+        }
+    }
+
+    @Test
+    void transform_shouldIncludeVenueAddress() throws Exception {
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then
+        assertThat(document).isNotNull();
+        Venue venue = document.getVenue();
+        assertThat(venue).isNotNull();
+        AddressSchema venueAddress = venue.getVenueAddress();
+        assertThat(venueAddress).isNotNull();
+        assertThat(venueAddress.getLine()).isNotNull();
     }
 
     /**

@@ -7,6 +7,8 @@
   "welshCourtCentreName": "Llys Profi",
   "welshCourtCentreAddress1": "",
   "welshCourtCentreAddress2": "Test City",
+  "ouCode": "OU123",
+  "courtId": "415",
   "hearingDates": [
     {
       "hearingDate": "2026-01-05",

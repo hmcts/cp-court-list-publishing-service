@@ -4,9 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.models.*;
-import uk.gov.hmcts.cp.models.transformed.*;
+import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
+import uk.gov.hmcts.cp.models.transformed.schema.*;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,186 +18,292 @@ import java.util.List;
 @Slf4j
 public class PublicCourtListTransformationService {
 
-    private static final DateTimeFormatter OUTPUT_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
     public CourtListDocument transform(CourtListPayload payload) {
         log.info("Transforming public court list payload to document format");
 
-        // Get current date for printdate
-        String printDate = LocalDate.now().format(OUTPUT_DATE_FORMATTER);
+        // Get current date/time for publicationDate (ISO 8601 format)
+        String publicationDate = java.time.OffsetDateTime.now(ZoneOffset.UTC)
+                .format(ISO_DATE_TIME_FORMATTER);
 
-        // Extract start time from courtCentreDefaultStartTime (format: HH:mm:ss)
-        String startTime = payload.getCourtCentreDefaultStartTime() != null 
-                ? payload.getCourtCentreDefaultStartTime() 
-                : "00:00:00";
-
-        DocumentInfo info = DocumentInfo.builder()
-                .startTime(startTime)
+        DocumentSchema document = DocumentSchema.builder()
+                .publicationDate(publicationDate)
                 .build();
 
-        List<Session> sessions = new ArrayList<>();
+        // Transform venue address
+        Venue venue = transformVenue(payload);
 
-        if (payload.getHearingDates() != null) {
+        // Transform court lists (simplified for public lists)
+        List<CourtList> courtLists = transformCourtLists(payload);
+
+        CourtListDocument result = CourtListDocument.builder()
+                .document(document)
+                .venue(venue)
+                .courtLists(courtLists)
+                .build();
+
+        return result;
+    }
+
+    private Venue transformVenue(CourtListPayload payload) {
+        AddressSchema venueAddress = transformAddressSchemaFromStrings(
+                payload.getCourtCentreAddress1(),
+                payload.getCourtCentreAddress2()
+        );
+
+        return Venue.builder()
+                .venueAddress(venueAddress)
+                .build();
+    }
+
+    private List<CourtList> transformCourtLists(CourtListPayload payload) {
+        List<CourtList> courtLists = new ArrayList<>();
+
+        if (payload.getHearingDates() != null && !payload.getHearingDates().isEmpty()) {
+            List<CourtRoomSchema> courtRooms = new ArrayList<>();
+
             for (HearingDate hearingDate : payload.getHearingDates()) {
                 if (hearingDate.getCourtRooms() != null) {
                     for (CourtRoom courtRoom : hearingDate.getCourtRooms()) {
-                        Session session = transformToSession(payload, courtRoom);
-                        if (session != null) {
-                            sessions.add(session);
+                        CourtRoomSchema courtRoomSchema = transformCourtRoom(courtRoom, hearingDate);
+                        if (courtRoomSchema != null) {
+                            courtRooms.add(courtRoomSchema);
                         }
                     }
                 }
             }
+
+            if (!courtRooms.isEmpty()) {
+                // According to public court list schema, courtHouse should not have courtHouseName or lja
+                CourtHouse courtHouse = CourtHouse.builder()
+                        .courtRoom(courtRooms)
+                        .build();
+
+                CourtList courtList = CourtList.builder()
+                        .courtHouse(courtHouse)
+                        .build();
+
+                courtLists.add(courtList);
+            }
         }
 
-        Sessions sessionsWrapper = Sessions.builder()
+        return courtLists;
+    }
+
+    private CourtRoomSchema transformCourtRoom(CourtRoom courtRoom, HearingDate hearingDate) {
+        List<SessionSchema> sessions = new ArrayList<>();
+
+        if (courtRoom.getTimeslots() != null) {
+            SessionSchema session = transformSession(courtRoom, hearingDate);
+            if (session != null) {
+                sessions.add(session);
+            }
+        }
+
+        if (sessions.isEmpty()) {
+            return null;
+        }
+
+        return CourtRoomSchema.builder()
+                .courtRoomName(courtRoom.getCourtRoomName())
                 .session(sessions)
-                .build();
-
-        Job job = Job.builder()
-                .printDate(printDate)
-                .sessions(sessionsWrapper)
-                .build();
-
-        DocumentData data = DocumentData.builder()
-                .job(job)
-                .build();
-
-        Document document = Document.builder()
-                .info(info)
-                .data(data)
-                .build();
-
-        return CourtListDocument.builder()
-                .document(document)
                 .build();
     }
 
-    private Session transformToSession(CourtListPayload payload, CourtRoom courtRoom) {
-        // Extract room number from courtRoomName (e.g., "Courtroom 01" -> 1)
-        Integer roomNumber = extractRoomNumber(courtRoom.getCourtRoomName());
-
-        // Get session start time from first hearing's startTime or use default
-        String sessionStart = getSessionStartTime(courtRoom);
-
-        // Get LJA (Local Justice Area) - using court centre name
-        String lja = payload.getCourtCentreName();
-
-        List<Block> blocks = new ArrayList<>();
+    private SessionSchema transformSession(CourtRoom courtRoom, HearingDate hearingDate) {
+        List<Judiciary> judiciary = transformJudiciary(courtRoom.getJudiciaryNames());
+        List<Sitting> sittings = new ArrayList<>();
 
         if (courtRoom.getTimeslots() != null) {
             for (Timeslot timeslot : courtRoom.getTimeslots()) {
                 if (timeslot.getHearings() != null && !timeslot.getHearings().isEmpty()) {
-                    // Get block start time from first hearing
-                    String blockStart = timeslot.getHearings().get(0).getStartTime();
-
-                    List<Case> cases = new ArrayList<>();
-                    for (Hearing hearing : timeslot.getHearings()) {
-                        List<Case> hearingCases = transformToCases(hearing);
-                        if (hearingCases != null && !hearingCases.isEmpty()) {
-                            cases.addAll(hearingCases);
-                        }
-                    }
-
-                    if (!cases.isEmpty()) {
-                        Cases casesWrapper = Cases.builder()
-                                .caseList(cases)
-                                .build();
-
-                        Block block = Block.builder()
-                                .bstart(blockStart)
-                                .cases(casesWrapper)
-                                .build();
-
-                        blocks.add(block);
+                    Sitting sitting = transformSitting(timeslot, hearingDate);
+                    if (sitting != null) {
+                        sittings.add(sitting);
                     }
                 }
             }
         }
 
-        if (blocks.isEmpty()) {
+        if (sittings.isEmpty()) {
             return null;
         }
 
-        Blocks blocksWrapper = Blocks.builder()
-                .block(blocks)
-                .build();
-
-        return Session.builder()
-                .lja(lja)
-                .court(payload.getCourtCentreName())
-                .room(roomNumber)
-                .sstart(sessionStart)
-                .blocks(blocksWrapper)
+        return SessionSchema.builder()
+                .judiciary(judiciary)
+                .sittings(sittings)
                 .build();
     }
 
-    private List<Case> transformToCases(Hearing hearing) {
-        if (hearing.getDefendants() == null || hearing.getDefendants().isEmpty()) {
-            return new ArrayList<>();
+    private List<Judiciary> transformJudiciary(String judiciaryNames) {
+        List<Judiciary> judiciary = new ArrayList<>();
+        
+        if (judiciaryNames != null && !judiciaryNames.trim().isEmpty()) {
+            String[] names = judiciaryNames.split("[,;]");
+            for (int i = 0; i < names.length; i++) {
+                String name = names[i].trim();
+                if (!name.isEmpty()) {
+                    Judiciary j = Judiciary.builder()
+                            .johKnownAs(name)
+                            .isPresiding(i == 0)
+                            .build();
+                    judiciary.add(j);
+                }
+            }
         }
 
-        List<Case> cases = new ArrayList<>();
-        
-        // Create a case for each defendant - simplified version with only caseno and def_name
-        for (Defendant defendant : hearing.getDefendants()) {
-            // Build defendant name
-            String defName = buildDefendantName(defendant);
+        return judiciary;
+    }
 
-            // For public court list, only include caseno and def_name
-            Case caseObj = Case.builder()
-                    .caseno(hearing.getCaseNumber())
-                    .defName(defName)
-                    .build();
+    private Sitting transformSitting(Timeslot timeslot, HearingDate hearingDate) {
+        if (timeslot.getHearings() == null || timeslot.getHearings().isEmpty()) {
+            return null;
+        }
+
+        String sittingStart = convertToIsoDateTime(timeslot.getHearings().get(0).getStartTime(), hearingDate.getHearingDate());
+
+        List<HearingSchema> hearings = new ArrayList<>();
+        for (Hearing hearing : timeslot.getHearings()) {
+            HearingSchema hearingSchema = transformHearing(hearing);
+            if (hearingSchema != null) {
+                hearings.add(hearingSchema);
+            }
+        }
+
+        if (hearings.isEmpty()) {
+            return null;
+        }
+
+        return Sitting.builder()
+                .sittingStart(sittingStart)
+                .hearing(hearings)
+                .build();
+    }
+
+    private HearingSchema transformHearing(Hearing hearing) {
+        // For public lists, only include case number and defendant name
+        List<CaseSchema> cases = transformCases(hearing);
+
+        if (cases.isEmpty()) {
+            return null;
+        }
+
+        // According to public court list schema, channel and application should be arrays (can be empty)
+        List<String> channels = new ArrayList<>();
+        List<Application> applications = new ArrayList<>();
+
+        return HearingSchema.builder()
+                .hearingType(hearing.getHearingType())
+                .caseList(cases)
+                .panel(null)
+                .channel(channels)
+                .application(applications)
+                .build();
+    }
+
+    private List<CaseSchema> transformCases(Hearing hearing) {
+        List<CaseSchema> cases = new ArrayList<>();
+
+        if (hearing.getDefendants() == null || hearing.getDefendants().isEmpty()) {
+            return cases;
+        }
+
+        // For public lists, create simplified cases with minimal party information
+        for (Defendant defendant : hearing.getDefendants()) {
+            List<Party> parties = new ArrayList<>();
             
-            cases.add(caseObj);
+            // Only include basic individual details (name only for public lists)
+            if (defendant.getFirstName() != null || defendant.getSurname() != null) {
+                IndividualDetails individualDetails = IndividualDetails.builder()
+                        .individualForenames(defendant.getFirstName())
+                        .individualSurname(defendant.getSurname())
+                        .build();
+
+                Party party = Party.builder()
+                        .partyRole("DEFENDANT")
+                        .individualDetails(individualDetails)
+                        .build();
+
+                parties.add(party);
+            }
+
+            CaseSchema caseSchema = CaseSchema.builder()
+                    .caseUrn(hearing.getCaseNumber())
+                    .reportingRestriction(hearing.getReportingRestrictionReason() != null && !hearing.getReportingRestrictionReason().trim().isEmpty())
+                    .caseSequenceIndicator(null)
+                    .party(parties)
+                    .build();
+
+            cases.add(caseSchema);
         }
 
         return cases;
     }
 
-    private String buildDefendantName(Defendant defendant) {
-        StringBuilder name = new StringBuilder();
-        if (defendant.getFirstName() != null && !defendant.getFirstName().trim().isEmpty()) {
-            name.append(defendant.getFirstName().trim());
-        }
-        if (defendant.getSurname() != null && !defendant.getSurname().trim().isEmpty()) {
-            if (name.length() > 0) {
-                name.append(" ");
-            }
-            name.append(defendant.getSurname().trim());
-        }
-        return name.toString();
+    private AddressSchema transformAddressSchemaFromStrings(String address1, String address2) {
+        return transformAddressSchemaFromStrings(address1, address2, null, null, null, null);
     }
 
-    private Integer extractRoomNumber(String courtRoomName) {
-        if (courtRoomName == null || courtRoomName.trim().isEmpty()) {
-            return 1; // Default room number
+    private AddressSchema transformAddressSchemaFromStrings(String address1, String address2, String address3, String address4, String address5, String postcode) {
+        List<String> lines = new ArrayList<>();
+        
+        if (address1 != null && !address1.trim().isEmpty()) {
+            lines.add(address1.trim());
+        }
+        if (address2 != null && !address2.trim().isEmpty()) {
+            lines.add(address2.trim());
+        }
+        if (address3 != null && !address3.trim().isEmpty()) {
+            lines.add(address3.trim());
+        }
+        if (address4 != null && !address4.trim().isEmpty()) {
+            lines.add(address4.trim());
+        }
+        if (address5 != null && !address5.trim().isEmpty()) {
+            lines.add(address5.trim());
         }
 
-        // Extract number from "Courtroom 01" or similar
-        String cleaned = courtRoomName.replaceAll("[^0-9]", "");
-        if (cleaned.isEmpty()) {
-            return 1;
+        // According to public court list schema, line and postCode are required
+        // Ensure line is never null (empty list if no address lines)
+        if (lines.isEmpty()) {
+            lines = new ArrayList<>();
+        }
+
+        String town = null;
+        String county = null;
+        if (lines.size() >= 2) {
+            town = lines.get(lines.size() - 2);
+            if (lines.size() >= 3) {
+                county = lines.get(lines.size() - 3);
+            }
+        }
+
+        return AddressSchema.builder()
+                .line(lines)
+                .town(town)
+                .county(county)
+                .postCode(postcode) // postCode is required per schema, but may be null if not available in payload
+                .build();
+    }
+
+    private String convertToIsoDateTime(String time, String date) {
+        if (time == null || date == null) {
+            return null;
         }
 
         try {
-            return Integer.parseInt(cleaned);
-        } catch (NumberFormatException e) {
-            log.warn("Failed to extract room number from: {}", courtRoomName, e);
-            return 1;
-        }
-    }
+            LocalDate localDate = LocalDate.parse(date);
+            String[] timeParts = time.split(":");
+            int hour = timeParts.length > 0 ? Integer.parseInt(timeParts[0]) : 0;
+            int minute = timeParts.length > 1 ? Integer.parseInt(timeParts[1]) : 0;
+            int second = timeParts.length > 2 ? Integer.parseInt(timeParts[2]) : 0;
 
-    private String getSessionStartTime(CourtRoom courtRoom) {
-        if (courtRoom.getTimeslots() != null && !courtRoom.getTimeslots().isEmpty()) {
-            Timeslot firstTimeslot = courtRoom.getTimeslots().get(0);
-            if (firstTimeslot.getHearings() != null && !firstTimeslot.getHearings().isEmpty()) {
-                return firstTimeslot.getHearings().get(0).getStartTime();
-            }
+            java.time.LocalDateTime dateTime = localDate.atTime(hour, minute, second);
+            return dateTime.atOffset(ZoneOffset.UTC).format(ISO_DATE_TIME_FORMATTER);
+        } catch (Exception e) {
+            log.warn("Failed to convert date/time to ISO format: date={}, time={}", date, time, e);
+            return null;
         }
-        return "00:00";
     }
 }
-
-

@@ -1,5 +1,6 @@
 package uk.gov.hmcts.cp.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 @Builder
 @NoArgsConstructor
@@ -51,5 +53,14 @@ public class Hearing {
     
     @JsonProperty("adjournedHearingDate")
     private String adjournedHearingDate;
+
+    @JsonProperty("courtApplicationId")
+    private String courtApplicationId;
+
+    @JsonProperty("applicationOffences")
+    private List<Offence> applicationOffences;
+
+    @JsonProperty("panel")
+    private String panel;
 }
 
