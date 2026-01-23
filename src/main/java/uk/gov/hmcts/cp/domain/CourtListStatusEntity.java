@@ -21,7 +21,7 @@ import lombok.Setter;
 @Getter
 @Entity
 @Table(name = "court_list_publish_status")
-public class CourtListPublishStatusEntity {
+public class CourtListStatusEntity {
 
     @Id
     @Column(name = "court_list_id", nullable = false)
@@ -61,10 +61,10 @@ public class CourtListPublishStatusEntity {
     @Column(name = "publish_date")
     private LocalDate publishDate;
 
-    protected CourtListPublishStatusEntity() {
+    protected CourtListStatusEntity() {
     }
 
-    public CourtListPublishStatusEntity(
+    public CourtListStatusEntity(
             final UUID courtListId,
             final UUID courtCentreId,
             final PublishStatus publishStatus,

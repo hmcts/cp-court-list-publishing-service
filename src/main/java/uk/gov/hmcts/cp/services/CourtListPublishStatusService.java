@@ -1,10 +1,10 @@
 package uk.gov.hmcts.cp.services;
 
-import uk.gov.hmcts.cp.domain.CourtListPublishStatusEntity;
+import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.PublishStatus;
-import uk.gov.hmcts.cp.repositories.CourtListPublishStatusRepository;
+import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -33,14 +33,14 @@ public class CourtListPublishStatusService {
     private static final String ERROR_COURT_LIST_TYPE_REQUIRED = "Court list type is required";
     private static final String ERROR_ENTITY_NOT_FOUND = "Court list publish status not found";
 
-    private final CourtListPublishStatusRepository repository;
+    private final CourtListStatusRepository repository;
 
     @Transactional
     public CourtListPublishResponse getByCourtListId(final UUID courtListId) {
         validateCourtListId(courtListId);
         LOG.atDebug().log("Fetching court list publish status for ID: {}", courtListId);
 
-        CourtListPublishStatusEntity entity = repository.getByCourtListId(courtListId);
+        CourtListStatusEntity entity = repository.getByCourtListId(courtListId);
         if (entity == null) {
             LOG.atWarn().log("Court list publish status not found for ID: {}", courtListId);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ERROR_ENTITY_NOT_FOUND);
@@ -60,7 +60,7 @@ public class CourtListPublishStatusService {
         validateCourtListType(courtListType);
 
         LOG.atDebug().log("Creating or updating court list publish status for ID: {}", courtListId);
-        CourtListPublishStatusEntity entity = repository.getByCourtListId(courtListId);
+        CourtListStatusEntity entity = repository.getByCourtListId(courtListId);
 
         if (entity != null) {
             LOG.atDebug().log("Updating existing court list publish status for ID: {}", courtListId);
@@ -70,7 +70,7 @@ public class CourtListPublishStatusService {
             entity = createNewEntity(courtListId, courtCentreId, publishStatus, courtListType);
         }
 
-        CourtListPublishStatusEntity savedEntity = repository.save(entity);
+        CourtListStatusEntity savedEntity = repository.save(entity);
         return toResponse(savedEntity);
     }
 
@@ -125,7 +125,7 @@ public class CourtListPublishStatusService {
     // Entity helper methods
 
     private void updateEntity(
-            final CourtListPublishStatusEntity entity,
+            final CourtListStatusEntity entity,
             final UUID courtCentreId,
             final PublishStatus publishStatus,
             final CourtListType courtListType) {
@@ -135,12 +135,12 @@ public class CourtListPublishStatusService {
         entity.setLastUpdated(Instant.now());
     }
 
-    private CourtListPublishStatusEntity createNewEntity(
+    private CourtListStatusEntity createNewEntity(
             final UUID courtListId,
             final UUID courtCentreId,
             final PublishStatus publishStatus,
             final CourtListType courtListType) {
-        return new CourtListPublishStatusEntity(
+        return new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
                 publishStatus,
@@ -150,7 +150,7 @@ public class CourtListPublishStatusService {
     }
 
     // Mapper method to convert entity to response
-    private CourtListPublishResponse toResponse(final CourtListPublishStatusEntity entity) {
+    private CourtListPublishResponse toResponse(final CourtListStatusEntity entity) {
         OffsetDateTime lastUpdated = entity.getLastUpdated() != null
                 ? entity.getLastUpdated().atOffset(ZoneOffset.UTC)
                 : null;

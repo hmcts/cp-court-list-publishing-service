@@ -39,12 +39,11 @@ class ListingQueryServiceTest {
     private String startDate;
     private String endDate;
     private String cjscppuid;
-    private String baseUrl;
 
     @BeforeEach
     void setUp() {
         // Use reflection to set the base URL for testing
-        baseUrl = "https://test.example.com";
+        String baseUrl = "https://test.example.com";
         try {
             java.lang.reflect.Field field = ListingQueryService.class.getDeclaredField("commonPlatformQueryApiBaseUrl");
             field.setAccessible(true);

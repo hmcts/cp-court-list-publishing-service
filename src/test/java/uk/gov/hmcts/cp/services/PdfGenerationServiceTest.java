@@ -8,6 +8,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,9 +19,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +30,12 @@ class PdfGenerationServiceTest {
     @Mock
     private CourtListPublisherBlobClientService blobClientService;
 
+    @Mock
+    private HttpClientFactory httpClientFactory;
+
+    @Mock
+    private RestTemplate restTemplate;
+
     @InjectMocks
     private PdfGenerationService pdfGenerationService;
 
@@ -35,9 +43,16 @@ class PdfGenerationServiceTest {
     private UUID courtCentreId;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         courtListId = UUID.randomUUID();
         courtCentreId = UUID.randomUUID();
+        // Mock HttpClientFactory to return RestTemplate (lenient for tests that don't use it)
+        lenient().when(httpClientFactory.getClient()).thenReturn(restTemplate);
+        
+        // Set the base URL field using reflection since it's @Value injected
+        java.lang.reflect.Field field = PdfGenerationService.class.getDeclaredField("commonPlatformQueryApiBaseUrl");
+        field.setAccessible(true);
+        field.set(pdfGenerationService, "http://localhost:8080");
     }
 
     @Test
@@ -46,7 +61,11 @@ class PdfGenerationServiceTest {
         JsonObject payload = Json.createObjectBuilder().build();
         String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
         String expectedBlobName = "court-lists/" + courtListId + ".pdf";
+        byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
+        // Mock PDF generation service call
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
         when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
                 .thenReturn(expectedSasUrl);
 
@@ -65,7 +84,11 @@ class PdfGenerationServiceTest {
         // Given
         String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
         String expectedBlobName = "court-lists/" + courtListId + ".pdf";
+        byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
+        // Mock PDF generation service call
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
         when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
                 .thenReturn(expectedSasUrl);
 
@@ -86,7 +109,10 @@ class PdfGenerationServiceTest {
                 .build();
         String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
         String expectedBlobName = "court-lists/" + courtListId + ".pdf";
+        byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
         when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
                 .thenReturn(expectedSasUrl);
 
@@ -108,7 +134,10 @@ class PdfGenerationServiceTest {
                 .build();
         String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
         String expectedBlobName = "court-lists/" + courtListId + ".pdf";
+        byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
         when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
                 .thenReturn(expectedSasUrl);
 
@@ -132,7 +161,10 @@ class PdfGenerationServiceTest {
                 .build();
         String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
         String expectedBlobName = "court-lists/" + courtListId + ".pdf";
+        byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
         when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
                 .thenReturn(expectedSasUrl);
 
@@ -151,7 +183,10 @@ class PdfGenerationServiceTest {
         JsonObject payload = Json.createObjectBuilder().build();
         String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
         String expectedBlobName = "court-lists/" + courtListId + ".pdf";
+        byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
         when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
                 .thenReturn(expectedSasUrl);
 
@@ -172,7 +207,10 @@ class PdfGenerationServiceTest {
         JsonObject payload = Json.createObjectBuilder().build();
         String expectedSasUrl1 = "https://storage.example.com/blob1.pdf?sasToken";
         String expectedSasUrl2 = "https://storage.example.com/blob2.pdf?sasToken";
+        byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
         when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq("court-lists/" + courtListId1 + ".pdf")))
                 .thenReturn(expectedSasUrl1);
         when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq("court-lists/" + courtListId2 + ".pdf")))
@@ -199,7 +237,10 @@ class PdfGenerationServiceTest {
                 .build();
         String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
         String expectedBlobName = "court-lists/" + courtListId + ".pdf";
+        byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
         when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
                 .thenReturn(expectedSasUrl);
 
@@ -221,7 +262,10 @@ class PdfGenerationServiceTest {
                 .build();
         String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
         String expectedBlobName = "court-lists/" + courtListId + ".pdf";
+        byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
         when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
                 .thenReturn(expectedSasUrl);
 
@@ -242,7 +286,10 @@ class PdfGenerationServiceTest {
         UUID nullCourtListId = null;
         String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
         String expectedBlobName = "court-lists/null.pdf";
+        byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
         when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
                 .thenReturn(expectedSasUrl);
 
@@ -263,7 +310,10 @@ class PdfGenerationServiceTest {
                 .build();
         String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
         String expectedBlobName = "court-lists/" + courtListId + ".pdf";
+        byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
         when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
                 .thenReturn(expectedSasUrl);
 
@@ -281,17 +331,15 @@ class PdfGenerationServiceTest {
         // Given
         JsonObject payload = Json.createObjectBuilder().build();
         
-        // Mock to throw exception during PDF generation (simulated by making payload cause an issue)
-        // Since the actual generation is simple, we'll test the IOException handling
-        // by making the upload fail, which should propagate the exception
-        
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), any(String.class)))
-                .thenThrow(new RuntimeException("Upload failed"));
+        // Mock PDF generation service to throw exception
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
+                .thenThrow(new RuntimeException("PDF generation failed"));
 
         // When & Then
         assertThatThrownBy(() -> pdfGenerationService.generateAndUploadPdf(payload, courtListId))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Upload failed");
+                .isInstanceOf(IOException.class)
+                .hasMessageContaining("Failed to generate PDF")
+                .hasCauseInstanceOf(RuntimeException.class);
     }
 
     @Test
@@ -300,7 +348,10 @@ class PdfGenerationServiceTest {
         JsonObject payload = Json.createObjectBuilder().build();
         String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
         String expectedBlobName = "court-lists/" + courtListId + ".pdf";
+        byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
         when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
                 .thenReturn(expectedSasUrl);
 

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import uk.gov.hmcts.cp.services.PublishJobTriggerService;
+import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,12 +24,12 @@ import java.util.UUID;
 public class CourtListPublishController implements CourtListPublishApi {
 
     private final CourtListPublishStatusService service;
-    private final PublishJobTriggerService publishJobTriggerService;
+    private final CourtListTaskTriggerService courtListTaskTriggerService;
     private static final Logger LOG = LoggerFactory.getLogger(CourtListPublishController.class);
 
-    public CourtListPublishController(final CourtListPublishStatusService service, PublishJobTriggerService publishJobTriggerService) {
+    public CourtListPublishController(final CourtListPublishStatusService service, CourtListTaskTriggerService CourtListTaskTriggerService) {
         this.service = service;
-        this.publishJobTriggerService = publishJobTriggerService;
+        this.courtListTaskTriggerService = CourtListTaskTriggerService;
     }
 
     @Override
@@ -43,7 +43,7 @@ public class CourtListPublishController implements CourtListPublishApi {
         final UUID courtListId = UUID.randomUUID();
 
         // Set initial publishStatus to COURT_LIST_REQUESTED
-        final PublishStatus publishStatus = PublishStatus.COURT_LIST_REQUESTED;
+        final PublishStatus publishStatus = PublishStatus.PUBLISH_REQUESTED;
 
         LOG.atInfo().log("Creating court list publish status with generated court list ID: {} and initial status: {}",
                 courtListId, publishStatus);
@@ -55,9 +55,9 @@ public class CourtListPublishController implements CourtListPublishApi {
                 request.getCourtListType()
         );
 
-        // Trigger the court list publishing task asynchronously
+        // Trigger the court list publishing and PDF generation task asynchronously
         try {
-            publishJobTriggerService.triggerCourtListPublishingTask(request, courtListId);
+            courtListTaskTriggerService.triggerCourtListTask(request, courtListId);
             LOG.atInfo().log("Court list publishing task triggered for court list ID: {}", courtListId);
         } catch (Exception e) {
             LOG.atError().log("Failed to trigger court list publishing task for court list ID: {}",

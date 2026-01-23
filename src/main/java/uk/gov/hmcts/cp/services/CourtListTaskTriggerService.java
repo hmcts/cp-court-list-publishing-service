@@ -21,24 +21,25 @@ import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
 
 
 @Service
-public class PublishJobTriggerService {
+public class CourtListTaskTriggerService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PublishJobTriggerService.class);
-    private static final String TASK_NAME = "COURT_LIST_PUBLISH_TASK";
+    private static final Logger LOG = LoggerFactory.getLogger(CourtListTaskTriggerService.class);
+    private static final String TASK_NAME = "PUBLISH_AND_PDF_GENERATION_TASK";
     private static final String ERROR_COURT_CENTRE_ID_REQUIRED = "Court centre ID is required";
     private static final String ERROR_COURT_LIST_TYPE_REQUIRED = "Court list type is required";
+    public static final String COURT_LIST_ID_IS_REQUIRED = "Court list ID is required";
+    public static final String REQUEST_IS_REQUIRED = "Request is required";
 
     @Autowired
     ExecutionService executionService;
 
-
     /**
-     * Triggers the court list publishing task asynchronously.
+     * Triggers the court list tasks asynchronously.
      */
     @Transactional
-    public void triggerCourtListPublishingTask(final CourtListPublishRequest request, final UUID courtListId) {
+    public void triggerCourtListTask(final CourtListPublishRequest request, final UUID courtListId) {
         if (request == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, REQUEST_IS_REQUIRED);
         }
         if (request.getCourtCentreId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ERROR_COURT_CENTRE_ID_REQUIRED);
@@ -47,10 +48,10 @@ public class PublishJobTriggerService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ERROR_COURT_LIST_TYPE_REQUIRED);
         }
         if (courtListId == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Court list ID is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, COURT_LIST_ID_IS_REQUIRED);
         }
 
-        LOG.atInfo().log("Triggering court list publishing task for court list ID: {}, court centre ID: {} and type: {}",
+        LOG.atInfo().log("Triggering court list tasks for court list ID: {}, court centre ID: {} and type: {}",
                 courtListId, request.getCourtCentreId(), request.getCourtListType());
 
         // Create jobData with courtListId, courtCentreId, and courtListType
@@ -73,7 +74,7 @@ public class PublishJobTriggerService {
             LOG.atInfo().log("Court list publishing task triggered successfully");
         } catch (Exception e) {
             LOG.atError().log("Failed to execute task via ExecutionService: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Failed to trigger court list publishing task: " + e.getMessage(), e);
         }
     }
