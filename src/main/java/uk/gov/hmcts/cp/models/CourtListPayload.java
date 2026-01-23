@@ -42,5 +42,11 @@ public class CourtListPayload {
     
     @JsonProperty("templateName")
     private String templateName;
+
+    @JsonProperty("ouCode")
+    private String ouCode;
+
+    @JsonProperty("courtId")
+    private String courtId;
 }
 

@@ -44,7 +44,7 @@ public class Defendant {
     private Address address;
     
     @JsonProperty("reportingRestrictions")
-    private List<Object> reportingRestrictions;
+    private List<ReportingRestriction> reportingRestrictions;
     
     @JsonProperty("offences")
     private List<Offence> offences;
