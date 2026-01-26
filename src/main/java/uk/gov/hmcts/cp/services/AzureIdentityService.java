@@ -46,7 +46,7 @@ public class AzureIdentityService {
             final Mono<String> accessTokenMono = managedIdentityCredential.getToken(context)
                     .map(AccessToken::getToken);
             accessToken = accessTokenMono.block();
-            log.warn("Acquired local access token "+ accessToken);
+            log.warn("Acquired local access token");
         } catch (Exception e) {
             log.error("Failed to acquire local Access token getTokenFromLocalClientSecretCredentials() with cause: {}", 
                     e.getCause() != null ? e.getCause().toString() : e.getMessage(), e);
