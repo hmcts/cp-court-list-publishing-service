@@ -7,22 +7,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
+import uk.gov.hmcts.cp.domain.DtsMeta;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
-
-import java.net.URI;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,85 +22,48 @@ import static org.mockito.Mockito.when;
 class CaTHServiceTest {
 
     @Mock
-    private RestTemplate restTemplate;
+    private CaTHPublisher cathPublisher;
 
     @InjectMocks
     private CaTHService cathService;
 
     private CourtListDocument courtListDocument;
-    private String baseUrl;
-    private String endpoint;
 
     @BeforeEach
     void setUp() {
-        // Use reflection to set the base URL and endpoint for testing
-        baseUrl = "https://spnl-apim-int-gw.cpp.nonlive";
-        endpoint = "/courtlistpublisher/publication";
-        try {
-            java.lang.reflect.Field baseUrlField = CaTHService.class.getDeclaredField("cathBaseUrl");
-            baseUrlField.setAccessible(true);
-            baseUrlField.set(cathService, baseUrl);
-
-            java.lang.reflect.Field endpointField = CaTHService.class.getDeclaredField("cathEndpoint");
-            endpointField.setAccessible(true);
-            endpointField.set(cathService, endpoint);
-        } catch (Exception e) {
-            // Ignore if reflection fails
-        }
-
         courtListDocument = CourtListDocument.builder().build();
     }
 
     @Test
-    void sendCourtListToCaTH_shouldCallApiWithCorrectParametersAndHeaders() {
+    void sendCourtListToCaTH_shouldCallPublisherWithCorrectParameters() {
         // Given
-        ResponseEntity<String> responseEntity = new ResponseEntity<>("Success", HttpStatus.OK);
-
-        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<HttpEntity<CourtListDocument>> httpEntityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-
-        when(restTemplate.exchange(
-                any(URI.class),
-                eq(HttpMethod.POST),
-                any(HttpEntity.class),
-                eq(String.class)
-        )).thenReturn(responseEntity);
+        when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
 
         // When
         cathService.sendCourtListToCaTH(courtListDocument);
 
-        // Then - Verify RestTemplate was called
-        verify(restTemplate).exchange(
-                uriCaptor.capture(),
-                eq(HttpMethod.POST),
-                httpEntityCaptor.capture(),
-                eq(String.class)
-        );
-
-        // Verify URI is correct
-        URI capturedUri = uriCaptor.getValue();
-        assertThat(capturedUri.toString()).isEqualTo(baseUrl + endpoint);
-
-        // Verify headers are set correctly
-        HttpEntity<CourtListDocument> capturedEntity = httpEntityCaptor.getValue();
-        assertThat(capturedEntity).isNotNull();
-        assertThat(capturedEntity.getBody()).isEqualTo(courtListDocument);
+        // Then - Verify CaTHPublisher was called
+        ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
         
-        HttpHeaders headers = capturedEntity.getHeaders();
-        assertThat(headers).isNotNull();
-        assertThat(headers.getContentType()).isEqualTo(MediaType.APPLICATION_JSON);
+        verify(cathPublisher).publish(payloadCaptor.capture(), metaCaptor.capture());
+
+        // Verify payload contains the court list document
+        String capturedPayload = payloadCaptor.getValue();
+        assertThat(capturedPayload).isNotNull().isNotEmpty();
+
+        // Verify metadata is set correctly
+        DtsMeta capturedMeta = metaCaptor.getValue();
+        assertThat(capturedMeta).isNotNull();
+        assertThat(capturedMeta.getProvenance()).isEqualTo("COMMON_PLATFORM");
+        assertThat(capturedMeta.getType()).isEqualTo("LIST");
     }
 
     @Test
-    void sendCourtListToCaTH_shouldThrowException_whenRestClientExceptionOccurs() {
+    void sendCourtListToCaTH_shouldThrowException_whenPublisherThrowsException() {
         // Given
-        when(restTemplate.exchange(
-                any(URI.class),
-                eq(HttpMethod.POST),
-                any(HttpEntity.class),
-                eq(String.class)
-        )).thenThrow(new RestClientException("Connection failed"));
+        when(cathPublisher.publish(anyString(), any(DtsMeta.class)))
+                .thenThrow(new RuntimeException("Publishing failed"));
 
         // When & Then
         assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument))
@@ -119,12 +74,8 @@ class CaTHServiceTest {
     @Test
     void sendCourtListToCaTH_shouldThrowException_whenGenericExceptionOccurs() {
         // Given
-        when(restTemplate.exchange(
-                any(URI.class),
-                eq(HttpMethod.POST),
-                any(HttpEntity.class),
-                eq(String.class)
-        )).thenThrow(new RuntimeException("Unexpected error"));
+        when(cathPublisher.publish(anyString(), any(DtsMeta.class)))
+                .thenThrow(new RuntimeException("Unexpected error"));
 
         // When & Then
         assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument))

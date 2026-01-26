@@ -1,12 +1,10 @@
 package uk.gov.hmcts.cp.controllers;
 
 import uk.gov.hmcts.cp.domain.DtsMeta;
-import uk.gov.hmcts.cp.services.AzureIdentityService;
-import uk.gov.hmcts.cp.services.PublishingService;
+import uk.gov.hmcts.cp.services.CaTHPublisher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,8 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class TestAuthController {
 
-    private final PublishingService publishingService;
-    private final AzureIdentityService azureIdentityService;
+    private final CaTHPublisher publisher;
 
     /**
      * Test endpoint for publishing data to the Publishing Hub.
@@ -42,50 +39,11 @@ public class TestAuthController {
             produces = "application/vnd.courtlistpublishing-service.test-auth.post+json")
     public ResponseEntity<Integer> testAuth() {
         log.info("Test auth endpoint called with payload");
-
         // Fetch local token independently with try/catch
-        Integer statusCode = HttpStatus.OK.value();
-        String localToken = null;
-        try {
-            log.info("Attempting to fetch local token...");
-            localToken = azureIdentityService.getTokenFromLocalClientSecretCredentials();
-            if (localToken != null) {
-                log.info("Successfully fetched local token: {}", localToken);
-            } else {
-                log.warn("Local token fetch returned null");
-            }
-        } catch (Exception e) {
-            log.error("Failed to fetch local token: " + e.getMessage(), e);
-            statusCode = 500;
-        }
-
-        // Fetch remote token independently with try/catch
-        String remoteToken = null;
-        try {
-            log.info("Attempting to fetch remote token...");
-            remoteToken = azureIdentityService.getTokenFromRemoteClientSecretCredentials();
-            if (remoteToken != null) {
-                log.info("Successfully fetched remote token: {}", remoteToken);
-            } else {
-                log.warn("Remote token fetch returned null");
-            }
-        } catch (Exception e) {
-            log.error("Failed to fetch remote token: " + e.getMessage(), e);
-            statusCode = 500;
-        }
-
-        if (HttpStatus.OK.value() == statusCode) {
-            log.info("=========about to publish dummy pauload");
-            statusCode = publishingService.sendData(DUMMY_LIST, DUMMY_METADATA);
-            log.info("=========successfully published dummy pauload and status is {}", statusCode);
-        } else {
-            log.info("=========did not publish as token gen failed with status {}",  statusCode);
-        }
-
-        log.info("Test auth completed with status code: {}", statusCode);
+        final Integer res = publisher.publish(DUMMY_LIST, DUMMY_METADATA);
         return ResponseEntity.ok()
                 .contentType(new MediaType("application", "vnd.courtlistpublishing-service.test-auth.post+json"))
-                .body(statusCode);
+                .body(res);
     }
 
     private static final String DUMMY_LIST = """
