@@ -45,7 +45,7 @@ public class CourtListPdfHelper {
             // Generate and upload PDF
             String sasUrl = pdfGenerationService.generateAndUploadPdf(payloadJson, courtListId);
             
-            log.info("Successfully generated and uploaded PDF for court list ID: {}. SAS URL: {}", courtListId, sasUrl);
+            log.info("Successfully generated and uploaded PDF for court list ID: {}. SAS URL generated", courtListId);
             return sasUrl;
         } catch (IOException e) {
             log.error("Error generating and uploading PDF for court list ID: {}", courtListId, e);
