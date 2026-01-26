@@ -23,7 +23,7 @@ public class CaTHPublisher {
             log.info("Attempting to fetch local token...");
             localToken = azureIdentityService.getTokenFromLocalClientSecretCredentials();
             if (localToken != null) {
-                log.info("Successfully fetched local token: {}", localToken);
+                log.info("Successfully fetched local token");
             } else {
                 log.warn("Local token fetch returned null");
             }
@@ -38,7 +38,7 @@ public class CaTHPublisher {
             log.info("Attempting to fetch remote token...");
             remoteToken = azureIdentityService.getTokenFromRemoteClientSecretCredentials();
             if (remoteToken != null) {
-                log.info("Successfully fetched remote token: {}", remoteToken);
+                log.info("Successfully fetched remote token");
             } else {
                 log.warn("Remote token fetch returned null");
             }
