@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 @Service
 @RequiredArgsConstructor
@@ -14,14 +15,14 @@ public class CourtListQueryService {
     private final CourtListTransformationService transformationService;
     private final PublicCourtListTransformationService publicCourtListTransformationService;
 
-    public CourtListDocument queryCourtList(String listId, String courtCentreId, String startDate, String endDate, String cjscppuid) {
+    public CourtListDocument queryCourtList(CourtListType listId, String courtCentreId, String startDate, String endDate, String cjscppuid) {
         try {
             // Fetch data from common-platform-query-api
             var payload = listingQueryService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
 
             // Transform to required format based on listId
             CourtListDocument document;
-            if ("PUBLIC".equalsIgnoreCase(listId)) {
+            if ("PUBLIC".equalsIgnoreCase(listId.name())) {
                 log.info("Using PublicCourtListTransformationService for PUBLIC list type");
                 document = publicCourtListTransformationService.transform(payload);
             } else {

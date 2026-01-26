@@ -74,9 +74,9 @@ class CourtListPublishControllerTest {
 
         when(service.createOrUpdate(
                 any(UUID.class),
-                any(UUID.class),
-                any(Status.class),
-                any(CourtListType.class)
+                any(CourtListType.class),
+                any(LocalDate.class),
+                any(LocalDate.class)
         )).thenReturn(toResponse(expectedEntity));
 
         // When & Then
@@ -93,10 +93,10 @@ class CourtListPublishControllerTest {
                 .andExpect(jsonPath("$.lastUpdated").exists());
 
         verify(service).createOrUpdate(
-                any(UUID.class),
                 eq(request.getCourtCentreId()),
-                eq(Status.REQUESTED),
-                eq(request.getCourtListType())
+                eq(request.getCourtListType()),
+                eq(request.getStartDate()),
+                eq(request.getEndDate())
         );
     }
 

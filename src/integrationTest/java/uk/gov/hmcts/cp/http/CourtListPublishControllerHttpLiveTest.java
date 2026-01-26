@@ -208,7 +208,7 @@ public class CourtListPublishControllerHttpLiveTest {
             {
                 "courtCentreId": "%s",
                 "startDate": "2026-01-20",
-                "endDate": "2026-01-27",
+                "endDate": "2026-01-20",
                 "courtListType": "%s"
             }
             """.formatted(courtCentreId, courtListType);

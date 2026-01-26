@@ -39,29 +39,23 @@ public class CourtListPublishController implements CourtListPublishApi {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
         }
 
-        // Generate courtListId internally
-        final UUID courtListId = UUID.randomUUID();
-
-        // Set initial publishStatus to REQUESTED
-        final Status publishStatus = Status.REQUESTED;
-
-        LOG.atInfo().log("Creating court list publish status with generated court list ID: {} and initial status: {}",
-                courtListId, publishStatus);
+        LOG.atInfo().log("Creating or updating court list publish status for court centre ID: {}, type: {}, startDate: {}, endDate: {}",
+                request.getCourtCentreId(), request.getCourtListType(), request.getStartDate(), request.getEndDate());
 
         final CourtListPublishResponse response = service.createOrUpdate(
-                courtListId,
                 request.getCourtCentreId(),
-                publishStatus,
-                request.getCourtListType()
+                request.getCourtListType(),
+                request.getStartDate(),
+                request.getEndDate()
         );
 
         // Trigger the court list publishing and PDF generation task asynchronously
         try {
-            courtListTaskTriggerService.triggerCourtListTask(request, courtListId);
-            LOG.atInfo().log("Court list publishing task triggered for court list ID: {}", courtListId);
+            courtListTaskTriggerService.triggerCourtListTask(response);
+            LOG.atInfo().log("Court list publishing task triggered for court list ID: {}", response.getCourtListId());
         } catch (Exception e) {
             LOG.atError().log("Failed to trigger court list publishing task for court list ID: {}",
-                    courtListId, e);
+                    response.getCourtListId(), e);
         }
 
         return ResponseEntity.ok()

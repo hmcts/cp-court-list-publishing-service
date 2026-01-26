@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import uk.gov.hmcts.cp.models.CourtListPayload;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 import java.net.URI;
 
@@ -24,14 +25,14 @@ public class ListingQueryService {
     @Value("${common-platform-query-api.base-url}")
     private String commonPlatformQueryApiBaseUrl;
 
-    public CourtListPayload getCourtListPayload(String listId, String courtCentreId, String startDate, String endDate, String cjscppuid) {
+    public CourtListPayload getCourtListPayload(CourtListType listId, String courtCentreId, String startDate, String endDate, String cjscppuid) {
         log.info("Fetching court list payload for listId: {}, courtCentreId: {}, startDate: {}, endDate: {}",
                 listId, courtCentreId, startDate, endDate);
 
         URI uri = UriComponentsBuilder
                 .fromUriString(commonPlatformQueryApiBaseUrl)
                 .path("/listing-query-api/query/api/rest/listing/courtlistpayload")
-                .queryParam("listId", listId)
+                .queryParam("listId", listId.name())
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate)
                 .queryParam("endDate", endDate)
