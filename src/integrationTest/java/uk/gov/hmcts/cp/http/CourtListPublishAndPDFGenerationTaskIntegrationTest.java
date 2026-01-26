@@ -17,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.hmcts.cp.openapi.model.Status;
-@Disabled
 @Slf4j
 public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
 
@@ -44,8 +43,10 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         assertThat(publishBody.get("publishStatus").asText()).isEqualTo("REQUESTED");
         
         // Wait for async task to complete (task execution is asynchronous)
-        // Task manager polls and executes tasks, so we need to wait longer (30 seconds)
-        waitForTaskCompletion(courtListId, courtCentreId, 30000);
+        // Task manager JobExecutor polls the database and executes tasks
+        // Note: The task manager service is an external dependency that uses @Scheduled polling
+        // If tasks aren't executing, check that the JobExecutor is running and polling frequently enough
+        waitForTaskCompletion(courtListId, courtCentreId, 120000); // 2 minutes timeout
         
         // Verify status was updated to SUCCESSFUL
         ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
@@ -69,7 +70,8 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         UUID courtListId = UUID.fromString(publishBody.get("courtListId").asText());
 
         // Wait for async task to complete
-        waitForTaskCompletion(courtListId, courtCentreId, 30000);
+        // Task manager JobExecutor polls the database and executes tasks
+        waitForTaskCompletion(courtListId, courtCentreId, 120000); // 2 minutes timeout
         
         // Verify status was still updated to SUCCESSFUL (status update happens even if CaTH fails)
         // Note: WireMock verification removed as we're using static mappings
@@ -108,7 +110,8 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         }
         
         // Wait for async task to complete
-        waitForTaskCompletion(courtListId, courtCentreId, 30000);
+        // Task manager JobExecutor polls the database and executes tasks
+        waitForTaskCompletion(courtListId, courtCentreId, 120000); // 2 minutes timeout
         
         // Verify status was still updated to SUCCESSFUL
         // Note: WireMock verification removed as we're using static mappings
@@ -125,7 +128,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
             {
                 "courtCentreId": "%s",
                 "startDate": "2026-01-20",
-                "endDate": "2026-01-27",
+                "endDate": "2026-01-20",
                 "courtListType": "%s"
             }
             """.formatted(courtCentreId, courtListType);
