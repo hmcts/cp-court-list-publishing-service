@@ -34,9 +34,9 @@ services:
       - CP_CLP_DATASOURCE_URL=${CP_CLP_DATASOURCE_URL:-jdbc:postgresql://db:5432/courtlistpublishing}
       - CP_CLP_DATASOURCE_USERNAME=${CP_CLP_DATASOURCE_USERNAME:-app}
       - CP_CLP_DATASOURCE_PASSWORD=${CP_CLP_DATASOURCE_PASSWORD:-app}
-      - AZURE_STORAGE_ACCOUNT_NAME=${AZURE_STORAGE_ACCOUNT_NAME:test-account-name}
-      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:test-client-id}
-      - AZURE_TENANT_ID=${AZURE_TENANT_ID:test-tenant-id}
+      - AZURE_STORAGE_ACCOUNT_NAME=${AZURE_STORAGE_ACCOUNT_NAME:-test-account-name}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:-test-client-id}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID:-test-tenant-id}
     depends_on:
       db:
         condition: service_healthy

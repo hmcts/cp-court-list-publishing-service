@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-import uk.gov.hmcts.cp.openapi.model.PublishStatus;
+import uk.gov.hmcts.cp.openapi.model.Status;
 
 import java.util.UUID;
 
@@ -43,7 +43,7 @@ public class PdfGenerationTaskIntegrationTest {
         assertThat(publishResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode publishBody = parseResponse(publishResponse);
         UUID courtListId = UUID.fromString(publishBody.get("courtListId").asText());
-        assertThat(publishBody.get("publishStatus").asText()).isEqualTo("PUBLISH_REQUESTED");
+        assertThat(publishBody.get("publishStatus").asText()).isEqualTo("REQUESTED");
         
         // Wait for async task to complete (task execution is asynchronous)
         // Task manager polls and executes tasks, so we need to wait longer (30 seconds)
@@ -54,7 +54,7 @@ public class PdfGenerationTaskIntegrationTest {
         ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
-        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("PUBLISH_SUCCESSFUL");
+        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
         // Note: PDF generation happens asynchronously as part of COURT_LIST_PUBLISH_TASK,
         // so fileName might not be set immediately. The test verifies the task completed successfully.
     }
@@ -138,8 +138,8 @@ public class PdfGenerationTaskIntegrationTest {
                     log.debug("Poll #{}: Status = {}", pollCount, publishStatusStr);
                     
                     try {
-                        PublishStatus publishStatus = PublishStatus.valueOf(publishStatusStr);
-                        if (PublishStatus.PUBLISH_SUCCESSFUL.equals(publishStatus) || PublishStatus.PUBLISH_FAILED.equals(publishStatus)) {
+                        Status publishStatus = Status.valueOf(publishStatusStr);
+                        if (Status.SUCCESSFUL.equals(publishStatus) || Status.FAILED.equals(publishStatus)) {
                             // Task has completed (either successfully or with failure)
                             log.info("Task completed with status: {}", publishStatus);
                             return;

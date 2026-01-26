@@ -17,7 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
-import uk.gov.hmcts.cp.openapi.model.PublishStatus;
+import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 import uk.gov.hmcts.cp.services.CaTHService;
 import uk.gov.hmcts.cp.services.CourtListPdfHelper;
@@ -65,7 +65,8 @@ class CourtListPublishAndPDFGenerationTaskTest {
         entity = new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
-                PublishStatus.PUBLISH_REQUESTED,
+                Status.REQUESTED,
+                Status.REQUESTED,
                 CourtListType.PUBLIC,
                 Instant.now()
         );
@@ -92,7 +93,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        assertThat(entity.getPublishStatus()).isEqualTo(PublishStatus.PUBLISH_SUCCESSFUL);
+        assertThat(entity.getPublishStatus()).isEqualTo(Status.SUCCESSFUL);
         assertThat(entity.getLastUpdated()).isNotNull();
         verify(repository).getByCourtListId(courtListId);
         verify(repository).save(entity);

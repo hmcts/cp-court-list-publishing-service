@@ -3,7 +3,7 @@ package uk.gov.hmcts.cp.domain;
 import static jakarta.persistence.EnumType.STRING;
 
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
-import uk.gov.hmcts.cp.openapi.model.PublishStatus;
+import uk.gov.hmcts.cp.openapi.model.Status;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -34,7 +34,12 @@ public class CourtListStatusEntity {
     @Enumerated(STRING)
     @Setter
     @Column(name = "publish_status", nullable = false)
-    private PublishStatus publishStatus;
+    private Status publishStatus;
+
+    @Enumerated(STRING)
+    @Setter
+    @Column(name = "file_status", nullable = false)
+    private Status fileStatus;
 
     @Enumerated(STRING)
     @Setter
@@ -54,8 +59,12 @@ public class CourtListStatusEntity {
     private String fileName;
 
     @Setter
-    @Column(name = "error_message")
-    private String errorMessage;
+    @Column(name = "publish_error_message")
+    private String publishErrorMessage;
+
+    @Setter
+    @Column(name = "file_error_message")
+    private String fileErrorMessage;
 
     @Setter
     @Column(name = "publish_date")
@@ -67,12 +76,14 @@ public class CourtListStatusEntity {
     public CourtListStatusEntity(
             final UUID courtListId,
             final UUID courtCentreId,
-            final PublishStatus publishStatus,
+            final Status publishStatus,
+            final Status fileStatus,
             final CourtListType courtListType,
             final Instant lastUpdated) {
         this.courtListId = Objects.requireNonNull(courtListId);
         this.courtCentreId = Objects.requireNonNull(courtCentreId);
         this.publishStatus = publishStatus;
+        this.fileStatus = Objects.requireNonNull(fileStatus);
         this.courtListType = Objects.requireNonNull(courtListType);
         this.lastUpdated = Objects.requireNonNull(lastUpdated);
     }
