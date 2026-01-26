@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
+import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus;
 import uk.gov.hmcts.cp.taskmanager.service.ExecutionService;
@@ -28,7 +28,7 @@ public class CourtListTaskTriggerService {
     private static final String ERROR_COURT_CENTRE_ID_REQUIRED = "Court centre ID is required";
     private static final String ERROR_COURT_LIST_TYPE_REQUIRED = "Court list type is required";
     public static final String COURT_LIST_ID_IS_REQUIRED = "Court list ID is required";
-    public static final String REQUEST_IS_REQUIRED = "Request is required";
+    public static final String RESPONSE_IS_REQUIRED = "Response is required";
 
     @Autowired
     ExecutionService executionService;
@@ -37,28 +37,28 @@ public class CourtListTaskTriggerService {
      * Triggers the court list tasks asynchronously.
      */
     @Transactional
-    public void triggerCourtListTask(final CourtListPublishRequest request, final UUID courtListId) {
-        if (request == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, REQUEST_IS_REQUIRED);
+    public void triggerCourtListTask(final CourtListPublishResponse response) {
+        if (response == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, RESPONSE_IS_REQUIRED);
         }
-        if (request.getCourtCentreId() == null) {
+        if (response.getCourtListId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, COURT_LIST_ID_IS_REQUIRED);
+        }
+        if (response.getCourtCentreId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ERROR_COURT_CENTRE_ID_REQUIRED);
         }
-        if (request.getCourtListType() == null) {
+        if (response.getCourtListType() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ERROR_COURT_LIST_TYPE_REQUIRED);
-        }
-        if (courtListId == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, COURT_LIST_ID_IS_REQUIRED);
         }
 
         LOG.atInfo().log("Triggering court list tasks for court list ID: {}, court centre ID: {} and type: {}",
-                courtListId, request.getCourtCentreId(), request.getCourtListType());
+                response.getCourtListId(), response.getCourtCentreId(), response.getCourtListType());
 
         // Create jobData with courtListId, courtCentreId, and courtListType
         JsonObject jobData = Json.createObjectBuilder()
-                .add("courtListId", courtListId.toString())
-                .add("courtCentreId", request.getCourtCentreId().toString())
-                .add("courtListType", request.getCourtListType().toString())
+                .add("courtListId", response.getCourtListId().toString())
+                .add("courtCentreId", response.getCourtCentreId().toString())
+                .add("courtListType", response.getCourtListType().toString())
                 .build();
 
         ExecutionInfo executionInfo = executionInfo()

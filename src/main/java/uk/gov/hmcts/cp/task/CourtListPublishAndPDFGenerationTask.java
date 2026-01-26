@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 import uk.gov.hmcts.cp.services.CaTHService;
@@ -42,6 +43,9 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     private final CaTHService cathService;
     private final ListingQueryService listingQueryService;
     private final Optional<CourtListPdfHelper> pdfHelper;
+
+    //This falg is only temporary and needs to be removed by 2026-02-07
+    private final boolean mockDataForUi = false;
 
     public CourtListPublishAndPDFGenerationTask(CourtListStatusRepository repository,
                                                 CourtListQueryService courtListQueryService,
@@ -83,7 +87,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
         try {
             // Generate and upload PDF if PDF helper is available
-            String sasUrl = generateAndUploadPdf(executionInfo);
+            String sasUrl = mockDataForUi? getMockBlobSasUrl(executionInfo) : generateAndUploadPdf(executionInfo);
             if (sasUrl != null && courtListId != null) {
                 // Update fileName and lastUpdated after successful PDF generation
                 updateFileNameAndLastUpdated(courtListId, sasUrl);
@@ -97,6 +101,16 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                 .build();
     }
 
+    private String getMockBlobSasUrl(final ExecutionInfo executionInfo) {
+        final CourtListType clt = extractCourtListType((executionInfo.getJobData()));
+
+        if(clt == CourtListType.PUBLIC) {
+            return "https://sastecourtlistpublisher.blob.core.windows.net/courtpublisher-blob-container/Online%20Public%20court%20list%20-%20Lavender%20Hill%20Magistrates'%20Court%2C%20All%20courtrooms%20-%2026-01-2026.pdf?st=2026-01-26T13:22:49Z&se=2026-12-31T21:37:49Z&si=ReadPolicyIdentifier&spr=https&sv=2024-11-04&sr=b&sig=%2F7gXu1fPVDnLpGfnC3xQZcGBL3LTUfKCZWfCYPOiCrQ%3D";
+        }
+
+        return "https://sastecourtlistpublisher.blob.core.windows.net/courtpublisher-blob-container/Standard%20court%20list%20-%20Lavender%20Hill%20Magistrates'%20Court%2C%20All%20courtrooms%20-%2026-01-2026.pdf?st=2026-01-26T13:25:46Z&se=2027-01-26T21:40:46Z&si=ReadPolicyIdentifier&spr=https&sv=2024-11-04&sr=b&sig=RtPqpntJQnM9h4jR8SUGDHP9502I4x%2BrOU9MNkF%2F4YQ%3D";
+    }
+
     private void queryAndSendCourtListToCaTH(ExecutionInfo executionInfo) {
         JsonObject jobData = executionInfo.getJobData();
         if (jobData == null) {
@@ -105,7 +119,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
 
         // Extract parameters from jobData
-        String listId = extractListId(jobData);
+        CourtListType listId = extractCourtListType(jobData);
         String courtCentreId = extractCourtCentreId(jobData);
 
         if (listId == null || courtCentreId == null) {
@@ -130,7 +144,11 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
             // Send transformed data to CaTH endpoint
             logger.info("Sending transformed court list document to CaTH endpoint");
-            cathService.sendCourtListToCaTH(courtListDocument);
+            if (mockDataForUi) {
+                logger.info("Not calling CaTH as we are in mock mode");
+            } else {
+                cathService.sendCourtListToCaTH(courtListDocument);
+            }
             logger.info("Successfully sent court list document to CaTH endpoint");
         } catch (Exception e) {
             logger.error("Error querying or sending court list to CaTH", e);
@@ -152,24 +170,24 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
         // Extract parameters from jobData
         UUID courtListId = extractCourtListId(jobData);
-        String listId = extractListId(jobData);
+        CourtListType courtListType = extractCourtListType(jobData);
         String courtCentreId = extractCourtCentreId(jobData);
 
-        if (courtListId == null || listId == null || courtCentreId == null) {
-            logger.warn("Missing required parameters for PDF generation: courtListId={}, listId={}, courtCentreId={}",
-                    courtListId, listId, courtCentreId);
+        if (courtListId == null || courtListType == null || courtCentreId == null) {
+            logger.warn("Missing required parameters for PDF generation: courtListId={}, courtListType={}, courtCentreId={}",
+                    courtListId, courtListType, courtCentreId);
             return null;
         }
 
         // Get today's date for startDate and endDate
         String todayDate = LocalDate.now().format(DATE_FORMATTER);
-        logger.info("Generating PDF for court list ID: {}, listId: {}, courtCentreId: {}",
-                courtListId, listId, courtCentreId);
+        logger.info("Generating PDF for court list ID: {}, courtListType: {}, courtCentreId: {}",
+                courtListId, courtListType, courtCentreId);
 
         try {
             // Fetch payload for PDF generation
             var payload = listingQueryService.getCourtListPayload(
-                    listId,
+                    courtListType,
                     courtCentreId,
                     todayDate,
                     todayDate,
@@ -192,9 +210,9 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
     }
 
-    private String extractListId(JsonObject jobData) {
+    private CourtListType extractCourtListType(JsonObject jobData) {
         try {
-            return jobData.getString(COURT_LIST_TYPE, null);
+            return CourtListType.valueOf(jobData.getString(COURT_LIST_TYPE, "").toUpperCase());
         } catch (Exception e) {
             logger.warn("Could not extract listId (courtListType) from JsonObject", e);
             return null;

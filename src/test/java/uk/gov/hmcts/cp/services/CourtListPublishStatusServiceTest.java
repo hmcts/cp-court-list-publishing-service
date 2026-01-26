@@ -14,7 +14,9 @@ import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -95,26 +97,27 @@ class CourtListPublishStatusServiceTest {
     @Test
     void createOrUpdate_shouldCreateNewEntity_whenEntityDoesNotExist() {
         // Given
-        UUID courtListId = UUID.randomUUID();
         UUID courtCentreId = UUID.randomUUID();
-        Status publishStatus = Status.REQUESTED;
         CourtListType courtListType = CourtListType.STANDARD;
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now();
 
-        when(repository.getByCourtListId(courtListId)).thenReturn(null);
+        when(repository.findByCourtCentreIdAndPublishDateAndCourtListType(courtCentreId, startDate, courtListType))
+                .thenReturn(Optional.empty());
         when(repository.save(any(CourtListStatusEntity.class))).thenAnswer(invocation -> invocation.<CourtListStatusEntity>getArgument(0));
 
         // When
         CourtListPublishResponse result = service.createOrUpdate(
-                courtListId, courtCentreId, publishStatus, courtListType);
+                courtCentreId, courtListType, startDate, endDate);
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.getCourtListId()).isEqualTo(courtListId);
+        assertThat(result.getCourtListId()).isNotNull();
         assertThat(result.getCourtCentreId()).isEqualTo(courtCentreId);
-        assertThat(result.getPublishStatus()).isEqualTo(publishStatus);
+        assertThat(result.getPublishStatus()).isEqualTo(Status.REQUESTED);
         assertThat(result.getCourtListType()).isEqualTo(courtListType);
         assertThat(result.getLastUpdated()).isNotNull();
-        verify(repository).getByCourtListId(courtListId);
+        verify(repository).findByCourtCentreIdAndPublishDateAndCourtListType(courtCentreId, startDate, courtListType);
         verify(repository).save(any(CourtListStatusEntity.class));
     }
 
@@ -123,84 +126,44 @@ class CourtListPublishStatusServiceTest {
         // Given
         UUID courtListId = UUID.randomUUID();
         UUID courtCentreId = UUID.randomUUID();
-        Status newPublishStatus = Status.REQUESTED;
-        CourtListType newCourtListType = CourtListType.ALPHABETICAL;
+        CourtListType courtListType = CourtListType.ALPHABETICAL;
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now();
 
         CourtListStatusEntity existingEntity = new CourtListStatusEntity(
                 courtListId,
-                UUID.randomUUID(),
+                courtCentreId,
+                Status.SUCCESSFUL,
                 Status.REQUESTED,
-                Status.REQUESTED,
-                CourtListType.FINAL,
+                courtListType,
                 Instant.now()
         );
+        existingEntity.setPublishDate(startDate);
 
-        when(repository.getByCourtListId(courtListId)).thenReturn(existingEntity);
+        when(repository.findByCourtCentreIdAndPublishDateAndCourtListType(courtCentreId, startDate, courtListType))
+                .thenReturn(Optional.of(existingEntity));
         when(repository.save(existingEntity)).thenReturn(existingEntity);
 
         // When
         CourtListPublishResponse result = service.createOrUpdate(
-                courtListId, courtCentreId, newPublishStatus, newCourtListType);
+                courtCentreId, courtListType, startDate, endDate);
 
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getCourtListId()).isEqualTo(courtListId);
         assertThat(result.getCourtCentreId()).isEqualTo(courtCentreId);
-        assertThat(result.getPublishStatus()).isEqualTo(newPublishStatus);
-        assertThat(result.getCourtListType()).isEqualTo(newCourtListType);
+        assertThat(result.getPublishStatus()).isEqualTo(Status.REQUESTED);
+        assertThat(result.getCourtListType()).isEqualTo(courtListType);
         assertThat(result.getLastUpdated()).isNotNull();
-        verify(repository).getByCourtListId(courtListId);
+        verify(repository).findByCourtCentreIdAndPublishDateAndCourtListType(courtCentreId, startDate, courtListType);
         verify(repository).save(existingEntity);
-    }
-
-    @Test
-    void createOrUpdate_shouldThrowResponseStatusException_whenCourtListIdIsNull() {
-        // When & Then
-        assertThatThrownBy(() -> service.createOrUpdate(
-                null, UUID.randomUUID(), Status.REQUESTED, CourtListType.FINAL))
-                .isInstanceOf(ResponseStatusException.class)
-                .satisfies(exception -> {
-                    ResponseStatusException ex = (ResponseStatusException) exception;
-                    assertThat(ex.getStatusCode().value()).isEqualTo(400);
-                });
-
-        verify(repository, never()).getByCourtListId(any());
-        verify(repository, never()).save(any());
     }
 
     @Test
     void createOrUpdate_shouldThrowResponseStatusException_whenCourtCentreIdIsNull() {
         // When & Then
         assertThatThrownBy(() -> service.createOrUpdate(
-                UUID.randomUUID(), null, Status.REQUESTED, CourtListType.DRAFT))
-                .isInstanceOf(ResponseStatusException.class)
-                .satisfies(exception -> {
-                    ResponseStatusException ex = (ResponseStatusException) exception;
-                    assertThat(ex.getStatusCode().value()).isEqualTo(400);
-                });
-
-        verify(repository, never()).save(any());
-    }
-
-    @Test
-    void createOrUpdate_shouldThrowResponseStatusException_whenPublishStatusIsNull() {
-        // When & Then
-        assertThatThrownBy(() -> service.createOrUpdate(
-                UUID.randomUUID(), UUID.randomUUID(), null, CourtListType.FIRM))
-                .isInstanceOf(ResponseStatusException.class)
-                .satisfies(exception -> {
-                    ResponseStatusException ex = (ResponseStatusException) exception;
-                    assertThat(ex.getStatusCode().value()).isEqualTo(400);
-                });
-
-        verify(repository, never()).save(any());
-    }
-
-    @Test
-    void createOrUpdate_shouldThrowResponseStatusException_whenPublishStatusIsBlank() {
-        // When & Then
-        assertThatThrownBy(() -> service.createOrUpdate(
-                UUID.randomUUID(), UUID.randomUUID(), null, CourtListType.PUBLIC))
+                null, CourtListType.FINAL, LocalDate.now(), LocalDate.now()))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> {
                     ResponseStatusException ex = (ResponseStatusException) exception;
@@ -214,7 +177,49 @@ class CourtListPublishStatusServiceTest {
     void createOrUpdate_shouldThrowResponseStatusException_whenCourtListTypeIsNull() {
         // When & Then
         assertThatThrownBy(() -> service.createOrUpdate(
-                UUID.randomUUID(), UUID.randomUUID(), Status.REQUESTED, null))
+                UUID.randomUUID(), null, LocalDate.now(), LocalDate.now()))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(exception -> {
+                    ResponseStatusException ex = (ResponseStatusException) exception;
+                    assertThat(ex.getStatusCode().value()).isEqualTo(400);
+                });
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void createOrUpdate_shouldThrowResponseStatusException_whenStartDateIsNull() {
+        // When & Then
+        assertThatThrownBy(() -> service.createOrUpdate(
+                UUID.randomUUID(), CourtListType.FIRM, null, LocalDate.now()))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(exception -> {
+                    ResponseStatusException ex = (ResponseStatusException) exception;
+                    assertThat(ex.getStatusCode().value()).isEqualTo(400);
+                });
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void createOrUpdate_shouldThrowResponseStatusException_whenEndDateIsNull() {
+        // When & Then
+        assertThatThrownBy(() -> service.createOrUpdate(
+                UUID.randomUUID(), CourtListType.PUBLIC, LocalDate.now(), null))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(exception -> {
+                    ResponseStatusException ex = (ResponseStatusException) exception;
+                    assertThat(ex.getStatusCode().value()).isEqualTo(400);
+                });
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void createOrUpdate_shouldThrowResponseStatusException_whenStartDateDoesNotEqualEndDate() {
+        // When & Then
+        assertThatThrownBy(() -> service.createOrUpdate(
+                UUID.randomUUID(), CourtListType.STANDARD, LocalDate.now(), LocalDate.now().plusDays(1)))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> {
                     ResponseStatusException ex = (ResponseStatusException) exception;

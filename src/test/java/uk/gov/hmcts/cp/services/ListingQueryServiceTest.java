@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.hmcts.cp.models.CourtListPayload;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 import java.net.URI;
 
@@ -34,7 +35,7 @@ class ListingQueryServiceTest {
     @InjectMocks
     private ListingQueryService listingQueryService;
 
-    private String listId;
+    private CourtListType courtListType;
     private String courtCentreId;
     private String startDate;
     private String endDate;
@@ -52,7 +53,7 @@ class ListingQueryServiceTest {
             // Ignore if reflection fails
         }
 
-        listId = "STANDARD";
+        courtListType = CourtListType.STANDARD;
         courtCentreId = "f8254db1-1683-483e-afb3-b87fde5a0a26";
         startDate = "2026-01-05";
         endDate = "2026-01-12";
@@ -85,7 +86,7 @@ class ListingQueryServiceTest {
         )).thenReturn(responseEntity);
 
         // When
-        CourtListPayload result = listingQueryService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
+        CourtListPayload result = listingQueryService.getCourtListPayload(courtListType, courtCentreId, startDate, endDate, cjscppuid);
 
         // Then - Verify the result
         assertThat(result).isNotNull();
@@ -133,7 +134,7 @@ class ListingQueryServiceTest {
         )).thenThrow(new RestClientException("Connection failed"));
 
         // When & Then
-        assertThatThrownBy(() -> listingQueryService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid))
+        assertThatThrownBy(() -> listingQueryService.getCourtListPayload(courtListType, courtCentreId, startDate, endDate, cjscppuid))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to fetch court list payload from common-platform-query-api");
     }

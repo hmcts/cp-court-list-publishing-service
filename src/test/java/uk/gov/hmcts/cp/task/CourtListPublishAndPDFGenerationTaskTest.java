@@ -266,7 +266,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         CourtListDocument courtListDocument = CourtListDocument.builder().build();
 
         when(courtListQueryService.queryCourtList(
-                "PUBLIC",
+                CourtListType.PUBLIC,
                 courtCentreId.toString(),
                 todayDate,
                 todayDate,
@@ -280,7 +280,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService).queryCourtList(
-                "PUBLIC",
+                CourtListType.PUBLIC,
                 courtCentreId.toString(),
                 todayDate,
                 todayDate,
@@ -406,7 +406,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         CourtListDocument courtListDocument = CourtListDocument.builder().build();
 
         when(courtListQueryService.queryCourtList(
-                "PUBLIC",
+                CourtListType.PUBLIC,
                 courtCentreId.toString(),
                 expectedDate,
                 expectedDate,
@@ -418,7 +418,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
 
         // Then
         verify(courtListQueryService).queryCourtList(
-                "PUBLIC",
+                CourtListType.PUBLIC,
                 courtCentreId.toString(),
                 expectedDate,
                 expectedDate,
@@ -441,7 +441,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 any(), any(), any(), any(), any()
         )).thenReturn(courtListDocument);
         when(listingQueryService.getCourtListPayload(
-                "PUBLIC",
+                CourtListType.PUBLIC,
                 courtCentreId.toString(),
                 todayDate,
                 todayDate,
@@ -456,7 +456,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(listingQueryService).getCourtListPayload(
-                "PUBLIC",
+                CourtListType.PUBLIC,
                 courtCentreId.toString(),
                 todayDate,
                 todayDate,

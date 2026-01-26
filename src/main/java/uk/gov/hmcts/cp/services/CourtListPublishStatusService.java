@@ -7,10 +7,12 @@ import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,7 @@ public class CourtListPublishStatusService {
     private static final String ERROR_PUBLISH_STATUS_REQUIRED = "Status is required";
     private static final String ERROR_COURT_LIST_TYPE_REQUIRED = "Court list type is required";
     private static final String ERROR_ENTITY_NOT_FOUND = "Court list publish status not found";
+    private static final String ERROR_START_END_DATE_MISMATCH = "Start date and end date must be the same";
 
     private final CourtListStatusRepository repository;
 
@@ -50,24 +53,32 @@ public class CourtListPublishStatusService {
 
     @Transactional
     public CourtListPublishResponse createOrUpdate(
-            final UUID courtListId,
             final UUID courtCentreId,
-            final Status publishStatus,
-            final CourtListType courtListType) {
-        validateCourtListId(courtListId);
+            final CourtListType courtListType,
+            final LocalDate startDate,
+            final LocalDate endDate) {
         validateCourtCentreId(courtCentreId);
-        validatePublishStatus(publishStatus);
         validateCourtListType(courtListType);
+        validateStartAndEndDate(startDate, endDate);
 
-        LOG.atDebug().log("Creating or updating court list publish status for ID: {}", courtListId);
-        CourtListStatusEntity entity = repository.getByCourtListId(courtListId);
+        final LocalDate publishDate = startDate; // Use startDate as publishDate since they must be equal
 
-        if (entity != null) {
-            LOG.atDebug().log("Updating existing court list publish status for ID: {}", courtListId);
-            updateEntity(entity, courtCentreId, publishStatus, courtListType);
+        LOG.atDebug().log("Creating or updating court list publish status for court centre ID: {}, type: {}, date: {}",
+                courtCentreId, courtListType, publishDate);
+
+        // Search for existing entity by courtCentreId, publishDate, and courtListType
+        Optional<CourtListStatusEntity> existingEntityOpt = repository.findByCourtCentreIdAndPublishDateAndCourtListType(
+                courtCentreId, publishDate, courtListType);
+
+        CourtListStatusEntity entity;
+        if (existingEntityOpt.isPresent()) {
+            entity = existingEntityOpt.get();
+            LOG.atDebug().log("Found existing court list publish status with ID: {}, updating with status REQUESTED", entity.getCourtListId());
+            updateExistingEntity(entity);
         } else {
-            LOG.atDebug().log("Creating new court list publish status for ID: {}", courtListId);
-            entity = createNewEntity(courtListId, courtCentreId, publishStatus, courtListType);
+            LOG.atDebug().log("No existing court list publish status found, creating new one");
+            final UUID courtListId = UUID.randomUUID();
+            entity = createNewEntity(courtListId, courtCentreId, courtListType, publishDate);
         }
 
         CourtListStatusEntity savedEntity = repository.save(entity);
@@ -122,32 +133,39 @@ public class CourtListPublishStatusService {
         }
     }
 
+    private void validateStartAndEndDate(final LocalDate startDate, final LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            LOG.atWarn().log("Start date or end date is null");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Start date and end date are required");
+        }
+        if (!startDate.equals(endDate)) {
+            LOG.atWarn().log("Start date {} does not match end date {}", startDate, endDate);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ERROR_START_END_DATE_MISMATCH);
+        }
+    }
+
     // Entity helper methods
 
-    private void updateEntity(
-            final CourtListStatusEntity entity,
-            final UUID courtCentreId,
-            final Status publishStatus,
-            final CourtListType courtListType) {
-        entity.setCourtCentreId(courtCentreId);
-        entity.setPublishStatus(publishStatus);
-        entity.setCourtListType(courtListType);
+    private void updateExistingEntity(final CourtListStatusEntity entity) {
+        entity.setPublishStatus(Status.REQUESTED);
         entity.setLastUpdated(Instant.now());
     }
 
     private CourtListStatusEntity createNewEntity(
             final UUID courtListId,
             final UUID courtCentreId,
-            final Status publishStatus,
-            final CourtListType courtListType) {
-        return new CourtListStatusEntity(
+            final CourtListType courtListType,
+            final LocalDate publishDate) {
+        CourtListStatusEntity entity = new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
-                publishStatus,
+                Status.REQUESTED, // Initial publish status
                 Status.REQUESTED, // Default file status for new entities
                 courtListType,
                 Instant.now()
         );
+        entity.setPublishDate(publishDate);
+        return entity;
     }
 
     // Mapper method to convert entity to response
