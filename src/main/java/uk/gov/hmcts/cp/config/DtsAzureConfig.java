@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 @Getter
 public class DtsAzureConfig {
 
-    @Value("${azure.local.dts.apimUrl:https://spnl-apim-int-gw.cpp.nonlive/publishing-hub/v2/publication}")
+    @Value("${azure.local.dts.apimUrl:}")
     private String azureLocalDtsApimUrl;
 
     @Value("${azure.local.dts.clientId:}")
