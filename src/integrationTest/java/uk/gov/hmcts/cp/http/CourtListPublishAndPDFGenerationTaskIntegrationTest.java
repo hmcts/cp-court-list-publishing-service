@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -15,8 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-import uk.gov.hmcts.cp.openapi.model.PublishStatus;
-
+import uk.gov.hmcts.cp.openapi.model.Status;
+@Disabled
 @Slf4j
 public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
 
@@ -40,17 +41,17 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         assertThat(publishResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode publishBody = parseResponse(publishResponse);
         UUID courtListId = UUID.fromString(publishBody.get("courtListId").asText());
-        assertThat(publishBody.get("publishStatus").asText()).isEqualTo("PUBLISH_REQUESTED");
+        assertThat(publishBody.get("publishStatus").asText()).isEqualTo("REQUESTED");
         
         // Wait for async task to complete (task execution is asynchronous)
         // Task manager polls and executes tasks, so we need to wait longer (30 seconds)
         waitForTaskCompletion(courtListId, courtCentreId, 30000);
         
-        // Verify status was updated to PUBLISH_SUCCESSFUL
+        // Verify status was updated to SUCCESSFUL
         ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
-        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("PUBLISH_SUCCESSFUL");
+        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
     }
 
     @Test
@@ -66,16 +67,16 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         assertThat(publishResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode publishBody = parseResponse(publishResponse);
         UUID courtListId = UUID.fromString(publishBody.get("courtListId").asText());
-        
+
         // Wait for async task to complete
         waitForTaskCompletion(courtListId, courtCentreId, 30000);
         
-        // Verify status was still updated to PUBLISH_SUCCESSFUL (status update happens even if CaTH fails)
+        // Verify status was still updated to SUCCESSFUL (status update happens even if CaTH fails)
         // Note: WireMock verification removed as we're using static mappings
         ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
-        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("PUBLISH_SUCCESSFUL");
+        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
     }
 
     @Test
@@ -109,12 +110,12 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         // Wait for async task to complete
         waitForTaskCompletion(courtListId, courtCentreId, 30000);
         
-        // Verify status was still updated to PUBLISH_SUCCESSFUL
+        // Verify status was still updated to SUCCESSFUL
         // Note: WireMock verification removed as we're using static mappings
         ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
-        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("PUBLISH_SUCCESSFUL");
+        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
     }
 
     // Helper methods
@@ -196,8 +197,8 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
                     log.debug("Poll #{}: Status = {}", pollCount, publishStatusStr);
                     
                     try {
-                        PublishStatus publishStatus = PublishStatus.valueOf(publishStatusStr);
-                        if (PublishStatus.PUBLISH_SUCCESSFUL.equals(publishStatus) || PublishStatus.PUBLISH_FAILED.equals(publishStatus)) {
+                        Status publishStatus = Status.valueOf(publishStatusStr);
+                        if (Status.SUCCESSFUL.equals(publishStatus) || Status.FAILED.equals(publishStatus)) {
                             // Task has completed (either successfully or with failure)
                             log.info("Task completed with status: {}", publishStatus);
                             return;

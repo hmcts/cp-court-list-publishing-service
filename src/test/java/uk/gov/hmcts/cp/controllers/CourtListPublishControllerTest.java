@@ -15,7 +15,7 @@ import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
-import uk.gov.hmcts.cp.openapi.model.PublishStatus;
+import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 
 import java.time.Instant;
@@ -75,7 +75,7 @@ class CourtListPublishControllerTest {
         when(service.createOrUpdate(
                 any(UUID.class),
                 any(UUID.class),
-                any(PublishStatus.class),
+                any(Status.class),
                 any(CourtListType.class)
         )).thenReturn(toResponse(expectedEntity));
 
@@ -88,14 +88,14 @@ class CourtListPublishControllerTest {
                 .andExpect(jsonPath("$.courtListId").exists())
                 .andExpect(jsonPath("$.courtCentreId").value(request.getCourtCentreId().toString()))
                 .andExpect(jsonPath("$.publishStatus").exists())
-                .andExpect(jsonPath("$.publishStatus").value(PublishStatus.PUBLISH_REQUESTED.toString()))
+                .andExpect(jsonPath("$.publishStatus").value(Status.REQUESTED.toString()))
                 .andExpect(jsonPath("$.courtListType").value(request.getCourtListType().toString()))
                 .andExpect(jsonPath("$.lastUpdated").exists());
 
         verify(service).createOrUpdate(
                 any(UUID.class),
                 eq(request.getCourtCentreId()),
-                eq(PublishStatus.PUBLISH_REQUESTED),
+                eq(Status.REQUESTED),
                 eq(request.getCourtListType())
         );
     }
@@ -178,10 +178,9 @@ class CourtListPublishControllerTest {
 
     private CourtListPublishRequest createValidRequest() {
         return new CourtListPublishRequest(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
-                LocalDate.now(),
-                LocalDate.now(),
+                UUID.randomUUID(),  // courtCentreId
+                LocalDate.now(),    // startDate
+                LocalDate.now(),    // endDate
                 CourtListType.STANDARD
         );
     }
@@ -191,7 +190,8 @@ class CourtListPublishControllerTest {
         return new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
-                PublishStatus.PUBLISH_REQUESTED,
+                Status.REQUESTED,
+                Status.REQUESTED,
                 courtListType,
                 Instant.now()
         );
@@ -202,18 +202,21 @@ class CourtListPublishControllerTest {
                 ? entity.getLastUpdated().atOffset(ZoneOffset.UTC)
                 : null;
 
-        // Convert String publishStatus to PublishStatus enum
-        PublishStatus publishStatusEnum = entity.getPublishStatus();
+        // Convert String publishStatus to Status enum
+        Status publishStatusEnum = entity.getPublishStatus();
+        Status fileStatusEnum = entity.getFileStatus();
 
         return new CourtListPublishResponse(
                 entity.getCourtListId(),
                 entity.getCourtCentreId(),
                 publishStatusEnum,
+                fileStatusEnum,
                 entity.getCourtListType(),
                 lastUpdated,
                 entity.getCourtListFileId(),
                 entity.getFileName(),
-                entity.getErrorMessage(),
+                entity.getPublishErrorMessage(),
+                entity.getFileErrorMessage(),
                 entity.getPublishDate()
         );
     }

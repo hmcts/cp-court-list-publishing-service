@@ -3,7 +3,7 @@ package uk.gov.hmcts.cp.services;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
-import uk.gov.hmcts.cp.openapi.model.PublishStatus;
+import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 
 import java.time.Instant;
@@ -29,7 +29,7 @@ public class CourtListPublishStatusService {
     private static final Logger LOG = LoggerFactory.getLogger(CourtListPublishStatusService.class);
     private static final String ERROR_COURT_LIST_ID_REQUIRED = "Court list ID is required";
     private static final String ERROR_COURT_CENTRE_ID_REQUIRED = "Court centre ID is required";
-    private static final String ERROR_PUBLISH_STATUS_REQUIRED = "Publish status is required";
+    private static final String ERROR_PUBLISH_STATUS_REQUIRED = "Status is required";
     private static final String ERROR_COURT_LIST_TYPE_REQUIRED = "Court list type is required";
     private static final String ERROR_ENTITY_NOT_FOUND = "Court list publish status not found";
 
@@ -52,7 +52,7 @@ public class CourtListPublishStatusService {
     public CourtListPublishResponse createOrUpdate(
             final UUID courtListId,
             final UUID courtCentreId,
-            final PublishStatus publishStatus,
+            final Status publishStatus,
             final CourtListType courtListType) {
         validateCourtListId(courtListId);
         validateCourtCentreId(courtCentreId);
@@ -108,7 +108,7 @@ public class CourtListPublishStatusService {
         }
     }
 
-    private void validatePublishStatus(final PublishStatus publishStatus) {
+    private void validatePublishStatus(final Status publishStatus) {
         if (publishStatus == null) {
             LOG.atWarn().log("No publish status provided");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ERROR_PUBLISH_STATUS_REQUIRED);
@@ -127,7 +127,7 @@ public class CourtListPublishStatusService {
     private void updateEntity(
             final CourtListStatusEntity entity,
             final UUID courtCentreId,
-            final PublishStatus publishStatus,
+            final Status publishStatus,
             final CourtListType courtListType) {
         entity.setCourtCentreId(courtCentreId);
         entity.setPublishStatus(publishStatus);
@@ -138,12 +138,13 @@ public class CourtListPublishStatusService {
     private CourtListStatusEntity createNewEntity(
             final UUID courtListId,
             final UUID courtCentreId,
-            final PublishStatus publishStatus,
+            final Status publishStatus,
             final CourtListType courtListType) {
         return new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
                 publishStatus,
+                Status.REQUESTED, // Default file status for new entities
                 courtListType,
                 Instant.now()
         );
@@ -160,18 +161,21 @@ public class CourtListPublishStatusService {
             throw new IllegalStateException("Court list type is required and cannot be null");
         }
 
-        // Convert String publishStatus to PublishStatus enum
-        PublishStatus publishStatusEnum = entity.getPublishStatus();
+        // Convert String publishStatus to Status enum
+        Status publishStatusEnum = entity.getPublishStatus();
+        Status fileStatusEnum = entity.getFileStatus();
         
         return new CourtListPublishResponse(
                 entity.getCourtListId(),
                 entity.getCourtCentreId(),
                 publishStatusEnum,
+                fileStatusEnum,
                 entity.getCourtListType(),
                 lastUpdated,
                 entity.getCourtListFileId(),
                 entity.getFileName(),
-                entity.getErrorMessage(),
+                entity.getPublishErrorMessage(),
+                entity.getFileErrorMessage(),
                 entity.getPublishDate()
         );
     }

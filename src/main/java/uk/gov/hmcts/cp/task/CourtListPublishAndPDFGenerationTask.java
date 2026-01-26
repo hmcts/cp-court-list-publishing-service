@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
-import uk.gov.hmcts.cp.openapi.model.PublishStatus;
+import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 import uk.gov.hmcts.cp.services.CaTHService;
 import uk.gov.hmcts.cp.services.CourtListPdfHelper;
@@ -217,10 +217,10 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             return;
         }
 
-        existingCourtListPublishEntity.setPublishStatus(PublishStatus.PUBLISH_SUCCESSFUL);
+        existingCourtListPublishEntity.setPublishStatus(Status.SUCCESSFUL);
         existingCourtListPublishEntity.setLastUpdated(Instant.now());
         repository.save(existingCourtListPublishEntity);
-        logger.info("Successfully updated status to PUBLISH_SUCCESSFUL for court list ID: {}", courtListId);
+        logger.info("Successfully updated status to SUCCESSFUL for court list ID: {}", courtListId);
     }
 
     private void updateFileNameAndLastUpdated(UUID courtListId, String fileName) {

@@ -3,7 +3,7 @@ package uk.gov.hmcts.cp.controllers;
 import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
-import uk.gov.hmcts.cp.openapi.model.PublishStatus;
+import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 
 import org.slf4j.Logger;
@@ -42,8 +42,8 @@ public class CourtListPublishController implements CourtListPublishApi {
         // Generate courtListId internally
         final UUID courtListId = UUID.randomUUID();
 
-        // Set initial publishStatus to COURT_LIST_REQUESTED
-        final PublishStatus publishStatus = PublishStatus.PUBLISH_REQUESTED;
+        // Set initial publishStatus to REQUESTED
+        final Status publishStatus = Status.REQUESTED;
 
         LOG.atInfo().log("Creating court list publish status with generated court list ID: {} and initial status: {}",
                 courtListId, publishStatus);
