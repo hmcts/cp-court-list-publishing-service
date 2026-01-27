@@ -24,7 +24,7 @@ public class PdfGenerationTaskIntegrationTest {
 
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private static final String PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publish";
-    private static final String GET_STATUS_BY_COURT_CENTRE_ENDPOINT = BASE_URL + "/api/court-list-publish/court-centre/";
+    private static final String GET_STATUS_ENDPOINT = BASE_URL + "/api/court-list-publish/publish-status";
     private static final String COURT_LIST_TYPE_PUBLIC = "PUBLIC";
 
     private final RestTemplate http = new RestTemplate();
@@ -86,8 +86,18 @@ public class PdfGenerationTaskIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(java.util.List.of(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json")));
         
+        // Use courtListId if available, otherwise use courtCentreId and publishDate
+        String url;
+        if (courtListId != null) {
+            url = GET_STATUS_ENDPOINT + "?courtListId=" + courtListId;
+        } else {
+            // Use today's date as publishDate
+            String publishDate = java.time.LocalDate.now().toString();
+            url = GET_STATUS_ENDPOINT + "?courtCentreId=" + courtCentreId + "&publishDate=" + publishDate;
+        }
+        
         ResponseEntity<String> response = http.exchange(
-                GET_STATUS_BY_COURT_CENTRE_ENDPOINT + courtCentreId, 
+                url, 
                 HttpMethod.GET, 
                 new HttpEntity<>(headers), 
                 String.class);
@@ -97,22 +107,36 @@ public class PdfGenerationTaskIntegrationTest {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         
-        String courtListIdStr = courtListId.toString();
-        JsonNode matchingItem = null;
-        for (JsonNode item : responseBody) {
-            if (courtListIdStr.equals(item.get("courtListId").asText())) {
-                matchingItem = item;
-                break;
+        // If courtListId was provided, find the matching item; otherwise return first item or empty
+        if (courtListId != null) {
+            String courtListIdStr = courtListId.toString();
+            JsonNode matchingItem = null;
+            for (JsonNode item : responseBody) {
+                if (courtListIdStr.equals(item.get("courtListId").asText())) {
+                    matchingItem = item;
+                    break;
+                }
+            }
+            
+            if (matchingItem == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+            
+            return ResponseEntity.ok()
+                    .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
+                    .body(matchingItem.toString());
+        } else {
+            // If querying by courtCentreId and publishDate, return the first item or empty array
+            if (responseBody.size() > 0) {
+                return ResponseEntity.ok()
+                        .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
+                        .body(responseBody.get(0).toString());
+            } else {
+                return ResponseEntity.ok()
+                        .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
+                        .body("[]");
             }
         }
-        
-        if (matchingItem == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        
-        return ResponseEntity.ok()
-                .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
-                .body(matchingItem.toString());
     }
 
     private JsonNode parseResponse(ResponseEntity<String> response) throws Exception {

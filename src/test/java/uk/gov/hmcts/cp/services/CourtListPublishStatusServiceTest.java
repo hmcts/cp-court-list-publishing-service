@@ -230,9 +230,10 @@ class CourtListPublishStatusServiceTest {
     }
 
     @Test
-    void findByCourtCentreId_shouldReturnList_whenEntitiesExist() {
+    void findPublishStatus_shouldReturnList_whenQueryingByCourtCentreIdAndPublishDate() {
         // Given
         UUID courtCentreId = UUID.randomUUID();
+        LocalDate publishDate = LocalDate.now();
         CourtListStatusEntity entity1 = new CourtListStatusEntity(
                 UUID.randomUUID(),
                 courtCentreId,
@@ -241,6 +242,7 @@ class CourtListPublishStatusServiceTest {
                 CourtListType.PUBLIC,
                 Instant.now()
         );
+        entity1.setPublishDate(publishDate);
         CourtListStatusEntity entity2 = new CourtListStatusEntity(
                 UUID.randomUUID(),
                 courtCentreId,
@@ -249,11 +251,14 @@ class CourtListPublishStatusServiceTest {
                 CourtListType.STANDARD,
                 Instant.now()
         );
+        entity2.setPublishDate(publishDate);
 
-        when(repository.findByCourtCentreId(courtCentreId)).thenReturn(List.of(entity1, entity2));
+        when(repository.findByCourtCentreIdAndPublishDate(courtCentreId, publishDate))
+                .thenReturn(List.of(entity1, entity2));
 
         // When
-        List<CourtListPublishResponse> result = service.findByCourtCentreId(courtCentreId);
+        List<CourtListPublishResponse> result = service.findPublishStatus(
+                null, courtCentreId, publishDate, null);
 
         // Then
         assertThat(result).hasSize(2);
@@ -261,45 +266,38 @@ class CourtListPublishStatusServiceTest {
                 .containsExactlyInAnyOrder(courtCentreId, courtCentreId);
         assertThat(result).extracting(CourtListPublishResponse::getPublishStatus)
                 .containsExactlyInAnyOrder(Status.SUCCESSFUL, Status.REQUESTED);
-        verify(repository).findByCourtCentreId(courtCentreId);
+        verify(repository).findByCourtCentreIdAndPublishDate(courtCentreId, publishDate);
     }
 
     @Test
-    void findByCourtCentreId_shouldReturnLimitedTo10Records_whenMoreThan10EntitiesExist() {
+    void findPublishStatus_shouldReturnEmptyList_whenNoEntitiesFound() {
         // Given
         UUID courtCentreId = UUID.randomUUID();
-        List<CourtListStatusEntity> entities = java.util.stream.IntStream.range(0, 15)
-                .mapToObj(i -> new CourtListStatusEntity(
-                        UUID.randomUUID(),
-                        courtCentreId,
-                        Status.REQUESTED,
-                        Status.REQUESTED,
-                        CourtListType.STANDARD,
-                        Instant.now()
-                ))
-                .toList();
+        LocalDate publishDate = LocalDate.now();
 
-        when(repository.findByCourtCentreId(courtCentreId)).thenReturn(entities);
+        when(repository.findByCourtCentreIdAndPublishDate(courtCentreId, publishDate))
+                .thenReturn(List.of());
 
         // When
-        List<CourtListPublishResponse> result = service.findByCourtCentreId(courtCentreId);
+        List<CourtListPublishResponse> result = service.findPublishStatus(
+                null, courtCentreId, publishDate, null);
 
         // Then
-        assertThat(result).hasSize(10);
-        verify(repository).findByCourtCentreId(courtCentreId);
+        assertThat(result).isEmpty();
+        verify(repository).findByCourtCentreIdAndPublishDate(courtCentreId, publishDate);
     }
 
     @Test
-    void findByCourtCentreId_shouldThrowResponseStatusException_whenCourtCentreIdIsNull() {
+    void findPublishStatus_shouldThrowResponseStatusException_whenCourtCentreIdIsNull() {
         // When & Then
-        assertThatThrownBy(() -> service.findByCourtCentreId(null))
+        assertThatThrownBy(() -> service.findPublishStatus(null, null, LocalDate.now(), null))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(exception -> {
                     ResponseStatusException ex = (ResponseStatusException) exception;
                     assertThat(ex.getStatusCode().value()).isEqualTo(400);
                 });
 
-        verify(repository, never()).findByCourtCentreId(any());
+        verify(repository, never()).findByCourtCentreIdAndPublishDate(any(), any());
     }
 
     @Test
