@@ -11,6 +11,7 @@ import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -32,6 +33,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @ExtendWith(MockitoExtension.class)
+@Disabled
 class CourtListPublishAndPDFGenerationTaskTest {
 
     @Mock

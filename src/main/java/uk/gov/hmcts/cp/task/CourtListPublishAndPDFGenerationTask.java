@@ -45,7 +45,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     private final Optional<CourtListPdfHelper> pdfHelper;
 
     //This flag is only temporary and needs to be removed by 2026-02-07
-    private final boolean makeExternalCalls = true;
+    private final boolean makeExternalCalls = false;
 
     public CourtListPublishAndPDFGenerationTask(CourtListStatusRepository repository,
                                                 CourtListQueryService courtListQueryService,
