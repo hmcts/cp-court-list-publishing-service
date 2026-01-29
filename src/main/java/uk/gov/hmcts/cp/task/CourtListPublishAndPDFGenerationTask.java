@@ -44,8 +44,8 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     private final ListingQueryService listingQueryService;
     private final Optional<CourtListPdfHelper> pdfHelper;
 
-    //This falg is only temporary and needs to be removed by 2026-02-07
-    private final boolean mockDataForUi = false;
+    //This flag is only temporary and needs to be removed by 2026-02-07
+    private final boolean makeExternalCalls = true;
 
     public CourtListPublishAndPDFGenerationTask(CourtListStatusRepository repository,
                                                 CourtListQueryService courtListQueryService,
@@ -87,7 +87,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
         try {
             // Generate and upload PDF if PDF helper is available
-            String sasUrl = mockDataForUi? getMockBlobSasUrl(executionInfo) : generateAndUploadPdf(executionInfo);
+            String sasUrl = makeExternalCalls ? generateAndUploadPdf(executionInfo) : getMockBlobSasUrl(executionInfo);
             if (sasUrl != null && courtListId != null) {
                 // Update fileName and lastUpdated after successful PDF generation
                 updateFileNameAndLastUpdated(courtListId, sasUrl);
@@ -144,10 +144,10 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
             // Send transformed data to CaTH endpoint
             logger.info("Sending transformed court list document to CaTH endpoint");
-            if (mockDataForUi) {
-                logger.info("Not calling CaTH as we are in mock mode");
-            } else {
+            if (makeExternalCalls) {
                 cathService.sendCourtListToCaTH(courtListDocument);
+            } else {
+                logger.info("Not calling CaTH as we are in mock mode");
             }
             logger.info("Successfully sent court list document to CaTH endpoint");
         } catch (Exception e) {
