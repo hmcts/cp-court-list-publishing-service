@@ -3,6 +3,9 @@ package uk.gov.hmcts.cp.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -15,7 +18,8 @@ import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 @Slf4j
 public class CaTHService {
 
-    private final CaTHPublisher cathPublisher;
+    @Autowired
+    private final CourtListPublisher caTHPublisher;
 
     ObjectMapper objectMapper = new ObjectMapper();
 
@@ -38,7 +42,7 @@ public class CaTHService {
                     .displayTo("2026-01-11T13:39:41.362Z")
                     .build();
 
-            final Integer res = cathPublisher.publish(objectMapper.writeValueAsString(courtListDocument), dtsMeta);
+            final Integer res = caTHPublisher.publish(objectMapper.writeValueAsString(courtListDocument), dtsMeta);
 
             log.info("Successfully sent court list document to CaTH. Response status: {}", res);
         } catch (Exception e) {

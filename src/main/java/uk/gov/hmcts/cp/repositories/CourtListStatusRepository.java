@@ -26,5 +26,8 @@ public interface CourtListStatusRepository extends JpaRepository<CourtListStatus
     Optional<CourtListStatusEntity> findByCourtCentreIdAndPublishDateAndCourtListType(
             UUID courtCentreId, LocalDate publishDate, CourtListType courtListType);
 
+    List<CourtListStatusEntity> findByCourtCentreIdAndPublishDate(
+            UUID courtCentreId, LocalDate publishDate);
+
 }
 

@@ -1,0 +1,24 @@
+# Used by unit tests that run against PostgreSQL Testcontainers (e.g. CourtListStatusRepositoryTest).
+# spring.datasource.url is set in test code via @DynamicPropertySource from the container.
+
+testcontainers:
+  postgres:
+    image: postgres:16-alpine
+    database-name: courtlistpublishing
+    username: courtlistpublishing
+    password: courtlistpublishing
+
+spring:
+  datasource:
+    username: courtlistpublishing
+    password: courtlistpublishing
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        connection:
+          provider_disables_autocommit: false
+  flyway:
+    enabled: true

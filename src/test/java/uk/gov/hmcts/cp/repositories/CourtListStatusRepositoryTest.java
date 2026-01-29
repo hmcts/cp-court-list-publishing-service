@@ -6,6 +6,7 @@ import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -16,13 +17,55 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase.Replace;
+import org.springframework.boot.env.YamlPropertySourceLoader;
+import org.springframework.core.env.PropertySource;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 @DataJpaTest
-@TestPropertySource(properties = {
-        "spring.jpa.hibernate.ddl-auto=create-drop"
-})
+@Testcontainers
+@AutoConfigureTestDatabase(replace = Replace.NONE)
+@ActiveProfiles("testcontainers")
 class CourtListStatusRepositoryTest {
+
+    @Container
+    static final PostgreSQLContainer<?> POSTGRES = createPostgresContainer();
+
+    static {
+        POSTGRES.start();
+    }
+
+    private static PostgreSQLContainer<?> createPostgresContainer() {
+        PropertySource<?> source;
+        try {
+            source = new YamlPropertySourceLoader()
+                    .load("application-testcontainers", new ClassPathResource("application-testcontainers.yaml"))
+                    .stream().findFirst().orElse(null);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load application-testcontainers.yaml", e);
+        }
+        return new PostgreSQLContainer<>(get(source, "testcontainers.postgres.image"))
+                .withDatabaseName(get(source, "testcontainers.postgres.database-name"))
+                .withUsername(get(source, "testcontainers.postgres.username"))
+                .withPassword(get(source, "testcontainers.postgres.password"));
+    }
+
+    private static String get(PropertySource<?> source, String key) {
+        Object value = source != null ? source.getProperty(key) : null;
+        return (String) value;
+    }
+
+    @DynamicPropertySource
+    static void dbProps(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+    }
 
     @Autowired
     private TestEntityManager entityManager;
