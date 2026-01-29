@@ -25,6 +25,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
@@ -38,6 +39,7 @@ import org.springframework.web.context.WebApplicationContext;
 @WebMvcTest(controllers = TracingProbeController.class,
         excludeFilters = {@ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {JWTFilter.class,GlobalExceptionHandler.class})}
 )
+@ActiveProfiles("test")
 @Import(TestTracingConfig.class)
 @Slf4j
 class TracingIntegrationTest {
