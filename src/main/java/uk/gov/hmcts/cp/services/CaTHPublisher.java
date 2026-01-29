@@ -10,13 +10,13 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class CaTHPublisher {
+public class CaTHPublisher implements CourtListPublisher {
 
     private final PublishingService publishingService;
     private final AzureIdentityService azureIdentityService;
 
-
-    public Integer publish(final String payload, final DtsMeta metadata) {
+    @Override
+    public int publish(final String payload, final DtsMeta metadata) {
         Integer statusCode = HttpStatus.OK.value();
         String localToken = null;
         try {
@@ -57,6 +57,6 @@ public class CaTHPublisher {
 
         log.info("Test auth completed with status code: {}", statusCode);
 
-        return statusCode;
+        return statusCode.intValue();
     }
 }
