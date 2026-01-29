@@ -137,9 +137,10 @@ class CourtListPublishControllerTest {
     }
 
     @Test
-    void findCourtListPublishByCourtCenterId_shouldReturnList_whenEntitiesExist() throws Exception {
+    void findCourtListPublishStatus_shouldReturnList_whenQueryingByCourtCentreIdAndPublishDate() throws Exception {
         // Given
         UUID courtCentreId = UUID.randomUUID();
+        LocalDate publishDate = LocalDate.now();
         CourtListStatusEntity entity1 = createEntity(UUID.randomUUID(), courtCentreId, CourtListType.STANDARD);
         CourtListStatusEntity entity2 = createEntity(UUID.randomUUID(), courtCentreId, CourtListType.PUBLIC);
         List<CourtListPublishResponse> responses = List.of(
@@ -147,10 +148,12 @@ class CourtListPublishControllerTest {
                 toResponse(entity2)
         );
 
-        when(service.findByCourtCentreId(courtCentreId)).thenReturn(responses);
+        when(service.findPublishStatus(null, courtCentreId, publishDate, null)).thenReturn(responses);
 
         // When & Then
-        mockMvc.perform(get(BASE_URL + "/court-centre/" + courtCentreId))
+        mockMvc.perform(get("/api/court-list-publish/publish-status")
+                        .param("courtCentreId", courtCentreId.toString())
+                        .param("publishDate", publishDate.toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(CONTENT_TYPE_APPLICATION_VND_GET))
                 .andExpect(jsonPath("$").isArray())
@@ -158,23 +161,27 @@ class CourtListPublishControllerTest {
                 .andExpect(jsonPath("$[0].courtCentreId").value(courtCentreId.toString()))
                 .andExpect(jsonPath("$[1].courtCentreId").value(courtCentreId.toString()));
 
-        verify(service).findByCourtCentreId(courtCentreId);
+        verify(service).findPublishStatus(null, courtCentreId, publishDate, null);
     }
 
     @Test
-    void findCourtListPublishByCourtCenterId_shouldReturnEmptyList_whenNoEntitiesExist() throws Exception {
+    void findCourtListPublishStatus_shouldReturnEmptyList_whenNoEntitiesExist() throws Exception {
         // Given
         UUID courtCentreId = UUID.randomUUID();
-        when(service.findByCourtCentreId(courtCentreId)).thenReturn(Collections.emptyList());
+        LocalDate publishDate = LocalDate.now();
+        when(service.findPublishStatus(null, courtCentreId, publishDate, null))
+                .thenReturn(Collections.emptyList());
 
         // When & Then
-        mockMvc.perform(get(BASE_URL + "/court-centre/" + courtCentreId))
+        mockMvc.perform(get("/api/court-list-publish/publish-status")
+                        .param("courtCentreId", courtCentreId.toString())
+                        .param("publishDate", publishDate.toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(CONTENT_TYPE_APPLICATION_VND_GET))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(0));
 
-        verify(service).findByCourtCentreId(courtCentreId);
+        verify(service).findPublishStatus(null, courtCentreId, publishDate, null);
     }
 
     private CourtListPublishRequest createValidRequest() {

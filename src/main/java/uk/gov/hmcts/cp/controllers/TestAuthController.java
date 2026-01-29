@@ -1,7 +1,7 @@
 package uk.gov.hmcts.cp.controllers;
 
 import uk.gov.hmcts.cp.domain.DtsMeta;
-import uk.gov.hmcts.cp.services.CaTHPublisher;
+import uk.gov.hmcts.cp.services.CourtListPublisher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class TestAuthController {
 
-    private final CaTHPublisher publisher;
+    private final CourtListPublisher publisher;
 
     /**
      * Test endpoint for publishing data to the Publishing Hub.
@@ -89,13 +89,12 @@ public class TestAuthController {
     private static final DtsMeta DUMMY_METADATA = DtsMeta.builder()
             .provenance("COMMON_PLATFORM")
             .type("LIST")
-            .listType("MAGISTRATES_PUBLIC_ADULT_COURT_LIST_DAILY")
+            .listType("MAGISTRATES_PUBLIC_LIST")// //‘MAGISTRATES_STANDARD_LIST’ or ‘MAGISTRATES_PUBLIC_LIST”.
             .courtId("0")// This should be court ID, a 3 digit string from refData
             .contentDate("2024-03-27T12:39:41.362Z")
             .language("ENGLISH")
             .sensitivity("PUBLIC")
-            .displayFrom("2026-01-08T12:39:41.362Z")
-            .displayTo("2026-01-11T13:39:41.362Z")
+            .displayFrom("2026-01-08T12:39:41.362Z")//now
+            .displayTo("2026-01-11T13:39:41.362Z")//TBD or now+7
             .build();
-
 }

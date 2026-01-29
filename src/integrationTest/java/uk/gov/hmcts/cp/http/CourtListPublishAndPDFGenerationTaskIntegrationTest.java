@@ -18,12 +18,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.hmcts.cp.openapi.model.Status;
+
 @Slf4j
 public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
 
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private static final String PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publish";
-    private static final String GET_STATUS_BY_COURT_CENTRE_ENDPOINT = BASE_URL + "/api/court-list-publish/court-centre/";
+    private static final String GET_STATUS_ENDPOINT = BASE_URL + "/api/court-list-publish/publish-status";
 
     private final RestTemplate http = new RestTemplate();
     private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
@@ -47,10 +48,10 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         // Task manager JobExecutor polls the database and executes tasks
         // Note: The task manager service is an external dependency that uses @Scheduled polling
         // If tasks aren't executing, check that the JobExecutor is running and polling frequently enough
-        waitForTaskCompletion(courtListId, courtCentreId, 120000); // 2 minutes timeout
+        waitForTaskCompletion(courtListId, 120000); // 2 minutes timeout
         
         // Verify status was updated to SUCCESSFUL
-        ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
+        ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
         assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
@@ -72,11 +73,11 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
 
         // Wait for async task to complete
         // Task manager JobExecutor polls the database and executes tasks
-        waitForTaskCompletion(courtListId, courtCentreId, 120000); // 2 minutes timeout
+        waitForTaskCompletion(courtListId, 120000); // 2 minutes timeout
         
         // Verify status was still updated to SUCCESSFUL (status update happens even if CaTH fails)
         // Note: WireMock verification removed as we're using static mappings
-        ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
+        ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
         assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
@@ -100,7 +101,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         
         // Immediately verify the record exists
         try {
-            ResponseEntity<String> immediateStatus = getStatusRequest(courtListId, courtCentreId);
+            ResponseEntity<String> immediateStatus = getStatusRequest(courtListId);
             if (immediateStatus.getStatusCode().is2xxSuccessful()) {
                 JsonNode immediateBody = parseResponse(immediateStatus);
                 log.info("Immediate status check: {}", immediateBody.get("publishStatus").asText());
@@ -112,11 +113,11 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         
         // Wait for async task to complete
         // Task manager JobExecutor polls the database and executes tasks
-        waitForTaskCompletion(courtListId, courtCentreId, 120000); // 2 minutes timeout
+        waitForTaskCompletion(courtListId, 120000); // 2 minutes timeout
         
         // Verify status was still updated to SUCCESSFUL
         // Note: WireMock verification removed as we're using static mappings
-        ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
+        ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
         assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
@@ -145,14 +146,16 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         return http.exchange(PUBLISH_ENDPOINT, HttpMethod.POST, createPublishHttpEntity(requestJson), String.class);
     }
 
-    private ResponseEntity<String> getStatusRequest(UUID courtListId, UUID courtCentreId) throws Exception {
+    private ResponseEntity<String> getStatusRequest(UUID courtListId) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(java.util.List.of(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json")));
         
+        String url = GET_STATUS_ENDPOINT + "?courtListId=" + courtListId;
+
         ResponseEntity<String> response = http.exchange(
-                GET_STATUS_BY_COURT_CENTRE_ENDPOINT + courtCentreId, 
-                HttpMethod.GET, 
-                new HttpEntity<>(headers), 
+                url,
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
                 String.class);
         
         JsonNode responseBody = parseResponse(response);
@@ -160,22 +163,23 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         
-        String courtListIdStr = courtListId.toString();
-        JsonNode matchingItem = null;
-        for (JsonNode item : responseBody) {
-            if (courtListIdStr.equals(item.get("courtListId").asText())) {
-                matchingItem = item;
-                break;
+        // If courtListId was provided, find the matching item; otherwise return first item or empty
+            String courtListIdStr = courtListId.toString();
+            JsonNode matchingItem = null;
+            for (JsonNode item : responseBody) {
+                if (courtListIdStr.equals(item.get("courtListId").asText())) {
+                    matchingItem = item;
+                    break;
+                }
             }
-        }
-        
-        if (matchingItem == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        
-        return ResponseEntity.ok()
-                .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
-                .body(matchingItem.toString());
+
+            if (matchingItem == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
+                    .body(matchingItem.toString());
     }
 
     private JsonNode parseResponse(ResponseEntity<String> response) throws Exception {
@@ -185,7 +189,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
     /**
      * Waits for task completion by polling the status endpoint until it's updated or timeout
      */
-    private void waitForTaskCompletion(UUID courtListId, UUID courtCentreId, long timeoutMs) throws Exception {
+    private void waitForTaskCompletion(UUID courtListId, long timeoutMs) throws Exception {
         long startTime = System.currentTimeMillis();
         long pollInterval = 500; // Poll every 500ms
         int pollCount = 0;
@@ -194,7 +198,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         
         while (System.currentTimeMillis() - startTime < timeoutMs) {
             try {
-                ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
+                ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
                 if (statusResponse.getStatusCode().is2xxSuccessful()) {
                     JsonNode statusBody = parseResponse(statusResponse);
                     String publishStatusStr = statusBody.get("publishStatus").asText();
@@ -225,7 +229,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         // Timeout reached - task may still be running
         log.error("Timeout reached after {}ms. Task may still be running.", timeoutMs);
         try {
-            ResponseEntity<String> finalStatus = getStatusRequest(courtListId, courtCentreId);
+            ResponseEntity<String> finalStatus = getStatusRequest(courtListId);
             if (finalStatus.getStatusCode().is2xxSuccessful()) {
                 JsonNode statusBody = parseResponse(finalStatus);
                 log.error("Final status: {}", statusBody.get("publishStatus").asText());

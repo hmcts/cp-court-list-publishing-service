@@ -86,14 +86,57 @@ public class CourtListPublishStatusService {
     }
 
     @Transactional
-    public List<CourtListPublishResponse> findByCourtCentreId(final UUID courtCentreId) {
+    public List<CourtListPublishResponse> findPublishStatus(
+            final UUID courtListId,
+            final UUID courtCentreId,
+            final LocalDate publishDate,
+            final CourtListType courtListType) {
+        // Validate that either courtListId is provided, or both courtCentreId and publishDate are provided
+        if (courtListId != null) {
+            // Query by courtListId
+            validateCourtListId(courtListId);
+            LOG.atDebug().log("Fetching court list publish status by court list ID: {}", courtListId);
+            CourtListStatusEntity entity = repository.getByCourtListId(courtListId);
+            if (entity == null) {
+                LOG.atDebug().log("Court list publish status not found for court list ID: {}, returning empty collection", courtListId);
+                return List.of();
+            }
+            return List.of(toResponse(entity));
+        }
+
+        // Query by courtCentreId and publishDate (with optional courtListType)
         validateCourtCentreId(courtCentreId);
-        LOG.atDebug().log("Fetching court list publish statuses for court centre ID: {} (limited to 10 records)", courtCentreId);
-        return repository.findByCourtCentreId(courtCentreId).stream()
-                .limit(10)
+        if (publishDate == null) {
+            LOG.atWarn().log("No publish date provided");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Either courtListId must be provided, or both courtCentreId and publishDate must be provided");
+        }
+
+        LOG.atDebug().log("Fetching court list publish statuses for court centre ID: {}, publish date: {}, type: {}",
+                courtCentreId, publishDate, courtListType);
+
+        List<CourtListStatusEntity> entities;
+        if (courtListType != null) {
+            // Filter by courtListType if provided
+            Optional<CourtListStatusEntity> entityOpt = repository.findByCourtCentreIdAndPublishDateAndCourtListType(
+                    courtCentreId, publishDate, courtListType);
+            entities = entityOpt.map(List::of).orElse(List.of());
+        } else {
+            // Get all for courtCentreId and publishDate
+            entities = repository.findByCourtCentreIdAndPublishDate(courtCentreId, publishDate);
+        }
+
+        if (entities.isEmpty()) {
+            LOG.atDebug().log("Court list publish statuses not found for court centre ID: {}, publish date: {}, type: {}, returning empty collection",
+                    courtCentreId, publishDate, courtListType);
+            return List.of();
+        }
+
+        return entities.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
+
 
     @Transactional
     public List<CourtListPublishResponse> findAll() {

@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 class CaTHServiceTest {
 
     @Mock
-    private CaTHPublisher cathPublisher;
+    private CourtListPublisher cathPublisher;
 
     @InjectMocks
     private CaTHService cathService;
