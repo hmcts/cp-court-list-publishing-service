@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.domain.DtsMeta;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 
@@ -21,7 +22,7 @@ public class CaTHService {
     @Autowired
     private final CourtListPublisher caTHPublisher;
 
-    ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
 
     public void sendCourtListToCaTH(CourtListDocument courtListDocument) {
         try {

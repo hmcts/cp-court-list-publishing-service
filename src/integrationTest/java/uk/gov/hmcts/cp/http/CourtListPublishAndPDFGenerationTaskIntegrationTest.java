@@ -7,6 +7,8 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -25,7 +27,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
     private static final String GET_STATUS_ENDPOINT = BASE_URL + "/api/court-list-publish/publish-status";
 
     private final RestTemplate http = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
 
     @Test
     void publishCourtList_shouldQueryAndSendToCaTH_whenValidRequest() throws Exception {
@@ -170,11 +172,11 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
                     break;
                 }
             }
-            
+
             if (matchingItem == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
-            
+
             return ResponseEntity.ok()
                     .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
                     .body(matchingItem.toString());

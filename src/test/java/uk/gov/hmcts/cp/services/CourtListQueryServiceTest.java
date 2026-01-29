@@ -11,6 +11,7 @@ import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,6 +27,9 @@ class CourtListQueryServiceTest {
 
     @Mock
     private PublicCourtListTransformationService publicCourtListTransformationService;
+
+    @Mock
+    private JsonSchemaValidatorService jsonSchemaValidatorService;
 
     @InjectMocks
     private CourtListQueryService courtListQueryService;
@@ -51,6 +55,7 @@ class CourtListQueryServiceTest {
                 .thenReturn(payload);
         when(transformationService.transform(payload))
                 .thenReturn(standardDocument);
+        doNothing().when(jsonSchemaValidatorService).validate(standardDocument, "schema/court-list-schema.json");
 
         // When
         CourtListDocument result = courtListQueryService.queryCourtList(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid");
@@ -59,6 +64,7 @@ class CourtListQueryServiceTest {
         assertThat(result).isEqualTo(standardDocument);
         verify(transformationService).transform(payload);
         verify(publicCourtListTransformationService, never()).transform(payload);
+        verify(jsonSchemaValidatorService).validate(standardDocument, "schema/court-list-schema.json");
     }
 
     @Test
@@ -68,6 +74,7 @@ class CourtListQueryServiceTest {
                 .thenReturn(payload);
         when(publicCourtListTransformationService.transform(payload))
                 .thenReturn(publicDocument);
+        doNothing().when(jsonSchemaValidatorService).validate(publicDocument, "schema/public-court-list-schema.json");
 
         // When
         CourtListDocument result = courtListQueryService.queryCourtList(CourtListType.PUBLIC, "courtId", "2026-01-05", "2026-01-12", "cjscppuid");
@@ -76,5 +83,6 @@ class CourtListQueryServiceTest {
         assertThat(result).isEqualTo(publicDocument);
         verify(publicCourtListTransformationService).transform(payload);
         verify(transformationService, never()).transform(payload);
+        verify(jsonSchemaValidatorService).validate(publicDocument, "schema/public-court-list-schema.json");
     }
 }

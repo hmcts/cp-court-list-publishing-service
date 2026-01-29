@@ -15,6 +15,7 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
@@ -110,7 +111,7 @@ class TracingIntegrationTest {
         for (int i = lines.length - 1; i >= 0; i--) {
             String line = lines[i].trim();
             if (!line.isEmpty() && line.startsWith("{") && line.endsWith("}")) {
-                return new ObjectMapper().readValue(line, new TypeReference<>() {
+                return ObjectMapperConfig.getObjectMapper().readValue(line, new TypeReference<>() {
                 });
             }
         }
