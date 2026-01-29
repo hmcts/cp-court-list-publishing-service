@@ -67,8 +67,6 @@ public class CourtListPublishController implements CourtListPublishApi {
                 .body(response);
     }
 
-    // @Override - Temporarily removed until API spec is published and dependency updated
-    @GetMapping("/api/court-list-publish/publish-status")
     @SuppressWarnings("unused") // Method is used by Spring's request mapping
     public ResponseEntity<List<CourtListPublishResponse>> findCourtListPublishStatus(
             @RequestParam(required = false) final UUID courtListId,
