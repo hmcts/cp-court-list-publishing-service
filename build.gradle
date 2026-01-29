@@ -99,7 +99,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 
     // Task Manager Service
-    implementation 'uk.gov.hmcts.cp:task-manager-service:1.0.3'
+    implementation "uk.gov.hmcts.cp:task-manager-service:${jobManagerVersion}"
 
     // --- Observability / Actuator / OTEL / Prometheus ---
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -153,7 +153,6 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     testImplementation 'io.micrometer:micrometer-tracing-test'
-    testImplementation 'com.h2database:h2'
     testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
     testImplementation "org.springframework.boot:spring-boot-starter-data-jpa-test"
 
@@ -161,6 +160,12 @@ dependencies {
     testImplementation 'au.com.dius.pact.provider:spring6:4.6.17'
     pactVerificationTestImplementation 'au.com.dius.pact.provider:junit5:4.6.17'
     pactVerificationTestImplementation 'au.com.dius.pact.provider:spring6:4.6.17'
+
+    // Testcontainers (BOM)
+    testImplementation platform("org.testcontainers:testcontainers-bom:${testcontainersBomVersion}")
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    implementation "org.testcontainers:testcontainers"
 
     // integrationTestImplementation dependencies are need as they aren't always propagate as expected,
     // especially with platform BOMs, test runtime dependencies, or custom tasks. Explicit dependencies eliminate that risk.

@@ -17,7 +17,6 @@ import uk.gov.hmcts.cp.openapi.model.Status;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-@Disabled
 @Slf4j
 public class PdfGenerationTaskIntegrationTest {
     // Note: PDF generation is now part of CourtListPublishTask, not a separate task
@@ -48,10 +47,10 @@ public class PdfGenerationTaskIntegrationTest {
         // Wait for async task to complete (task execution is asynchronous)
         // Task manager polls and executes tasks, so we need to wait longer (30 seconds)
         // The task now handles both CaTH publishing and PDF generation
-        waitForTaskCompletion(courtListId, courtCentreId, 30000);
+        waitForTaskCompletion(courtListId, 30000);
         
         // Verify status record exists and check if PDF was generated (fileName should be set)
-        ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
+        ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
         assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
@@ -82,19 +81,12 @@ public class PdfGenerationTaskIntegrationTest {
         return http.exchange(PUBLISH_ENDPOINT, HttpMethod.POST, createPublishHttpEntity(requestJson), String.class);
     }
 
-    private ResponseEntity<String> getStatusRequest(UUID courtListId, UUID courtCentreId) throws Exception {
+    private ResponseEntity<String> getStatusRequest(UUID courtListId) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(java.util.List.of(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json")));
         
         // Use courtListId if available, otherwise use courtCentreId and publishDate
-        String url;
-        if (courtListId != null) {
-            url = GET_STATUS_ENDPOINT + "?courtListId=" + courtListId;
-        } else {
-            // Use today's date as publishDate
-            String publishDate = java.time.LocalDate.now().toString();
-            url = GET_STATUS_ENDPOINT + "?courtCentreId=" + courtCentreId + "&publishDate=" + publishDate;
-        }
+        String url = GET_STATUS_ENDPOINT + "?courtListId=" + courtListId;
         
         ResponseEntity<String> response = http.exchange(
                 url, 
@@ -108,7 +100,7 @@ public class PdfGenerationTaskIntegrationTest {
         }
         
         // If courtListId was provided, find the matching item; otherwise return first item or empty
-        if (courtListId != null) {
+
             String courtListIdStr = courtListId.toString();
             JsonNode matchingItem = null;
             for (JsonNode item : responseBody) {
@@ -125,18 +117,7 @@ public class PdfGenerationTaskIntegrationTest {
             return ResponseEntity.ok()
                     .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
                     .body(matchingItem.toString());
-        } else {
-            // If querying by courtCentreId and publishDate, return the first item or empty array
-            if (responseBody.size() > 0) {
-                return ResponseEntity.ok()
-                        .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
-                        .body(responseBody.get(0).toString());
-            } else {
-                return ResponseEntity.ok()
-                        .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
-                        .body("[]");
-            }
-        }
+
     }
 
     private JsonNode parseResponse(ResponseEntity<String> response) throws Exception {
@@ -146,7 +127,7 @@ public class PdfGenerationTaskIntegrationTest {
     /**
      * Waits for task completion by polling the status endpoint until it's updated or timeout
      */
-    private void waitForTaskCompletion(UUID courtListId, UUID courtCentreId, long timeoutMs) throws Exception {
+    private void waitForTaskCompletion(UUID courtListId, long timeoutMs) throws Exception {
         long startTime = System.currentTimeMillis();
         long pollInterval = 500; // Poll every 500ms
         int pollCount = 0;
@@ -155,7 +136,7 @@ public class PdfGenerationTaskIntegrationTest {
         
         while (System.currentTimeMillis() - startTime < timeoutMs) {
             try {
-                ResponseEntity<String> statusResponse = getStatusRequest(courtListId, courtCentreId);
+                ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
                 if (statusResponse.getStatusCode().is2xxSuccessful()) {
                     JsonNode statusBody = parseResponse(statusResponse);
                     String publishStatusStr = statusBody.get("publishStatus").asText();
@@ -186,7 +167,7 @@ public class PdfGenerationTaskIntegrationTest {
         // Timeout reached - task may still be running
         log.error("Timeout reached after {}ms. Task may still be running.", timeoutMs);
         try {
-            ResponseEntity<String> finalStatus = getStatusRequest(courtListId, courtCentreId);
+            ResponseEntity<String> finalStatus = getStatusRequest(courtListId);
             if (finalStatus.getStatusCode().is2xxSuccessful()) {
                 JsonNode statusBody = parseResponse(finalStatus);
                 log.error("Final status: {}", statusBody.get("publishStatus").asText());

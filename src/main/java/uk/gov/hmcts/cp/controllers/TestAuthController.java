@@ -1,7 +1,7 @@
 package uk.gov.hmcts.cp.controllers;
 
 import uk.gov.hmcts.cp.domain.DtsMeta;
-import uk.gov.hmcts.cp.services.CaTHPublisher;
+import uk.gov.hmcts.cp.services.CourtListPublisher;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class TestAuthController {
 
-    private final CaTHPublisher publisher;
+    private final CourtListPublisher publisher;
 
     /**
      * Test endpoint for publishing data to the Publishing Hub.
