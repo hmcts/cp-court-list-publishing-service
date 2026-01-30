@@ -50,4 +50,3 @@ common-platform-query-api:
 cath:
   base-url: ${CATH_BASE_URL:http://host.docker.internal:8090}
   endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
-
