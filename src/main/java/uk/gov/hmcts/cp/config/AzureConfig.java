@@ -18,6 +18,7 @@ import org.springframework.util.StringUtils;
 
 @Slf4j
 @Configuration
+@org.springframework.context.annotation.Profile("!integration")
 @ConditionalOnProperty(name = "azure.storage.enabled", havingValue = "true", matchIfMissing = false)
 public class AzureConfig {
     public static final String AZURE_CLIENT_ID = "AZURE_CLIENT_ID";
