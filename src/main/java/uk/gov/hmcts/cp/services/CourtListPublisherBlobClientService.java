@@ -29,14 +29,11 @@ public class CourtListPublisherBlobClientService {
 
     private final BlobContainerClient blobContainerClient;
 
-    @Value("${azure.storage.account.name:}")
+    @Value("${azure.storage.account.name}")
     private String storageAccountName;
 
     @Value("${azure.storage.account-key:}")
     private String storageAccountKey;
-
-    @Value("${azure.storage.connection-string:}")
-    private String connectionString;
 
     @Value("${azure.storage.sas-url-expiry-minutes:120}")
     private long sasUrlExpiryInMinutes;
@@ -100,13 +97,6 @@ public class CourtListPublisherBlobClientService {
                 sasPermission
         );
 
-        // When using connection string (e.g. Azurite), blobClient supports SAS generation directly
-        if (connectionString != null && !connectionString.isEmpty()) {
-            String sasToken = blobClient.generateSas(sasSignatureValues);
-            return blobClient.getBlobUrl() + "?" + sasToken;
-        }
-
-        // Managed identity path: need account key for SAS generation
         if (storageAccountKey == null || storageAccountKey.isEmpty()) {
             throw new IllegalStateException(
                 "Storage account key is required for SAS generation. " +

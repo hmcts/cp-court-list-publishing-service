@@ -107,7 +107,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         // Wait for async task to complete (CourtListTaskTriggerService.triggerCourtListTask triggered the task)
         waitForTaskCompletion(courtListId, 120000);
 
-        // Verify row updated with filename (SAS URL from Azurite blob upload)
+        // Verify row updated with filename (mock PDF URL when Azure disabled for integration tests)
         ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
@@ -115,9 +115,8 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         assertThat(statusBody.has("fileName")).isTrue();
         String fileName = statusBody.get("fileName").asText();
         assertThat(fileName).isNotBlank();
-        // SAS URL from Azurite contains devstoreaccount1 and sig= (SAS token)
-        assertThat(fileName).contains("devstoreaccount1");
-        assertThat(fileName).contains("sig=");
+        // Mock PDF URL for PUBLIC type
+        assertThat(fileName).isEqualTo("https://public-sas-url.com/");
     }
 
     @Test
