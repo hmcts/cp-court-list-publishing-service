@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/documents/generate"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/pdf"
+    },
+    "bodyFileName": "minimal-pdf.pdf"
+  },
+  "priority": 1
+}

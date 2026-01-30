@@ -29,11 +29,14 @@ public class CourtListPublisherBlobClientService {
 
     private final BlobContainerClient blobContainerClient;
 
-    @Value("${azure.storage.account.name}")
+    @Value("${azure.storage.account.name:}")
     private String storageAccountName;
 
     @Value("${azure.storage.account-key:}")
     private String storageAccountKey;
+
+    @Value("${azure.storage.connection-string:}")
+    private String connectionString;
 
     @Value("${azure.storage.sas-url-expiry-minutes:120}")
     private long sasUrlExpiryInMinutes;
@@ -84,12 +87,6 @@ public class CourtListPublisherBlobClientService {
      * Generates a SAS URL for a blob with specified expiry time using account-level key
      */
     private String generateSasUrl(BlobClient blobClient, long expiryInMinutes) {
-        if (storageAccountKey == null || storageAccountKey.isEmpty()) {
-            throw new IllegalStateException(
-                "Storage account key is required for SAS generation. " +
-                "Set azure.storage.account-key property or AZURE_STORAGE_ACCOUNT_KEY environment variable.");
-        }
-
         // Set expiry time
         OffsetDateTime expiryTime = OffsetDateTime.now().plusMinutes(expiryInMinutes);
         
@@ -103,14 +100,25 @@ public class CourtListPublisherBlobClientService {
                 sasPermission
         );
 
-        // Create storage shared key credential
+        // When using connection string (e.g. Azurite), blobClient supports SAS generation directly
+        if (connectionString != null && !connectionString.isEmpty()) {
+            String sasToken = blobClient.generateSas(sasSignatureValues);
+            return blobClient.getBlobUrl() + "?" + sasToken;
+        }
+
+        if (storageAccountKey == null || storageAccountKey.isEmpty()) {
+            throw new IllegalStateException(
+                "Storage account key is required for SAS generation. " +
+                "Set azure.storage.account-key property or AZURE_STORAGE_ACCOUNT_KEY environment variable.");
+        }
+
+        // Create a new BlobClient with account key credential for SAS generation
+        // This is necessary because the original blobClient uses managed identity which doesn't support SAS generation
         StorageSharedKeyCredential credential = new StorageSharedKeyCredential(
                 storageAccountName, 
                 storageAccountKey
         );
         
-        // Create a new BlobClient with account key credential for SAS generation
-        // This is necessary because the original blobClient uses managed identity which doesn't support SAS generation
         BlobClient sasBlobClient = new BlobClientBuilder()
                 .endpoint(format("https://%s.blob.core.windows.net", storageAccountName))
                 .containerName(blobContainerClient.getBlobContainerName())
@@ -118,10 +126,8 @@ public class CourtListPublisherBlobClientService {
                 .credential(credential)
                 .buildClient();
         
-        // Generate SAS token using the credential-enabled blob client
         String sasToken = sasBlobClient.generateSas(sasSignatureValues);
         
-        // Return the full URL with SAS token
         return blobClient.getBlobUrl() + "?" + sasToken;
     }
 

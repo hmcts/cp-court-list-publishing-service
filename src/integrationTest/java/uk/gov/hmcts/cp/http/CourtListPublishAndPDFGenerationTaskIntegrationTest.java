@@ -84,6 +84,43 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
     }
 
     @Test
+    void publishCourtList_shouldCreateDbEntry_triggerTask_andUpdateFileNameWithPdfUrl() throws Exception {
+        UUID courtCentreId = UUID.randomUUID();
+        String requestJson = createPublishRequestJson(courtCentreId, "PUBLIC");
+
+        // When - Call publishCourtList (controller) - this triggers createOrUpdate and triggerCourtListTask
+        ResponseEntity<String> publishResponse = postPublishRequest(requestJson);
+
+        // Then - Verify publish response
+        assertThat(publishResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode publishBody = parseResponse(publishResponse);
+        UUID courtListId = UUID.fromString(publishBody.get("courtListId").asText());
+        assertThat(publishBody.get("publishStatus").asText()).isEqualTo("REQUESTED");
+
+        // Verify CourtListPublishStatusService createOrUpdate created entry in DB (record exists)
+        ResponseEntity<String> immediateStatus = getStatusRequest(courtListId);
+        assertThat(immediateStatus.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode immediateBody = parseResponse(immediateStatus);
+        assertThat(immediateBody.get("courtListId").asText()).isEqualTo(courtListId.toString());
+        assertThat(immediateBody.get("courtCentreId").asText()).isEqualTo(courtCentreId.toString());
+
+        // Wait for async task to complete (CourtListTaskTriggerService.triggerCourtListTask triggered the task)
+        waitForTaskCompletion(courtListId, 120000);
+
+        // Verify row updated with filename (SAS URL from Azurite blob upload)
+        ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
+        assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode statusBody = parseResponse(statusResponse);
+        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
+        assertThat(statusBody.has("fileName")).isTrue();
+        String fileName = statusBody.get("fileName").asText();
+        assertThat(fileName).isNotBlank();
+        // SAS URL from Azurite contains devstoreaccount1 and sig= (SAS token)
+        assertThat(fileName).contains("devstoreaccount1");
+        assertThat(fileName).contains("sig=");
+    }
+
+    @Test
     void publishCourtList_shouldStillUpdateStatus_whenQueryApiFails() throws Exception {
         // Given
         UUID courtCentreId = UUID.randomUUID();
