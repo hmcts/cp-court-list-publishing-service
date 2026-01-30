@@ -48,5 +48,11 @@ public class CourtListPayload {
 
     @JsonProperty("courtId")
     private String courtId;
+
+    /**
+     * Numeric court id from reference data (e.g. "325"), used for CaTH DtsMeta.
+     */
+    @JsonProperty("courtIdNumeric")
+    private String courtIdNumeric;
 }
 
