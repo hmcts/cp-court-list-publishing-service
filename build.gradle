@@ -281,7 +281,7 @@ tasks.named('composeBuild') { dependsOn tasks.named('bootJar') }
 
 dockerCompose {
     useComposeFiles = ['docker/docker-compose.integration.yml']
-    startedServices = ['app', 'db', 'wiremock']
+    startedServices = ['app', 'db', 'wiremock', 'azurite']
 
     buildBeforeUp = true
     waitForTcpPorts = true
@@ -295,7 +295,8 @@ dockerCompose {
     projectName = "${rootProject.name}-it".replaceAll('[^A-Za-z0-9]', '')
 
     useDockerComposeV2 = true
-    dockerExecutable = 'docker'
+    dockerExecutable = '/usr/local/bin/docker'
+
 }
 
 /* ---------------- Test and Integration Tasks ---------------- */

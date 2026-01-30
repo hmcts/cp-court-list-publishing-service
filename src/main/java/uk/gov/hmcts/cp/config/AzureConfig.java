@@ -26,14 +26,17 @@ public class AzureConfig {
     @Value("${azure.storage.container-name}")
     private String containerName;
 
-    @Value( "${azure.client.id}")
+    @Value("${azure.client.id:}")
     private String clientId;
 
-    @Value("${azure.tenant.id}")
+    @Value("${azure.tenant.id:}")
     private String tenantId;
 
-    @Value("${azure.storage.account.name}")
+    @Value("${azure.storage.account.name:}")
     private String storageAccountName;
+
+    @Value("${azure.storage.connection-string:}")
+    private String connectionString;
 
 
     @Bean
@@ -90,6 +93,13 @@ public class AzureConfig {
     }
     
     private void validateAzureConfiguration() {
+        boolean useConnectionString = StringUtils.hasText(connectionString);
+        if (useConnectionString) {
+            if (!StringUtils.hasText(containerName)) {
+                throw new IllegalStateException("Azure storage container name is required. Set azure.storage.container-name property.");
+            }
+            return;
+        }
         if (!StringUtils.hasText(clientId)) {
             throw new IllegalStateException("Azure client ID is required when azure.storage.enabled=true. Set AZURE_CLIENT_ID environment variable.");
         }
@@ -105,6 +115,12 @@ public class AzureConfig {
     }
 
     private BlobServiceClient createBlobServiceClient() {
+        if (StringUtils.hasText(connectionString)) {
+            log.info("Using Azure storage connection string (e.g. for Azurite emulator)");
+            return new BlobServiceClientBuilder()
+                    .connectionString(connectionString)
+                    .buildClient();
+        }
 
         final com.azure.core.util.Configuration configuration = new ConfigurationBuilder()
                 .putProperty(AZURE_CLIENT_ID, clientId)
