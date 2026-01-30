@@ -57,6 +57,25 @@ class CaTHServiceTest {
         assertThat(capturedMeta).isNotNull();
         assertThat(capturedMeta.getProvenance()).isEqualTo("COMMON_PLATFORM");
         assertThat(capturedMeta.getType()).isEqualTo("LIST");
+        // When document has no courtIdNumeric, DtsMeta uses fallback "0"
+        assertThat(capturedMeta.getCourtId()).isEqualTo("0");
+    }
+
+    @Test
+    void sendCourtListToCaTH_shouldUseCourtIdNumericFromDocument_whenPresent() {
+        // Given - document with reference data courtId (from getCourtCenterDataByCourtName)
+        courtListDocument = CourtListDocument.builder()
+                .courtIdNumeric("325")
+                .build();
+        when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
+
+        // When
+        cathService.sendCourtListToCaTH(courtListDocument);
+
+        // Then - DtsMeta uses courtId from reference data
+        ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
+        verify(cathPublisher).publish(anyString(), metaCaptor.capture());
+        assertThat(metaCaptor.getValue().getCourtId()).isEqualTo("325");
     }
 
     @Test

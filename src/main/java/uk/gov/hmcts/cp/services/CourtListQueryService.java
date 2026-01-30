@@ -15,6 +15,7 @@ public class CourtListQueryService {
     private static final String PUBLIC_COURT_LIST_SCHEMA_PATH = "schema/public-court-list-schema.json";
 
     private final ListingQueryService listingQueryService;
+    private final ReferenceDataService referenceDataService;
     private final CourtListTransformationService transformationService;
     private final PublicCourtListTransformationService publicCourtListTransformationService;
     private final JsonSchemaValidatorService jsonSchemaValidatorService;
@@ -23,6 +24,16 @@ public class CourtListQueryService {
         try {
             // Fetch data from common-platform-query-api
             var payload = listingQueryService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
+
+            // Reference data: getCourtCenterDataByCourtName → ouCode and courtId (aligned with progression context)
+            if (payload.getCourtCentreName() != null && !payload.getCourtCentreName().isBlank()) {
+                referenceDataService.getCourtCenterDataByCourtName(payload.getCourtCentreName())
+                        .ifPresent(courtCentre -> {
+                            payload.setOuCode(courtCentre.getOuCode());
+                            payload.setCourtId(courtCentre.getId() != null ? courtCentre.getId().toString() : null);
+                            payload.setCourtIdNumeric(courtCentre.getCourtIdNumeric());
+                        });
+            }
 
             // Transform to required format based on listId
             CourtListDocument document;
