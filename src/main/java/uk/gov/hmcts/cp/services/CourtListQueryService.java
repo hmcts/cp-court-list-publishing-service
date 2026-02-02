@@ -14,7 +14,7 @@ public class CourtListQueryService {
     private static final String COURT_LIST_SCHEMA_PATH = "schema/court-list-schema.json";
     private static final String PUBLIC_COURT_LIST_SCHEMA_PATH = "schema/public-court-list-schema.json";
 
-    private final ListingQueryService listingQueryService;
+    private final ProgressionQueryService progressionQueryService;
     private final ReferenceDataService referenceDataService;
     private final CourtListTransformationService transformationService;
     private final PublicCourtListTransformationService publicCourtListTransformationService;
@@ -22,8 +22,8 @@ public class CourtListQueryService {
 
     public CourtListDocument queryCourtList(CourtListType listId, String courtCentreId, String startDate, String endDate, String cjscppuid) {
         try {
-            // Fetch data from common-platform-query-api
-            var payload = listingQueryService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
+            // Fetch court list payload from progression-service
+            var payload = progressionQueryService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
 
             // Reference data: getCourtCenterDataByCourtName → ouCode and courtId (aligned with progression context)
             if (payload.getCourtCentreName() != null && !payload.getCourtCentreName().isBlank()) {

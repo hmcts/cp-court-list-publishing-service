@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPathPattern": "/listing-query-api/query/api/rest/listing/courtlistpayload.*",
+    "urlPathPattern": "/progression-service/query/api/rest/progression/courtlistpayload.*",
     "queryParameters": {
       "listId": {
         "equalTo": "PUBLIC"
@@ -12,7 +12,7 @@
     "status": 200,
     "headers": {
       "Content-Type": "application/json",
-      "Accept": "application/vnd.listing.search.court.list.payload+json"
+      "Accept": "application/vnd.progression.search.court.list+json"
     },
     "bodyFileName": "court-list-payload-public.json"
   },
