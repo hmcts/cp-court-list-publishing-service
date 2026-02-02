@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 class CourtListQueryServiceTest {
 
     @Mock
-    private ListingQueryService listingQueryService;
+    private ProgressionQueryService progressionQueryService;
 
     @Mock
     private ReferenceDataService referenceDataService;
@@ -65,7 +65,7 @@ class CourtListQueryServiceTest {
                         .ouCode("B01LY00")
                         .courtIdNumeric("325")
                         .build()));
-        when(listingQueryService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
+        when(progressionQueryService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
                 .thenReturn(payload);
         when(transformationService.transform(payload))
                 .thenReturn(standardDocument);
@@ -94,7 +94,7 @@ class CourtListQueryServiceTest {
                         .ouCode("B01LY00")
                         .courtIdNumeric("325")
                         .build()));
-        when(listingQueryService.getCourtListPayload(CourtListType.PUBLIC, "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
+        when(progressionQueryService.getCourtListPayload(CourtListType.PUBLIC, "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
                 .thenReturn(payload);
         when(publicCourtListTransformationService.transform(payload))
                 .thenReturn(publicDocument);
@@ -116,7 +116,7 @@ class CourtListQueryServiceTest {
     void queryCourtList_shouldNotEnrichPayload_whenReferenceDataReturnsEmpty() {
         // Given - no reference data (e.g. API not configured or court not found)
         when(referenceDataService.getCourtCenterDataByCourtName("Test Court")).thenReturn(Optional.empty());
-        when(listingQueryService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
+        when(progressionQueryService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
                 .thenReturn(payload);
         when(transformationService.transform(payload)).thenReturn(standardDocument);
         doNothing().when(jsonSchemaValidatorService).validate(standardDocument, "schema/court-list-schema.json");

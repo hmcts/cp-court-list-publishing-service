@@ -36,7 +36,7 @@ public class ReferenceDataService {
      * Fetches court centre data (id, ouCode, courtId) by court room name.
      * Maps to referencedata.query.ou.courtrooms.ou-courtroom-name.
      *
-     * @param courtCentreName court name (e.g. from listing payload courtCentreName)
+     * @param courtCentreName court name (e.g. from progression court list payload courtCentreName)
      * @return optional with id, ouCode and courtIdNumeric if found
      */
     public Optional<CourtCentreData> getCourtCenterDataByCourtName(String courtCentreName) {

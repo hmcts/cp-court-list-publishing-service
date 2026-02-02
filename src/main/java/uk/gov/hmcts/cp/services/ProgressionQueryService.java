@@ -18,7 +18,7 @@ import java.net.URI;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ListingQueryService {
+public class ProgressionQueryService {
 
     private final RestTemplate restTemplate;
 
@@ -31,7 +31,7 @@ public class ListingQueryService {
 
         URI uri = UriComponentsBuilder
                 .fromUriString(commonPlatformQueryApiBaseUrl)
-                .path("/listing-query-api/query/api/rest/listing/courtlistpayload")
+                .path("/progression-service/query/api/rest/progression/courtlistpayload")
                 .queryParam("listId", listId.name())
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate)
@@ -39,11 +39,11 @@ public class ListingQueryService {
                 .build()
                 .toUri();
 
-        log.debug("Calling listing-query-api with URI: {}", uri);
+        log.debug("Calling progression-service with URI: {}", uri);
 
         // Set required headers
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Accept", "application/vnd.listing.search.court.list.payload+json");
+        headers.set("Accept", "application/vnd.progression.search.court.list+json");
         if (cjscppuid != null && !cjscppuid.trim().isEmpty()) {
             headers.set("CJSCPPUID", cjscppuid);
         }
@@ -59,9 +59,8 @@ public class ListingQueryService {
             log.info("Successfully retrieved court list payload");
             return response.getBody();
         } catch (Exception e) {
-            log.error("Error calling common-platform-query-api: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to fetch court list payload from common-platform-query-api", e);
+            log.error("Error calling progression-service: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to fetch court list payload from progression-service", e);
         }
     }
 }
-
