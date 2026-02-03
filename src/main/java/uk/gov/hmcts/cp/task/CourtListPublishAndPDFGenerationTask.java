@@ -96,7 +96,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                     : getMockBlobSasUrl(executionInfo);
             if (sasUrl != null && courtListId != null) {
                 // Update fileName and lastUpdated after successful PDF generation
-                updateFileNameAndLastUpdated(courtListId, sasUrl);
+                updateFileUrlAndLastUpdated(courtListId, sasUrl);
             }
         } catch (Exception e) {
             logger.error("Error generating and uploading PDF", e);
@@ -247,17 +247,17 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         logger.info("Successfully updated status to SUCCESSFUL for court list ID: {}", courtListId);
     }
 
-    private void updateFileNameAndLastUpdated(UUID courtListId, String fileName) {
+    private void updateFileUrlAndLastUpdated(UUID courtListId, String fileUrl) {
         CourtListStatusEntity existingCourtListPublishEntity = repository.getByCourtListId(courtListId);
         if (existingCourtListPublishEntity == null) {
             logger.warn("No record found with court list ID: {}", courtListId);
             return;
         }
 
-        existingCourtListPublishEntity.setFileName(fileName);
+        existingCourtListPublishEntity.setFileUrl(fileUrl);
         existingCourtListPublishEntity.setLastUpdated(Instant.now());
         repository.save(existingCourtListPublishEntity);
-        logger.info("Successfully updated fileName and lastUpdated for court list ID: {}", courtListId);
+        logger.info("Successfully updated fileUrl and lastUpdated for court list ID: {}", courtListId);
     }
 
     private UUID extractCourtListId(JsonObject jobData) {

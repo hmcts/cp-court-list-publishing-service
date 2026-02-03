@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
-import org.junit.jupiter.api.Disabled;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -84,7 +84,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
     }
 
     @Test
-    void publishCourtList_shouldCreateDbEntry_triggerTask_andUpdateFileNameWithPdfUrl() throws Exception {
+    void publishCourtList_shouldCreateDbEntry_triggerTask_andUpdateFileUrlWithPdfUrl() throws Exception {
         UUID courtCentreId = UUID.randomUUID();
         String requestJson = createPublishRequestJson(courtCentreId, "PUBLIC");
 
@@ -112,12 +112,12 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
         assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
-        assertThat(statusBody.has("fileName")).isTrue();
-        String fileName = statusBody.get("fileName").asText();
-        assertThat(fileName).isNotBlank();
+        assertThat(statusBody.has("fileUrl")).isTrue();
+        String fileUrl = statusBody.get("fileUrl").asText();
+        assertThat(fileUrl).isNotBlank();
         // SAS URL from Azurite contains devstoreaccount1 and sig= (SAS token)
-        assertThat(fileName).contains("devstoreaccount1");
-        assertThat(fileName).contains("sig=");
+        assertThat(fileUrl).contains("devstoreaccount1");
+        assertThat(fileUrl).contains("sig=");
     }
 
     @Test

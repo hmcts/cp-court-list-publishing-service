@@ -133,7 +133,7 @@ class CourtListStatusRepositoryTest {
                 lastUpdated
         );
         entity.setCourtListFileId(courtListFileId);
-        entity.setFileName(fileName);
+        entity.setFileUrl(fileName);
         entity.setPublishErrorMessage(errorMessage);
         entity.setPublishDate(publishDate);
 
@@ -145,7 +145,7 @@ class CourtListStatusRepositoryTest {
         // Then
         CourtListStatusEntity retrievedEntity = repository.findById(courtListId).orElseThrow();
         assertThat(retrievedEntity.getCourtListFileId()).isEqualTo(courtListFileId);
-        assertThat(retrievedEntity.getFileName()).isEqualTo(fileName);
+        assertThat(retrievedEntity.getFileUrl()).isEqualTo(fileName);
         assertThat(retrievedEntity.getPublishErrorMessage()).isNull();
         assertThat(retrievedEntity.getPublishDate()).isEqualTo(publishDate);
     }
@@ -384,7 +384,7 @@ class CourtListStatusRepositoryTest {
         // When
         CourtListStatusEntity existingEntity = repository.findById(courtListId).orElseThrow();
         existingEntity.setPublishStatus(newStatus);
-        existingEntity.setFileName("updated-file.pdf");
+        existingEntity.setFileUrl("updated-file.pdf");
         existingEntity.setPublishErrorMessage(null);
         CourtListStatusEntity updatedEntity = repository.save(existingEntity);
         entityManager.flush();
@@ -393,7 +393,7 @@ class CourtListStatusRepositoryTest {
         // Then
         CourtListStatusEntity retrievedEntity = repository.findById(courtListId).orElseThrow();
         assertThat(retrievedEntity.getPublishStatus()).isEqualTo(newStatus);
-        assertThat(retrievedEntity.getFileName()).isEqualTo("updated-file.pdf");
+        assertThat(retrievedEntity.getFileUrl()).isEqualTo("updated-file.pdf");
         assertThat(retrievedEntity.getCourtListId()).isEqualTo(courtListId);
     }
 

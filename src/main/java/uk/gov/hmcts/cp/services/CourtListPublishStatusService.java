@@ -234,7 +234,7 @@ public class CourtListPublishStatusService {
                 entity.getCourtListType(),
                 lastUpdated,
                 entity.getCourtListFileId(),
-                entity.getFileName(),
+                entity.getFileUrl(),
                 entity.getPublishErrorMessage(),
                 entity.getFileErrorMessage(),
                 entity.getPublishDate()

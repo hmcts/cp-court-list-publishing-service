@@ -22,3 +22,7 @@ WHERE error_message IS NOT NULL;
 -- Drop the old error_message column
 ALTER TABLE court_list_publish_status 
 DROP COLUMN error_message;
+
+-- Rename file_name
+ALTER TABLE court_list_publish_status
+    RENAME COLUMN file_name TO file_url;
