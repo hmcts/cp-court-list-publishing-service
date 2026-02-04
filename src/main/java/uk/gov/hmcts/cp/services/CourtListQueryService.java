@@ -23,30 +23,21 @@ public class CourtListQueryService {
     private final PublicCourtListTransformationService publicCourtListTransformationService;
     private final JsonSchemaValidatorService jsonSchemaValidatorService;
 
-    public CourtListDocument queryCourtList(CourtListType listId, String courtCentreId, String startDate, String endDate, String cjscppuid) {
-        try {
-            // Fetch court list payload from progression-service
-            final var payload = getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
-
-            // Transform to required format based on listId
-            CourtListDocument document;
-            if ("PUBLIC".equalsIgnoreCase(listId.name())) {
-                log.info("Using PublicCourtListTransformationService for PUBLIC list type");
-                document = publicCourtListTransformationService.transform(payload);
-                // Validate the transformed document against JSON schema
-                jsonSchemaValidatorService.validate(document, PUBLIC_COURT_LIST_SCHEMA_PATH);
-            } else {
-                log.info("Using CourtListTransformationService for list type: {}", listId);
-                document = transformationService.transform(payload);
-                // Validate the transformed document against JSON schema
-                jsonSchemaValidatorService.validate(document, COURT_LIST_SCHEMA_PATH);
-            }
-
+    /**
+     * Transforms an existing payload into CourtListDocument (no remote fetch).
+     * Use when the payload was already obtained so that getCourtListPayload is not called again.
+     */
+    public CourtListDocument buildCourtListDocumentFromPayload(CourtListPayload payload, CourtListType listId) {
+        if (CourtListType.PUBLIC.equals(listId)) {
+            log.info("Using PublicCourtListTransformationService for PUBLIC list type");
+            CourtListDocument document = publicCourtListTransformationService.transform(payload);
+            jsonSchemaValidatorService.validate(document, PUBLIC_COURT_LIST_SCHEMA_PATH);
             return document;
-        } catch (Exception e) {
-            log.error("Error processing court list query", e);
-            throw new RuntimeException("Failed to process court list query: " + e.getMessage(), e);
         }
+        log.info("Using CourtListTransformationService for list type: {}", listId);
+        CourtListDocument document = transformationService.transform(payload);
+        jsonSchemaValidatorService.validate(document, COURT_LIST_SCHEMA_PATH);
+        return document;
     }
 
     public @NotNull CourtListPayload getCourtListPayload(final CourtListType listId, final String courtCentreId, final String startDate, final String endDate, final String cjscppuid) {

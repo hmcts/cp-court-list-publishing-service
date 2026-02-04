@@ -254,20 +254,22 @@ class CourtListPublishAndPDFGenerationTaskTest {
     @Test
     void execute_shouldQueryCourtListAndSendToCaTH_whenValidJobDataProvided() {
         // Given
+        String publishDate = LocalDate.now().toString();
         JsonObject jobData = createJobDataWithCourtListId(courtListId);
         when(executionInfo.getJobData()).thenReturn(jobData);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
 
-        String todayDate = LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        CourtListPayload payload = new CourtListPayload();
         CourtListDocument courtListDocument = CourtListDocument.builder().build();
-
-        when(courtListQueryService.queryCourtList(
+        when(courtListQueryService.getCourtListPayload(
                 CourtListType.PUBLIC,
                 courtCentreId.toString(),
-                todayDate,
-                todayDate,
+                publishDate,
+                publishDate,
                 "7aee5dea-b0de-4604-b49b-86c7788cfc4b"
-        )).thenReturn(courtListDocument);
+        )).thenReturn(payload);
+        when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
+                .thenReturn(courtListDocument);
 
         // When
         ExecutionInfo result = task.execute(executionInfo);
@@ -275,13 +277,14 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService).queryCourtList(
+        verify(courtListQueryService).getCourtListPayload(
                 CourtListType.PUBLIC,
                 courtCentreId.toString(),
-                todayDate,
-                todayDate,
+                publishDate,
+                publishDate,
                 "7aee5dea-b0de-4604-b49b-86c7788cfc4b"
         );
+        verify(courtListQueryService).buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC);
         verify(cathService).sendCourtListToCaTH(courtListDocument);
         verify(repository).getByCourtListId(courtListId);
         verify(repository).save(entity);
@@ -298,7 +301,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService, never()).queryCourtList(any(), any(), any(), any(), any());
+        verify(courtListQueryService, never()).getCourtListPayload(any(), any(), any(), any(), any());
         verify(cathService, never()).sendCourtListToCaTH(any());
     }
 
@@ -317,7 +320,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService, never()).queryCourtList(any(), any(), any(), any(), any());
+        verify(courtListQueryService, never()).getCourtListPayload(any(), any(), any(), any(), any());
         verify(cathService, never()).sendCourtListToCaTH(any());
     }
 
@@ -336,7 +339,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService, never()).queryCourtList(any(), any(), any(), any(), any());
+        verify(courtListQueryService, never()).getCourtListPayload(any(), any(), any(), any(), any());
         verify(cathService, never()).sendCourtListToCaTH(any());
     }
 
@@ -347,7 +350,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         when(executionInfo.getJobData()).thenReturn(jobData);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
 
-        when(courtListQueryService.queryCourtList(
+        when(courtListQueryService.getCourtListPayload(
                 any(), any(), any(), any(), any()
         )).thenThrow(new RuntimeException("Query service error"));
 
@@ -357,9 +360,8 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService).queryCourtList(any(), any(), any(), any(), any());
+        verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
         verify(cathService, never()).sendCourtListToCaTH(any());
-        // Status update should still be attempted
         verify(repository).getByCourtListId(courtListId);
     }
 
@@ -370,11 +372,11 @@ class CourtListPublishAndPDFGenerationTaskTest {
         when(executionInfo.getJobData()).thenReturn(jobData);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
 
+        CourtListPayload payload = new CourtListPayload();
         CourtListDocument courtListDocument = CourtListDocument.builder().build();
-
-        when(courtListQueryService.queryCourtList(
-                any(), any(), any(), any(), any()
-        )).thenReturn(courtListDocument);
+        when(courtListQueryService.getCourtListPayload(any(), any(), any(), any(), any())).thenReturn(payload);
+        when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
+                .thenReturn(courtListDocument);
 
         doThrow(new RuntimeException("CaTH service error"))
                 .when(cathService).sendCourtListToCaTH(any());
@@ -385,35 +387,36 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService).queryCourtList(any(), any(), any(), any(), any());
+        verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
+        verify(courtListQueryService).buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC);
         verify(cathService).sendCourtListToCaTH(courtListDocument);
-        // Status update should still be attempted
         verify(repository).getByCourtListId(courtListId);
     }
 
     @Test
-    void execute_shouldUseTodayDateForStartDateAndEndDate() {
+    void execute_shouldUsePublishDateForPayloadFetch() {
         // Given
+        String expectedDate = LocalDate.now().toString();
         JsonObject jobData = createJobDataWithCourtListId(courtListId);
         when(executionInfo.getJobData()).thenReturn(jobData);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
 
-        String expectedDate = LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        CourtListDocument courtListDocument = CourtListDocument.builder().build();
-
-        when(courtListQueryService.queryCourtList(
+        CourtListPayload payload = new CourtListPayload();
+        when(courtListQueryService.getCourtListPayload(
                 CourtListType.PUBLIC,
                 courtCentreId.toString(),
                 expectedDate,
                 expectedDate,
                 "7aee5dea-b0de-4604-b49b-86c7788cfc4b"
-        )).thenReturn(courtListDocument);
+        )).thenReturn(payload);
+        when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
+                .thenReturn(CourtListDocument.builder().build());
 
         // When
         task.execute(executionInfo);
 
-        // Then
-        verify(courtListQueryService).queryCourtList(
+        // Then - getCourtListPayload called once with publishDate from jobData
+        verify(courtListQueryService).getCourtListPayload(
                 CourtListType.PUBLIC,
                 courtCentreId.toString(),
                 expectedDate,
@@ -424,38 +427,35 @@ class CourtListPublishAndPDFGenerationTaskTest {
 
     @Test
     void execute_shouldGeneratePdf_whenPdfHelperIsAvailable() {
-        // Given
+        // Given - payload is fetched once and passed to both CaTH path and PDF
+        String publishDate = LocalDate.now().toString();
         JsonObject jobData = createJobDataWithCourtListId(courtListId);
         when(executionInfo.getJobData()).thenReturn(jobData);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
 
-        String todayDate = LocalDate.now().toString();
-        CourtListDocument courtListDocument = CourtListDocument.builder().build();
         CourtListPayload payload = new CourtListPayload();
-
-        when(courtListQueryService.queryCourtList(
-                any(), any(), any(), any(), any()
-        )).thenReturn(courtListDocument);
         when(courtListQueryService.getCourtListPayload(
                 CourtListType.PUBLIC,
                 courtCentreId.toString(),
-                todayDate,
-                todayDate,
+                publishDate,
+                publishDate,
                 "7aee5dea-b0de-4604-b49b-86c7788cfc4b"
         )).thenReturn(payload);
+        when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
+                .thenReturn(CourtListDocument.builder().build());
         when(pdfHelper.generateAndUploadPdf(payload, courtListId)).thenReturn("https://storage.example.com/blob.pdf?sasToken");
 
         // When
         ExecutionInfo result = task.execute(executionInfo);
 
-        // Then
+        // Then - getCourtListPayload called once; same payload used for PDF
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService).getCourtListPayload(
                 CourtListType.PUBLIC,
                 courtCentreId.toString(),
-                todayDate,
-                todayDate,
+                publishDate,
+                publishDate,
                 "7aee5dea-b0de-4604-b49b-86c7788cfc4b"
         );
         verify(pdfHelper).generateAndUploadPdf(payload, courtListId);
@@ -463,17 +463,11 @@ class CourtListPublishAndPDFGenerationTaskTest {
 
     @Test
     void execute_shouldNotGeneratePdf_whenPayloadIsNull() {
-        // Given
+        // Given - getCourtListPayload returns null (e.g. upstream failure)
         JsonObject jobData = createJobDataWithCourtListId(courtListId);
         when(executionInfo.getJobData()).thenReturn(jobData);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
 
-        CourtListDocument courtListDocument = CourtListDocument.builder().build();
-        when(courtListQueryService.queryCourtList(
-                any(), any(), any(), any(), any()
-        )).thenReturn(courtListDocument);
-
-        // Mock courtListQueryService to return null payload for PDF
         when(courtListQueryService.getCourtListPayload(
                 any(), any(), any(), any(), any()
         )).thenReturn(null);
@@ -481,7 +475,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // When
         ExecutionInfo result = task.execute(executionInfo);
 
-        // Then
+        // Then - getCourtListPayload called once; PDF not generated
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
@@ -490,30 +484,25 @@ class CourtListPublishAndPDFGenerationTaskTest {
 
     @Test
     void execute_shouldContinue_whenPdfGenerationFails() {
-        // Given
+        // Given - payload fetched once, PDF generation throws
         JsonObject jobData = createJobDataWithCourtListId(courtListId);
         when(executionInfo.getJobData()).thenReturn(jobData);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
 
-        CourtListDocument courtListDocument = CourtListDocument.builder().build();
         CourtListPayload payload = new CourtListPayload();
-
-        when(courtListQueryService.queryCourtList(
-                any(), any(), any(), any(), any()
-        )).thenReturn(courtListDocument);
-        when(courtListQueryService.getCourtListPayload(
-                any(), any(), any(), any(), any()
-        )).thenReturn(payload);
+        when(courtListQueryService.getCourtListPayload(any(), any(), any(), any(), any())).thenReturn(payload);
+        when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
+                .thenReturn(CourtListDocument.builder().build());
         when(pdfHelper.generateAndUploadPdf(payload, courtListId))
                 .thenThrow(new RuntimeException("PDF generation error"));
 
         // When
         ExecutionInfo result = task.execute(executionInfo);
 
-        // Then
+        // Then - task completes even if PDF generation fails
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        // Task should complete even if PDF generation fails
+        verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
         verify(pdfHelper).generateAndUploadPdf(payload, courtListId);
     }
 

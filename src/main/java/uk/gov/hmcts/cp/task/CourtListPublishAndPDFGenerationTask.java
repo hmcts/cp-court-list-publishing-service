@@ -3,25 +3,20 @@ package uk.gov.hmcts.cp.task;
 import jakarta.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import java.util.Optional;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
+import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 import uk.gov.hmcts.cp.services.CaTHService;
 import uk.gov.hmcts.cp.services.CourtListPdfHelper;
 import uk.gov.hmcts.cp.services.CourtListQueryService;
-import uk.gov.hmcts.cp.services.ProgressionQueryService;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 import uk.gov.hmcts.cp.taskmanager.service.task.ExecutableTask;
 import uk.gov.hmcts.cp.taskmanager.service.task.Task;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
@@ -36,7 +31,6 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     private static final String COURT_LIST_ID = "courtListId";
     private static final String COURT_CENTRE_ID = "courtCentreId";
     private static final String COURT_LIST_TYPE = "courtListType";
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final String GENISIS_USER_ID = "7aee5dea-b0de-4604-b49b-86c7788cfc4b";
 
     private final CourtListStatusRepository repository;
@@ -61,21 +55,32 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     public ExecutionInfo execute(ExecutionInfo executionInfo) {
         logger.info("Executing COURT_LIST_PUBLISH_TASK [job {}]", executionInfo);
 
-        // Extract courtListId once for use in status update
-        UUID courtListId = null;
-        if (executionInfo.getJobData() != null) {
-            courtListId = extractCourtListId(executionInfo.getJobData());
+        JsonObject jobData = executionInfo.getJobData();
+        UUID courtListId = jobData != null ? extractCourtListId(jobData) : null;
+
+        // Fetch court list payload once for both CaTH and PDF processing
+        CourtListPayload payload = null;
+        if (jobData != null) {
+            CourtListType listId = extractCourtListType(jobData);
+            String courtCentreId = extractCourtCentreId(jobData);
+            String publishDate = extractPublishDate(jobData);
+            if (listId != null && courtCentreId != null && publishDate != null) {
+                try {
+                    payload = courtListQueryService.getCourtListPayload(
+                            listId, courtCentreId, publishDate, publishDate, GENISIS_USER_ID);
+                } catch (Exception e) {
+                    logger.error("Error fetching court list payload", e);
+                }
+            }
         }
 
         try {
-            // Query and send court list data to CaTH
-            queryAndSendCourtListToCaTH(executionInfo);
+            queryAndSendCourtListToCaTH(executionInfo, payload);
         } catch (Exception e) {
             logger.error("Error querying or sending court list to CaTH", e);
         }
 
         try {
-            // Update status to PUBLISH_SUCCESSFUL after CaTH publishing attempt
             if (courtListId != null) {
                 updateStatusToPublishSuccessful(courtListId);
             }
@@ -84,18 +89,16 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
 
         try {
-            // Generate and upload PDF if PDF helper is available, or use mock URL for integration tests
             String sasUrl = makeExternalCalls
-                    ? generateAndUploadPdf(executionInfo)
+                    ? generateAndUploadPdf(executionInfo, payload)
                     : getMockBlobSasUrl(executionInfo);
             if (sasUrl != null && courtListId != null) {
-                // Update fileName and lastUpdated after successful PDF generation
                 updateFileUrlAndLastUpdated(courtListId, sasUrl);
             }
         } catch (Exception e) {
             logger.error("Error generating and uploading PDF", e);
         }
-        
+
         return executionInfo().from(executionInfo)
                 .withExecutionStatus(COMPLETED)
                 .build();
@@ -111,38 +114,22 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         return "https://standard-sas-url.com/";
     }
 
-    private void queryAndSendCourtListToCaTH(ExecutionInfo executionInfo) {
+    private void queryAndSendCourtListToCaTH(ExecutionInfo executionInfo, CourtListPayload payload) {
+        if (payload == null) {
+            logger.warn("Payload is null, cannot send court list to CaTH");
+            return;
+        }
         JsonObject jobData = executionInfo.getJobData();
         if (jobData == null) {
-            logger.warn("Job data is null in execution info, cannot query court list");
             return;
         }
-
-        // Extract parameters from jobData
         CourtListType listId = extractCourtListType(jobData);
-        String courtCentreId = extractCourtCentreId(jobData);
-        String publishDate = extractPublishDate(jobData);
-
-        if (listId == null || courtCentreId == null || publishDate == null) {
-            logger.warn("Missing required parameters: listId={}, courtCentreId={}, publishDate={}", listId, courtCentreId, publishDate);
+        if (listId == null) {
+            logger.warn("Missing listId (courtListType), cannot send court list to CaTH");
             return;
         }
-
-        // Get today's date for startDate and endDate
-        logger.info("Querying court list with listId={}, courtCentreId={}, startDate={}, endDate={}",
-                listId, courtCentreId, publishDate, publishDate);
-
         try {
-            // Query court list using CourtListQueryService
-            var courtListDocument = courtListQueryService.queryCourtList(
-                    listId,
-                    courtCentreId,
-                    publishDate,
-                    publishDate,
-                    GENISIS_USER_ID
-            );
-
-            // Send transformed data to CaTH endpoint
+            var courtListDocument = courtListQueryService.buildCourtListDocumentFromPayload(payload, listId);
             logger.info("Sending transformed court list document to CaTH endpoint");
             if (makeExternalCalls) {
                 cathService.sendCourtListToCaTH(courtListDocument);
@@ -151,56 +138,32 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             }
             logger.info("Successfully sent court list document to CaTH endpoint");
         } catch (Exception e) {
-            logger.error("Error querying or sending court list to CaTH", e);
-            throw new RuntimeException("Failed to query and send court list to CaTH: " + e.getMessage(), e);
+            logger.error("Error building document or sending court list to CaTH", e);
+            throw new RuntimeException("Failed to send court list to CaTH: " + e.getMessage(), e);
         }
     }
 
-    private String generateAndUploadPdf(ExecutionInfo executionInfo) {
+    private String generateAndUploadPdf(ExecutionInfo executionInfo, CourtListPayload payload) {
+        if (payload == null) {
+            logger.warn("Payload is null, cannot generate PDF");
+            return null;
+        }
         JsonObject jobData = executionInfo.getJobData();
         if (jobData == null) {
-            logger.warn("Job data is null in execution info, cannot generate PDF");
             return null;
         }
-
-        // Extract parameters from jobData
         UUID courtListId = extractCourtListId(jobData);
-        CourtListType courtListType = extractCourtListType(jobData);
-        String courtCentreId = extractCourtCentreId(jobData);
-
-        if (courtListId == null || courtListType == null || courtCentreId == null) {
-            logger.warn("Missing required parameters for PDF generation: courtListId={}, courtListType={}, courtCentreId={}",
-                    courtListId, courtListType, courtCentreId);
+        if (courtListId == null) {
+            logger.warn("Missing courtListId for PDF generation");
             return null;
         }
-
-        // Get today's date for startDate and endDate
-        String todayDate = LocalDate.now().format(DATE_FORMATTER);
-        logger.info("Generating PDF for court list ID: {}, courtListType: {}, courtCentreId: {}",
-                courtListId, courtListType, courtCentreId);
-
+        logger.info("Generating PDF for court list ID: {}", courtListId);
         try {
-            // Fetch payload for PDF generation
-            var payload = courtListQueryService.getCourtListPayload(
-                    courtListType,
-                    courtCentreId,
-                    todayDate,
-                    todayDate,
-                    GENISIS_USER_ID
-            );
-
-            if (payload == null) {
-                logger.warn("Payload is null, cannot generate PDF for court list ID: {}", courtListId);
-                return null;
-            }
-
-            // Generate and upload PDF using helper and return the SAS URL
             String sasUrl = pdfHelper.generateAndUploadPdf(payload, courtListId);
             logger.info("Successfully generated and uploaded PDF for court list ID: {}", courtListId);
             return sasUrl;
         } catch (Exception e) {
             logger.error("Error generating and uploading PDF for court list ID: {}", courtListId, e);
-            // Don't throw - PDF generation failure should not fail the entire task
             return null;
         }
     }
