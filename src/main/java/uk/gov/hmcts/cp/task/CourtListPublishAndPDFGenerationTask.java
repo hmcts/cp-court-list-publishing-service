@@ -43,7 +43,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     private final CourtListQueryService courtListQueryService;
     private final CaTHService cathService;
     private final ProgressionQueryService progressionQueryService;
-    private final Optional<CourtListPdfHelper> pdfHelper;
+    private final CourtListPdfHelper pdfHelper;
 
     //This flag is only temporary and needs to be removed by 2026-02-07
     private final boolean makeExternalCalls = true;
@@ -52,12 +52,12 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                                                 CourtListQueryService courtListQueryService,
                                                 CaTHService cathService,
                                                 ProgressionQueryService progressionQueryService,
-                                                @Autowired(required = false) CourtListPdfHelper pdfHelper) {
+                                                CourtListPdfHelper pdfHelper) {
         this.repository = repository;
         this.courtListQueryService = courtListQueryService;
         this.cathService = cathService;
         this.progressionQueryService = progressionQueryService;
-        this.pdfHelper = Optional.ofNullable(pdfHelper);
+        this.pdfHelper = pdfHelper;
     }
 
     @Override
@@ -160,11 +160,6 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     }
 
     private String generateAndUploadPdf(ExecutionInfo executionInfo) {
-        if (pdfHelper.isEmpty()) {
-            logger.debug("PDF helper not available, skipping PDF generation");
-            return null;
-        }
-
         JsonObject jobData = executionInfo.getJobData();
         if (jobData == null) {
             logger.warn("Job data is null in execution info, cannot generate PDF");
@@ -203,7 +198,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             }
 
             // Generate and upload PDF using helper and return the SAS URL
-            String sasUrl = pdfHelper.get().generateAndUploadPdf(payload, courtListId);
+            String sasUrl = pdfHelper.generateAndUploadPdf(payload, courtListId);
             logger.info("Successfully generated and uploaded PDF for court list ID: {}", courtListId);
             return sasUrl;
         } catch (Exception e) {
