@@ -127,24 +127,24 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         // Extract parameters from jobData
         CourtListType listId = extractCourtListType(jobData);
         String courtCentreId = extractCourtCentreId(jobData);
+        String publishDate = extractPublishDate(jobData);
 
-        if (listId == null || courtCentreId == null) {
-            logger.warn("Missing required parameters: listId={}, courtCentreId={}", listId, courtCentreId);
+        if (listId == null || courtCentreId == null || publishDate == null) {
+            logger.warn("Missing required parameters: listId={}, courtCentreId={}, publishDate={}", listId, courtCentreId, publishDate);
             return;
         }
 
         // Get today's date for startDate and endDate
-        String todayDate = LocalDate.now().format(DATE_FORMATTER);
         logger.info("Querying court list with listId={}, courtCentreId={}, startDate={}, endDate={}",
-                listId, courtCentreId, todayDate, todayDate);
+                listId, courtCentreId, publishDate, publishDate);
 
         try {
             // Query court list using CourtListQueryService
             var courtListDocument = courtListQueryService.queryCourtList(
                     listId,
                     courtCentreId,
-                    todayDate,
-                    todayDate,
+                    publishDate,
+                    publishDate,
                     GENISIS_USER_ID
             );
 
@@ -230,6 +230,15 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             return jobData.getString(COURT_CENTRE_ID, null);
         } catch (Exception e) {
             logger.warn("Could not extract courtCentreId from JsonObject", e);
+            return null;
+        }
+    }
+
+    private String extractPublishDate(JsonObject jobData) {
+        try {
+            return jobData.getString("publishDate", null);
+        } catch (Exception e) {
+            logger.warn("Could not extract publishDate from JsonObject", e);
             return null;
         }
     }

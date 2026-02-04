@@ -27,6 +27,7 @@ public class CourtListTaskTriggerService {
     private static final String TASK_NAME = "PUBLISH_AND_PDF_GENERATION_TASK";
     private static final String ERROR_COURT_CENTRE_ID_REQUIRED = "Court centre ID is required";
     private static final String ERROR_COURT_LIST_TYPE_REQUIRED = "Court list type is required";
+    private static final String ERROR_COURT_LIST_PUBLISH_DATE_REQUIRED = "Court list Publish Date is required";
     public static final String COURT_LIST_ID_IS_REQUIRED = "Court list ID is required";
     public static final String RESPONSE_IS_REQUIRED = "Response is required";
 
@@ -50,6 +51,9 @@ public class CourtListTaskTriggerService {
         if (response.getCourtListType() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ERROR_COURT_LIST_TYPE_REQUIRED);
         }
+        if (response.getPublishDate() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ERROR_COURT_LIST_PUBLISH_DATE_REQUIRED);
+        }
 
         LOG.atInfo().log("Triggering court list tasks for court list ID: {}, court centre ID: {} and type: {}",
                 response.getCourtListId(), response.getCourtCentreId(), response.getCourtListType());
@@ -59,6 +63,7 @@ public class CourtListTaskTriggerService {
                 .add("courtListId", response.getCourtListId().toString())
                 .add("courtCentreId", response.getCourtCentreId().toString())
                 .add("courtListType", response.getCourtListType().toString())
+                .add("publishDate", response.getPublishDate().toString())
                 .build();
 
         ExecutionInfo executionInfo = executionInfo()

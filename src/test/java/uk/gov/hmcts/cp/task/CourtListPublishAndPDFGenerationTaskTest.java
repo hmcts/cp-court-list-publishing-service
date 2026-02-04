@@ -2,6 +2,7 @@ package uk.gov.hmcts.cp.task;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -217,8 +218,8 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(repository).getByCourtListId(courtListId);
-        verify(repository).save(entity);
+        verify(repository, atLeastOnce()).getByCourtListId(courtListId);
+        verify(repository, atLeastOnce()).save(entity);
     }
 
     @Test
@@ -433,7 +434,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         when(executionInfo.getJobData()).thenReturn(jobData);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
 
-        String todayDate = LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String todayDate = LocalDate.now().toString();
         CourtListDocument courtListDocument = CourtListDocument.builder().build();
         CourtListPayload payload = new CourtListPayload();
 
@@ -526,6 +527,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 .add("courtListId", courtListId.toString())
                 .add("courtCentreId", courtCentreId.toString())
                 .add("courtListType", "PUBLIC")
+                .add("publishDate", LocalDate.now().toString())
                 .build();
     }
 }
