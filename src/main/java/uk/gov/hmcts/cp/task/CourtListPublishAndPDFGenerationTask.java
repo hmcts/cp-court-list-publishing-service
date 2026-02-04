@@ -48,9 +48,6 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     //This flag is only temporary and needs to be removed by 2026-02-07
     private final boolean makeExternalCalls = true;
 
-    @Value("${court.list.mock.pdf.for.integration:false}")
-    private boolean mockPdfForIntegration;
-
     public CourtListPublishAndPDFGenerationTask(CourtListStatusRepository repository,
                                                 CourtListQueryService courtListQueryService,
                                                 CaTHService cathService,
@@ -91,7 +88,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
         try {
             // Generate and upload PDF if PDF helper is available, or use mock URL for integration tests
-            String sasUrl = (makeExternalCalls && !mockPdfForIntegration)
+            String sasUrl = makeExternalCalls
                     ? generateAndUploadPdf(executionInfo)
                     : getMockBlobSasUrl(executionInfo);
             if (sasUrl != null && courtListId != null) {
