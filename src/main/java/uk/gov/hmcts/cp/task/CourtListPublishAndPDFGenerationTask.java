@@ -4,6 +4,7 @@ import jakarta.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
@@ -13,7 +14,7 @@ import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 import uk.gov.hmcts.cp.services.CaTHService;
 import uk.gov.hmcts.cp.services.CourtListPdfHelper;
 import uk.gov.hmcts.cp.services.CourtListQueryService;
-import uk.gov.hmcts.cp.services.ListingQueryService;
+import uk.gov.hmcts.cp.services.ProgressionQueryService;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 import uk.gov.hmcts.cp.taskmanager.service.task.ExecutableTask;
 import uk.gov.hmcts.cp.taskmanager.service.task.Task;
@@ -41,21 +42,24 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     private final CourtListStatusRepository repository;
     private final CourtListQueryService courtListQueryService;
     private final CaTHService cathService;
-    private final ListingQueryService listingQueryService;
+    private final ProgressionQueryService progressionQueryService;
     private final Optional<CourtListPdfHelper> pdfHelper;
 
     //This flag is only temporary and needs to be removed by 2026-02-07
     private final boolean makeExternalCalls = false;
 
+    @Value("${court.list.mock.pdf.for.integration:false}")
+    private boolean mockPdfForIntegration;
+
     public CourtListPublishAndPDFGenerationTask(CourtListStatusRepository repository,
                                                 CourtListQueryService courtListQueryService,
                                                 CaTHService cathService,
-                                                ListingQueryService listingQueryService,
+                                                ProgressionQueryService progressionQueryService,
                                                 @Autowired(required = false) CourtListPdfHelper pdfHelper) {
         this.repository = repository;
         this.courtListQueryService = courtListQueryService;
         this.cathService = cathService;
-        this.listingQueryService = listingQueryService;
+        this.progressionQueryService = progressionQueryService;
         this.pdfHelper = Optional.ofNullable(pdfHelper);
     }
 
@@ -86,11 +90,13 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
 
         try {
-            // Generate and upload PDF if PDF helper is available
-            String sasUrl = makeExternalCalls ? generateAndUploadPdf(executionInfo) : getMockBlobSasUrl(executionInfo);
+            // Generate and upload PDF if PDF helper is available, or use mock URL for integration tests
+            String sasUrl = (makeExternalCalls && !mockPdfForIntegration)
+                    ? generateAndUploadPdf(executionInfo)
+                    : getMockBlobSasUrl(executionInfo);
             if (sasUrl != null && courtListId != null) {
                 // Update fileName and lastUpdated after successful PDF generation
-                updateFileNameAndLastUpdated(courtListId, sasUrl);
+                updateFileUrlAndLastUpdated(courtListId, sasUrl);
             }
         } catch (Exception e) {
             logger.error("Error generating and uploading PDF", e);
@@ -186,7 +192,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
         try {
             // Fetch payload for PDF generation
-            var payload = listingQueryService.getCourtListPayload(
+            var payload = progressionQueryService.getCourtListPayload(
                     courtListType,
                     courtCentreId,
                     todayDate,
@@ -241,17 +247,17 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         logger.info("Successfully updated status to SUCCESSFUL for court list ID: {}", courtListId);
     }
 
-    private void updateFileNameAndLastUpdated(UUID courtListId, String fileName) {
+    private void updateFileUrlAndLastUpdated(UUID courtListId, String fileUrl) {
         CourtListStatusEntity existingCourtListPublishEntity = repository.getByCourtListId(courtListId);
         if (existingCourtListPublishEntity == null) {
             logger.warn("No record found with court list ID: {}", courtListId);
             return;
         }
 
-        existingCourtListPublishEntity.setFileName(fileName);
+        existingCourtListPublishEntity.setFileUrl(fileUrl);
         existingCourtListPublishEntity.setLastUpdated(Instant.now());
         repository.save(existingCourtListPublishEntity);
-        logger.info("Successfully updated fileName and lastUpdated for court list ID: {}", courtListId);
+        logger.info("Successfully updated fileUrl and lastUpdated for court list ID: {}", courtListId);
     }
 
     private UUID extractCourtListId(JsonObject jobData) {

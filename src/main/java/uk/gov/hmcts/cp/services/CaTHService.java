@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.domain.DtsMeta;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 
@@ -21,7 +22,7 @@ public class CaTHService {
     @Autowired
     private final CourtListPublisher caTHPublisher;
 
-    ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
 
     public void sendCourtListToCaTH(CourtListDocument courtListDocument) {
         try {
@@ -30,11 +31,15 @@ public class CaTHService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
+            final String courtIdFromRefData = courtListDocument.getCourtIdNumeric() != null && !courtListDocument.getCourtIdNumeric().isBlank()
+                    ? courtListDocument.getCourtIdNumeric()
+                    : "0";
+
             final DtsMeta dtsMeta = DtsMeta.builder()
                     .provenance("COMMON_PLATFORM")
                     .type("LIST")
                     .listType("MAGISTRATES_PUBLIC_ADULT_COURT_LIST_DAILY")
-                    .courtId("0")// This should be court ID, a 3 digit string from refData
+                    .courtId(courtIdFromRefData)
                     .contentDate("2024-03-27T12:39:41.362Z")
                     .language("ENGLISH")
                     .sensitivity("PUBLIC")// Thi sneeds to be dynamic along with other params here

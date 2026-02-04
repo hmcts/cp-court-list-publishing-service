@@ -23,7 +23,7 @@ import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 import uk.gov.hmcts.cp.services.CaTHService;
 import uk.gov.hmcts.cp.services.CourtListPdfHelper;
 import uk.gov.hmcts.cp.services.CourtListQueryService;
-import uk.gov.hmcts.cp.services.ListingQueryService;
+import uk.gov.hmcts.cp.services.ProgressionQueryService;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
@@ -46,7 +46,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
     private CaTHService cathService;
 
     @Mock
-    private ListingQueryService listingQueryService;
+    private ProgressionQueryService progressionQueryService;
 
     @Mock
     private CourtListPdfHelper pdfHelper;
@@ -77,7 +77,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 repository,
                 courtListQueryService,
                 cathService,
-                listingQueryService,
+                progressionQueryService,
                 pdfHelper
         );
     }
@@ -442,7 +442,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         when(courtListQueryService.queryCourtList(
                 any(), any(), any(), any(), any()
         )).thenReturn(courtListDocument);
-        when(listingQueryService.getCourtListPayload(
+        when(progressionQueryService.getCourtListPayload(
                 CourtListType.PUBLIC,
                 courtCentreId.toString(),
                 todayDate,
@@ -457,7 +457,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(listingQueryService).getCourtListPayload(
+        verify(progressionQueryService).getCourtListPayload(
                 CourtListType.PUBLIC,
                 courtCentreId.toString(),
                 todayDate,
@@ -479,8 +479,8 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 any(), any(), any(), any(), any()
         )).thenReturn(courtListDocument);
 
-        // Mock listingQueryService to return null payload
-        when(listingQueryService.getCourtListPayload(
+        // Mock progressionQueryService to return null payload
+        when(progressionQueryService.getCourtListPayload(
                 any(), any(), any(), any(), any()
         )).thenReturn(null);
 
@@ -490,7 +490,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(listingQueryService).getCourtListPayload(any(), any(), any(), any(), any());
+        verify(progressionQueryService).getCourtListPayload(any(), any(), any(), any(), any());
         verify(pdfHelper, never()).generateAndUploadPdf(any(), any());
     }
 
@@ -507,7 +507,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         when(courtListQueryService.queryCourtList(
                 any(), any(), any(), any(), any()
         )).thenReturn(courtListDocument);
-        when(listingQueryService.getCourtListPayload(
+        when(progressionQueryService.getCourtListPayload(
                 any(), any(), any(), any(), any()
         )).thenReturn(payload);
         when(pdfHelper.generateAndUploadPdf(payload, courtListId))

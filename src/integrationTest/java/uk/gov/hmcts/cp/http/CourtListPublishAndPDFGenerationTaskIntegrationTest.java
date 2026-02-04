@@ -7,6 +7,8 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -25,7 +27,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
     private static final String GET_STATUS_ENDPOINT = BASE_URL + "/api/court-list-publish/publish-status";
 
     private final RestTemplate http = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
 
     @Test
     void publishCourtList_shouldQueryAndSendToCaTH_whenValidRequest() throws Exception {
@@ -79,6 +81,43 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
         assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
+    }
+
+    @Test
+    void publishCourtList_shouldCreateDbEntry_triggerTask_andUpdateFileUrlWithPdfUrl() throws Exception {
+        UUID courtCentreId = UUID.randomUUID();
+        String requestJson = createPublishRequestJson(courtCentreId, "PUBLIC");
+
+        // When - Call publishCourtList (controller) - this triggers createOrUpdate and triggerCourtListTask
+        ResponseEntity<String> publishResponse = postPublishRequest(requestJson);
+
+        // Then - Verify publish response
+        assertThat(publishResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode publishBody = parseResponse(publishResponse);
+        UUID courtListId = UUID.fromString(publishBody.get("courtListId").asText());
+        assertThat(publishBody.get("publishStatus").asText()).isEqualTo("REQUESTED");
+
+        // Verify CourtListPublishStatusService createOrUpdate created entry in DB (record exists)
+        ResponseEntity<String> immediateStatus = getStatusRequest(courtListId);
+        assertThat(immediateStatus.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode immediateBody = parseResponse(immediateStatus);
+        assertThat(immediateBody.get("courtListId").asText()).isEqualTo(courtListId.toString());
+        assertThat(immediateBody.get("courtCentreId").asText()).isEqualTo(courtCentreId.toString());
+
+        // Wait for async task to complete (CourtListTaskTriggerService.triggerCourtListTask triggered the task)
+        waitForTaskCompletion(courtListId, 120000);
+
+        // Verify row updated with filename (SAS URL from Azurite blob upload)
+        ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
+        assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode statusBody = parseResponse(statusResponse);
+        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
+        assertThat(statusBody.has("fileUrl")).isTrue();
+        String fileUrl = statusBody.get("fileUrl").asText();
+        assertThat(fileUrl).isNotBlank();
+        // SAS URL from Azurite contains devstoreaccount1 and sig= (SAS token)
+        assertThat(fileUrl).contains("devstoreaccount1");
+        assertThat(fileUrl).contains("sig=");
     }
 
     @Test
@@ -170,11 +209,11 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
                     break;
                 }
             }
-            
+
             if (matchingItem == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
-            
+
             return ResponseEntity.ok()
                     .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
                     .body(matchingItem.toString());

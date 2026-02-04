@@ -21,7 +21,7 @@ public class PublicCourtListTransformationService {
     private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
     public CourtListDocument transform(CourtListPayload payload) {
-        log.info("Transforming public court list payload to document format");
+        log.info("Transforming progression public court list payload to document format");
 
         // Get current date/time for publicationDate (ISO 8601 format)
         String publicationDate = java.time.OffsetDateTime.now(ZoneOffset.UTC)
@@ -41,6 +41,9 @@ public class PublicCourtListTransformationService {
                 .document(document)
                 .venue(venue)
                 .courtLists(courtLists)
+                .ouCode(payload.getOuCode())
+                .courtId(payload.getCourtId())
+                .courtIdNumeric(payload.getCourtIdNumeric())
                 .build();
 
         return result;

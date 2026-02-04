@@ -2,6 +2,7 @@ package uk.gov.hmcts.cp.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
@@ -16,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CourtListTransformationServiceTest {
 
     private CourtListTransformationService transformationService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
     private CourtListPayload payload;
 
     @BeforeEach
@@ -122,14 +123,19 @@ class CourtListTransformationServiceTest {
         List<OffenceSchema> offences = party.getOffence();
         assertThat(offences).isNotNull();
         assertThat(offences).isNotEmpty();
-        
+
         // Verify first Offence
         OffenceSchema offence = offences.get(0);
         assertThat(offence).isNotNull();
         assertThat(offence.getOffenceCode()).isEqualTo("72357c7f-c4d1-4027-bed3-d42fb52a164e"); // From offence id
         assertThat(offence.getOffenceTitle()).isEqualTo("Occupy reserved seat / berth without a valid ticket on the Tyne and Wear Metro"); // From payload
         assertThat(offence.getOffenceWording()).contains("Has a violent past"); // From payload
-        
+
+        // Stub payload has no ouCode/courtId/courtIdNumeric (reference data not in stub) - document has nulls
+        assertThat(document.getOuCode()).isNull();
+        assertThat(document.getCourtId()).isNull();
+        assertThat(document.getCourtIdNumeric()).isNull();
+
         // Verify second Party (PROSECUTING_AUTHORITY) if exists
         if (caseObj.getParty().size() > 1) {
             Party prosecutorParty = caseObj.getParty().get(1);
@@ -225,6 +231,23 @@ class CourtListTransformationServiceTest {
         AddressSchema venueAddress = venue.getVenueAddress();
         assertThat(venueAddress).isNotNull();
         assertThat(venueAddress.getLine()).isNotNull();
+    }
+
+    @Test
+    void transform_shouldCopyReferenceDataFieldsFromPayloadToDocument() throws Exception {
+        // Given - payload enriched with ouCode/courtId from getCourtCenterDataByCourtName
+        payload.setOuCode("B01LY00");
+        payload.setCourtId("f8254db1-1683-483e-afb3-b87fde5a0a26");
+        payload.setCourtIdNumeric("325");
+
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then - reference data fields are present on document (for CaTH and list publishing)
+        assertThat(document).isNotNull();
+        assertThat(document.getOuCode()).isEqualTo("B01LY00");
+        assertThat(document.getCourtId()).isEqualTo("f8254db1-1683-483e-afb3-b87fde5a0a26");
+        assertThat(document.getCourtIdNumeric()).isEqualTo("325");
     }
 
     /**

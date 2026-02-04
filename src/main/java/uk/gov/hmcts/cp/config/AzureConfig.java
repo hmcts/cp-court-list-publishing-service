@@ -18,6 +18,7 @@ import org.springframework.util.StringUtils;
 
 @Slf4j
 @Configuration
+@org.springframework.context.annotation.Profile("!integration")
 @ConditionalOnProperty(name = "azure.storage.enabled", havingValue = "true", matchIfMissing = false)
 public class AzureConfig {
     public static final String AZURE_CLIENT_ID = "AZURE_CLIENT_ID";
@@ -26,10 +27,10 @@ public class AzureConfig {
     @Value("${azure.storage.container-name}")
     private String containerName;
 
-    @Value( "${azure.client.id}")
+    @Value("${azure.client.id:}")
     private String clientId;
 
-    @Value("${azure.tenant.id}")
+    @Value("${azure.tenant.id:}")
     private String tenantId;
 
     @Value("${azure.storage.account.name}")

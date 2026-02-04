@@ -1,9 +1,9 @@
 package uk.gov.hmcts.cp.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -58,7 +58,7 @@ class CourtListPublishControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
-        objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+        objectMapper = ObjectMapperConfig.getObjectMapper();
     }
 
     @Test
@@ -221,7 +221,7 @@ class CourtListPublishControllerTest {
                 entity.getCourtListType(),
                 lastUpdated,
                 entity.getCourtListFileId(),
-                entity.getFileName(),
+                entity.getFileUrl(),
                 entity.getPublishErrorMessage(),
                 entity.getFileErrorMessage(),
                 entity.getPublishDate()

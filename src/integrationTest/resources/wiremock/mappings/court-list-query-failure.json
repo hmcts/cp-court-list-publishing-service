@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPathPattern": "/listing-query-api/query/api/rest/listing/courtlistpayload.*"
+    "urlPathPattern": "/progression-service/query/api/rest/progression/courtlistpayload.*"
   },
   "response": {
     "status": 500,

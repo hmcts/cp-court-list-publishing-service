@@ -2,6 +2,7 @@ package uk.gov.hmcts.cp.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
@@ -16,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PublicCourtListTransformationServiceTest {
 
     private PublicCourtListTransformationService transformationService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
     private CourtListPayload payload;
 
     @BeforeEach
@@ -91,6 +92,28 @@ class PublicCourtListTransformationServiceTest {
         assertThat(individualDetails.getDateOfBirth()).isNull();
         assertThat(individualDetails.getAddress()).isNull();
         assertThat(party.getOffence()).isNull();
+
+        // Stub payload has no reference data - document has nulls
+        assertThat(document.getOuCode()).isNull();
+        assertThat(document.getCourtId()).isNull();
+        assertThat(document.getCourtIdNumeric()).isNull();
+    }
+
+    @Test
+    void transform_shouldCopyReferenceDataFieldsFromPayloadToDocument() throws Exception {
+        // Given - payload enriched with ouCode/courtId from getCourtCenterDataByCourtName
+        payload.setOuCode("B01LY00");
+        payload.setCourtId("f8254db1-1683-483e-afb3-b87fde5a0a26");
+        payload.setCourtIdNumeric("325");
+
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then - reference data fields are present on document
+        assertThat(document).isNotNull();
+        assertThat(document.getOuCode()).isEqualTo("B01LY00");
+        assertThat(document.getCourtId()).isEqualTo("f8254db1-1683-483e-afb3-b87fde5a0a26");
+        assertThat(document.getCourtIdNumeric()).isEqualTo("325");
     }
 
     @Test

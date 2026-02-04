@@ -27,13 +27,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ListingQueryServiceTest {
+class ProgressionQueryServiceTest {
 
     @Mock
     private RestTemplate restTemplate;
 
     @InjectMocks
-    private ListingQueryService listingQueryService;
+    private ProgressionQueryService progressionQueryService;
 
     private CourtListType courtListType;
     private String courtCentreId;
@@ -46,9 +46,9 @@ class ListingQueryServiceTest {
         // Use reflection to set the base URL for testing
         String baseUrl = "https://test.example.com";
         try {
-            java.lang.reflect.Field field = ListingQueryService.class.getDeclaredField("commonPlatformQueryApiBaseUrl");
+            java.lang.reflect.Field field = ProgressionQueryService.class.getDeclaredField("commonPlatformQueryApiBaseUrl");
             field.setAccessible(true);
-            field.set(listingQueryService, baseUrl);
+            field.set(progressionQueryService, baseUrl);
         } catch (Exception e) {
             // Ignore if reflection fails
         }
@@ -86,7 +86,7 @@ class ListingQueryServiceTest {
         )).thenReturn(responseEntity);
 
         // When
-        CourtListPayload result = listingQueryService.getCourtListPayload(courtListType, courtCentreId, startDate, endDate, cjscppuid);
+        CourtListPayload result = progressionQueryService.getCourtListPayload(courtListType, courtCentreId, startDate, endDate, cjscppuid);
 
         // Then - Verify the result
         assertThat(result).isNotNull();
@@ -108,7 +108,7 @@ class ListingQueryServiceTest {
 
         // Verify URI contains correct path and query parameters
         URI capturedUri = uriCaptor.getValue();
-        assertThat(capturedUri.toString()).contains("/listing-query-api/query/api/rest/listing/courtlistpayload");
+        assertThat(capturedUri.toString()).contains("/progression-service/query/api/rest/progression/courtlistpayload");
         assertThat(capturedUri.toString()).contains("listId=STANDARD");
         assertThat(capturedUri.toString()).contains("courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26");
         assertThat(capturedUri.toString()).contains("startDate=2026-01-05");
@@ -119,7 +119,7 @@ class ListingQueryServiceTest {
         assertThat(capturedEntity).isNotNull();
         HttpHeaders headers = capturedEntity.getHeaders();
         assertThat(headers).isNotNull();
-        assertThat(headers.getFirst("Accept")).isEqualTo("application/vnd.listing.search.court.list.payload+json");
+        assertThat(headers.getFirst("Accept")).isEqualTo("application/vnd.progression.search.court.list+json");
         assertThat(headers.getFirst("CJSCPPUID")).isEqualTo(cjscppuid);
     }
 
@@ -134,9 +134,9 @@ class ListingQueryServiceTest {
         )).thenThrow(new RestClientException("Connection failed"));
 
         // When & Then
-        assertThatThrownBy(() -> listingQueryService.getCourtListPayload(courtListType, courtCentreId, startDate, endDate, cjscppuid))
+        assertThatThrownBy(() -> progressionQueryService.getCourtListPayload(courtListType, courtCentreId, startDate, endDate, cjscppuid))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to fetch court list payload from common-platform-query-api");
+                .hasMessageContaining("Failed to fetch court list payload from progression-service");
     }
 
 }
