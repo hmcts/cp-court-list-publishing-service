@@ -2,7 +2,10 @@ package uk.gov.hmcts.cp.services;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
+
+import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
@@ -23,17 +26,7 @@ public class CourtListQueryService {
     public CourtListDocument queryCourtList(CourtListType listId, String courtCentreId, String startDate, String endDate, String cjscppuid) {
         try {
             // Fetch court list payload from progression-service
-            var payload = progressionQueryService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
-
-            // Reference data: getCourtCenterDataByCourtName → ouCode and courtId (aligned with progression context)
-            if (payload.getCourtCentreName() != null && !payload.getCourtCentreName().isBlank()) {
-                referenceDataService.getCourtCenterDataByCourtName(payload.getCourtCentreName())
-                        .ifPresent(courtCentre -> {
-                            payload.setOuCode(courtCentre.getOuCode());
-                            payload.setCourtId(courtCentre.getId() != null ? courtCentre.getId().toString() : null);
-                            payload.setCourtIdNumeric(courtCentre.getCourtIdNumeric());
-                        });
-            }
+            final var payload = getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
 
             // Transform to required format based on listId
             CourtListDocument document;
@@ -54,6 +47,21 @@ public class CourtListQueryService {
             log.error("Error processing court list query", e);
             throw new RuntimeException("Failed to process court list query: " + e.getMessage(), e);
         }
+    }
+
+    public @NotNull CourtListPayload getCourtListPayload(final CourtListType listId, final String courtCentreId, final String startDate, final String endDate, final String cjscppuid) {
+        var payload = progressionQueryService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
+
+        // Reference data: getCourtCenterDataByCourtName → ouCode and courtId (aligned with progression context)
+        if (payload.getCourtCentreName() != null && !payload.getCourtCentreName().isBlank()) {
+            referenceDataService.getCourtCenterDataByCourtName(payload.getCourtCentreName())
+                    .ifPresent(courtCentre -> {
+                        payload.setOuCode(courtCentre.getOuCode());
+                        payload.setCourtId(courtCentre.getId() != null ? courtCentre.getId().toString() : null);
+                        payload.setCourtIdNumeric(courtCentre.getCourtIdNumeric());
+                    });
+        }
+        return payload;
     }
 }
 

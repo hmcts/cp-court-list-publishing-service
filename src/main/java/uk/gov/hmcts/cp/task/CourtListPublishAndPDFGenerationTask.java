@@ -42,7 +42,6 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     private final CourtListStatusRepository repository;
     private final CourtListQueryService courtListQueryService;
     private final CaTHService cathService;
-    private final ProgressionQueryService progressionQueryService;
     private final CourtListPdfHelper pdfHelper;
 
     //This flag is only temporary and needs to be removed by 2026-02-07
@@ -51,12 +50,10 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     public CourtListPublishAndPDFGenerationTask(CourtListStatusRepository repository,
                                                 CourtListQueryService courtListQueryService,
                                                 CaTHService cathService,
-                                                ProgressionQueryService progressionQueryService,
                                                 CourtListPdfHelper pdfHelper) {
         this.repository = repository;
         this.courtListQueryService = courtListQueryService;
         this.cathService = cathService;
-        this.progressionQueryService = progressionQueryService;
         this.pdfHelper = pdfHelper;
     }
 
@@ -184,7 +181,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
         try {
             // Fetch payload for PDF generation
-            var payload = progressionQueryService.getCourtListPayload(
+            var payload = courtListQueryService.getCourtListPayload(
                     courtListType,
                     courtCentreId,
                     todayDate,
