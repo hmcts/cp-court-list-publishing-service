@@ -31,7 +31,7 @@ public class ProgressionQueryService {
 
         URI uri = UriComponentsBuilder
                 .fromUriString(commonPlatformQueryApiBaseUrl)
-                .path("/progression-service/query/api/rest/progression/courtlistpayload")
+                .path("/progression-service/query/api/rest/progression/courtlist")
                 .queryParam("listId", listId.name())
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate)
