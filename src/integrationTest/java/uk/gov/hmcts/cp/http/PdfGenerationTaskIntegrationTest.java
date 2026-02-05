@@ -67,7 +67,8 @@ public class PdfGenerationTaskIntegrationTest {
                 "courtCentreId": "%s",
                 "startDate": "2026-01-20",
                 "endDate": "2026-01-20",
-                "courtListType": "%s"
+                "courtListType": "%s",
+                "makeExternalCalls": true
             }
             """.formatted(courtCentreId, COURT_LIST_TYPE_PUBLIC);
     }

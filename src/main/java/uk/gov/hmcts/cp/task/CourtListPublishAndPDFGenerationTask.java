@@ -32,14 +32,12 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     private static final String COURT_CENTRE_ID = "courtCentreId";
     private static final String COURT_LIST_TYPE = "courtListType";
     private static final String GENISIS_USER_ID = "7aee5dea-b0de-4604-b49b-86c7788cfc4b";
+    private static final String MAKE_EXTERNAL_CALLS = "makeExternalCalls";
 
     private final CourtListStatusRepository repository;
     private final CourtListQueryService courtListQueryService;
     private final CaTHService cathService;
     private final CourtListPdfHelper pdfHelper;
-
-    //This flag is only temporary and needs to be removed by 2026-02-07
-    private final boolean makeExternalCalls = true;
 
     public CourtListPublishAndPDFGenerationTask(CourtListStatusRepository repository,
                                                 CourtListQueryService courtListQueryService,
@@ -57,6 +55,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
         JsonObject jobData = executionInfo.getJobData();
         UUID courtListId = jobData != null ? extractCourtListId(jobData) : null;
+        boolean makeExternalCalls = extractMakeExternalCalls(jobData);
 
         // Fetch court list payload once for both CaTH and PDF processing
         CourtListPayload payload = null;
@@ -75,7 +74,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
 
         try {
-            queryAndSendCourtListToCaTH(executionInfo, payload);
+            queryAndSendCourtListToCaTH(executionInfo, payload, makeExternalCalls);
         } catch (Exception e) {
             logger.error("Error querying or sending court list to CaTH", e);
         }
@@ -90,8 +89,8 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
         try {
             String sasUrl = makeExternalCalls
-                    ? generateAndUploadPdf(executionInfo, payload)
-                    : getMockBlobSasUrl(executionInfo);
+                ? generateAndUploadPdf(executionInfo, payload)
+                : getMockBlobSasUrl(executionInfo);
             if (sasUrl != null && courtListId != null) {
                 updateFileUrlAndLastUpdated(courtListId, sasUrl);
             }
@@ -114,7 +113,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         return "https://standard-sas-url.com/";
     }
 
-    private void queryAndSendCourtListToCaTH(ExecutionInfo executionInfo, CourtListPayload payload) {
+    private void queryAndSendCourtListToCaTH(ExecutionInfo executionInfo, CourtListPayload payload, boolean makeExternalCalls) {
         if (payload == null) {
             logger.warn("Payload is null, cannot send court list to CaTH");
             return;
@@ -192,6 +191,21 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         } catch (Exception e) {
             logger.warn("Could not extract publishDate from JsonObject", e);
             return null;
+        }
+    }
+
+    /**
+     * Reads makeExternalCalls from jobData (temporary param, to be removed by 2026-02-07). Default false.
+     */
+    private boolean extractMakeExternalCalls(JsonObject jobData) {
+        if (jobData == null || !jobData.containsKey(MAKE_EXTERNAL_CALLS)) {
+            return false;
+        }
+        try {
+            return jobData.getBoolean(MAKE_EXTERNAL_CALLS);
+        } catch (Exception e) {
+            logger.warn("Could not extract makeExternalCalls from JsonObject, using false", e);
+            return false;
         }
     }
 

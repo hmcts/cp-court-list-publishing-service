@@ -219,7 +219,8 @@ public class CourtListPublishControllerHttpLiveTest {
                 "courtCentreId": "%s",
                 "startDate": "%s",
                 "endDate": "%s",
-                "courtListType": "%s"
+                "courtListType": "%s",
+                "makeExternalCalls": true
             }
             """.formatted(courtCentreId, today, today, courtListType.name());
     }

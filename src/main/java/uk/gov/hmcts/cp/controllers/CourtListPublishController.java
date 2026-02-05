@@ -31,9 +31,9 @@ public class CourtListPublishController implements CourtListPublishApi {
     private final CourtListTaskTriggerService courtListTaskTriggerService;
     private static final Logger LOG = LoggerFactory.getLogger(CourtListPublishController.class);
 
-    public CourtListPublishController(final CourtListPublishStatusService service, CourtListTaskTriggerService CourtListTaskTriggerService) {
+    public CourtListPublishController(final CourtListPublishStatusService service, CourtListTaskTriggerService courtListTaskTriggerService) {
         this.service = service;
-        this.courtListTaskTriggerService = CourtListTaskTriggerService;
+        this.courtListTaskTriggerService = courtListTaskTriggerService;
     }
 
     @Override
@@ -53,9 +53,11 @@ public class CourtListPublishController implements CourtListPublishApi {
                 request.getEndDate()
         );
 
+        boolean makeExternalCallsBool = Boolean.TRUE.equals(request.getMakeExternalCalls());
+
         // Trigger the court list publishing and PDF generation task asynchronously
         try {
-            courtListTaskTriggerService.triggerCourtListTask(response);
+            courtListTaskTriggerService.triggerCourtListTask(response, makeExternalCallsBool);
             LOG.atInfo().log("Court list publishing task triggered for court list ID: {}", response.getCourtListId());
         } catch (Exception e) {
             LOG.atError().log("Failed to trigger court list publishing task for court list ID: {}",

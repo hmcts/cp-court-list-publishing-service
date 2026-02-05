@@ -17,6 +17,7 @@ import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
+import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -46,6 +47,9 @@ class CourtListPublishControllerTest {
 
     @Mock
     private CourtListPublishStatusService service;
+
+    @Mock
+    private CourtListTaskTriggerService courtListTaskTriggerService;
 
     @InjectMocks
     private CourtListPublishController controller;
@@ -79,7 +83,7 @@ class CourtListPublishControllerTest {
                 any(LocalDate.class)
         )).thenReturn(toResponse(expectedEntity));
 
-        // When & Then
+        // When & Then (makeExternalCalls=true in payload for tests so task runs real CaTH/PDF flow when exercised)
         mockMvc.perform(post(PUBLISH_URL)
                         .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
                         .content(objectMapper.writeValueAsString(request)))
@@ -98,6 +102,7 @@ class CourtListPublishControllerTest {
                 eq(request.getStartDate()),
                 eq(request.getEndDate())
         );
+        verify(courtListTaskTriggerService).triggerCourtListTask(any(), eq(true));
     }
 
     @Test
@@ -188,7 +193,8 @@ class CourtListPublishControllerTest {
                 UUID.randomUUID(),  // courtCentreId
                 LocalDate.now(),    // startDate
                 LocalDate.now(),    // endDate
-                CourtListType.STANDARD
+                CourtListType.STANDARD,
+                true                // makeExternalCalls - tests expect external CaTH/PDF flow when exercised
         );
     }
 

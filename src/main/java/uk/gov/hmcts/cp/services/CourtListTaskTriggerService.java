@@ -36,9 +36,10 @@ public class CourtListTaskTriggerService {
 
     /**
      * Triggers the court list tasks asynchronously.
+     * @param makeExternalCalls when true, the task will call CaTH and generate/upload PDF; when false, external calls are skipped (temporary param, to be removed by 2026-02-07).
      */
     @Transactional
-    public void triggerCourtListTask(final CourtListPublishResponse response) {
+    public void triggerCourtListTask(final CourtListPublishResponse response, final boolean makeExternalCalls) {
         if (response == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, RESPONSE_IS_REQUIRED);
         }
@@ -58,12 +59,13 @@ public class CourtListTaskTriggerService {
         LOG.atInfo().log("Triggering court list tasks for court list ID: {}, court centre ID: {} and type: {}",
                 response.getCourtListId(), response.getCourtCentreId(), response.getCourtListType());
 
-        // Create jobData with courtListId, courtCentreId, and courtListType
+        // Create jobData with courtListId, courtCentreId, courtListType, and makeExternalCalls
         JsonObject jobData = Json.createObjectBuilder()
                 .add("courtListId", response.getCourtListId().toString())
                 .add("courtCentreId", response.getCourtCentreId().toString())
                 .add("courtListType", response.getCourtListType().toString())
                 .add("publishDate", response.getPublishDate().toString())
+                .add("makeExternalCalls", makeExternalCalls)
                 .build();
 
         ExecutionInfo executionInfo = executionInfo()
