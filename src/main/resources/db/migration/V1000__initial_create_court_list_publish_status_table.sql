@@ -1,4 +1,4 @@
--- V1_001__create_court_list_publish_status_table.sql
+-- V1000__initial_create_court_list_publish_status_table.sql
 CREATE TABLE court_list_publish_status (
     court_list_id    UUID        PRIMARY KEY,
     court_centre_id  UUID        NOT NULL,

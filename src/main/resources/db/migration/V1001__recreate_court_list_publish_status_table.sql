@@ -1,4 +1,4 @@
--- V1_002__add_file_status_and_split_error_messages.sql
+-- V1001__recreate_court_list_publish_status_table.sql
 -- Drop and recreate table (test data only). Removes any unwanted CHECK constraints
 -- and produces the final schema matching CourtListStatusEntity.
 
