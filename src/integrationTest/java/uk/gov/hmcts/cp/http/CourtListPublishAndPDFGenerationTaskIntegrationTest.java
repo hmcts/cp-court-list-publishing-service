@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -21,7 +20,7 @@ import org.springframework.web.client.RestTemplate;
 import uk.gov.hmcts.cp.openapi.model.Status;
 
 @Slf4j
-public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
+public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends AbstractTest {
 
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private static final String PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publish";
@@ -84,7 +83,6 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
     }
 
-    @Disabled
     @Test
     void publishCourtList_shouldCreateDbEntry_triggerTask_andUpdateFileUrlWithPdfUrl() throws Exception {
         UUID courtCentreId = UUID.randomUUID();

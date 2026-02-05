@@ -11,8 +11,7 @@
   "response": {
     "status": 200,
     "headers": {
-      "Content-Type": "application/json",
-      "Accept": "application/vnd.progression.search.court.list+json"
+      "Content-Type": "application/json"
     },
     "bodyFileName": "court-list-payload-standard.json"
   },

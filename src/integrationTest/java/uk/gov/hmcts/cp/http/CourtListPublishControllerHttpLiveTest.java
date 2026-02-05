@@ -9,7 +9,6 @@ import uk.gov.hmcts.cp.openapi.model.Status;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -24,7 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 
-public class CourtListPublishControllerHttpLiveTest {
+public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
 
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private static final String PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publish";
