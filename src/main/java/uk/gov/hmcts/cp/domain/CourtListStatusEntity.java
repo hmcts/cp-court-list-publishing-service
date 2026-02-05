@@ -51,10 +51,6 @@ public class CourtListStatusEntity {
     private Instant lastUpdated;
 
     @Setter
-    @Column(name = "court_list_file_id")
-    private UUID courtListFileId;
-
-    @Setter
     @Column(name = "file_url")
     private String fileUrl;
 
@@ -67,7 +63,7 @@ public class CourtListStatusEntity {
     private String fileErrorMessage;
 
     @Setter
-    @Column(name = "publish_date")
+    @Column(name = "publish_date", nullable = false)
     private LocalDate publishDate;
 
     protected CourtListStatusEntity() {

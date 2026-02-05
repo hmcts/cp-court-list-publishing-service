@@ -96,6 +96,7 @@ class CourtListStatusRepositoryTest {
                 courtListType,
                 lastUpdated
         );
+        entity.setPublishDate(LocalDate.now());
 
         // When
         CourtListStatusEntity savedEntity = repository.save(entity);
@@ -119,7 +120,6 @@ class CourtListStatusRepositoryTest {
         Status publishStatus = Status.REQUESTED;
         CourtListType courtListType = CourtListType.PUBLIC;
         Instant lastUpdated = Instant.now();
-        UUID courtListFileId = UUID.randomUUID();
         String fileName = "court-list-2024-01-15.pdf";
         String errorMessage = null;
         LocalDate publishDate = LocalDate.now();
@@ -132,7 +132,6 @@ class CourtListStatusRepositoryTest {
                 courtListType,
                 lastUpdated
         );
-        entity.setCourtListFileId(courtListFileId);
         entity.setFileUrl(fileName);
         entity.setPublishErrorMessage(errorMessage);
         entity.setPublishDate(publishDate);
@@ -144,7 +143,6 @@ class CourtListStatusRepositoryTest {
 
         // Then
         CourtListStatusEntity retrievedEntity = repository.findById(courtListId).orElseThrow();
-        assertThat(retrievedEntity.getCourtListFileId()).isEqualTo(courtListFileId);
         assertThat(retrievedEntity.getFileUrl()).isEqualTo(fileName);
         assertThat(retrievedEntity.getPublishErrorMessage()).isNull();
         assertThat(retrievedEntity.getPublishDate()).isEqualTo(publishDate);
@@ -167,6 +165,7 @@ class CourtListStatusRepositoryTest {
                 courtListType,
                 lastUpdated
         );
+        entity.setPublishDate(LocalDate.now());
         entityManager.persistAndFlush(entity);
         entityManager.clear();
 
@@ -210,6 +209,7 @@ class CourtListStatusRepositoryTest {
                 courtListType,
                 lastUpdated
         );
+        entity.setPublishDate(LocalDate.now());
         entityManager.persistAndFlush(entity);
         entityManager.clear();
 
@@ -257,6 +257,9 @@ class CourtListStatusRepositoryTest {
                 CourtListType.STANDARD,
                 Instant.now()
         );
+        entity1.setPublishDate(LocalDate.now());
+        entity2.setPublishDate(LocalDate.now());
+        entity3.setPublishDate(LocalDate.now());
 
         entityManager.persist(entity1);
         entityManager.persist(entity2);
@@ -299,6 +302,8 @@ class CourtListStatusRepositoryTest {
                 CourtListType.FINAL,
                 Instant.now()
         );
+        entity1.setPublishDate(LocalDate.now());
+        entity2.setPublishDate(LocalDate.now());
 
         entityManager.persist(entity1);
         entityManager.persist(entity2);
@@ -341,6 +346,8 @@ class CourtListStatusRepositoryTest {
                 CourtListType.FIRM,
                 Instant.now()
         );
+        entity1.setPublishDate(LocalDate.now());
+        entity2.setPublishDate(LocalDate.now());
 
         entityManager.persist(entity1);
         entityManager.persist(entity2);
@@ -378,6 +385,7 @@ class CourtListStatusRepositoryTest {
                 CourtListType.ONLINE_PUBLIC,
                 lastUpdated
         );
+        entity.setPublishDate(LocalDate.now());
         entityManager.persistAndFlush(entity);
         entityManager.clear();
 
@@ -414,6 +422,7 @@ class CourtListStatusRepositoryTest {
                 courtListType,
                 lastUpdated
         );
+        entity.setPublishDate(LocalDate.now());
         entityManager.persistAndFlush(entity);
         entityManager.clear();
 
@@ -459,6 +468,9 @@ class CourtListStatusRepositoryTest {
                 CourtListType.ONLINE_PUBLIC,
                 Instant.now()
         );
+        entity1.setPublishDate(LocalDate.now());
+        entity2.setPublishDate(LocalDate.now());
+        entity3.setPublishDate(LocalDate.now());
 
         entityManager.persist(entity1);
         entityManager.persist(entity2);

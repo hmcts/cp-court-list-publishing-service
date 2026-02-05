@@ -226,7 +226,6 @@ class CourtListPublishControllerTest {
                 fileStatusEnum,
                 entity.getCourtListType(),
                 lastUpdated,
-                entity.getCourtListFileId(),
                 entity.getFileUrl(),
                 entity.getPublishErrorMessage(),
                 entity.getFileErrorMessage(),

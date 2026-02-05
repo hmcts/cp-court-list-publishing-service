@@ -20,7 +20,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update               # schema managed by Flyway it is updating db
+      ddl-auto: validate             # schema managed by Flyway only; Hibernate validates mapping matches DB at startup
     properties:
       hibernate.jdbc.time_zone: UTC
       hibernate.connection.provider_disables_autocommit: true
@@ -34,6 +34,8 @@ spring:
 
 flyway:
   enabled: true
-  locations: classpath:db/migration
-  baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
+  locations:
+    - classpath:db/migration/postgresql
+    - classpath:db/migration
+  baseline-on-migrate: true
 
