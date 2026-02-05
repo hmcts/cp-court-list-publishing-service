@@ -57,12 +57,13 @@ public class PdfGenerationService {
     private String commonPlatformQueryApiBaseUrl;
 
     /**
-     * Generates a PDF file from the provided payload data, uploads it to Azure Blob Storage, and returns the SAS URL
+     * Generates a PDF file from the provided payload data, uploads it to Azure Blob Storage, and returns the SAS URL.
+     * Document generator is called with GENESIS user.
      */
     public String generateAndUploadPdf(JsonObject payload, UUID courtListId) throws IOException {
         LOGGER.info("Generating PDF for court list ID: {}", courtListId);
         
-        // Generate PDF using document generator service
+        // Generate PDF using document generator service (GENESIS user)
         byte[] pdfBytes;
         try {
             pdfBytes = generatePdfDocument(payload, TEMPLATE_NAME);
@@ -149,7 +150,7 @@ public class PdfGenerationService {
                 .path(URL);
 
         URI uri = uriBuilder.build().toUri();
-        // Set up headers
+        // Set up headers (document generator uses GENESIS user)
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("CJSCPPUID", GENISIS_USER_ID);

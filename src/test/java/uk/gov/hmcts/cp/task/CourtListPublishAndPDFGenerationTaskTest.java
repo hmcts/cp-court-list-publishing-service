@@ -51,6 +51,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
 
     private CourtListPublishAndPDFGenerationTask task;
 
+    private static final String TEST_USER_ID = "test-user-id";
     private UUID courtListId;
     private UUID courtCentreId;
     private CourtListStatusEntity entity;
@@ -266,7 +267,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 courtCentreId.toString(),
                 publishDate,
                 publishDate,
-                "7aee5dea-b0de-4604-b49b-86c7788cfc4b"
+                TEST_USER_ID
         )).thenReturn(payload);
         when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
                 .thenReturn(courtListDocument);
@@ -282,7 +283,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 courtCentreId.toString(),
                 publishDate,
                 publishDate,
-                "7aee5dea-b0de-4604-b49b-86c7788cfc4b"
+                TEST_USER_ID
         );
         verify(courtListQueryService).buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC);
         verify(cathService).sendCourtListToCaTH(courtListDocument);
@@ -407,7 +408,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 courtCentreId.toString(),
                 expectedDate,
                 expectedDate,
-                "7aee5dea-b0de-4604-b49b-86c7788cfc4b"
+                TEST_USER_ID
         )).thenReturn(payload);
         when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
                 .thenReturn(CourtListDocument.builder().build());
@@ -421,7 +422,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 courtCentreId.toString(),
                 expectedDate,
                 expectedDate,
-                "7aee5dea-b0de-4604-b49b-86c7788cfc4b"
+                TEST_USER_ID
         );
     }
 
@@ -439,7 +440,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 courtCentreId.toString(),
                 publishDate,
                 publishDate,
-                "7aee5dea-b0de-4604-b49b-86c7788cfc4b"
+                TEST_USER_ID
         )).thenReturn(payload);
         when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
                 .thenReturn(CourtListDocument.builder().build());
@@ -456,7 +457,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 courtCentreId.toString(),
                 publishDate,
                 publishDate,
-                "7aee5dea-b0de-4604-b49b-86c7788cfc4b"
+                TEST_USER_ID
         );
         verify(pdfHelper).generateAndUploadPdf(payload, courtListId);
     }
@@ -513,6 +514,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 .add("courtListType", "PUBLIC")
                 .add("publishDate", LocalDate.now().toString())
                 .add("makeExternalCalls", true)
+                .add("userId", TEST_USER_ID)
                 .build();
     }
 }

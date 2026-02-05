@@ -25,6 +25,7 @@ public class CourtListPdfHelper {
 
     /**
      * Generates and uploads PDF for the given court list payload and court list ID.
+     * Document generator is called with GENESIS user (not request user).
      *
      * @param payload the court list payload to generate PDF from
      * @param courtListId the court list ID
@@ -42,7 +43,7 @@ public class CourtListPdfHelper {
             // Convert payload to JsonObject
             JsonObject payloadJson = objectConverter.convertFromObject(payload);
             
-            // Generate and upload PDF
+            // Generate and upload PDF (document generator uses GENESIS user)
             String sasUrl = pdfGenerationService.generateAndUploadPdf(payloadJson, courtListId);
             
             log.info("Successfully generated and uploaded PDF for court list ID: {}. SAS URL generated", courtListId);

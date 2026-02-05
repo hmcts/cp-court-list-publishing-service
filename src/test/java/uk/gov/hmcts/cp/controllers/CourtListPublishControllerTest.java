@@ -85,6 +85,7 @@ class CourtListPublishControllerTest {
 
         // When & Then (makeExternalCalls=true in payload for tests so task runs real CaTH/PDF flow when exercised)
         mockMvc.perform(post(PUBLISH_URL)
+                        .header("CJSCPPUID", "test-user-id")
                         .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -102,7 +103,24 @@ class CourtListPublishControllerTest {
                 eq(request.getStartDate()),
                 eq(request.getEndDate())
         );
-        verify(courtListTaskTriggerService).triggerCourtListTask(any(), eq(true));
+        verify(courtListTaskTriggerService).triggerCourtListTask(any(), eq(true), eq("test-user-id"));
+    }
+
+    @Test
+    void createCourtList_shouldReturnBadRequest_whenCjscppuidHeaderMissing() throws Exception {
+        // Given
+        CourtListPublishRequest request = new CourtListPublishRequest()
+                .courtCentreId(UUID.randomUUID())
+                .courtListType(CourtListType.STANDARD)
+                .startDate(LocalDate.now())
+                .endDate(LocalDate.now().plusDays(7))
+                .makeExternalCalls(true);
+
+        // When & Then - no CJSCPPUID header
+        mockMvc.perform(post(PUBLISH_URL)
+                        .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

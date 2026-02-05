@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -54,10 +56,14 @@ public class CourtListPublishController implements CourtListPublishApi {
         );
 
         boolean makeExternalCallsBool = Boolean.TRUE.equals(request.getMakeExternalCalls());
+        String userId = getCjscppuidFromRequest();
+        if (userId == null || userId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CJSCPPUID header is required");
+        }
 
-        // Trigger the court list publishing and PDF generation task asynchronously
+        // Trigger the court list publishing and PDF generation task asynchronously (userId from CJSCPPUID header)
         try {
-            courtListTaskTriggerService.triggerCourtListTask(response, makeExternalCallsBool);
+            courtListTaskTriggerService.triggerCourtListTask(response, makeExternalCallsBool, userId);
             LOG.atInfo().log("Court list publishing task triggered for court list ID: {}", response.getCourtListId());
         } catch (Exception e) {
             LOG.atError().log("Failed to trigger court list publishing task for court list ID: {}",
@@ -82,6 +88,14 @@ public class CourtListPublishController implements CourtListPublishApi {
         return ResponseEntity.ok()
                 .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
                 .body(responses);
+    }
+
+    private static String getCjscppuidFromRequest() {
+        var attrs = RequestContextHolder.getRequestAttributes();
+        if (attrs instanceof ServletRequestAttributes servletAttrs) {
+            return servletAttrs.getRequest().getHeader("CJSCPPUID");
+        }
+        return null;
     }
 }
 

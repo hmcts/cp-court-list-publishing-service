@@ -31,7 +31,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     private static final String COURT_LIST_ID = "courtListId";
     private static final String COURT_CENTRE_ID = "courtCentreId";
     private static final String COURT_LIST_TYPE = "courtListType";
-    private static final String GENISIS_USER_ID = "7aee5dea-b0de-4604-b49b-86c7788cfc4b";
+    private static final String USER_ID = "userId";
     private static final String MAKE_EXTERNAL_CALLS = "makeExternalCalls";
 
     private final CourtListStatusRepository repository;
@@ -56,8 +56,9 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         JsonObject jobData = executionInfo.getJobData();
         UUID courtListId = jobData != null ? extractCourtListId(jobData) : null;
         boolean makeExternalCalls = extractMakeExternalCalls(jobData);
+        String userId = extractUserId(jobData);
 
-        // Fetch court list payload once for both CaTH and PDF processing
+        // Fetch court list payload once for both CaTH and PDF processing (userId from CJSCPPUID header)
         CourtListPayload payload = null;
         if (jobData != null) {
             CourtListType listId = extractCourtListType(jobData);
@@ -66,7 +67,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             if (listId != null && courtCentreId != null && publishDate != null) {
                 try {
                     payload = courtListQueryService.getCourtListPayload(
-                            listId, courtCentreId, publishDate, publishDate, GENISIS_USER_ID);
+                            listId, courtCentreId, publishDate, publishDate, userId);
                 } catch (Exception e) {
                     logger.error("Error fetching court list payload", e);
                 }
@@ -190,6 +191,22 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             return jobData.getString("publishDate", null);
         } catch (Exception e) {
             logger.warn("Could not extract publishDate from JsonObject", e);
+            return null;
+        }
+    }
+
+    /**
+     * Reads userId from jobData (CJSCPPUID from request). May be null if header was not sent.
+     */
+    private String extractUserId(JsonObject jobData) {
+        if (jobData == null || !jobData.containsKey(USER_ID)) {
+            return null;
+        }
+        try {
+            String value = jobData.getString(USER_ID, null);
+            return (value != null && !value.isBlank()) ? value : null;
+        } catch (Exception e) {
+            logger.warn("Could not extract userId from JsonObject", e);
             return null;
         }
     }

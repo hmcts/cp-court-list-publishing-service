@@ -225,9 +225,13 @@ public class CourtListPublishControllerHttpLiveTest {
             """.formatted(courtCentreId, today, today, courtListType.name());
     }
 
+    private static final String CJSCPPUID_HEADER = "CJSCPPUID";
+    private static final String INTEGRATION_TEST_USER_ID = "integration-test-user-id";
+
     private HttpEntity<String> createHttpEntity(String json) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.post+json"));
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         return new HttpEntity<>(json, headers);
     }
 
