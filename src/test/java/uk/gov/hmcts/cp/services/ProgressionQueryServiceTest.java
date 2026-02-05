@@ -108,7 +108,7 @@ class ProgressionQueryServiceTest {
 
         // Verify URI contains correct path and query parameters
         URI capturedUri = uriCaptor.getValue();
-        assertThat(capturedUri.toString()).contains("/progression-service/query/api/rest/progression/courtlistpayload");
+        assertThat(capturedUri.toString()).contains("/progression-service/query/api/rest/progression/courtlist");
         assertThat(capturedUri.toString()).contains("listId=STANDARD");
         assertThat(capturedUri.toString()).contains("courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26");
         assertThat(capturedUri.toString()).contains("startDate=2026-01-05");

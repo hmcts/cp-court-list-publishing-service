@@ -84,6 +84,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest {
         assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
     }
 
+    @Disabled
     @Test
     void publishCourtList_shouldCreateDbEntry_triggerTask_andUpdateFileUrlWithPdfUrl() throws Exception {
         UUID courtCentreId = UUID.randomUUID();

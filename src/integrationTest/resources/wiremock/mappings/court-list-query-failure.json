@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPathPattern": "/progression-service/query/api/rest/progression/courtlistpayload.*"
+    "urlPathPattern": "/progression-service/query/api/rest/progression/courtlist.*"
   },
   "response": {
     "status": 500,
