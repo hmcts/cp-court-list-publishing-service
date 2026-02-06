@@ -64,7 +64,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             CourtListType listId = extractCourtListType(jobData);
             String courtCentreId = extractCourtCentreId(jobData);
             String publishDate = extractPublishDate(jobData);
-            if (listId != null && courtCentreId != null && publishDate != null) {
+            if (listId != null && courtCentreId != null && publishDate != null && makeExternalCalls/*RM this next day*/) {
                 try {
                     payload = courtListQueryService.getCourtListPayload(
                             listId, courtCentreId, publishDate, publishDate, userId);
