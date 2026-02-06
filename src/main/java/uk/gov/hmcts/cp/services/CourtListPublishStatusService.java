@@ -191,6 +191,10 @@ public class CourtListPublishStatusService {
 
     private void updateExistingEntity(final CourtListStatusEntity entity) {
         entity.setPublishStatus(Status.REQUESTED);
+        entity.setFileStatus(Status.REQUESTED);
+        entity.setFileUrl(null);
+        entity.setFileErrorMessage(null);
+        entity.setPublishErrorMessage(null);
         entity.setLastUpdated(Instant.now());
     }
 
