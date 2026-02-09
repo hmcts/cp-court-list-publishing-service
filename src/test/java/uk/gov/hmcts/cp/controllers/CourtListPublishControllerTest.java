@@ -16,6 +16,7 @@ import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
+import uk.gov.hmcts.cp.services.CourtListDataService;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 
@@ -29,6 +30,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -51,6 +53,9 @@ class CourtListPublishControllerTest {
     @Mock
     private CourtListTaskTriggerService courtListTaskTriggerService;
 
+    @Mock
+    private CourtListDataService courtListDataService;
+
     @InjectMocks
     private CourtListPublishController controller;
 
@@ -58,6 +63,7 @@ class CourtListPublishControllerTest {
 
     private static final String PUBLISH_URL = "/api/court-list-publish/publish";
     private static final String BASE_URL = "/api/court-list-publish";
+    private static final String COURTLISTDATA_URL = "/api/court-list-publish/courtlistdata";
 
     @BeforeEach
     void setUp() {
@@ -204,6 +210,48 @@ class CourtListPublishControllerTest {
                 .andExpect(jsonPath("$.length()").value(0));
 
         verify(service).findPublishStatus(null, courtCentreId, publishDate, null);
+    }
+
+    @Test
+    void getCourtlistData_returnsCourtListDataFromListingAndReferenceData() throws Exception {
+        String payload = "{\"listType\":\"standard\",\"courtCentreName\":\"Test Court\",\"templateName\":\"PublicCourtList\"}";
+        when(courtListDataService.getCourtListData(
+                eq(CourtListType.STANDARD),
+                eq("f8254db1-1683-483e-afb3-b87fde5a0a26"),
+                isNull(),
+                eq("2024-01-15"),
+                eq("2024-01-15"),
+                eq(false)))
+                .thenReturn(payload);
+
+        mockMvc.perform(get(COURTLISTDATA_URL)
+                        .param("courtCentreId", "f8254db1-1683-483e-afb3-b87fde5a0a26")
+                        .param("listId", "STANDARD")
+                        .param("startDate", "2024-01-15")
+                        .param("endDate", "2024-01-15"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.parseMediaType("application/vnd.progression.search.court.list.data+json")))
+                .andExpect(jsonPath("$.listType").value("standard"))
+                .andExpect(jsonPath("$.courtCentreName").value("Test Court"))
+                .andExpect(jsonPath("$.templateName").value("PublicCourtList"));
+
+        verify(courtListDataService).getCourtListData(
+                eq(CourtListType.STANDARD),
+                eq("f8254db1-1683-483e-afb3-b87fde5a0a26"),
+                isNull(),
+                eq("2024-01-15"),
+                eq("2024-01-15"),
+                eq(false));
+    }
+
+    @Test
+    void getCourtlistData_returns403WhenListIdIsPrison() throws Exception {
+        mockMvc.perform(get(COURTLISTDATA_URL)
+                        .param("courtCentreId", "f8254db1-1683-483e-afb3-b87fde5a0a26")
+                        .param("listId", "PRISON")
+                        .param("startDate", "2024-01-15")
+                        .param("endDate", "2024-01-15"))
+                .andExpect(status().isForbidden());
     }
 
     private CourtListPublishRequest createValidRequest() {

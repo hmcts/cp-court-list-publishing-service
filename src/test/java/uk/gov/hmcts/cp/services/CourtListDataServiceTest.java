@@ -1,7 +1,5 @@
 package uk.gov.hmcts.cp.services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,15 +30,6 @@ class CourtListDataServiceTest {
 
     @InjectMocks
     private CourtListDataService courtListDataService;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @BeforeEach
-    void setUp() throws Exception {
-        var field = CourtListDataService.class.getDeclaredField("objectMapper");
-        field.setAccessible(true);
-        field.set(courtListDataService, objectMapper);
-    }
 
     @Test
     void getCourtListData_returnsListingPayloadEnrichedWithOuCodeAndCourtId() {

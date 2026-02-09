@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.models.CourtCentreData;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
@@ -22,9 +23,10 @@ public class CourtListDataService {
     private static final String OU_CODE = "ouCode";
     private static final String COURT_ID = "courtId";
 
+    private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
+
     private final ListingQueryService listingQueryService;
     private final ReferenceDataService referenceDataService;
-    private final ObjectMapper objectMapper;
 
     /**
      * Fetches court list data from listing, enriches with ouCode/courtId from reference data,
@@ -42,7 +44,7 @@ public class CourtListDataService {
 
         JsonNode root;
         try {
-            root = objectMapper.readTree(listingJson);
+            root = OBJECT_MAPPER.readTree(listingJson);
         } catch (Exception e) {
             log.warn("Could not parse listing response as JSON: {}", e.getMessage());
             return listingJson;
@@ -57,7 +59,7 @@ public class CourtListDataService {
                     .ifPresent(data -> addCourtCentreIds(object, data));
         }
         try {
-            return objectMapper.writeValueAsString(object);
+            return OBJECT_MAPPER.writeValueAsString(object);
         } catch (Exception e) {
             log.warn("Could not serialize enriched court list data, returning listing payload as-is: {}", e.getMessage());
             return listingJson;
