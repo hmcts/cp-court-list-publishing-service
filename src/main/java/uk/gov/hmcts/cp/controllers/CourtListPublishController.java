@@ -1,5 +1,7 @@
 package uk.gov.hmcts.cp.controllers;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
 import uk.gov.hmcts.cp.openapi.model.CourtListData;
@@ -26,6 +28,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -112,6 +115,7 @@ public class CourtListPublishController implements CourtListPublishApi {
             CourtListData data = ObjectMapperConfig.getObjectMapper().readValue(json, CourtListData.class);
             return ResponseEntity.ok(data);
         } catch (Exception e) {
+            logUnknownPropertiesFromDeserializationError(e, CourtListData.class);
             LOG.warn("Could not parse court list data as CourtListData, returning error: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to parse court list data");
         }
@@ -130,6 +134,32 @@ public class CourtListPublishController implements CourtListPublishApi {
         return ResponseEntity.ok()
                 .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
                 .body(responses);
+    }
+
+    /**
+     * Logs any unknown JSON properties that caused deserialization to fail, so they can be added to the model.
+     * Walks the exception cause chain and logs each {@link UnrecognizedPropertyException}.
+     */
+    private void logUnknownPropertiesFromDeserializationError(Throwable e, Class<?> targetType) {
+        List<String> unknownProperties = new ArrayList<>();
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof UnrecognizedPropertyException upe) {
+                String prop = upe.getPropertyName();
+                if (prop != null && !unknownProperties.contains(prop)) {
+                    unknownProperties.add(prop);
+                }
+            }
+            if (t instanceof JsonMappingException jme && jme.getPath() != null && !jme.getPath().isEmpty()) {
+                var ref = jme.getPath().get(jme.getPath().size() - 1);
+                if (ref != null && ref.getFieldName() != null && !unknownProperties.contains(ref.getFieldName())) {
+                    unknownProperties.add(ref.getFieldName());
+                }
+            }
+        }
+        if (!unknownProperties.isEmpty()) {
+            LOG.warn("Court list data JSON contains unknown properties for {}: {}. Add these to the OpenAPI model to fix deserialization.",
+                    targetType.getSimpleName(), unknownProperties);
+        }
     }
 
     private static String getCjscppuidFromRequest() {
