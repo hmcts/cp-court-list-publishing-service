@@ -230,7 +230,7 @@ class CourtListPublishControllerTest {
                         .param("startDate", "2024-01-15")
                         .param("endDate", "2024-01-15"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.parseMediaType("application/vnd.progression.search.court.list.data+json")))
+                .andExpect(content().contentType(MediaType.parseMediaType("application/vnd.courtlistpublishing-service.publish.courtlistdata+json")))
                 .andExpect(jsonPath("$.listType").value("standard"))
                 .andExpect(jsonPath("$.courtCentreName").value("Test Court"))
                 .andExpect(jsonPath("$.templateName").value("PublicCourtList"));
