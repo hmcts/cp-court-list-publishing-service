@@ -22,6 +22,15 @@ then
   $o.setSuccess(true);
 end
 
+rule "Allow – courtlistdata"
+when
+  $o: Outcome()
+  $a: Action(name == "courtlistpublishing-service.courtlistdata.get")
+  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, "Legal Advisers","District Judge","System Users"))
+then
+  $o.setSuccess(true);
+end
+
 rule "Allow – test-auth (public access)"
 when
   $o: Outcome()

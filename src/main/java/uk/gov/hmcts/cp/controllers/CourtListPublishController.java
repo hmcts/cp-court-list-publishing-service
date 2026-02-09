@@ -1,10 +1,13 @@
 package uk.gov.hmcts.cp.controllers;
 
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
+import uk.gov.hmcts.cp.openapi.model.CourtListData;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
+import uk.gov.hmcts.cp.services.CourtListDataService;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 
 import org.slf4j.Logger;
@@ -29,13 +32,19 @@ import java.util.UUID;
 @RestController
 public class CourtListPublishController implements CourtListPublishApi {
 
+    private static final String PRISON = "PRISON";
+
     private final CourtListPublishStatusService service;
     private final CourtListTaskTriggerService courtListTaskTriggerService;
+    private final CourtListDataService courtListDataService;
     private static final Logger LOG = LoggerFactory.getLogger(CourtListPublishController.class);
 
-    public CourtListPublishController(final CourtListPublishStatusService service, CourtListTaskTriggerService courtListTaskTriggerService) {
+    public CourtListPublishController(final CourtListPublishStatusService service,
+                                     CourtListTaskTriggerService courtListTaskTriggerService,
+                                     CourtListDataService courtListDataService) {
         this.service = service;
         this.courtListTaskTriggerService = courtListTaskTriggerService;
+        this.courtListDataService = courtListDataService;
     }
 
     @Override
@@ -73,6 +82,32 @@ public class CourtListPublishController implements CourtListPublishApi {
         return ResponseEntity.ok()
                 .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.post+json"))
                 .body(response);
+    }
+
+    @Override
+    public ResponseEntity<CourtListData> getCourtlistData(final UUID courtCentreId,
+                                                          final CourtListType listId,
+                                                          final LocalDate startDate,
+                                                          final LocalDate endDate,
+                                                          final UUID courtListId,
+                                                          final Boolean restricted) {
+        if (PRISON.equals(listId.name())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "PRISON listId is not supported for courtlistdata");
+        }
+        LOG.info("Fetching court list data (listing + reference data only) for listId: {}, courtCentreId: {}, startDate: {}, endDate: {}",
+                listId, courtCentreId, startDate, endDate);
+        String courtCentreIdStr = courtCentreId != null ? courtCentreId.toString() : null;
+        String startStr = startDate != null ? startDate.toString() : null;
+        String endStr = endDate != null ? endDate.toString() : null;
+        boolean rest = Boolean.TRUE.equals(restricted);
+        String json = courtListDataService.getCourtListData(listId, courtCentreIdStr, null, startStr, endStr, rest);
+        try {
+            CourtListData data = ObjectMapperConfig.getObjectMapper().readValue(json, CourtListData.class);
+            return ResponseEntity.ok(data);
+        } catch (Exception e) {
+            LOG.warn("Could not parse court list data as CourtListData, returning error: {}", e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to parse court list data");
+        }
     }
 
     @SuppressWarnings("unused") // Method is used by Spring's request mapping
