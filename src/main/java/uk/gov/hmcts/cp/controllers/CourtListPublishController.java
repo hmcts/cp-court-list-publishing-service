@@ -33,6 +33,8 @@ import java.util.UUID;
 public class CourtListPublishController implements CourtListPublishApi {
 
     private static final String PRISON = "PRISON";
+    /** GENESIS user ID used for reference data calls (same as document generator). */
+    private static final String GENESIS_USER_ID = "7aee5dea-b0de-4604-b49b-86c7788cfc4b";
 
     private final CourtListPublishStatusService service;
     private final CourtListTaskTriggerService courtListTaskTriggerService;
@@ -94,13 +96,18 @@ public class CourtListPublishController implements CourtListPublishApi {
         if (PRISON.equals(listId.name())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "PRISON listId is not supported for courtlistdata");
         }
+        String cjscppuid = getCjscppuidFromRequest();
+        if (cjscppuid == null || cjscppuid.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CJSCPPUID header is required");
+        }
         LOG.info("Fetching court list data (listing + reference data only) for listId: {}, courtCentreId: {}, startDate: {}, endDate: {}",
                 listId, courtCentreId, startDate, endDate);
         String courtCentreIdStr = courtCentreId != null ? courtCentreId.toString() : null;
         String startStr = startDate != null ? startDate.toString() : null;
         String endStr = endDate != null ? endDate.toString() : null;
         boolean rest = Boolean.TRUE.equals(restricted);
-        String json = courtListDataService.getCourtListData(listId, courtCentreIdStr, null, startStr, endStr, rest);
+        String json = courtListDataService.getCourtListData(listId, courtCentreIdStr, null, startStr, endStr, rest,
+                cjscppuid, GENESIS_USER_ID);
         try {
             CourtListData data = ObjectMapperConfig.getObjectMapper().readValue(json, CourtListData.class);
             return ResponseEntity.ok(data);

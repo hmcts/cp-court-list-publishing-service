@@ -47,9 +47,10 @@ class CourtListDataServiceTest {
                 isNull(),
                 eq("2024-01-15"),
                 eq("2024-01-15"),
-                eq(false)))
+                eq(false),
+                eq("request-user-id")))
                 .thenReturn(listingJson);
-        when(referenceDataService.getCourtCenterDataByCourtName(eq("Lavender Hill Magistrates' Court")))
+        when(referenceDataService.getCourtCenterDataByCourtName(eq("Lavender Hill Magistrates' Court"), eq("genesis-user-id")))
                 .thenReturn(Optional.of(refData));
 
         String result = courtListDataService.getCourtListData(
@@ -58,7 +59,9 @@ class CourtListDataServiceTest {
                 null,
                 "2024-01-15",
                 "2024-01-15",
-                false);
+                false,
+                "request-user-id",
+                "genesis-user-id");
 
         assertThat(result).contains("\"ouCode\":\"123\"");
         assertThat(result).contains("\"courtId\":\"" + courtId + "\"");
@@ -69,14 +72,16 @@ class CourtListDataServiceTest {
                 isNull(),
                 eq("2024-01-15"),
                 eq("2024-01-15"),
-                eq(false));
+                eq(false),
+                eq("request-user-id"));
+        verify(referenceDataService).getCourtCenterDataByCourtName(eq("Lavender Hill Magistrates' Court"), eq("genesis-user-id"));
     }
 
     @Test
     void getCourtListData_returnsListingPayloadAsIsWhenReferenceDataEmpty() {
         String listingJson = "{\"listType\":\"public\",\"courtCentreName\":\"Unknown Court\"}";
-        when(listingQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean())).thenReturn(listingJson);
-        when(referenceDataService.getCourtCenterDataByCourtName(eq("Unknown Court"))).thenReturn(Optional.empty());
+        when(listingQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean(), any())).thenReturn(listingJson);
+        when(referenceDataService.getCourtCenterDataByCourtName(eq("Unknown Court"), any())).thenReturn(Optional.empty());
 
         String result = courtListDataService.getCourtListData(
                 CourtListType.PUBLIC,
@@ -84,7 +89,9 @@ class CourtListDataServiceTest {
                 null,
                 "2024-01-15",
                 "2024-01-15",
-                false);
+                false,
+                "listing-user",
+                "ref-data-user");
 
         assertThat(result).isEqualTo(listingJson);
     }

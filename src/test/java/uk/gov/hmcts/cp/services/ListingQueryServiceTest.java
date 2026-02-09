@@ -49,7 +49,8 @@ class ListingQueryServiceTest {
                 null,
                 "2024-01-15",
                 "2024-01-15",
-                false);
+                false,
+                "test-cjscppuid");
 
         assertThat(result).isEqualTo(expectedJson);
         verify(restTemplate).exchange(any(URI.class), eq(HttpMethod.GET), any(), eq(String.class));
@@ -67,7 +68,8 @@ class ListingQueryServiceTest {
                 null,
                 "2024-01-15",
                 "2024-01-15",
-                false))
+                false,
+                null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("base-url is not configured");
     }

@@ -221,10 +221,13 @@ class CourtListPublishControllerTest {
                 isNull(),
                 eq("2024-01-15"),
                 eq("2024-01-15"),
-                eq(false)))
+                eq(false),
+                eq("test-cjscppuid"),
+                any()))
                 .thenReturn(payload);
 
         mockMvc.perform(get(COURTLISTDATA_URL)
+                        .header("CJSCPPUID", "test-cjscppuid")
                         .param("courtCentreId", "f8254db1-1683-483e-afb3-b87fde5a0a26")
                         .param("listId", "STANDARD")
                         .param("startDate", "2024-01-15")
@@ -241,7 +244,19 @@ class CourtListPublishControllerTest {
                 isNull(),
                 eq("2024-01-15"),
                 eq("2024-01-15"),
-                eq(false));
+                eq(false),
+                eq("test-cjscppuid"),
+                eq("7aee5dea-b0de-4604-b49b-86c7788cfc4b"));
+    }
+
+    @Test
+    void getCourtlistData_returns400WhenCjscppuidHeaderMissing() throws Exception {
+        mockMvc.perform(get(COURTLISTDATA_URL)
+                        .param("courtCentreId", "f8254db1-1683-483e-afb3-b87fde5a0a26")
+                        .param("listId", "STANDARD")
+                        .param("startDate", "2024-01-15")
+                        .param("endDate", "2024-01-15"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

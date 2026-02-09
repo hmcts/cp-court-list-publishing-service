@@ -53,7 +53,7 @@ class ReferenceDataServiceTest {
                 eq(CourtCentreData.class)
         )).thenReturn(ResponseEntity.ok(expected));
 
-        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName(courtName);
+        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName(courtName, "genesis-user");
 
         assertThat(result).isPresent();
         assertThat(result.get().getOuCode()).isEqualTo("B01LY00");
@@ -64,13 +64,13 @@ class ReferenceDataServiceTest {
 
     @Test
     void getCourtCenterDataByCourtName_returnsEmpty_whenCourtNameIsNull() {
-        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName(null);
+        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName(null, null);
         assertThat(result).isEmpty();
     }
 
     @Test
     void getCourtCenterDataByCourtName_returnsEmpty_whenCourtNameIsBlank() {
-        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName("   ");
+        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName("   ", null);
         assertThat(result).isEmpty();
     }
 
@@ -78,7 +78,7 @@ class ReferenceDataServiceTest {
     void getCourtCenterDataByCourtName_returnsEmpty_whenBaseUrlNotConfigured() {
         ReflectionTestUtils.setField(referenceDataService, "commonPlatformQueryApiBaseUrl", "");
 
-        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName("Some Court");
+        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName("Some Court", null);
 
         assertThat(result).isEmpty();
     }
@@ -88,7 +88,7 @@ class ReferenceDataServiceTest {
         when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(CourtCentreData.class)))
                 .thenThrow(new RuntimeException("Connection refused"));
 
-        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName("Some Court");
+        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName("Some Court", "genesis-user");
 
         assertThat(result).isEmpty();
     }

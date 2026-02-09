@@ -34,6 +34,7 @@ public class ListingQueryService {
     /**
      * Fetches court list payload from listing only (no progression).
      * Returns raw JSON string to preserve exact response shape.
+     * @param cjscppuid user ID from CJSCPPUID header; set on request when non-blank.
      */
     public String getCourtListPayload(
             CourtListType listId,
@@ -41,7 +42,8 @@ public class ListingQueryService {
             String courtRoomId,
             String startDate,
             String endDate,
-            boolean restricted) {
+            boolean restricted,
+            String cjscppuid) {
         if (baseUrl == null || baseUrl.isBlank()) {
             throw new IllegalStateException("common-platform-query-api.base-url is not configured");
         }
@@ -65,6 +67,9 @@ public class ListingQueryService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", ACCEPT_LISTING_PAYLOAD);
+        if (cjscppuid != null && !cjscppuid.isBlank()) {
+            headers.set("CJSCPPUID", cjscppuid);
+        }
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
         ResponseEntity<String> response = restTemplate.exchange(

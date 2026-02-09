@@ -31,6 +31,8 @@ public class CourtListDataService {
     /**
      * Fetches court list data from listing, enriches with ouCode/courtId from reference data,
      * returns JSON string (same shape as progression /courtlistdata).
+     * @param listingUserId user ID for listing call (e.g. CJSCPPUID from request).
+     * @param referenceDataUserId user ID for reference data call (e.g. GENESIS user).
      */
     public String getCourtListData(
             CourtListType listId,
@@ -38,9 +40,11 @@ public class CourtListDataService {
             String courtRoomId,
             String startDate,
             String endDate,
-            boolean restricted) {
+            boolean restricted,
+            String listingUserId,
+            String referenceDataUserId) {
         String listingJson = listingQueryService.getCourtListPayload(
-                listId, courtCentreId, courtRoomId, startDate, endDate, restricted);
+                listId, courtCentreId, courtRoomId, startDate, endDate, restricted, listingUserId);
 
         JsonNode root;
         try {
@@ -55,7 +59,7 @@ public class CourtListDataService {
         ObjectNode object = (ObjectNode) root;
         String courtCentreName = object.has(COURT_CENTRE_NAME) ? object.get(COURT_CENTRE_NAME).asText("") : "";
         if (!courtCentreName.isBlank()) {
-            referenceDataService.getCourtCenterDataByCourtName(courtCentreName)
+            referenceDataService.getCourtCenterDataByCourtName(courtCentreName, referenceDataUserId)
                     .ifPresent(data -> addCourtCentreIds(object, data));
         }
         try {

@@ -37,9 +37,10 @@ public class ReferenceDataService {
      * Maps to referencedata.query.ou.courtrooms.ou-courtroom-name.
      *
      * @param courtCentreName court name (e.g. from progression court list payload courtCentreName)
+     * @param cjscppuid user ID for CJSCPPUID header (e.g. GENESIS user for reference data); set when non-blank.
      * @return optional with id, ouCode and courtIdNumeric if found
      */
-    public Optional<CourtCentreData> getCourtCenterDataByCourtName(String courtCentreName) {
+    public Optional<CourtCentreData> getCourtCenterDataByCourtName(String courtCentreName, String cjscppuid) {
         if (courtCentreName == null || courtCentreName.isBlank()) {
             log.debug("Court centre name is null or blank, skipping reference data lookup");
             return Optional.empty();
@@ -58,6 +59,9 @@ public class ReferenceDataService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", ACCEPT_OU_COURTROOM_NAME);
+        if (cjscppuid != null && !cjscppuid.isBlank()) {
+            headers.set("CJSCPPUID", cjscppuid);
+        }
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
         try {

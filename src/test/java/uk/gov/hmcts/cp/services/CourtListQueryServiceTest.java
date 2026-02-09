@@ -16,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -94,7 +95,7 @@ class CourtListQueryServiceTest {
         UUID refId = UUID.fromString("f8254db1-1683-483e-afb3-b87fde5a0a26");
         when(progressionQueryService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
                 .thenReturn(payload);
-        when(referenceDataService.getCourtCenterDataByCourtName("Test Court"))
+        when(referenceDataService.getCourtCenterDataByCourtName(eq("Test Court"), any()))
                 .thenReturn(Optional.of(CourtCentreData.builder()
                         .id(refId)
                         .ouCode("B01LY00")
@@ -111,7 +112,7 @@ class CourtListQueryServiceTest {
         assertThat(payload.getCourtId()).isEqualTo(refId.toString());
         assertThat(payload.getCourtIdNumeric()).isEqualTo("325");
         verify(progressionQueryService).getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid");
-        verify(referenceDataService).getCourtCenterDataByCourtName("Test Court");
+        verify(referenceDataService).getCourtCenterDataByCourtName(eq("Test Court"), any());
     }
 
     @Test
@@ -119,7 +120,7 @@ class CourtListQueryServiceTest {
         // Given
         when(progressionQueryService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
                 .thenReturn(payload);
-        when(referenceDataService.getCourtCenterDataByCourtName("Test Court")).thenReturn(Optional.empty());
+        when(referenceDataService.getCourtCenterDataByCourtName(eq("Test Court"), any())).thenReturn(Optional.empty());
 
         // When
         CourtListPayload result = courtListQueryService.getCourtListPayload(
