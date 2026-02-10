@@ -14,13 +14,10 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 @Slf4j
 public class CourtListQueryService {
 
-    /** GENESIS user ID used for reference data calls (same as document generator). */
-    private static final String GENESIS_USER_ID = "7aee5dea-b0de-4604-b49b-86c7788cfc4b";
     private static final String COURT_LIST_SCHEMA_PATH = "schema/court-list-schema.json";
     private static final String PUBLIC_COURT_LIST_SCHEMA_PATH = "schema/public-court-list-schema.json";
 
-    private final ProgressionQueryService progressionQueryService;
-    private final ReferenceDataService referenceDataService;
+    private final CourtListDataService courtListDataService;
     private final CourtListTransformationService transformationService;
     private final PublicCourtListTransformationService publicCourtListTransformationService;
     private final JsonSchemaValidatorService jsonSchemaValidatorService;
@@ -43,18 +40,7 @@ public class CourtListQueryService {
     }
 
     public @NotNull CourtListPayload getCourtListPayload(final CourtListType listId, final String courtCentreId, final String startDate, final String endDate, final String cjscppuid) {
-        var payload = progressionQueryService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
-
-        // Reference data: getCourtCenterDataByCourtName → ouCode and courtId (GENESIS user)
-        if (payload.getCourtCentreName() != null && !payload.getCourtCentreName().isBlank()) {
-            referenceDataService.getCourtCenterDataByCourtName(payload.getCourtCentreName(), GENESIS_USER_ID)
-                    .ifPresent(courtCentre -> {
-                        payload.setOuCode(courtCentre.getOuCode());
-                        payload.setCourtId(courtCentre.getId() != null ? courtCentre.getId().toString() : null);
-                        payload.setCourtIdNumeric(courtCentre.getCourtIdNumeric());
-                    });
-        }
-        return payload;
+        return courtListDataService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
     }
 }
 
