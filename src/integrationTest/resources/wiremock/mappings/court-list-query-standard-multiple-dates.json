@@ -5,23 +5,13 @@
     "queryParameters": {
       "listId": {
         "equalTo": "STANDARD"
-      },
-      "courtCentreId": {
-        "equalTo": "f8254db1-1683-483e-afb3-b87fde5a0a26"
-      },
-      "startDate": {
-        "equalTo": "2026-01-05"
-      },
-      "endDate": {
-        "equalTo": "2026-01-12"
       }
     }
   },
   "response": {
     "status": 200,
     "headers": {
-      "Content-Type": "application/json",
-      "Accept": "application/vnd.progression.search.court.list+json"
+      "Content-Type": "application/json"
     },
     "bodyFileName": "court-list-payload-multiple-dates.json"
   },

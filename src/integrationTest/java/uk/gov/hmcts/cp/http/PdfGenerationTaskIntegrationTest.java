@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
-import org.junit.jupiter.api.Disabled;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -19,7 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
-public class PdfGenerationTaskIntegrationTest {
+public class PdfGenerationTaskIntegrationTest extends AbstractTest {
     // Note: PDF generation is now part of CourtListPublishTask, not a separate task
 
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
