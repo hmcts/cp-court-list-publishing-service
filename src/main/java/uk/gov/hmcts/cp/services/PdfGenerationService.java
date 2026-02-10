@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -48,10 +49,10 @@ public class PdfGenerationService {
     private static final String KEY_CONVERSION_FORMAT = "conversionFormat";
     private static final String DOCUMENT_CONVERSION_FORMAT_PDF = "PDF";
     private static final String URL_ENDS_WITH = "/documents/generate";
-    private static final String GENISIS_USER_ID = "7aee5dea-b0de-4604-b49b-86c7788cfc4b";
 
     private final CourtListPublisherBlobClientService blobClientService;
     private final HttpClientFactory httpClientFactory;
+    private final CourtListPublishingSystemUserConfig systemUserConfig;
 
     @Value("${common-platform-query-api.base-url}")
     private String commonPlatformQueryApiBaseUrl;
@@ -150,10 +151,14 @@ public class PdfGenerationService {
                 .path(URL);
 
         URI uri = uriBuilder.build().toUri();
-        // Set up headers (document generator uses GENESIS user)
+        String systemUserId = systemUserConfig.getSystemUserId();
+        if (systemUserId == null || systemUserId.isBlank()) {
+            throw new IllegalStateException("COURTLISTPUBLISHING_SYSTEM_USER_ID is not configured");
+        }
+        // Set up headers (document generator uses system user)
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("CJSCPPUID", GENISIS_USER_ID);
+        headers.set("CJSCPPUID", systemUserId);
 
         // Convert JsonObject to JSON string
         String jsonPayload = jsonObjectToString(payload);

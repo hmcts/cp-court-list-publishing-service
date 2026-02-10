@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
+import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,6 +37,9 @@ class PdfGenerationServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private CourtListPublishingSystemUserConfig systemUserConfig;
+
     @InjectMocks
     private PdfGenerationService pdfGenerationService;
 
@@ -48,7 +52,8 @@ class PdfGenerationServiceTest {
         courtCentreId = UUID.randomUUID();
         // Mock HttpClientFactory to return RestTemplate (lenient for tests that don't use it)
         lenient().when(httpClientFactory.getClient()).thenReturn(restTemplate);
-        
+        lenient().when(systemUserConfig.getSystemUserId()).thenReturn("ba4e97ab-2174-4fa2-abfe-3ac2bb04bc75");
+
         // Set the base URL field using reflection since it's @Value injected
         java.lang.reflect.Field field = PdfGenerationService.class.getDeclaredField("commonPlatformQueryApiBaseUrl");
         field.setAccessible(true);

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.models.CourtCentreData;
 import uk.gov.hmcts.cp.models.CourtListPayload;
@@ -21,8 +22,6 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 @Slf4j
 public class CourtListDataService {
 
-    /** GENESIS user ID used for reference data calls (same as document generator). */
-    private static final String GENESIS_USER_ID = "7aee5dea-b0de-4604-b49b-86c7788cfc4b";
     private static final String COURT_CENTRE_NAME = "courtCentreName";
     private static final String OU_CODE = "ouCode";
     private static final String COURT_ID = "courtId";
@@ -32,6 +31,7 @@ public class CourtListDataService {
 
     private final ListingQueryService listingQueryService;
     private final ReferenceDataService referenceDataService;
+    private final CourtListPublishingSystemUserConfig systemUserConfig;
 
     /**
      * Fetches court list data from listing, enriches with ouCode/courtId from reference data,
@@ -85,8 +85,12 @@ public class CourtListDataService {
             String startDate,
             String endDate,
             String cjscppuid) {
+        String systemUserId = systemUserConfig.getSystemUserId();
+        if (systemUserId == null || systemUserId.isBlank()) {
+            throw new IllegalStateException("COURTLISTPUBLISHING_SYSTEM_USER_ID is not configured");
+        }
         boolean restricted = cjscppuid != null && !cjscppuid.trim().isEmpty();
-        String json = getCourtListData(listId, courtCentreId, null, startDate, endDate, restricted, cjscppuid, GENESIS_USER_ID);
+        String json = getCourtListData(listId, courtCentreId, null, startDate, endDate, restricted, cjscppuid, systemUserId);
         try {
             return OBJECT_MAPPER.readValue(json, CourtListPayload.class);
         } catch (JsonProcessingException e) {

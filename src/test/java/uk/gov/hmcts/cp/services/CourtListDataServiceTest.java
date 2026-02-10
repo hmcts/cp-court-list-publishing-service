@@ -1,10 +1,12 @@
 package uk.gov.hmcts.cp.services;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import uk.gov.hmcts.cp.models.CourtCentreData;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
@@ -18,6 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,8 +33,16 @@ class CourtListDataServiceTest {
     @Mock
     private ReferenceDataService referenceDataService;
 
+    @Mock
+    private CourtListPublishingSystemUserConfig systemUserConfig;
+
     @InjectMocks
     private CourtListDataService courtListDataService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(systemUserConfig.getSystemUserId()).thenReturn("ba4e97ab-2174-4fa2-abfe-3ac2bb04bc75");
+    }
 
     @Test
     void getCourtListData_returnsListingPayloadEnrichedWithOuCodeAndCourtId() {

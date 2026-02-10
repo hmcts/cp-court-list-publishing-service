@@ -289,9 +289,9 @@ dockerCompose {
     upAdditionalArgs = ['--wait', '--wait-timeout', '120']
 
     captureContainersOutput = true
-    removeOrphans = true
-    stopContainers = true
-    removeContainers = true
+    removeOrphans = false
+    stopContainers = false
+    removeContainers = false
 
     projectName = "${rootProject.name}-it".replaceAll('[^A-Za-z0-9]', '')
 

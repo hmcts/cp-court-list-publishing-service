@@ -3,6 +3,7 @@ package uk.gov.hmcts.cp.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,6 +32,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -56,17 +58,22 @@ class CourtListPublishControllerTest {
     @Mock
     private CourtListDataService courtListDataService;
 
+    @Mock
+    private CourtListPublishingSystemUserConfig systemUserConfig;
+
     @InjectMocks
     private CourtListPublishController controller;
 
     private ObjectMapper objectMapper;
 
+    private static final String TEST_SYSTEM_USER_ID = "ba4e97ab-2174-4fa2-abfe-3ac2bb04bc75";
     private static final String PUBLISH_URL = "/api/court-list-publish/publish";
     private static final String BASE_URL = "/api/court-list-publish";
     private static final String COURTLISTDATA_URL = "/api/court-list-publish/courtlistdata";
 
     @BeforeEach
     void setUp() {
+        lenient().when(systemUserConfig.getSystemUserId()).thenReturn(TEST_SYSTEM_USER_ID);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
         objectMapper = ObjectMapperConfig.getObjectMapper();
     }
@@ -246,7 +253,7 @@ class CourtListPublishControllerTest {
                 eq("2024-01-15"),
                 eq(false),
                 eq("test-cjscppuid"),
-                eq("7aee5dea-b0de-4604-b49b-86c7788cfc4b"));
+                eq(TEST_SYSTEM_USER_ID));
     }
 
     @Test
