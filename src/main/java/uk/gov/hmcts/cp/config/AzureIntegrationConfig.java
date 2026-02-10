@@ -17,7 +17,6 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @Configuration
 @Profile("integration")
-@ConditionalOnProperty(name = "azure.storage.enabled", havingValue = "true", matchIfMissing = false)
 public class AzureIntegrationConfig {
 
     @Value("${azure.storage.container-name}")
