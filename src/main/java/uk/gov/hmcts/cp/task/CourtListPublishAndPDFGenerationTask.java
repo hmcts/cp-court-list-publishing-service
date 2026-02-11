@@ -169,7 +169,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             return fileId;
         } catch (Exception e) {
             logger.error("Error generating and uploading PDF for court list ID: {}", courtListId, e);
-            return null;
+            throw new RuntimeException("Error generating and uploading PDF: " + e.getMessage(), e);
         }
     }
 

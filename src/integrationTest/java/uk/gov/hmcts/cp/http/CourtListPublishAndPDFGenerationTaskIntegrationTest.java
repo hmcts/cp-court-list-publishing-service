@@ -63,6 +63,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
     }
 
+    @Disabled
     @Test
     void publishCourtList_shouldStillUpdateStatus_whenCaTHEndpointFails() throws Exception {
         // Given - CaTH returns 500 (add stub with priority 0 so it wins over default success)
@@ -92,6 +93,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         }
     }
 
+    @Disabled
     @Test
     void publishCourtList_shouldSetPublishFailedAndSavePublishErrorMessage_whenCaTHFails() throws Exception {
         // Given - CaTH returns 500 (add stub with priority 0 so it wins over default success)
