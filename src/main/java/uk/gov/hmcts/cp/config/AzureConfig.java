@@ -35,14 +35,10 @@ public class AzureConfig {
     @Value("${azure.storage.account.name}")
     private String storageAccountName;
 
-
     @Bean
     public BlobContainerClient blobContainerClient() {
-        // Validate required Azure configuration when storage is enabled
         validateAzureConfiguration();
-        
         BlobServiceClient serviceClient = createBlobServiceClient();
-
         BlobContainerClient containerClient = serviceClient.getBlobContainerClient(containerName);
 
         // Try to create container if it doesn't exist, but don't fail if we lack permissions

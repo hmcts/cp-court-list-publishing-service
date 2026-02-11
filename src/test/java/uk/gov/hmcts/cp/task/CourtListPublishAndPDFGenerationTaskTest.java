@@ -492,7 +492,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         )).thenReturn(payload);
         when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
                 .thenReturn(CourtListDocument.builder().build());
-        when(pdfHelper.generateAndUploadPdf(payload, courtListId)).thenReturn("https://storage.example.com/blob.pdf?sasToken");
+        when(pdfHelper.generateAndUploadPdf(payload, courtListId)).thenReturn(courtListId);
 
         // When
         ExecutionInfo result = task.execute(executionInfo);

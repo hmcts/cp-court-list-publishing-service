@@ -61,274 +61,176 @@ class PdfGenerationServiceTest {
     }
 
     @Test
-    void generateAndUploadPdf_shouldReturnSasUrl_whenValidInput() throws IOException {
-        // Given
+    void generateAndUploadPdf_shouldReturnFileId_whenValidInput() throws IOException {
         JsonObject payload = Json.createObjectBuilder().build();
-        String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
-        String expectedBlobName = "court-lists/" + courtListId + ".pdf";
         byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
-        // Mock PDF generation service call
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
-                .thenReturn(expectedSasUrl);
 
-        // When
-        String result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
 
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(expectedSasUrl);
-        assertThat(result).contains("?");
-        verify(blobClientService).uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName));
+        assertThat(result).isEqualTo(courtListId);
+        verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
     }
 
     @Test
-    void generateAndUploadPdf_shouldReturnSasUrl_whenPayloadIsNull() throws IOException {
-        // Given
-        String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
+    void generateAndUploadPdf_shouldReturnFileId_whenPayloadIsNull() throws IOException {
         String expectedBlobName = "court-lists/" + courtListId + ".pdf";
         byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
-        // Mock PDF generation service call
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
-                .thenReturn(expectedSasUrl);
 
-        // When
-        String result = pdfGenerationService.generateAndUploadPdf(null, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(null, courtListId);
 
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(expectedSasUrl);
-        verify(blobClientService).uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName));
+        assertThat(result).isEqualTo(courtListId);
+        verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
     }
 
     @Test
     void generateAndUploadPdf_shouldIncludeCourtCentreId_whenPayloadContainsCourtCentreId() throws IOException {
-        // Given
         JsonObject payload = Json.createObjectBuilder()
                 .add("courtCentreId", courtCentreId.toString())
                 .build();
-        String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
-        String expectedBlobName = "court-lists/" + courtListId + ".pdf";
         byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
-                .thenReturn(expectedSasUrl);
 
-        // When
-        String result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
 
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(expectedSasUrl);
-        verify(blobClientService).uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName));
+        assertThat(result).isEqualTo(courtListId);
+        verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
     }
 
     @Test
     void generateAndUploadPdf_shouldIncludeCourtListType_whenPayloadContainsCourtListType() throws IOException {
-        // Given
-        String courtListType = "PUBLIC";
         JsonObject payload = Json.createObjectBuilder()
-                .add("courtListType", courtListType)
+                .add("courtListType", "PUBLIC")
                 .build();
-        String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
-        String expectedBlobName = "court-lists/" + courtListId + ".pdf";
         byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
-                .thenReturn(expectedSasUrl);
 
-        // When
-        String result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
 
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(expectedSasUrl);
-        verify(blobClientService).uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName));
+        assertThat(result).isEqualTo(courtListId);
+        verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
     }
 
     @Test
     void generateAndUploadPdf_shouldIncludeAllFields_whenPayloadContainsAllFields() throws IOException {
-        // Given
-        String courtListType = "STANDARD";
         JsonObject payload = Json.createObjectBuilder()
                 .add("courtCentreId", courtCentreId.toString())
-                .add("courtListType", courtListType)
+                .add("courtListType", "STANDARD")
                 .add("otherField", "otherValue")
                 .build();
-        String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
-        String expectedBlobName = "court-lists/" + courtListId + ".pdf";
         byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
-                .thenReturn(expectedSasUrl);
 
-        // When
-        String result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
 
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(expectedSasUrl);
-        verify(blobClientService).uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName));
+        assertThat(result).isEqualTo(courtListId);
+        verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
     }
 
     @Test
-    void generateAndUploadPdf_shouldReturnSasUrl_whenEmptyPayload() throws IOException {
-        // Given
+    void generateAndUploadPdf_shouldReturnFileId_whenEmptyPayload() throws IOException {
         JsonObject payload = Json.createObjectBuilder().build();
-        String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
-        String expectedBlobName = "court-lists/" + courtListId + ".pdf";
         byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
-                .thenReturn(expectedSasUrl);
 
-        // When
-        String result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
 
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(expectedSasUrl);
-        verify(blobClientService).uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName));
+        assertThat(result).isEqualTo(courtListId);
+        verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
     }
 
     @Test
-    void generateAndUploadPdf_shouldReturnDifferentSasUrls_whenDifferentCourtListIds() throws IOException {
-        // Given
+    void generateAndUploadPdf_shouldReturnDifferentFileIds_whenDifferentCourtListIds() throws IOException {
         UUID courtListId1 = UUID.randomUUID();
         UUID courtListId2 = UUID.randomUUID();
         JsonObject payload = Json.createObjectBuilder().build();
-        String expectedSasUrl1 = "https://storage.example.com/blob1.pdf?sasToken";
-        String expectedSasUrl2 = "https://storage.example.com/blob2.pdf?sasToken";
         byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq("court-lists/" + courtListId1 + ".pdf")))
-                .thenReturn(expectedSasUrl1);
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq("court-lists/" + courtListId2 + ".pdf")))
-                .thenReturn(expectedSasUrl2);
 
-        // When
-        String result1 = pdfGenerationService.generateAndUploadPdf(payload, courtListId1);
-        String result2 = pdfGenerationService.generateAndUploadPdf(payload, courtListId2);
+        UUID result1 = pdfGenerationService.generateAndUploadPdf(payload, courtListId1);
+        UUID result2 = pdfGenerationService.generateAndUploadPdf(payload, courtListId2);
 
-        // Then
-        assertThat(result1).isNotNull();
-        assertThat(result2).isNotNull();
-        assertThat(result1).isEqualTo(expectedSasUrl1);
-        assertThat(result2).isEqualTo(expectedSasUrl2);
+        assertThat(result1).isEqualTo(courtListId1);
+        assertThat(result2).isEqualTo(courtListId2);
         assertThat(result1).isNotEqualTo(result2);
     }
 
     @Test
     void generateAndUploadPdf_shouldHandleSpecialCharactersInPayload() throws IOException {
-        // Given
-        String courtListType = "PUBLIC & STANDARD";
         JsonObject payload = Json.createObjectBuilder()
-                .add("courtListType", courtListType)
+                .add("courtListType", "PUBLIC & STANDARD")
                 .build();
-        String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
-        String expectedBlobName = "court-lists/" + courtListId + ".pdf";
         byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
-                .thenReturn(expectedSasUrl);
 
-        // When
-        String result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
 
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(expectedSasUrl);
-        verify(blobClientService).uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName));
+        assertThat(result).isEqualTo(courtListId);
+        verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
     }
 
     @Test
     void generateAndUploadPdf_shouldUploadPdfWithCorrectSize() throws IOException {
-        // Given
         JsonObject payload = Json.createObjectBuilder()
                 .add("courtCentreId", courtCentreId.toString())
                 .add("courtListType", "PUBLIC")
                 .build();
-        String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
-        String expectedBlobName = "court-lists/" + courtListId + ".pdf";
         byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
-                .thenReturn(expectedSasUrl);
 
-        // When
-        String result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
 
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(expectedSasUrl);
-        // Verify that upload was called with a size greater than 0
-        verify(blobClientService).uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName));
+        assertThat(result).isEqualTo(courtListId);
+        verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
     }
 
     @Test
     void generateAndUploadPdf_shouldHandleNullCourtListId() throws IOException {
-        // Given
         JsonObject payload = Json.createObjectBuilder().build();
-        UUID nullCourtListId = null;
-        String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
-        String expectedBlobName = "court-lists/null.pdf";
         byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
-                .thenReturn(expectedSasUrl);
 
-        // When
-        String result = pdfGenerationService.generateAndUploadPdf(payload, nullCourtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, null);
 
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(expectedSasUrl);
-        verify(blobClientService).uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName));
+        assertThat(result).isNull();
+        verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(null));
     }
 
     @Test
     void generateAndUploadPdf_shouldUploadPdf_whenPayloadDoesNotContainExpectedFields() throws IOException {
-        // Given
         JsonObject payload = Json.createObjectBuilder()
                 .add("someOtherField", "someValue")
                 .build();
-        String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
-        String expectedBlobName = "court-lists/" + courtListId + ".pdf";
         byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
-                .thenReturn(expectedSasUrl);
 
-        // When
-        String result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
 
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(expectedSasUrl);
-        verify(blobClientService).uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName));
+        assertThat(result).isEqualTo(courtListId);
+        verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
     }
 
     @Test
@@ -348,23 +250,16 @@ class PdfGenerationServiceTest {
     }
 
     @Test
-    void generateAndUploadPdf_shouldUseCorrectBlobName() throws IOException {
-        // Given
+    void generateAndUploadPdf_shouldUseCorrectFileId() throws IOException {
         JsonObject payload = Json.createObjectBuilder().build();
-        String expectedSasUrl = "https://storage.example.com/blob.pdf?sasToken";
-        String expectedBlobName = "court-lists/" + courtListId + ".pdf";
         byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
-        when(blobClientService.uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName)))
-                .thenReturn(expectedSasUrl);
 
-        // When
         pdfGenerationService.generateAndUploadPdf(payload, courtListId);
 
-        // Then
-        verify(blobClientService).uploadPdfAndGenerateSasUrl(any(InputStream.class), anyLong(), eq(expectedBlobName));
+        verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
     }
 
     @Test

@@ -54,8 +54,9 @@ services:
       SPRING_PROFILES_ACTIVE: integration
       AZURE_STORAGE_ENABLED: "true"
       AZURE_STORAGE_CONTAINER_NAME: schedulelistinginput
-      AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
-      # Dummy values - not used when connection string is set for Azurite
+      AZURE_STORAGE_ACCOUNT_NAME: "devstoreaccount1"
+      AZURE_STORAGE_ACCOUNT_KEY: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+      AZURE_STORAGE_BLOB_ENDPOINT: "http://azurite:10000/devstoreaccount1"
       AZURE_CLIENT_ID: "integration-test-client"
       AZURE_TENANT_ID: "integration-test-tenant"
       MANAGEMENT_HEALTH_JMS_ENABLED: "false"

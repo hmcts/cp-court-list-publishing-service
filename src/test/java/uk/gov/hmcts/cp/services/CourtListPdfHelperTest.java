@@ -34,70 +34,43 @@ class CourtListPdfHelperTest {
 
     private UUID courtListId;
     private CourtListPayload payload;
-    private String sasUrl;
 
     @BeforeEach
     void setUp() {
         courtListId = UUID.randomUUID();
         payload = new CourtListPayload();
-        sasUrl = "https://storage.example.com/blob.pdf?sasToken";
     }
 
     @Test
-    void generateAndUploadPdf_shouldReturnSasUrl_whenSuccessful() throws IOException {
-        // Given
+    void generateAndUploadPdf_shouldReturnFileId_whenSuccessful() throws IOException {
         jakarta.json.JsonObject payloadJson = jakarta.json.Json.createObjectBuilder().build();
         when(objectConverter.convertFromObject(payload)).thenReturn(payloadJson);
-        when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId))).thenReturn(sasUrl);
+        when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId))).thenReturn(courtListId);
 
-        // When
-        String result = pdfHelper.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfHelper.generateAndUploadPdf(payload, courtListId);
 
-        // Then
-        assertThat(result).isEqualTo(sasUrl);
+        assertThat(result).isEqualTo(courtListId);
         verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId));
     }
 
     @Test
     void generateAndUploadPdf_shouldReturnNull_whenPayloadIsNull() throws IOException {
-        // When
-        String result = pdfHelper.generateAndUploadPdf(null, courtListId);
+        UUID result = pdfHelper.generateAndUploadPdf(null, courtListId);
 
-        // Then
         assertThat(result).isNull();
         verify(pdfGenerationService, never()).generateAndUploadPdf(any(), any());
     }
 
     @Test
-    void generateAndUploadPdf_shouldThrowRuntimeException_whenPdfGenerationFails() throws IOException {
-        // Given
+    void generateAndUploadPdf_shouldReturnNull_whenPdfGenerationThrowsException() throws IOException {
         jakarta.json.JsonObject payloadJson = jakarta.json.Json.createObjectBuilder().build();
         when(objectConverter.convertFromObject(payload)).thenReturn(payloadJson);
         when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId)))
                 .thenThrow(new IOException("PDF generation failed"));
 
-        // When / Then - error is propagated so caller can persist it
-        assertThatThrownBy(() -> pdfHelper.generateAndUploadPdf(payload, courtListId))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to generate or upload PDF")
-                .hasMessageContaining("PDF generation failed")
-                .hasCauseInstanceOf(IOException.class);
-        verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId));
-    }
+        UUID result = pdfHelper.generateAndUploadPdf(payload, courtListId);
 
-    @Test
-    void generateAndUploadPdf_shouldThrowRuntimeException_whenUploadFails() throws IOException {
-        // Given - upload throws (e.g. Azure storage error)
-        jakarta.json.JsonObject payloadJson = jakarta.json.Json.createObjectBuilder().build();
-        when(objectConverter.convertFromObject(payload)).thenReturn(payloadJson);
-        when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId)))
-                .thenThrow(new RuntimeException("Azure storage error while uploading PDF"));
-
-        // When / Then - error is propagated so caller can persist it
-        assertThatThrownBy(() -> pdfHelper.generateAndUploadPdf(payload, courtListId))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to generate or upload PDF")
-                .hasMessageContaining("Azure storage error");
+        assertThat(result).isNull();
         verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId));
     }
 }

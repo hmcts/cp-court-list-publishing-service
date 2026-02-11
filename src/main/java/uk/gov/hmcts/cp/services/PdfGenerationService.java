@@ -58,42 +58,25 @@ public class PdfGenerationService {
     private String commonPlatformQueryApiBaseUrl;
 
     /**
-     * Generates a PDF file from the provided payload data, uploads it to Azure Blob Storage, and returns the SAS URL.
+     * Generates a PDF from the payload, uploads it to Azure Blob Storage as court-lists/{courtListId}.pdf,
+     * and returns the file ID (court list ID).
      */
-    public String generateAndUploadPdf(JsonObject payload, UUID courtListId) throws IOException {
+    public UUID generateAndUploadPdf(JsonObject payload, UUID courtListId) throws IOException {
         LOGGER.info("Generating PDF for court list ID: {}", courtListId);
-        
         byte[] pdfBytes;
         try {
             pdfBytes = generatePdfDocument(payload, TEMPLATE_NAME);
-            LOGGER.info("Successfully generated PDF for court list ID: {}, size: {} bytes", 
+            LOGGER.info("Successfully generated PDF for court list ID: {}, size: {} bytes",
                     courtListId, pdfBytes.length);
         } catch (Exception e) {
             LOGGER.error("Error generating PDF for court list ID: {}", courtListId, e);
             throw new IOException("Failed to generate PDF: " + e.getMessage(), e);
         }
-        
-        // Generate blob name and upload to Azure
-        String blobName = generateBlobName(courtListId, "court-lists");
         long pdfSize = pdfBytes.length;
         ByteArrayInputStream pdfInputStream = new ByteArrayInputStream(pdfBytes);
-        
-        // Upload to Azure Blob Storage and get SAS URL
-        String sasUrl = blobClientService.uploadPdfAndGenerateSasUrl(pdfInputStream, pdfSize, blobName);
-        
-        LOGGER.info("Successfully uploaded PDF to Azure for court list ID: {}. SAS URL generated", courtListId);
-        return sasUrl;
-    }
-
-    /**
-     * Generates a blob name for the PDF file
-     */
-    private String generateBlobName(UUID courtListId, String folderPath) {
-        String fileName = (courtListId != null ? courtListId.toString() : "null") + ".pdf";
-        if (folderPath != null && !folderPath.isEmpty()) {
-            return folderPath + "/" + fileName;
-        }
-        return fileName;
+        blobClientService.uploadPdf(pdfInputStream, pdfSize, courtListId);
+        LOGGER.info("Successfully uploaded PDF for court list ID: {}", courtListId);
+        return courtListId;
     }
 
     /**

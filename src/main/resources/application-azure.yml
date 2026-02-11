@@ -7,8 +7,6 @@ azure:
     container-name: ${AZURE_STORAGE_CONTAINER_NAME:schedulelistinginput}
     account-name: ${AZURE_STORAGE_ACCOUNT_NAME:}
     account-key: ${AZURE_STORAGE_ACCOUNT_KEY:}
-    connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
-    sas-url-expiry-minutes: ${AZURE_STORAGE_SAS_URL_EXPIRY_MINUTES:120}
   client-id: ${AZURE_CLIENT_ID}
   tenant-id: ${AZURE_TENANT_ID}
   local:

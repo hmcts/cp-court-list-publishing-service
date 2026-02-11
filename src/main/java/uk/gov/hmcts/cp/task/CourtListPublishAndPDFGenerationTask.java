@@ -97,11 +97,11 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
 
         try {
-            String sasUrl = makeExternalCalls
+            UUID fileId = makeExternalCalls
                 ? generateAndUploadPdf(executionInfo, payload)
-                : getMockBlobSasUrl(executionInfo);
-            if (sasUrl != null && courtListId != null) {
-                updateFileUrlAndLastUpdated(courtListId, sasUrl);
+                : getMockFileId(executionInfo);
+            if (fileId != null && courtListId != null) {
+                updateFileIdAndLastUpdated(courtListId, fileId);
             }
         } catch (Exception e) {
             logger.error("Error generating and uploading PDF", e);
@@ -115,32 +115,8 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                 .build();
     }
 
-    private String getMockBlobSasUrl(final ExecutionInfo executionInfo) {
-        final CourtListType clt = extractCourtListType((executionInfo.getJobData()));
-
-        if(clt == CourtListType.PUBLIC) {
-            return "https://sastecourtlistpublisher.blob.core.windows.net/" +
-                    "courtpublisher-blob-container/" +
-                    "Online%20Public%20court%20list%20-%20Lavender%20Hill%20Magistrates'%20Court%2C%20All%20courtrooms%20-%2026-01-2026.pdf?st=2026-01-26T13:22:49Z&se=2026-12-31T21:37:49Z&" +
-                    "si" +
-                    "=" +
-                    "ReadPolicyIdentifier&spr=https&sv=2024-11-04&sr=b&" +
-                    "sig" +
-                    "=" +
-                    "%2F7gXu1fPVDnLpGfnC3xQZcGBL3LTUfKCZWfCYPOiCrQ%3D";
-        }
-
-        return "https://sastecourtlistpublisher.blob.core.windows.net/" +
-                "courtpublisher-blob-container/" +
-                "Standard%20court%20list%20-%20Lavender%20Hill%20Magistrates'%20Court%2C%20All%20courtrooms%20-%2026-01-2026.pdf?st=2026-01-26T13:25:46Z&se=2027-01-26T21:40:46Z&" +
-                "si" +
-                "=" +
-                "ReadPolicyIdentifier&spr=https&sv=2024-11-04&sr=b&" +
-                "sig" +
-                "=" +
-                "RtPqpntJQnM9h4jR8SUGDHP9502I4x%2BrOU9MNkF%2F4YQ%3D";
-
-
+    private UUID getMockFileId(final ExecutionInfo executionInfo) {
+        return extractCourtListId(executionInfo.getJobData());
     }
 
     private void queryAndSendCourtListToCaTH(ExecutionInfo executionInfo, CourtListPayload payload, boolean makeExternalCalls) {
@@ -172,7 +148,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
     }
 
-    private String generateAndUploadPdf(ExecutionInfo executionInfo, CourtListPayload payload) {
+    private UUID generateAndUploadPdf(ExecutionInfo executionInfo, CourtListPayload payload) {
         if (payload == null) {
             logger.warn("Payload is null, cannot generate PDF");
             return null;
@@ -187,9 +163,14 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             return null;
         }
         logger.info("Generating PDF for court list ID: {}", courtListId);
-        String sasUrl = pdfHelper.generateAndUploadPdf(payload, courtListId);
-        logger.info("Successfully generated and uploaded PDF for court list ID: {}", courtListId);
-        return sasUrl;
+        try {
+            UUID fileId = pdfHelper.generateAndUploadPdf(payload, courtListId);
+            logger.info("Successfully generated and uploaded PDF for court list ID: {}", courtListId);
+            return fileId;
+        } catch (Exception e) {
+            logger.error("Error generating and uploading PDF for court list ID: {}", courtListId, e);
+            return null;
+        }
     }
 
     private CourtListType extractCourtListType(JsonObject jobData) {
@@ -263,20 +244,18 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         logger.info("Successfully updated status to SUCCESSFUL for court list ID: {}", courtListId);
     }
 
-    private void updateFileUrlAndLastUpdated(UUID courtListId, String fileUrl) {
+    private void updateFileIdAndLastUpdated(UUID courtListId, UUID fileId) {
         CourtListStatusEntity existingCourtListPublishEntity = repository.getByCourtListId(courtListId);
         if (existingCourtListPublishEntity == null) {
             logger.warn("No record found with court list ID: {}", courtListId);
             return;
         }
-
-        existingCourtListPublishEntity.setFileUrl(fileUrl);
-        existingCourtListPublishEntity.setFileId(courtListId);// same as courtListId .... azure file upload is atomic
+        existingCourtListPublishEntity.setFileId(fileId);
         existingCourtListPublishEntity.setFileStatus(Status.SUCCESSFUL);
         existingCourtListPublishEntity.setFileErrorMessage(null);
         existingCourtListPublishEntity.setLastUpdated(Instant.now());
         repository.save(existingCourtListPublishEntity);
-        logger.info("Successfully updated fileUrl and lastUpdated for court list ID: {}", courtListId);
+        logger.info("Successfully updated fileId and lastUpdated for court list ID: {}", courtListId);
     }
 
     private void updateErrorMessage(UUID courtListId, Exception e, ErrorContext context) {

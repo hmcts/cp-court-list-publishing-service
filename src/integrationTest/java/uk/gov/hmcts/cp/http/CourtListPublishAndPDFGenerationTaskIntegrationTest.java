@@ -175,17 +175,15 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         // Wait for async task to complete (CourtListTaskTriggerService.triggerCourtListTask triggered the task)
         waitForTaskCompletion(courtListId, 120000);
 
-        // Verify row updated with filename (SAS URL from Azurite blob upload)
+        // Verify row updated with fileId (PDF uploaded as court-lists/{courtListId}.pdf)
         ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);
         assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
-        assertThat(statusBody.has("fileUrl")).isTrue();
-        String fileUrl = statusBody.get("fileUrl").asText();
-        assertThat(fileUrl).isNotBlank();
-        // SAS URL from Azurite contains devstoreaccount1 and sig= (SAS token)
-        assertThat(fileUrl).contains("devstoreaccount1");
-        assertThat(fileUrl).contains("sig=");
+        assertThat(statusBody.has("fileId")).isTrue();
+        String fileIdStr = statusBody.get("fileId").asText();
+        assertThat(fileIdStr).isNotBlank();
+        assertThat(UUID.fromString(fileIdStr)).isEqualTo(courtListId);
     }
 
     @Test

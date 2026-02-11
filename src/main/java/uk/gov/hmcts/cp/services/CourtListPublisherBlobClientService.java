@@ -1,142 +1,52 @@
 package uk.gov.hmcts.cp.services;
 
 import com.azure.storage.blob.BlobClient;
-import com.azure.storage.blob.BlobClientBuilder;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
-import com.azure.storage.blob.sas.BlobSasPermission;
-import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
-import com.azure.storage.common.StorageSharedKeyCredential;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import static java.lang.String.format;
-
+/**
+ * Uploads PDF files to Azure Blob Storage. Files are stored with name {fileId}.pdf
+ * (under court-lists/). No SAS URL is generated; callers reference the file by fileId only.
+ */
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "azure.storage.enabled", havingValue = "true", matchIfMissing = false)
 public class CourtListPublisherBlobClientService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CourtListPublisherBlobClientService.class);
+    private static final String COURT_LISTS_PREFIX = "court-lists";
+    private static final String PDF_EXTENSION = ".pdf";
 
     private final BlobContainerClient blobContainerClient;
 
-    @Value("${azure.storage.account.name:}")
-    private String storageAccountName;
-
-    @Value("${azure.storage.account-key:}")
-    private String storageAccountKey;
-
-    @Value("${azure.storage.connection-string:}")
-    private String connectionString;
-
-    @Value("${azure.storage.sas-url-expiry-minutes:120}")
-    private long sasUrlExpiryInMinutes;
-
     /**
-     * Uploads a PDF file to Azure Blob Storage and returns a SAS URL with expiry time
+     * Uploads a PDF to blob storage with blob name court-lists/{fileId}.pdf.
+     *
+     * @param fileInputStream PDF content
+     * @param fileSize        size in bytes
+     * @param fileId          identifier for the file (e.g. court list ID); used as blob name (with .pdf)
      */
-    public String uploadPdfAndGenerateSasUrl(InputStream fileInputStream, long fileSize, String blobName) {
+    public void uploadPdf(InputStream fileInputStream, long fileSize, UUID fileId) {
+        String blobName = COURT_LISTS_PREFIX + "/" + fileId + PDF_EXTENSION;
         try {
-            LOGGER.info("Uploading PDF file {} to container {}", blobName, blobContainerClient.getBlobContainerName());
-            
-            // Get or create blob client
+            LOGGER.info("Uploading PDF {} to container {}", blobName, blobContainerClient.getBlobContainerName());
             BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
-            
-            // Set content type for PDF
-            BlobHttpHeaders headers = new BlobHttpHeaders()
-                    .setContentType("application/pdf");
-            
-            // Upload the file with overwrite enabled
+            BlobHttpHeaders headers = new BlobHttpHeaders().setContentType("application/pdf");
             blobClient.upload(fileInputStream, fileSize, true);
             blobClient.setHttpHeaders(headers);
-            
-            LOGGER.info("Successfully uploaded PDF file: {}", blobName);
-            
-            // Generate SAS URL with expiry using account-level key
-            String sasUrl = generateSasUrl(blobClient, sasUrlExpiryInMinutes);
-            
-            LOGGER.info("Generated SAS URL for blob: {} with expiry of {} minutes", blobName, sasUrlExpiryInMinutes);
-            return sasUrl;
-            
+            LOGGER.info("Successfully uploaded PDF: {}", blobName);
         } catch (Exception e) {
-            LOGGER.error("Error uploading PDF file {} to Azure Blob Storage", blobName, e);
+            LOGGER.error("Error uploading PDF {} to Azure Blob Storage", blobName, e);
             throw new RuntimeException(
-                String.format("Azure storage error while uploading PDF file: %s. Error: %s", 
-                    blobName, e.getMessage()), e);
+                "Azure storage error while uploading PDF: " + blobName + ". " + e.getMessage(), e);
         }
-    }
-
-    /**
-     * Uploads a PDF file with auto-generated blob name and returns SAS URL
-     */
-    public String uploadPdfAndGenerateSasUrlWithAutoName(InputStream fileInputStream, long fileSize, String folderPath) {
-        String blobName = generateBlobName(folderPath);
-        return uploadPdfAndGenerateSasUrl(fileInputStream, fileSize, blobName);
-    }
-
-    /**
-     * Generates a SAS URL for a blob with specified expiry time using account-level key
-     */
-    private String generateSasUrl(BlobClient blobClient, long expiryInMinutes) {
-        // Set expiry time
-        OffsetDateTime expiryTime = OffsetDateTime.now().plusMinutes(expiryInMinutes);
-        
-        // Set permissions for the SAS token (read permission)
-        BlobSasPermission sasPermission = new BlobSasPermission()
-                .setReadPermission(true);
-        
-        // Create SAS signature values
-        BlobServiceSasSignatureValues sasSignatureValues = new BlobServiceSasSignatureValues(
-                expiryTime,
-                sasPermission
-        );
-
-        // When using connection string (e.g. Azurite), blobClient supports SAS generation directly
-        if (connectionString != null && !connectionString.isEmpty()) {
-            String sasToken = blobClient.generateSas(sasSignatureValues);
-            return blobClient.getBlobUrl() + "?" + sasToken;
-        }
-
-        if (storageAccountKey == null || storageAccountKey.isEmpty()) {
-            throw new IllegalStateException(
-                "Storage account key is required for SAS generation. " +
-                "Set azure.storage.account-key property or AZURE_STORAGE_ACCOUNT_KEY environment variable.");
-        }
-
-        // Create a new BlobClient with account key credential for SAS generation
-        // This is necessary because the original blobClient uses managed identity which doesn't support SAS generation
-        StorageSharedKeyCredential credential = new StorageSharedKeyCredential(
-                storageAccountName, 
-                storageAccountKey
-        );
-        
-        BlobClient sasBlobClient = new BlobClientBuilder()
-                .endpoint(format("https://%s.blob.core.windows.net", storageAccountName))
-                .containerName(blobContainerClient.getBlobContainerName())
-                .blobName(blobClient.getBlobName())
-                .credential(credential)
-                .buildClient();
-        
-        String sasToken = sasBlobClient.generateSas(sasSignatureValues);
-        
-        return blobClient.getBlobUrl() + "?" + sasToken;
-    }
-
-
-    private String generateBlobName(String folderPath) {
-        String fileName = UUID.randomUUID() + "." + "pdf";
-        if (folderPath != null && !folderPath.isEmpty()) {
-            return folderPath + "/" + fileName;
-        }
-        return fileName;
     }
 }
