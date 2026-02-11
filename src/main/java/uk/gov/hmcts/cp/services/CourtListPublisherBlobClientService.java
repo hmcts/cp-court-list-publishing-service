@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -46,6 +47,25 @@ public class CourtListPublisherBlobClientService {
             LOGGER.error("Error uploading PDF {} to Azure Blob Storage", blobName, e);
             throw new RuntimeException(
                 "Azure storage error while uploading PDF: " + blobName + ". " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Opens a streaming input stream for downloading the PDF blob named {fileId}.pdf.
+     * Caller must close the stream when done. Returns empty if the blob does not exist.
+     */
+    public Optional<InputStream> openPdfDownloadStream(UUID fileId) {
+        String blobName = fileId + PDF_EXTENSION;
+        try {
+            BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
+            if (!blobClient.exists()) {
+                return Optional.empty();
+            }
+            return Optional.of(blobClient.openInputStream());
+        } catch (Exception e) {
+            LOGGER.error("Error opening download stream for PDF {}", blobName, e);
+            throw new RuntimeException(
+                "Azure storage error while opening PDF stream: " + blobName + ". " + e.getMessage(), e);
         }
     }
 }

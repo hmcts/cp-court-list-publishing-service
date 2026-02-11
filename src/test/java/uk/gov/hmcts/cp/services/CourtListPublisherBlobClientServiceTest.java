@@ -3,6 +3,7 @@ package uk.gov.hmcts.cp.services;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
+import com.azure.storage.blob.specialized.BlobInputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -12,14 +13,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -64,6 +68,52 @@ class CourtListPublisherBlobClientServiceTest {
                 .when(mockBlobClient).upload(any(InputStream.class), eq(4L), eq(true));
 
         assertThatThrownBy(() -> service.uploadPdf(fileInputStream, 4L, FILE_ID))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Azure storage error")
+                .hasMessageContaining(FILE_ID + ".pdf");
+    }
+
+    @Test
+    void openPdfDownloadStream_shouldReturnInputStream_whenBlobExists() {
+        BlobClient mockBlobClient = mock(BlobClient.class);
+        BlobInputStream mockStream = mock(BlobInputStream.class);
+
+        when(blobContainerClient.getBlobClient(EXPECTED_BLOB_NAME)).thenReturn(mockBlobClient);
+        when(mockBlobClient.exists()).thenReturn(true);
+        when(mockBlobClient.openInputStream()).thenReturn(mockStream);
+
+        Optional<InputStream> result = service.openPdfDownloadStream(FILE_ID);
+
+        assertThat(result).isPresent();
+        assertThat(result.get()).isSameAs(mockStream);
+        verify(blobContainerClient).getBlobClient(EXPECTED_BLOB_NAME);
+        verify(mockBlobClient).exists();
+        verify(mockBlobClient).openInputStream();
+    }
+
+    @Test
+    void openPdfDownloadStream_shouldReturnEmpty_whenBlobDoesNotExist() {
+        BlobClient mockBlobClient = mock(BlobClient.class);
+
+        when(blobContainerClient.getBlobClient(EXPECTED_BLOB_NAME)).thenReturn(mockBlobClient);
+        when(mockBlobClient.exists()).thenReturn(false);
+
+        Optional<InputStream> result = service.openPdfDownloadStream(FILE_ID);
+
+        assertThat(result).isEmpty();
+        verify(blobContainerClient).getBlobClient(EXPECTED_BLOB_NAME);
+        verify(mockBlobClient).exists();
+        verify(mockBlobClient, never()).openInputStream();
+    }
+
+    @Test
+    void openPdfDownloadStream_shouldThrow_whenBlobClientErrors() {
+        BlobClient mockBlobClient = mock(BlobClient.class);
+
+        when(blobContainerClient.getBlobClient(EXPECTED_BLOB_NAME)).thenReturn(mockBlobClient);
+        when(mockBlobClient.exists()).thenThrow(new RuntimeException("Blob client error"));
+
+        assertThatThrownBy(() -> service.openPdfDownloadStream(FILE_ID))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Azure storage error")
                 .hasMessageContaining(FILE_ID + ".pdf");
