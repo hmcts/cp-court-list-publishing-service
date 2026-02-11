@@ -42,13 +42,13 @@ public class PdfGenerationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PdfGenerationService.class);
 
-    // Constants for document generator service
-    private static final String BASE_URI_TEMPLATE = "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator";
+    // Constants for document generator service (same as progression: render endpoint)
+    private static final String RENDER_PATH = "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render";
     private static final String TEMPLATE_NAME = "PublicCourtList";
     private static final String KEY_TEMPLATE_PAYLOAD = "templatePayload";
     private static final String KEY_CONVERSION_FORMAT = "conversionFormat";
-    private static final String DOCUMENT_CONVERSION_FORMAT_PDF = "PDF";
-    private static final String URL_ENDS_WITH = "/documents/generate";
+    private static final String DOCUMENT_CONVERSION_FORMAT_PDF = "pdf";
+    private static final String RENDER_MEDIA_TYPE = "application/vnd.systemdocgenerator.render+json";
 
     private final CourtListPublisherBlobClientService blobClientService;
     private final HttpClientFactory httpClientFactory;
@@ -142,20 +142,19 @@ public class PdfGenerationService {
                 .add(KEY_CONVERSION_FORMAT, DOCUMENT_CONVERSION_FORMAT_PDF)
                 .build();
 
-        // Build the URL using the base URI template
-        String URL = BASE_URI_TEMPLATE + URL_ENDS_WITH;
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder
+        URI uri = UriComponentsBuilder
                 .fromUriString(commonPlatformQueryApiBaseUrl)
-                .path(URL);
+                .path(RENDER_PATH)
+                .build()
+                .toUri();
 
-        URI uri = uriBuilder.build().toUri();
         String systemUserId = systemUserConfig.getSystemUserId();
         if (systemUserId == null || systemUserId.isBlank()) {
             throw new IllegalStateException("COURTLISTPUBLISHING_SYSTEM_USER_ID is not configured");
         }
-        // Set up headers (document generator uses system user)
+        // Same as progression: render endpoint expects application/vnd.systemdocgenerator.render+json
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentType(MediaType.parseMediaType(RENDER_MEDIA_TYPE));
         headers.set("CJSCPPUID", systemUserId);
 
         // Convert JsonObject to JSON string
