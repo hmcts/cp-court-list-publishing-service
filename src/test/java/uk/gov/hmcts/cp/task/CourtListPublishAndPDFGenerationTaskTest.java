@@ -10,7 +10,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 
-
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
@@ -187,37 +189,53 @@ class CourtListPublishAndPDFGenerationTaskTest {
 
     @Test
     void execute_shouldReturnCompletedStatus_whenRepositoryThrowsException() {
-        // Given
+        // Given - repository throws when updating status to PUBLISH_SUCCESSFUL (task logs ERROR then continues)
         JsonObject jobData = createJobDataWithCourtListId(courtListId);
         when(executionInfo.getJobData()).thenReturn(jobData);
         when(repository.getByCourtListId(courtListId)).thenThrow(new RuntimeException("Database error"));
 
-        // When
-        ExecutionInfo result = task.execute(executionInfo);
+        // Silence expected ERROR log from task so test output is clean
+        Logger taskLogger = (Logger) LoggerFactory.getLogger(CourtListPublishAndPDFGenerationTask.class);
+        Level originalLevel = taskLogger.getLevel();
+        taskLogger.setLevel(Level.OFF);
+        try {
+            // When
+            ExecutionInfo result = task.execute(executionInfo);
 
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(repository).getByCourtListId(courtListId);
-        verify(repository, never()).save(any());
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
+            verify(repository).getByCourtListId(courtListId);
+            verify(repository, never()).save(any());
+        } finally {
+            taskLogger.setLevel(originalLevel);
+        }
     }
 
     @Test
     void execute_shouldReturnCompletedStatus_whenSaveThrowsException() {
-        // Given
+        // Given - save() throws when updating status (task logs ERROR then continues)
         JsonObject jobData = createJobDataWithCourtListId(courtListId);
         when(executionInfo.getJobData()).thenReturn(jobData);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
         when(repository.save(entity)).thenThrow(new RuntimeException("Save error"));
 
-        // When
-        ExecutionInfo result = task.execute(executionInfo);
+        // Silence expected ERROR log from task so test output is clean
+        Logger taskLogger = (Logger) LoggerFactory.getLogger(CourtListPublishAndPDFGenerationTask.class);
+        Level originalLevel = taskLogger.getLevel();
+        taskLogger.setLevel(Level.OFF);
+        try {
+            // When
+            ExecutionInfo result = task.execute(executionInfo);
 
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(repository, atLeastOnce()).getByCourtListId(courtListId);
-        verify(repository, atLeastOnce()).save(entity);
+            // Then
+            assertThat(result).isNotNull();
+            assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
+            verify(repository, atLeastOnce()).getByCourtListId(courtListId);
+            verify(repository, atLeastOnce()).save(entity);
+        } finally {
+            taskLogger.setLevel(originalLevel);
+        }
     }
 
     @Test
