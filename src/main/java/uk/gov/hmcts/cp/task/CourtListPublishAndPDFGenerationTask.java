@@ -265,6 +265,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
 
         existingCourtListPublishEntity.setFileUrl(fileUrl);
+        existingCourtListPublishEntity.setFileId(courtListId);// same as courtListId .... azure file upload is atomic
         existingCourtListPublishEntity.setFileStatus(Status.SUCCESSFUL);
         existingCourtListPublishEntity.setLastUpdated(Instant.now());
         repository.save(existingCourtListPublishEntity);

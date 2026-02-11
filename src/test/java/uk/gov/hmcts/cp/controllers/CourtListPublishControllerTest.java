@@ -315,6 +315,7 @@ class CourtListPublishControllerTest {
                 entity.getCourtListType(),
                 lastUpdated,
                 entity.getFileUrl(),
+                entity.getFileId(),
                 entity.getPublishErrorMessage(),
                 entity.getFileErrorMessage(),
                 entity.getPublishDate()
