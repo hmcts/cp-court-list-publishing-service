@@ -8,12 +8,10 @@ import org.springframework.stereotype.Component;
 import uk.gov.hmcts.cp.domain.DtsMeta;
 
 /**
- * No-op publisher used when profile {@code integration} is active.
- * Returns success without calling any external system, so integration tests
- * do not need real CaTH or test libraries (e.g. Mockito).
+ * No-op publisher used when profile {@code integration} is active and no HTTP-based publisher is used.
+ * {@link IntegrationCourtListPublisher} is @Primary in integration and calls WireMock instead.
  */
 @Component
-@Primary
 @Profile("integration")
 @Slf4j
 public class StubCourtListPublisher implements CourtListPublisher {

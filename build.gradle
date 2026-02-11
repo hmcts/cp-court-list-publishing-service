@@ -296,7 +296,8 @@ dockerCompose {
     projectName = "${rootProject.name}-it".replaceAll('[^A-Za-z0-9]', '')
 
     useDockerComposeV2 = true
-    dockerExecutable = 'docker'
+    //dockerExecutable = 'docker'
+    dockerExecutable = '/usr/local/bin/docker'
 }
 
 /* ---------------- Test and Integration Tasks ---------------- */

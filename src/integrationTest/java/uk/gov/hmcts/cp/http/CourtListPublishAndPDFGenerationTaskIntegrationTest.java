@@ -25,6 +25,10 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private static final String PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publish";
     private static final String GET_STATUS_ENDPOINT = BASE_URL + "/api/court-list-publish/publish-status";
+    private static final String WIREMOCK_BASE_URL = System.getProperty("wiremock.baseUrl", "http://localhost:8089");
+    private static final String WIREMOCK_MAPPINGS_URL = WIREMOCK_BASE_URL + "/__admin/mappings";
+    private static final String CJSCPPUID_HEADER = "CJSCPPUID";
+    private static final String INTEGRATION_TEST_USER_ID = "integration-test-user-id";
 
     private final RestTemplate http = new RestTemplate();
     private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
@@ -59,28 +63,90 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
 
     @Test
     void publishCourtList_shouldStillUpdateStatus_whenCaTHEndpointFails() throws Exception {
-        // Given
-        UUID courtCentreId = UUID.randomUUID();
-        String requestJson = createPublishRequestJson(courtCentreId, "STANDARD");
-        
-        // When - Publish court list
-        ResponseEntity<String> publishResponse = postPublishRequest(requestJson);
-        
-        // Then - Verify publish response
-        assertThat(publishResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        JsonNode publishBody = parseResponse(publishResponse);
-        UUID courtListId = UUID.fromString(publishBody.get("courtListId").asText());
+        // Given - CaTH returns 500 (add stub with priority 0 so it wins over default success)
+        addCathFailureStub();
+        try {
+            UUID courtCentreId = UUID.randomUUID();
+            String requestJson = createPublishRequestJson(courtCentreId, "STANDARD");
 
-        // Wait for async task to complete
-        // Task manager JobExecutor polls the database and executes tasks
-        waitForTaskCompletion(courtListId, 120000); // 2 minutes timeout
-        
-        // Verify status was still updated to SUCCESSFUL (status update happens even if CaTH fails)
-        // Note: WireMock verification removed as we're using static mappings
-        ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
-        assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        JsonNode statusBody = parseResponse(statusResponse);
-        assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
+            // When - Publish court list (task will call CaTH and get 500)
+            ResponseEntity<String> publishResponse = postPublishRequest(requestJson);
+
+            assertThat(publishResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode publishBody = parseResponse(publishResponse);
+            UUID courtListId = UUID.fromString(publishBody.get("courtListId").asText());
+
+            waitForTaskCompletion(courtListId, 120000);
+
+            // Then - DB has publishStatus FAILED and publishErrorMessage set
+            ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
+            assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode statusBody = parseResponse(statusResponse);
+            assertThat(statusBody.get("publishStatus").asText()).isEqualTo("FAILED");
+            assertThat(statusBody.has("publishErrorMessage")).isTrue();
+            assertThat(statusBody.get("publishErrorMessage").asText()).isNotBlank();
+        } finally {
+            AbstractTest.resetWireMock();
+        }
+    }
+
+    @Test
+    void publishCourtList_shouldSetPublishFailedAndSavePublishErrorMessage_whenCaTHFails() throws Exception {
+        // Given - CaTH returns 500 (add stub with priority 0 so it wins over default success)
+        addCathFailureStub();
+        try {
+            UUID courtCentreId = UUID.randomUUID();
+            String requestJson = createPublishRequestJson(courtCentreId, "PUBLIC");
+
+            // When - Publish court list (task calls CaTH and gets 500)
+            ResponseEntity<String> publishResponse = postPublishRequest(requestJson);
+
+            assertThat(publishResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode publishBody = parseResponse(publishResponse);
+            UUID courtListId = UUID.fromString(publishBody.get("courtListId").asText());
+
+            waitForTaskCompletion(courtListId, 120000);
+
+            // Then - DB has publishStatus FAILED and publishErrorMessage set
+            ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
+            assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode statusBody = parseResponse(statusResponse);
+            assertThat(statusBody.get("publishStatus").asText()).isEqualTo("FAILED");
+            assertThat(statusBody.has("publishErrorMessage")).isTrue();
+            assertThat(statusBody.get("publishErrorMessage").asText()).isNotBlank();
+        } finally {
+            AbstractTest.resetWireMock();
+        }
+    }
+
+   @Test
+    void publishCourtList_shouldSetFileFailedAndSaveFileErrorMessage_whenPdfGenerationFails() throws Exception {
+        // Given - Add stub so document-generator returns 500 (only for this test)
+        addDocumentGeneratorFailureStub();
+
+        try {
+            UUID courtCentreId = UUID.randomUUID();
+            String requestJson = createPublishRequestJson(courtCentreId, "PUBLIC");
+
+            // When - Publish court list (task will call document-generator and get 500)
+            ResponseEntity<String> publishResponse = postPublishRequest(requestJson);
+
+            assertThat(publishResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode publishBody = parseResponse(publishResponse);
+            UUID courtListId = UUID.fromString(publishBody.get("courtListId").asText());
+
+            waitForTaskCompletion(courtListId, 120000);
+
+            // Then - DB has fileStatus FAILED and fileErrorMessage set
+            ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
+            assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode statusBody = parseResponse(statusResponse);
+            assertThat(statusBody.get("fileStatus").asText()).isEqualTo("FAILED");
+            assertThat(statusBody.has("fileErrorMessage")).isTrue();
+            assertThat(statusBody.get("fileErrorMessage").asText()).isNotBlank();
+        } finally {
+            AbstractTest.resetWireMock();
+        }
     }
 
     @Test
@@ -174,9 +240,6 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
             """.formatted(courtCentreId, courtListType);
     }
 
-    private static final String CJSCPPUID_HEADER = "CJSCPPUID";
-    private static final String INTEGRATION_TEST_USER_ID = "integration-test-user-id";
-
     private HttpEntity<String> createPublishHttpEntity(String json) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.post+json"));
@@ -226,6 +289,69 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
 
     private JsonNode parseResponse(ResponseEntity<String> response) throws Exception {
         return objectMapper.readTree(response.getBody());
+    }
+
+    /**
+     * Adds a WireMock stub so CaTH returns 500. Use only in tests that expect publish failure.
+     * Call {@link AbstractTest#resetWireMock()} in a finally block after the test so other tests get default mappings.
+     */
+    private void addCathFailureStub() {
+        String mappingJson = """
+            {
+              "request": {
+                "method": "POST",
+                "urlPath": "/courtlistpublisher/publication",
+                "headers": {"Content-Type": {"contains": "application/json"}}
+              },
+              "response": {
+                "status": 500,
+                "headers": {"Content-Type": "application/json"},
+                "body": "{\\"error\\": \\"Internal Server Error\\"}"
+              },
+              "priority": 0
+            }
+            """;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        ResponseEntity<String> response = http.exchange(
+                WIREMOCK_MAPPINGS_URL,
+                HttpMethod.POST,
+                new HttpEntity<>(mappingJson, headers),
+                String.class);
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new IllegalStateException("Failed to add CaTH failure stub: " + response.getStatusCode());
+        }
+    }
+
+    /**
+     * Adds a WireMock stub so document-generator returns 500. Use only in tests that expect PDF failure.
+     * Call {@link AbstractTest#resetWireMock()} in a finally block after the test so other tests get default mappings.
+     */
+    private void addDocumentGeneratorFailureStub() {
+        String mappingJson = """
+            {
+              "request": {
+                "method": "POST",
+                "urlPathPattern": "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/documents/generate"
+              },
+              "response": {
+                "status": 500,
+                "headers": {"Content-Type": "application/json"},
+                "body": "{\\"error\\": \\"PDF generation failed\\"}"
+              },
+              "priority": 0
+            }
+            """;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        ResponseEntity<String> response = http.exchange(
+                WIREMOCK_MAPPINGS_URL,
+                HttpMethod.POST,
+                new HttpEntity<>(mappingJson, headers),
+                String.class);
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new IllegalStateException("Failed to add document-generator failure stub: " + response.getStatusCode());
+        }
     }
 
     /**

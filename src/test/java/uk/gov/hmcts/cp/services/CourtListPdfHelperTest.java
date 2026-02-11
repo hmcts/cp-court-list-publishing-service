@@ -1,6 +1,7 @@
 package uk.gov.hmcts.cp.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -68,18 +69,35 @@ class CourtListPdfHelperTest {
     }
 
     @Test
-    void generateAndUploadPdf_shouldReturnNull_whenPdfGenerationThrowsException() throws IOException {
+    void generateAndUploadPdf_shouldThrowRuntimeException_whenPdfGenerationFails() throws IOException {
         // Given
         jakarta.json.JsonObject payloadJson = jakarta.json.Json.createObjectBuilder().build();
         when(objectConverter.convertFromObject(payload)).thenReturn(payloadJson);
         when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId)))
                 .thenThrow(new IOException("PDF generation failed"));
 
-        // When
-        String result = pdfHelper.generateAndUploadPdf(payload, courtListId);
+        // When / Then - error is propagated so caller can persist it
+        assertThatThrownBy(() -> pdfHelper.generateAndUploadPdf(payload, courtListId))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to generate or upload PDF")
+                .hasMessageContaining("PDF generation failed")
+                .hasCauseInstanceOf(IOException.class);
+        verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId));
+    }
 
-        // Then
-        assertThat(result).isNull();
+    @Test
+    void generateAndUploadPdf_shouldThrowRuntimeException_whenUploadFails() throws IOException {
+        // Given - upload throws (e.g. Azure storage error)
+        jakarta.json.JsonObject payloadJson = jakarta.json.Json.createObjectBuilder().build();
+        when(objectConverter.convertFromObject(payload)).thenReturn(payloadJson);
+        when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId)))
+                .thenThrow(new RuntimeException("Azure storage error while uploading PDF"));
+
+        // When / Then - error is propagated so caller can persist it
+        assertThatThrownBy(() -> pdfHelper.generateAndUploadPdf(payload, courtListId))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to generate or upload PDF")
+                .hasMessageContaining("Azure storage error");
         verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId));
     }
 }
