@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/listing-service/query/api/rest/listing/courtlistpayload.*",
+    "headers": {
+      "Accept": {
+        "equalTo": "application/vnd.listing.search.court.list.payload+json"
+      }
+    }
+  },
+  "response": {
+    "status": 500,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"error\": \"Internal Server Error\"}"
+  },
+  "priority": 10
+}

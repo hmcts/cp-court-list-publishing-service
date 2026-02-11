@@ -18,6 +18,10 @@ spring:
     virtual:
       enabled: ${VIRTUAL_THREADS:false}
 
+# Court list publishing config - system user (UUID) for reference data and document generator
+courtlistpublishing:
+  system-user-id: ${COURTLISTPUBLISHING_SYSTEM_USER_ID:}
+
 # Common Platform Query API configuration
 common-platform-query-api:
   base-url: ${CP_CLP_BASE_URL:http://localhost:8080}

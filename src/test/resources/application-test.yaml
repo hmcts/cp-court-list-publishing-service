@@ -36,6 +36,10 @@ cp:
   audit:
     enabled: false
 
+# System user ID for reference data and document generator (set env COURTLISTPUBLISHING_SYSTEM_USER_ID in production)
+courtlistpublishing:
+  system-user-id: "ba4e97ab-2174-4fa2-abfe-3ac2bb04bc75"
+
 # CaTH endpoint configuration for unit tests
 cath:
   base-url: ${CATH_BASE_URL:https://spnl-apim-int-gw.cpp.nonlive}

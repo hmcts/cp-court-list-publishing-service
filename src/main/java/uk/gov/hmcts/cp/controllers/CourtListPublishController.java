@@ -2,6 +2,7 @@ package uk.gov.hmcts.cp.controllers;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
 import uk.gov.hmcts.cp.openapi.model.CourtListData;
@@ -36,20 +37,21 @@ import java.util.UUID;
 public class CourtListPublishController implements CourtListPublishApi {
 
     private static final String PRISON = "PRISON";
-    /** GENESIS user ID used for reference data calls (same as document generator). */
-    private static final String GENESIS_USER_ID = "7aee5dea-b0de-4604-b49b-86c7788cfc4b";
 
     private final CourtListPublishStatusService service;
     private final CourtListTaskTriggerService courtListTaskTriggerService;
     private final CourtListDataService courtListDataService;
+    private final CourtListPublishingSystemUserConfig systemUserConfig;
     private static final Logger LOG = LoggerFactory.getLogger(CourtListPublishController.class);
 
     public CourtListPublishController(final CourtListPublishStatusService service,
                                      CourtListTaskTriggerService courtListTaskTriggerService,
-                                     CourtListDataService courtListDataService) {
+                                     CourtListDataService courtListDataService,
+                                     CourtListPublishingSystemUserConfig systemUserConfig) {
         this.service = service;
         this.courtListTaskTriggerService = courtListTaskTriggerService;
         this.courtListDataService = courtListDataService;
+        this.systemUserConfig = systemUserConfig;
     }
 
     @Override
@@ -103,6 +105,11 @@ public class CourtListPublishController implements CourtListPublishApi {
         if (cjscppuid == null || cjscppuid.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CJSCPPUID header is required");
         }
+        String systemUserId = systemUserConfig.getSystemUserId();
+        if (systemUserId == null || systemUserId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "COURTLISTPUBLISHING_SYSTEM_USER_ID is not configured");
+        }
         LOG.info("Fetching court list data (listing + reference data only) for listId: {}, courtCentreId: {}, startDate: {}, endDate: {}",
                 listId, courtCentreId, startDate, endDate);
         String courtCentreIdStr = courtCentreId != null ? courtCentreId.toString() : null;
@@ -110,7 +117,7 @@ public class CourtListPublishController implements CourtListPublishApi {
         String endStr = endDate != null ? endDate.toString() : null;
         boolean rest = Boolean.TRUE.equals(restricted);
         String json = courtListDataService.getCourtListData(listId, courtCentreIdStr, null, startStr, endStr, rest,
-                cjscppuid, GENESIS_USER_ID);
+                cjscppuid, systemUserId);
         try {
             CourtListData data = ObjectMapperConfig.getObjectMapper().readValue(json, CourtListData.class);
             return ResponseEntity.ok(data);
