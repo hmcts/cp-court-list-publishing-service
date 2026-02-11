@@ -63,7 +63,7 @@ services:
       CP_CLP_AUTHZ_ENABLED: "false"
       CP_CLP_HTTP_AUDIT_ENABLED: "false"
       CP_CLP_AUDIT_ENABLED: "false"
-      # WireMock service running in Docker container
+      # WireMock service running in Docker container (publication endpoint)
       COMMON_PLATFORM_QUERY_API_BASE_URL: "http://wiremock:8080"
       CATH_BASE_URL: "http://wiremock:8080"
     depends_on:

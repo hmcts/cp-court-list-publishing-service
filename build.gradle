@@ -357,7 +357,7 @@ tasks.register('integration', Test) {
     useJUnitPlatform()
 
     dependsOn tasks.composeUp
-    //finalizedBy tasks.composeDown
+    finalizedBy tasks.composeDown
 
     systemProperty 'app.baseUrl', "http://localhost:${serverPort}/courtlistpublishing-service"
     systemProperty 'wiremock.baseUrl', 'http://localhost:8089'
