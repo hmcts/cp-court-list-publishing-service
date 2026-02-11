@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
@@ -387,7 +388,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
 
     @Test
     void execute_shouldHandleException_whenCaTHServiceThrowsException() {
-        // Given
+        // Given - CaTH throws so publish error is saved to DB
         JsonObject jobData = createJobDataWithCourtListId(courtListId);
         when(executionInfo.getJobData()).thenReturn(jobData);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
@@ -404,13 +405,41 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // When
         ExecutionInfo result = task.execute(executionInfo);
 
-        // Then
+        // Then - task completes; publish error saved to publish_error_message, publish status FAILED; updateStatusToPublishSuccessful not called
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
         verify(courtListQueryService).buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC);
         verify(cathService).sendCourtListToCaTH(courtListDocument);
-        verify(repository).getByCourtListId(courtListId);
+        assertThat(entity.getPublishErrorMessage()).contains("CaTH service error", "RuntimeException");
+        assertThat(entity.getPublishStatus()).isEqualTo(Status.FAILED);
+        verify(repository, times(1)).getByCourtListId(courtListId);
+        verify(repository, times(1)).save(entity);
+    }
+
+    @Test
+    void execute_shouldSavePublishErrorMessageAndSetPublishStatusFailed_whenBuildCourtListDocumentThrows() {
+        // Given - buildCourtListDocumentFromPayload throws (e.g. transform error)
+        String errorMessage = "Transform failed";
+        String causeMessage = "Invalid date format";
+        JsonObject jobData = createJobDataWithCourtListId(courtListId);
+        when(executionInfo.getJobData()).thenReturn(jobData);
+        when(repository.getByCourtListId(courtListId)).thenReturn(entity);
+
+        CourtListPayload payload = new CourtListPayload();
+        when(courtListQueryService.getCourtListPayload(any(), any(), any(), any(), any())).thenReturn(payload);
+        when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
+                .thenThrow(new RuntimeException(errorMessage, new IllegalStateException(causeMessage)));
+
+        // When
+        task.execute(executionInfo);
+
+        // Then - publish error (full stack trace) saved, publish status FAILED
+        assertThat(entity.getPublishErrorMessage())
+                .contains(errorMessage, causeMessage, "RuntimeException", "IllegalStateException");
+        assertThat(entity.getPublishStatus()).isEqualTo(Status.FAILED);
+        verify(repository, times(1)).getByCourtListId(courtListId);
+        verify(repository, times(1)).save(entity);
     }
 
     @Test
@@ -524,6 +553,37 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
         verify(pdfHelper).generateAndUploadPdf(payload, courtListId);
+        // Verify error message is saved to fileErrorMessage and file status is FAILED
+        assertThat(entity.getFileErrorMessage()).contains("PDF generation error");
+        assertThat(entity.getFileStatus()).isEqualTo(Status.FAILED);
+        // save called twice: updateStatusToPublishSuccessful then updateFileErrorMessage
+        verify(repository, times(2)).save(entity);
+    }
+
+    @Test
+    void execute_shouldSaveFileErrorMessageAndSetFileStatusFailed_whenPdfGenerationThrows() {
+        // Given - PDF generation throws with message and cause
+        String errorMessage = "Upload failed";
+        String causeMessage = "Connection timeout";
+        JsonObject jobData = createJobDataWithCourtListId(courtListId);
+        when(executionInfo.getJobData()).thenReturn(jobData);
+        when(repository.getByCourtListId(courtListId)).thenReturn(entity);
+
+        CourtListPayload payload = new CourtListPayload();
+        when(courtListQueryService.getCourtListPayload(any(), any(), any(), any(), any())).thenReturn(payload);
+        when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
+                .thenReturn(CourtListDocument.builder().build());
+        when(pdfHelper.generateAndUploadPdf(payload, courtListId))
+                .thenThrow(new RuntimeException(errorMessage, new IllegalStateException(causeMessage)));
+
+        // When
+        task.execute(executionInfo);
+
+        // Then - entity is updated with full stack trace and FAILED status
+        assertThat(entity.getFileErrorMessage())
+                .contains(errorMessage, causeMessage, "RuntimeException", "IllegalStateException");
+        assertThat(entity.getFileStatus()).isEqualTo(Status.FAILED);
+        verify(repository, times(2)).save(entity);
     }
 
     private JsonObject createJobDataWithCourtListId(UUID courtListId) {

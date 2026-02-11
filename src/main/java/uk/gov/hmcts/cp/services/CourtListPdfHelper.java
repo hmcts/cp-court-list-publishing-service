@@ -27,7 +27,8 @@ public class CourtListPdfHelper {
      * Generates and uploads PDF for the given court list payload and court list ID.
      * @param payload the court list payload to generate PDF from
      * @param courtListId the court list ID
-     * @return the SAS URL of the uploaded PDF, or null if generation fails
+     * @return the SAS URL of the uploaded PDF
+     * @throws RuntimeException when PDF generation or upload fails (caller can persist the error)
      */
     public String generateAndUploadPdf(uk.gov.hmcts.cp.models.CourtListPayload payload, UUID courtListId) {
         if (payload == null) {
@@ -37,19 +38,19 @@ public class CourtListPdfHelper {
 
         try {
             log.info("Generating and uploading PDF for court list ID: {}", courtListId);
-            
+
             // Convert payload to JsonObject
             JsonObject payloadJson = objectConverter.convertFromObject(payload);
             String sasUrl = pdfGenerationService.generateAndUploadPdf(payloadJson, courtListId);
-            
+
             log.info("Successfully generated and uploaded PDF for court list ID: {}. SAS URL generated", courtListId);
             return sasUrl;
         } catch (IOException e) {
             log.error("Error generating and uploading PDF for court list ID: {}", courtListId, e);
-            return null;
+            throw new RuntimeException("Failed to generate or upload PDF: " + e.getMessage(), e);
         } catch (Exception e) {
             log.error("Unexpected error during PDF generation for court list ID: {}", courtListId, e);
-            return null;
+            throw new RuntimeException("Failed to generate or upload PDF: " + e.getMessage(), e);
         }
     }
 }

@@ -12,19 +12,20 @@ import org.springframework.web.client.RestTemplate;
 import uk.gov.hmcts.cp.domain.DtsMeta;
 
 /**
- * No-op publisher used when profile {@code integration} is active and no HTTP-based publisher is used.
- * {@link IntegrationCourtListPublisher} is @Primary in integration and calls WireMock instead.
+ * Court list publisher used in integration tests. Performs a real HTTP POST to the CaTH URL
+ * (WireMock), so integration tests can stub success or failure and assert on DB state.
  */
 @Component
+@Primary
 @Profile("integration")
 @Slf4j
-public class StubCourtListPublisher implements CourtListPublisher {
+public class IntegrationCourtListPublisher implements CourtListPublisher {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final String cathBaseUrl;
     private final String cathEndpoint;
 
-    public StubCourtListPublisher(
+    public IntegrationCourtListPublisher(
             @Value("${cath.base-url:}") String cathBaseUrl,
             @Value("${cath.endpoint:/courtlistpublisher/publication}") String cathEndpoint) {
         this.cathBaseUrl = cathBaseUrl != null ? cathBaseUrl.stripTrailing() : "";
