@@ -4,7 +4,7 @@ azure:
     instrumentation-key: ${rpe.AppInsightsInstrumentationKey:00000000-0000-0000-0000-000000000000}
   storage:
     enabled: ${AZURE_STORAGE_ENABLED:false}
-    container-name: ${AZURE_STORAGE_CONTAINER_NAME:schedulelistinginput}
+    container-name: ${AZURE_STORAGE_CONTAINER_NAME:courtpublisher-blob-container}
     account-name: ${AZURE_STORAGE_ACCOUNT_NAME:}
     account-key: ${AZURE_STORAGE_ACCOUNT_KEY:}
   client-id: ${AZURE_CLIENT_ID}

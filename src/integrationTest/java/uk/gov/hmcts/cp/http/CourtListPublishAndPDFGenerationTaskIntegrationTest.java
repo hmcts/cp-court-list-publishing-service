@@ -177,7 +177,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         // Wait for async task to complete (CourtListTaskTriggerService.triggerCourtListTask triggered the task)
         waitForTaskCompletion(courtListId, 120000);
 
-        // Verify row updated with fileId (PDF uploaded as court-lists/{courtListId}.pdf)
+        // Verify row updated with fileId (PDF uploaded as {courtListId}.pdf)
         ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
         assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode statusBody = parseResponse(statusResponse);

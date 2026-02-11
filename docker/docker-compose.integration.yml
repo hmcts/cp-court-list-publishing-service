@@ -53,7 +53,7 @@ services:
       JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
       SPRING_PROFILES_ACTIVE: integration
       AZURE_STORAGE_ENABLED: "true"
-      AZURE_STORAGE_CONTAINER_NAME: schedulelistinginput
+      AZURE_STORAGE_CONTAINER_NAME: courtpublisher-blob-container
       AZURE_STORAGE_ACCOUNT_NAME: "devstoreaccount1"
       AZURE_STORAGE_ACCOUNT_KEY: "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
       AZURE_STORAGE_BLOB_ENDPOINT: "http://azurite:10000/devstoreaccount1"

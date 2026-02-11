@@ -76,7 +76,7 @@ class PdfGenerationServiceTest {
 
     @Test
     void generateAndUploadPdf_shouldReturnFileId_whenPayloadIsNull() throws IOException {
-        String expectedBlobName = "court-lists/" + courtListId + ".pdf";
+        String expectedBlobName = courtListId + ".pdf";
         byte[] mockPdfBytes = "Mock PDF content".getBytes();
 
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))

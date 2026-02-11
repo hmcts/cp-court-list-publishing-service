@@ -33,7 +33,7 @@ class CourtListPublisherBlobClientServiceTest {
     private CourtListPublisherBlobClientService service;
 
     private static final UUID FILE_ID = UUID.fromString("3be64c15-0988-41c8-8345-6fef4218f5eb");
-    private static final String EXPECTED_BLOB_NAME = "court-lists/3be64c15-0988-41c8-8345-6fef4218f5eb.pdf";
+    private static final String EXPECTED_BLOB_NAME = "3be64c15-0988-41c8-8345-6fef4218f5eb.pdf";
 
     @Test
     void uploadPdf_shouldUploadWithCorrectBlobNameAndContentType() {

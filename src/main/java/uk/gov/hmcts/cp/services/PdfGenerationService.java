@@ -58,7 +58,7 @@ public class PdfGenerationService {
     private String commonPlatformQueryApiBaseUrl;
 
     /**
-     * Generates a PDF from the payload, uploads it to Azure Blob Storage as court-lists/{courtListId}.pdf,
+     * Generates a PDF from the payload, uploads it to Azure Blob Storage as {courtListId}.pdf,
      * and returns the file ID (court list ID).
      */
     public UUID generateAndUploadPdf(JsonObject payload, UUID courtListId) throws IOException {
