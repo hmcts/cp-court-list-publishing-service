@@ -53,7 +53,7 @@ class ReferenceDataServiceTest {
                 eq(CourtCentreData.class)
         )).thenReturn(ResponseEntity.ok(expected));
 
-        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName(courtName, "genesis-user");
+        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName(courtName, "system-user");
 
         assertThat(result).isPresent();
         assertThat(result.get().getOuCode()).isEqualTo("B01LY00");
@@ -88,7 +88,7 @@ class ReferenceDataServiceTest {
         when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(CourtCentreData.class)))
                 .thenThrow(new RuntimeException("Connection refused"));
 
-        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName("Some Court", "genesis-user");
+        Optional<CourtCentreData> result = referenceDataService.getCourtCenterDataByCourtName("Some Court", "system-user");
 
         assertThat(result).isEmpty();
     }

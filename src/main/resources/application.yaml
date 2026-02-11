@@ -18,8 +18,9 @@ spring:
     virtual:
       enabled: ${VIRTUAL_THREADS:false}
 
-# System user ID (UUID) for reference data and document generator calls. Set env COURTLISTPUBLISHING_SYSTEM_USER_ID.
-# No default in production; must be set.
+# Court list publishing config - system user (UUID) for reference data and document generator
+courtlistpublishing:
+  system-user-id: ${COURTLISTPUBLISHING_SYSTEM_USER_ID:}
 
 # Common Platform Query API configuration
 common-platform-query-api:

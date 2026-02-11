@@ -39,8 +39,9 @@ logging:
     root: INFO
     uk.gov.hmcts.cp: DEBUG
 
-# System user ID (Genesis) for reference data and document generator in integration tests
-COURTLISTPUBLISHING_SYSTEM_USER_ID: "ba4e97ab-2174-4fa2-abfe-3ac2bb04bc75"
+# System user ID for reference data and document generator in integration tests
+courtlistpublishing:
+  system-user-id: "ba4e97ab-2174-4fa2-abfe-3ac2bb04bc75"
 
 # Override common platform query API base URL for integration tests
 # Note: The test sets COMMON_PLATFORM_QUERY_API_BASE_URL system property in a static block

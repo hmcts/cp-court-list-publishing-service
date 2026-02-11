@@ -7,7 +7,7 @@ import java.util.UUID;
 
 /**
  * Holds the system user ID (UUID) used for reference data and document generator calls.
- * Set via environment variable or property: COURTLISTPUBLISHING_SYSTEM_USER_ID.
+ * Configured via courtlistpublishing.system-user-id (set from env COURTLISTPUBLISHING_SYSTEM_USER_ID).
  * Optional at startup; if not set, the application starts but endpoints that need it will fail with a clear error.
  */
 @Component
@@ -16,7 +16,7 @@ public class CourtListPublishingSystemUserConfig {
     private final String systemUserId;
 
     public CourtListPublishingSystemUserConfig(
-            @Value("${COURTLISTPUBLISHING_SYSTEM_USER_ID:}") String systemUserId) {
+            @Value("${courtlistpublishing.system-user-id:}") String systemUserId) {
         if (systemUserId != null && !systemUserId.isBlank()) {
             this.systemUserId = validateAndReturn(systemUserId);
         } else {

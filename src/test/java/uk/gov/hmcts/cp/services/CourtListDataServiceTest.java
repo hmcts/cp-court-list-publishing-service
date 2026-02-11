@@ -63,7 +63,7 @@ class CourtListDataServiceTest {
                 eq(false),
                 eq("request-user-id")))
                 .thenReturn(listingJson);
-        when(referenceDataService.getCourtCenterDataByCourtName(eq("Lavender Hill Magistrates' Court"), eq("genesis-user-id")))
+        when(referenceDataService.getCourtCenterDataByCourtName(eq("Lavender Hill Magistrates' Court"), eq("system-user-id")))
                 .thenReturn(Optional.of(refData));
 
         String result = courtListDataService.getCourtListData(
@@ -74,7 +74,7 @@ class CourtListDataServiceTest {
                 "2024-01-15",
                 false,
                 "request-user-id",
-                "genesis-user-id");
+                "system-user-id");
 
         assertThat(result).contains("\"ouCode\":\"123\"");
         assertThat(result).contains("\"courtId\":\"" + courtId + "\"");
@@ -88,7 +88,7 @@ class CourtListDataServiceTest {
                 eq("2024-01-15"),
                 eq(false),
                 eq("request-user-id"));
-        verify(referenceDataService).getCourtCenterDataByCourtName(eq("Lavender Hill Magistrates' Court"), eq("genesis-user-id"));
+        verify(referenceDataService).getCourtCenterDataByCourtName(eq("Lavender Hill Magistrates' Court"), eq("system-user-id"));
     }
 
     @Test

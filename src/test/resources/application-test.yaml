@@ -37,7 +37,8 @@ cp:
     enabled: false
 
 # System user ID for reference data and document generator (set env COURTLISTPUBLISHING_SYSTEM_USER_ID in production)
-COURTLISTPUBLISHING_SYSTEM_USER_ID: "ba4e97ab-2174-4fa2-abfe-3ac2bb04bc75"
+courtlistpublishing:
+  system-user-id: "ba4e97ab-2174-4fa2-abfe-3ac2bb04bc75"
 
 # CaTH endpoint configuration for unit tests
 cath:
