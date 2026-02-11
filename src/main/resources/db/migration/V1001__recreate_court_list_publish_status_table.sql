@@ -12,6 +12,7 @@ CREATE TABLE court_list_publish_status (
     court_list_type       TEXT                     NOT NULL,
     last_updated          TIMESTAMP WITH TIME ZONE NOT NULL,
     file_url              TEXT,
+    file_id               UUID,
     publish_error_message TEXT,
     file_error_message    TEXT,
     publish_date          DATE                     NOT NULL

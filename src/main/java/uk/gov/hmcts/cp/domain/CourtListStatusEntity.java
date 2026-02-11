@@ -55,6 +55,10 @@ public class CourtListStatusEntity {
     private String fileUrl;
 
     @Setter
+    @Column(name = "file_id")
+    private UUID fileId;
+
+    @Setter
     @Column(name = "publish_error_message")
     private String publishErrorMessage;
 

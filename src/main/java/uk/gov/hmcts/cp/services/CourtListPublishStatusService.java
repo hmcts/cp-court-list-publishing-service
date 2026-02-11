@@ -193,6 +193,7 @@ public class CourtListPublishStatusService {
         entity.setPublishStatus(Status.REQUESTED);
         entity.setFileStatus(Status.REQUESTED);
         entity.setFileUrl(null);
+        entity.setFileId(null);
         entity.setFileErrorMessage(null);
         entity.setPublishErrorMessage(null);
         entity.setLastUpdated(Instant.now());
@@ -238,6 +239,7 @@ public class CourtListPublishStatusService {
                 entity.getCourtListType(),
                 lastUpdated,
                 entity.getFileUrl(),
+                entity.getFileId(),
                 entity.getPublishErrorMessage(),
                 entity.getFileErrorMessage(),
                 entity.getPublishDate()

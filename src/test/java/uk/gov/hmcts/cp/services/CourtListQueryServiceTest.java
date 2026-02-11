@@ -6,17 +6,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.hmcts.cp.models.CourtCentreData;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
-import java.util.Optional;
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -26,10 +21,7 @@ import static org.mockito.Mockito.when;
 class CourtListQueryServiceTest {
 
     @Mock
-    private ProgressionQueryService progressionQueryService;
-
-    @Mock
-    private ReferenceDataService referenceDataService;
+    private CourtListDataService courtListDataService;
 
     @Mock
     private CourtListTransformationService transformationService;
@@ -90,17 +82,10 @@ class CourtListQueryServiceTest {
     }
 
     @Test
-    void getCourtListPayload_shouldEnrichPayloadAndReturn_whenReferenceDataPresent() {
-        // Given
-        UUID refId = UUID.fromString("f8254db1-1683-483e-afb3-b87fde5a0a26");
-        when(progressionQueryService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
+    void getCourtListPayload_shouldReturnPayloadFromCourtListDataService() {
+        // Given - CourtListDataService returns payload (already enriched with reference data)
+        when(courtListDataService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
                 .thenReturn(payload);
-        when(referenceDataService.getCourtCenterDataByCourtName(eq("Test Court"), any()))
-                .thenReturn(Optional.of(CourtCentreData.builder()
-                        .id(refId)
-                        .ouCode("B01LY00")
-                        .courtIdNumeric("325")
-                        .build()));
 
         // When
         CourtListPayload result = courtListQueryService.getCourtListPayload(
@@ -108,29 +93,22 @@ class CourtListQueryServiceTest {
 
         // Then
         assertThat(result).isEqualTo(payload);
-        assertThat(payload.getOuCode()).isEqualTo("B01LY00");
-        assertThat(payload.getCourtId()).isEqualTo(refId.toString());
-        assertThat(payload.getCourtIdNumeric()).isEqualTo("325");
-        verify(progressionQueryService).getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid");
-        verify(referenceDataService).getCourtCenterDataByCourtName(eq("Test Court"), any());
+        verify(courtListDataService).getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid");
     }
 
     @Test
-    void getCourtListPayload_shouldReturnPayloadWithoutEnrichment_whenReferenceDataEmpty() {
+    void getCourtListPayload_shouldReturnPayloadWhenNoCjscppuid() {
         // Given
-        when(progressionQueryService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
+        when(courtListDataService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", null))
                 .thenReturn(payload);
-        when(referenceDataService.getCourtCenterDataByCourtName(eq("Test Court"), any())).thenReturn(Optional.empty());
 
         // When
         CourtListPayload result = courtListQueryService.getCourtListPayload(
-                CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid");
+                CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", null);
 
         // Then
         assertThat(result).isEqualTo(payload);
-        assertThat(payload.getOuCode()).isNull();
-        assertThat(payload.getCourtId()).isNull();
-        verify(progressionQueryService).getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid");
+        verify(courtListDataService).getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", null);
     }
 
 }

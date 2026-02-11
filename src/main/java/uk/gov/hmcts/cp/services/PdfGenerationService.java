@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -41,29 +42,27 @@ public class PdfGenerationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PdfGenerationService.class);
 
-    // Constants for document generator service
-    private static final String BASE_URI_TEMPLATE = "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator";
+    // Constants for document generator service (same as progression: render endpoint)
+    private static final String RENDER_PATH = "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render";
     private static final String TEMPLATE_NAME = "PublicCourtList";
     private static final String KEY_TEMPLATE_PAYLOAD = "templatePayload";
     private static final String KEY_CONVERSION_FORMAT = "conversionFormat";
-    private static final String DOCUMENT_CONVERSION_FORMAT_PDF = "PDF";
-    private static final String URL_ENDS_WITH = "/documents/generate";
-    private static final String GENISIS_USER_ID = "7aee5dea-b0de-4604-b49b-86c7788cfc4b";
+    private static final String DOCUMENT_CONVERSION_FORMAT_PDF = "pdf";
+    private static final String RENDER_MEDIA_TYPE = "application/vnd.systemdocgenerator.render+json";
 
     private final CourtListPublisherBlobClientService blobClientService;
     private final HttpClientFactory httpClientFactory;
+    private final CourtListPublishingSystemUserConfig systemUserConfig;
 
     @Value("${common-platform-query-api.base-url}")
     private String commonPlatformQueryApiBaseUrl;
 
     /**
      * Generates a PDF file from the provided payload data, uploads it to Azure Blob Storage, and returns the SAS URL.
-     * Document generator is called with GENESIS user.
      */
     public String generateAndUploadPdf(JsonObject payload, UUID courtListId) throws IOException {
         LOGGER.info("Generating PDF for court list ID: {}", courtListId);
         
-        // Generate PDF using document generator service (GENESIS user)
         byte[] pdfBytes;
         try {
             pdfBytes = generatePdfDocument(payload, TEMPLATE_NAME);
@@ -143,17 +142,20 @@ public class PdfGenerationService {
                 .add(KEY_CONVERSION_FORMAT, DOCUMENT_CONVERSION_FORMAT_PDF)
                 .build();
 
-        // Build the URL using the base URI template
-        String URL = BASE_URI_TEMPLATE + URL_ENDS_WITH;
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder
+        URI uri = UriComponentsBuilder
                 .fromUriString(commonPlatformQueryApiBaseUrl)
-                .path(URL);
+                .path(RENDER_PATH)
+                .build()
+                .toUri();
 
-        URI uri = uriBuilder.build().toUri();
-        // Set up headers (document generator uses GENESIS user)
+        String systemUserId = systemUserConfig.getSystemUserId();
+        if (systemUserId == null || systemUserId.isBlank()) {
+            throw new IllegalStateException("COURTLISTPUBLISHING_SYSTEM_USER_ID is not configured");
+        }
+        // Same as progression: render endpoint expects application/vnd.systemdocgenerator.render+json
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("CJSCPPUID", GENISIS_USER_ID);
+        headers.setContentType(MediaType.parseMediaType(RENDER_MEDIA_TYPE));
+        headers.set("CJSCPPUID", systemUserId);
 
         // Convert JsonObject to JSON string
         String jsonPayload = jsonObjectToString(payload);

@@ -37,7 +37,7 @@ public class ReferenceDataService {
      * Maps to referencedata.query.ou.courtrooms.ou-courtroom-name.
      *
      * @param courtCentreName court name (e.g. from progression court list payload courtCentreName)
-     * @param cjscppuid user ID for CJSCPPUID header (e.g. GENESIS user for reference data); set when non-blank.
+     * @param cjscppuid user ID for CJSCPPUID header; set when non-blank.
      * @return optional with id, ouCode and courtIdNumeric if found
      */
     public Optional<CourtCentreData> getCourtCenterDataByCourtName(String courtCentreName, String cjscppuid) {
