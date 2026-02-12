@@ -27,6 +27,7 @@ class FileDownloadIntegrationTest extends AbstractTest {
     private static final String PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publish";
     private static final String GET_STATUS_ENDPOINT = BASE_URL + "/api/court-list-publish/publish-status";
     private static final String DOWNLOAD_ENDPOINT = BASE_URL + "/api/files/download";
+    private static final MediaType ACCEPT_FILES_DOWNLOAD = new MediaType("application", "vnd.courtlistpublishing-service.files.download+json");
     private static final String CJSCPPUID_HEADER = "CJSCPPUID";
     private static final String INTEGRATION_TEST_USER_ID = "integration-test-user-id";
     private static final String COURT_LIST_TYPE_PUBLIC = "PUBLIC";
@@ -54,10 +55,12 @@ class FileDownloadIntegrationTest extends AbstractTest {
         UUID nonExistentFileId = UUID.randomUUID();
 
         // When
+        HttpHeaders downloadHeaders = new HttpHeaders();
+        downloadHeaders.setAccept(java.util.List.of(ACCEPT_FILES_DOWNLOAD));
         ResponseEntity<byte[]> response = http.exchange(
                 DOWNLOAD_ENDPOINT + "/" + nonExistentFileId,
                 HttpMethod.GET,
-                new HttpEntity<>(new HttpHeaders()),
+                new HttpEntity<>(downloadHeaders),
                 byte[].class
         );
 
@@ -86,16 +89,16 @@ class FileDownloadIntegrationTest extends AbstractTest {
         String publishStatus = statusBody.get("publishStatus").asText();
 
         // When - Download the file (only meaningful if task succeeded)
+        HttpHeaders downloadHeaders = new HttpHeaders();
+        downloadHeaders.setAccept(java.util.List.of(ACCEPT_FILES_DOWNLOAD));
         ResponseEntity<byte[]> downloadResponse = http.exchange(
                 DOWNLOAD_ENDPOINT + "/" + courtListId,
                 HttpMethod.GET,
-                new HttpEntity<>(new HttpHeaders()),
+                new HttpEntity<>(downloadHeaders),
                 byte[].class
         );
 
         // Then - If task succeeded and PDF was uploaded: 200 with content.
-        // In integration, COURTLISTPUBLISHING_SYSTEM_USER_ID may be unset, so payload is null,
-        // task still reports SUCCESSFUL but PDF is never uploaded → 404 is acceptable.
         if (Status.SUCCESSFUL.toString().equals(publishStatus)) {
             if (downloadResponse.getStatusCode().is2xxSuccessful()) {
                 assertThat(downloadResponse.getHeaders().getContentType())
@@ -106,7 +109,6 @@ class FileDownloadIntegrationTest extends AbstractTest {
                 assertThat(downloadResponse.getBody()).isNotNull();
                 assertThat(downloadResponse.getBody().length).isGreaterThan(0);
             }
-            // 404 is acceptable when payload was null and PDF was not generated
         } else {
             assertThat(downloadResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         }
@@ -118,8 +120,7 @@ class FileDownloadIntegrationTest extends AbstractTest {
                 "courtCentreId": "%s",
                 "startDate": "2026-01-20",
                 "endDate": "2026-01-20",
-                "courtListType": "%s",
-                "makeExternalCalls": true
+                "courtListType": "%s"
             }
             """.formatted(courtCentreId, COURT_LIST_TYPE_PUBLIC);
     }

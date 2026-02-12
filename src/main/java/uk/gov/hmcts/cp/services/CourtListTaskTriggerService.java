@@ -36,12 +36,11 @@ public class CourtListTaskTriggerService {
     ExecutionService executionService;
 
     /**
-     * Triggers the court list tasks asynchronously.
-     * @param makeExternalCalls when true, the task will call CaTH and generate/upload PDF; when false, external calls are skipped (temporary param, to be removed by 2026-02-07).
+     * Triggers the court list tasks asynchronously. External calls (CaTH and PDF generation) are always made.
      * @param userId value from CJSCPPUID request header; stored in job data for query and PDF calls.
      */
     @Transactional
-    public void triggerCourtListTask(final CourtListPublishResponse response, final boolean makeExternalCalls, final String userId) {
+    public void triggerCourtListTask(final CourtListPublishResponse response, final String userId) {
         if (response == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, RESPONSE_IS_REQUIRED);
         }
@@ -64,13 +63,12 @@ public class CourtListTaskTriggerService {
         LOG.atInfo().log("Triggering court list tasks for court list ID: {}, court centre ID: {} and type: {}",
                 response.getCourtListId(), response.getCourtCentreId(), response.getCourtListType());
 
-        // Create jobData with courtListId, courtCentreId, courtListType, makeExternalCalls, and userId (CJSCPPUID)
+        // Create jobData with courtListId, courtCentreId, courtListType, and userId (CJSCPPUID)
         JsonObject jobData = Json.createObjectBuilder()
                 .add("courtListId", response.getCourtListId().toString())
                 .add("courtCentreId", response.getCourtCentreId().toString())
                 .add("courtListType", response.getCourtListType().toString())
                 .add("publishDate", response.getPublishDate().toString())
-                .add("makeExternalCalls", makeExternalCalls)
                 .add("userId", userId)
                 .build();
 

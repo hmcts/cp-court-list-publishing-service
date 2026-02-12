@@ -34,7 +34,6 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     private static final String COURT_CENTRE_ID = "courtCentreId";
     private static final String COURT_LIST_TYPE = "courtListType";
     private static final String USER_ID = "userId";
-    private static final String MAKE_EXTERNAL_CALLS = "makeExternalCalls";
 
     private final CourtListStatusRepository repository;
     private final CourtListQueryService courtListQueryService;
@@ -58,7 +57,6 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
         JsonObject jobData = executionInfo.getJobData();
         UUID courtListId = jobData != null ? extractCourtListId(jobData) : null;
-        boolean makeExternalCalls = extractMakeExternalCalls(jobData);
         String userId = extractUserId(jobData);
 
         // Fetch court list payload once for both CaTH and PDF processing (userId from CJSCPPUID header)
@@ -67,7 +65,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             CourtListType listId = extractCourtListType(jobData);
             String courtCentreId = extractCourtCentreId(jobData);
             String publishDate = extractPublishDate(jobData);
-            if (listId != null && courtCentreId != null && publishDate != null && makeExternalCalls/*RM this next day*/) {
+            if (listId != null && courtCentreId != null && publishDate != null) {
                 try {
                     payload = courtListQueryService.getCourtListPayload(
                             listId, courtCentreId, publishDate, publishDate, userId);
@@ -79,7 +77,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
         boolean cathSucceeded = false;
         try {
-            queryAndSendCourtListToCaTH(executionInfo, payload, makeExternalCalls);
+            queryAndSendCourtListToCaTH(executionInfo, payload);
             cathSucceeded = true;
         } catch (Exception e) {
             logger.error("Error querying or sending court list to CaTH", e);
@@ -97,9 +95,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
 
         try {
-            UUID fileId = makeExternalCalls
-                ? generateAndUploadPdf(executionInfo, payload)
-                : getMockFileId(executionInfo);
+            UUID fileId = generateAndUploadPdf(executionInfo, payload);
             if (fileId != null && courtListId != null) {
                 updateFileIdAndLastUpdated(courtListId, fileId);
             }
@@ -115,11 +111,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                 .build();
     }
 
-    private UUID getMockFileId(final ExecutionInfo executionInfo) {
-        return extractCourtListId(executionInfo.getJobData());
-    }
-
-    private void queryAndSendCourtListToCaTH(ExecutionInfo executionInfo, CourtListPayload payload, boolean makeExternalCalls) {
+    private void queryAndSendCourtListToCaTH(ExecutionInfo executionInfo, CourtListPayload payload) {
         if (payload == null) {
             logger.warn("Payload is null, cannot send court list to CaTH");
             return;
@@ -136,11 +128,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         try {
             var courtListDocument = courtListQueryService.buildCourtListDocumentFromPayload(payload, listId);
             logger.info("Sending transformed court list document to CaTH endpoint");
-            if (makeExternalCalls) {
-                cathService.sendCourtListToCaTH(courtListDocument, listId);
-            } else {
-                logger.info("Not calling CaTH as we are in mock mode");
-            }
+            cathService.sendCourtListToCaTH(courtListDocument, listId);
             logger.info("Successfully sent court list document to CaTH endpoint");
         } catch (Exception e) {
             logger.error("Error building document or sending court list to CaTH", e);
@@ -213,21 +201,6 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         } catch (Exception e) {
             logger.warn("Could not extract userId from JsonObject", e);
             return null;
-        }
-    }
-
-    /**
-     * Reads makeExternalCalls from jobData (temporary param, to be removed by 2026-02-07). Default false.
-     */
-    private boolean extractMakeExternalCalls(JsonObject jobData) {
-        if (jobData == null || !jobData.containsKey(MAKE_EXTERNAL_CALLS)) {
-            return false;
-        }
-        try {
-            return jobData.getBoolean(MAKE_EXTERNAL_CALLS);
-        } catch (Exception e) {
-            logger.warn("Could not extract makeExternalCalls from JsonObject, using false", e);
-            return false;
         }
     }
 

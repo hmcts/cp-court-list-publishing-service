@@ -592,7 +592,6 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 .add("courtCentreId", courtCentreId.toString())
                 .add("courtListType", "PUBLIC")
                 .add("publishDate", LocalDate.now().toString())
-                .add("makeExternalCalls", true)
                 .add("userId", TEST_USER_ID)
                 .build();
     }

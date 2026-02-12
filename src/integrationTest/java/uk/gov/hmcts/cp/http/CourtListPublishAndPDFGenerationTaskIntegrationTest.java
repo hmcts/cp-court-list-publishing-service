@@ -231,8 +231,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
                 "courtCentreId": "%s",
                 "startDate": "2026-01-20",
                 "endDate": "2026-01-20",
-                "courtListType": "%s",
-                "makeExternalCalls": true
+                "courtListType": "%s"
             }
             """.formatted(courtCentreId, courtListType);
     }

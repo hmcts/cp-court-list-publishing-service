@@ -218,8 +218,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 "courtCentreId": "%s",
                 "startDate": "%s",
                 "endDate": "%s",
-                "courtListType": "%s",
-                "makeExternalCalls": true
+                "courtListType": "%s"
             }
             """.formatted(courtCentreId, today, today, courtListType.name());
     }

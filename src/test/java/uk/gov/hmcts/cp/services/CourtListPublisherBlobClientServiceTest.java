@@ -74,7 +74,7 @@ class CourtListPublisherBlobClientServiceTest {
     }
 
     @Test
-    void openPdfDownloadStream_shouldReturnInputStream_whenBlobExists() {
+    void openPdfStream_shouldReturnInputStream_whenBlobExists() {
         BlobClient mockBlobClient = mock(BlobClient.class);
         BlobInputStream mockStream = mock(BlobInputStream.class);
 
@@ -82,7 +82,7 @@ class CourtListPublisherBlobClientServiceTest {
         when(mockBlobClient.exists()).thenReturn(true);
         when(mockBlobClient.openInputStream()).thenReturn(mockStream);
 
-        Optional<InputStream> result = service.openPdfDownloadStream(FILE_ID);
+        Optional<InputStream> result = service.openPdfStream(FILE_ID);
 
         assertThat(result).isPresent();
         assertThat(result.get()).isSameAs(mockStream);
@@ -92,13 +92,13 @@ class CourtListPublisherBlobClientServiceTest {
     }
 
     @Test
-    void openPdfDownloadStream_shouldReturnEmpty_whenBlobDoesNotExist() {
+    void openPdfStream_shouldReturnEmpty_whenBlobDoesNotExist() {
         BlobClient mockBlobClient = mock(BlobClient.class);
 
         when(blobContainerClient.getBlobClient(EXPECTED_BLOB_NAME)).thenReturn(mockBlobClient);
         when(mockBlobClient.exists()).thenReturn(false);
 
-        Optional<InputStream> result = service.openPdfDownloadStream(FILE_ID);
+        Optional<InputStream> result = service.openPdfStream(FILE_ID);
 
         assertThat(result).isEmpty();
         verify(blobContainerClient).getBlobClient(EXPECTED_BLOB_NAME);
@@ -107,13 +107,13 @@ class CourtListPublisherBlobClientServiceTest {
     }
 
     @Test
-    void openPdfDownloadStream_shouldThrow_whenBlobClientErrors() {
+    void openPdfStream_shouldThrow_whenBlobClientErrors() {
         BlobClient mockBlobClient = mock(BlobClient.class);
 
         when(blobContainerClient.getBlobClient(EXPECTED_BLOB_NAME)).thenReturn(mockBlobClient);
         when(mockBlobClient.exists()).thenThrow(new RuntimeException("Blob client error"));
 
-        assertThatThrownBy(() -> service.openPdfDownloadStream(FILE_ID))
+        assertThatThrownBy(() -> service.openPdfStream(FILE_ID))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Azure storage error")
                 .hasMessageContaining(FILE_ID + ".pdf");

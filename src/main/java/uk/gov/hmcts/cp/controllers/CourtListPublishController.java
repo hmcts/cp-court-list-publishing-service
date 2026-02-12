@@ -71,7 +71,6 @@ public class CourtListPublishController implements CourtListPublishApi {
                 request.getEndDate()
         );
 
-        boolean makeExternalCallsBool = Boolean.TRUE.equals(request.getMakeExternalCalls());
         String userId = getCjscppuidFromRequest();
         if (userId == null || userId.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CJSCPPUID header is required");
@@ -79,7 +78,7 @@ public class CourtListPublishController implements CourtListPublishApi {
 
         // Trigger the court list publishing and PDF generation task asynchronously (userId from CJSCPPUID header)
         try {
-            courtListTaskTriggerService.triggerCourtListTask(response, makeExternalCallsBool, userId);
+            courtListTaskTriggerService.triggerCourtListTask(response, userId);
             LOG.atInfo().log("Court list publishing task triggered for court list ID: {}", response.getCourtListId());
         } catch (Exception e) {
             LOG.atError().log("Failed to trigger court list publishing task for court list ID: {}",

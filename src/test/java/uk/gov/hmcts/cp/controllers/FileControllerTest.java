@@ -13,8 +13,6 @@ import uk.gov.hmcts.cp.openapi.model.FileInfo;
 import uk.gov.hmcts.cp.services.AzureBlobService;
 import uk.gov.hmcts.cp.services.CourtListPublisherBlobClientService;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class FileControllerTest {
 
     public static final String VND_COURTLISTPUBLISHING_SERVICE_FILES_JSON = "application/vnd.courtlistpublishing-service.files+json";
+    public static final String ACCEPT_FILES_DOWNLOAD = "application/vnd.courtlistpublishing-service.files.download+json";
     private MockMvc mockMvc;
 
     @Mock
@@ -169,30 +168,31 @@ class FileControllerTest {
         // Given
         UUID fileId = UUID.fromString("3be64c15-0988-41c8-8345-6fef4218f5eb");
         byte[] pdfContent = "mock pdf content".getBytes();
-        when(courtListPublisherBlobService.openPdfDownloadStream(fileId))
-                .thenReturn(Optional.of(new ByteArrayInputStream(pdfContent)));
+        when(courtListPublisherBlobService.downloadPdf(fileId)).thenReturn(Optional.of(pdfContent));
 
         // When & Then
-        mockMvc.perform(get(BASE_URL + "/download/{fileId}", fileId))
+        mockMvc.perform(get(BASE_URL + "/download/{fileId}", fileId)
+                        .header("Accept", ACCEPT_FILES_DOWNLOAD))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/pdf"))
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"" + fileId + ".pdf\""))
                 .andExpect(content().bytes(pdfContent));
 
-        verify(courtListPublisherBlobService).openPdfDownloadStream(fileId);
+        verify(courtListPublisherBlobService).downloadPdf(fileId);
     }
 
     @Test
     void downloadFile_shouldReturn404_whenFileDoesNotExist() throws Exception {
         // Given
         UUID fileId = UUID.randomUUID();
-        when(courtListPublisherBlobService.openPdfDownloadStream(fileId)).thenReturn(Optional.empty());
+        when(courtListPublisherBlobService.downloadPdf(fileId)).thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(get(BASE_URL + "/download/{fileId}", fileId))
+        mockMvc.perform(get(BASE_URL + "/download/{fileId}", fileId)
+                        .header("Accept", ACCEPT_FILES_DOWNLOAD))
                 .andExpect(status().isNotFound());
 
-        verify(courtListPublisherBlobService).openPdfDownloadStream(fileId);
+        verify(courtListPublisherBlobService).downloadPdf(fileId);
     }
 
     @Test
@@ -200,14 +200,14 @@ class FileControllerTest {
         // Given
         UUID fileId = UUID.fromString("123e4567-e89b-12d3-a456-426614174002");
         byte[] pdfContent = "pdf".getBytes();
-        when(courtListPublisherBlobService.openPdfDownloadStream(fileId))
-                .thenReturn(Optional.of(new ByteArrayInputStream(pdfContent)));
+        when(courtListPublisherBlobService.downloadPdf(fileId)).thenReturn(Optional.of(pdfContent));
 
         // When & Then
-        mockMvc.perform(get(BASE_URL + "/download/{fileId}", fileId))
+        mockMvc.perform(get(BASE_URL + "/download/{fileId}", fileId)
+                        .header("Accept", ACCEPT_FILES_DOWNLOAD))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"123e4567-e89b-12d3-a456-426614174002.pdf\""));
 
-        verify(courtListPublisherBlobService).openPdfDownloadStream(fileId);
+        verify(courtListPublisherBlobService).downloadPdf(fileId);
     }
 }

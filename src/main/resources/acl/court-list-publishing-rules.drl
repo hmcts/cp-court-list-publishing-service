@@ -12,11 +12,12 @@ then
   $o.setSuccess(true);
 end
 
-rule "Allow – court-list-publish"
+rule "Allow – court-list-publish and download"
 when
   $o: Outcome()
   $a: Action(name == "courtlistpublishing-service.publish.post" ||
-             name == "courtlistpublishing-service.publish.get")
+             name == "courtlistpublishing-service.publish.get" ||
+             name == "courtlistpublishing-service.files.download")
   eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, "Legal Advisers","District Judge","System Users"))
 then
   $o.setSuccess(true);

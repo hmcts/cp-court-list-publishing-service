@@ -96,7 +96,7 @@ class CourtListPublishControllerTest {
                 any(LocalDate.class)
         )).thenReturn(toResponse(expectedEntity));
 
-        // When & Then (makeExternalCalls=true in payload for tests so task runs real CaTH/PDF flow when exercised)
+        // When & Then
         mockMvc.perform(post(PUBLISH_URL)
                         .header("CJSCPPUID", "test-user-id")
                         .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
@@ -116,7 +116,7 @@ class CourtListPublishControllerTest {
                 eq(request.getStartDate()),
                 eq(request.getEndDate())
         );
-        verify(courtListTaskTriggerService).triggerCourtListTask(any(), eq(true), eq("test-user-id"));
+        verify(courtListTaskTriggerService).triggerCourtListTask(any(), eq("test-user-id"));
     }
 
     @Test
@@ -126,8 +126,7 @@ class CourtListPublishControllerTest {
                 .courtCentreId(UUID.randomUUID())
                 .courtListType(CourtListType.STANDARD)
                 .startDate(LocalDate.now())
-                .endDate(LocalDate.now().plusDays(7))
-                .makeExternalCalls(true);
+                .endDate(LocalDate.now().plusDays(7));
 
         // When & Then - no CJSCPPUID header
         mockMvc.perform(post(PUBLISH_URL)
@@ -281,8 +280,7 @@ class CourtListPublishControllerTest {
                 UUID.randomUUID(),  // courtCentreId
                 LocalDate.now(),    // startDate
                 LocalDate.now(),    // endDate
-                CourtListType.STANDARD,
-                true                // makeExternalCalls - tests expect external CaTH/PDF flow when exercised
+                CourtListType.STANDARD
         );
     }
 

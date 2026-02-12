@@ -51,10 +51,27 @@ public class CourtListPublisherBlobClientService {
     }
 
     /**
-     * Opens a streaming input stream for downloading the PDF blob named {fileId}.pdf.
+     * Downloads the full PDF blob named {fileId}.pdf as a byte array in a single shot.
+     * Returns empty if the blob does not exist.
+     */
+    public Optional<byte[]> downloadPdf(UUID fileId) {
+        return openPdfStream(fileId)
+                .map(stream -> {
+                    try (InputStream in = stream) {
+                        return in.readAllBytes();
+                    } catch (Exception e) {
+                        LOGGER.error("Error reading PDF content for {}", fileId + PDF_EXTENSION, e);
+                        throw new RuntimeException(
+                                "Azure storage error while reading PDF: " + fileId + PDF_EXTENSION + ". " + e.getMessage(), e);
+                    }
+                });
+    }
+
+    /**
+     * Opens a streaming input stream for the PDF blob named {fileId}.pdf.
      * Caller must close the stream when done. Returns empty if the blob does not exist.
      */
-    public Optional<InputStream> openPdfDownloadStream(UUID fileId) {
+    public Optional<InputStream> openPdfStream(UUID fileId) {
         String blobName = fileId + PDF_EXTENSION;
         try {
             BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
