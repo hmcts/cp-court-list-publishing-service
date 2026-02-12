@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import uk.gov.hmcts.cp.domain.DtsMeta;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -40,7 +41,7 @@ class CaTHServiceTest {
         when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
 
         // When
-        cathService.sendCourtListToCaTH(courtListDocument);
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC);
 
         // Then - Verify CaTHPublisher was called
         ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
@@ -70,7 +71,7 @@ class CaTHServiceTest {
         when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
 
         // When
-        cathService.sendCourtListToCaTH(courtListDocument);
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC);
 
         // Then - DtsMeta uses courtId from reference data
         ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
@@ -85,7 +86,7 @@ class CaTHServiceTest {
                 .thenThrow(new RuntimeException("Publishing failed"));
 
         // When & Then
-        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument))
+        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to send court list document to CaTH");
     }
@@ -97,7 +98,7 @@ class CaTHServiceTest {
                 .thenThrow(new RuntimeException("Unexpected error"));
 
         // When & Then
-        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument))
+        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to send court list document to CaTH");
     }

@@ -137,7 +137,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             var courtListDocument = courtListQueryService.buildCourtListDocumentFromPayload(payload, listId);
             logger.info("Sending transformed court list document to CaTH endpoint");
             if (makeExternalCalls) {
-                cathService.sendCourtListToCaTH(courtListDocument);
+                cathService.sendCourtListToCaTH(courtListDocument, listId);
             } else {
                 logger.info("Not calling CaTH as we are in mock mode");
             }

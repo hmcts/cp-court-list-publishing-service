@@ -306,7 +306,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 TEST_USER_ID
         );
         verify(courtListQueryService).buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC);
-        verify(cathService).sendCourtListToCaTH(courtListDocument);
+        verify(cathService).sendCourtListToCaTH(courtListDocument, CourtListType.PUBLIC);
         verify(repository).getByCourtListId(courtListId);
         verify(repository).save(entity);
     }
@@ -323,7 +323,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService, never()).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(cathService, never()).sendCourtListToCaTH(any());
+        verify(cathService, never()).sendCourtListToCaTH(any(), any());
     }
 
     @Test
@@ -342,7 +342,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService, never()).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(cathService, never()).sendCourtListToCaTH(any());
+        verify(cathService, never()).sendCourtListToCaTH(any(), any());
     }
 
     @Test
@@ -361,7 +361,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService, never()).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(cathService, never()).sendCourtListToCaTH(any());
+        verify(cathService, never()).sendCourtListToCaTH(any(), any());
     }
 
     @Test
@@ -382,7 +382,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(cathService, never()).sendCourtListToCaTH(any());
+        verify(cathService, never()).sendCourtListToCaTH(any(), any());
         verify(repository).getByCourtListId(courtListId);
     }
 
@@ -400,7 +400,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 .thenReturn(courtListDocument);
 
         doThrow(new RuntimeException("CaTH service error"))
-                .when(cathService).sendCourtListToCaTH(any());
+                .when(cathService).sendCourtListToCaTH(any(), any());
 
         // When
         ExecutionInfo result = task.execute(executionInfo);
@@ -410,7 +410,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
         verify(courtListQueryService).buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC);
-        verify(cathService).sendCourtListToCaTH(courtListDocument);
+        verify(cathService).sendCourtListToCaTH(courtListDocument, CourtListType.PUBLIC);
         assertThat(entity.getPublishErrorMessage()).contains("CaTH service error", "RuntimeException");
         assertThat(entity.getPublishStatus()).isEqualTo(Status.FAILED);
         verify(repository, times(1)).getByCourtListId(courtListId);
