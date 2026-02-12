@@ -64,6 +64,8 @@ services:
       CP_CLP_AUTHZ_ENABLED: "false"
       CP_CLP_HTTP_AUDIT_ENABLED: "false"
       CP_CLP_AUDIT_ENABLED: "false"
+      # System user id required for reference data + document generator calls
+      COURTLISTPUBLISHING_SYSTEM_USER_ID: "11111111-1111-1111-1111-111111111111"
       # WireMock service running in Docker container
       COMMON_PLATFORM_QUERY_API_BASE_URL: "http://wiremock:8080"
       CATH_BASE_URL: "http://wiremock:8080"

@@ -28,7 +28,8 @@ public class CourtListPdfHelper {
      *
      * @param payload     the court list payload to generate PDF from
      * @param courtListId the court list ID (used as file ID and blob name)
-     * @return the file ID of the uploaded PDF, or null if generation fails
+     * @return the file ID of the uploaded PDF, or null if payload is null
+     * @throws RuntimeException when PDF generation/upload fails so the caller can persist the error
      */
     public UUID generateAndUploadPdf(uk.gov.hmcts.cp.models.CourtListPayload payload, UUID courtListId) {
         if (payload == null) {
@@ -43,10 +44,10 @@ public class CourtListPdfHelper {
             return fileId;
         } catch (IOException e) {
             log.error("Error generating and uploading PDF for court list ID: {}", courtListId, e);
-            return null;
+            throw new RuntimeException("Failed to generate or upload PDF: " + e.getMessage(), e);
         } catch (Exception e) {
             log.error("Unexpected error during PDF generation for court list ID: {}", courtListId, e);
-            return null;
+            throw new RuntimeException("Failed to generate or upload PDF: " + e.getMessage(), e);
         }
     }
 }
