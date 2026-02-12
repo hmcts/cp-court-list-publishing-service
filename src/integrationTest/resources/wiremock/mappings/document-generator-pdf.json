@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "urlPathPattern": "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/documents/generate"
+    "urlPathPattern": "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render"
   },
   "response": {
     "status": 200,

@@ -7,7 +7,6 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Disabled;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 
 import org.junit.jupiter.api.Disabled;
@@ -19,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpServerErrorException;
 import uk.gov.hmcts.cp.openapi.model.Status;
 
 @Slf4j
@@ -63,7 +63,6 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
     }
 
-    @Disabled
     @Test
     void publishCourtList_shouldStillUpdateStatus_whenCaTHEndpointFails() throws Exception {
         // Given - CaTH returns 500 (add stub with priority 0 so it wins over default success)
@@ -93,7 +92,6 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         }
     }
 
-    @Disabled
     @Test
     void publishCourtList_shouldSetPublishFailedAndSavePublishErrorMessage_whenCaTHFails() throws Exception {
         // Given - CaTH returns 500 (add stub with priority 0 so it wins over default success)
@@ -122,7 +120,6 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
             AbstractTest.resetWireMock();
         }
     }
-    @Disabled
     @Test
     void publishCourtList_shouldSetFileFailedAndSaveFileErrorMessage_whenPdfGenerationFails() throws Exception {
         // Given - Add stub so document-generator returns 500 (only for this test)
@@ -152,7 +149,6 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
             AbstractTest.resetWireMock();
         }
     }
-    @Disabled
     @Test
     void publishCourtList_shouldCreateDbEntry_triggerTask_andUpdateFileUrlWithPdfUrl() throws Exception {
         UUID courtCentreId = UUID.randomUUID();
@@ -174,8 +170,8 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         assertThat(immediateBody.get("courtListId").asText()).isEqualTo(courtListId.toString());
         assertThat(immediateBody.get("courtCentreId").asText()).isEqualTo(courtCentreId.toString());
 
-        // Wait for async task to complete (CourtListTaskTriggerService.triggerCourtListTask triggered the task)
-        waitForTaskCompletion(courtListId, 120000);
+        // Wait for async task to complete (file status/fileId updated after PDF generation)
+        waitForFileCompletion(courtListId, 120000);
 
         // Verify row updated with fileId (PDF uploaded as {courtListId}.pdf)
         ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
@@ -229,7 +225,6 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
     }
 
     // Helper methods
-
     private String createPublishRequestJson(UUID courtCentreId, String courtListType) {
         return """
             {
@@ -302,8 +297,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
             {
               "request": {
                 "method": "POST",
-                "urlPath": "/courtlistpublisher/publication",
-                "headers": {"Content-Type": {"contains": "application/json"}}
+                "urlPathPattern": "/courtlistpublisher/publication.*"
               },
               "response": {
                 "status": 500,
@@ -322,6 +316,23 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
                 String.class);
         if (!response.getStatusCode().is2xxSuccessful()) {
             throw new IllegalStateException("Failed to add CaTH failure stub: " + response.getStatusCode());
+        }
+
+        // Sanity check: ensure WireMock is actually returning 500 for CaTH on the host-mapped port
+        // (helps diagnose cases where the stub isn't applied).
+        try {
+            HttpHeaders cathHeaders = new HttpHeaders();
+            cathHeaders.setContentType(MediaType.APPLICATION_JSON);
+            http.exchange(
+                    WIREMOCK_BASE_URL + "/courtlistpublisher/publication",
+                    HttpMethod.POST,
+                    new HttpEntity<>("{}", cathHeaders),
+                    String.class
+            );
+            throw new AssertionError("Expected WireMock CaTH endpoint to return 500 after adding failure stub");
+        } catch (HttpServerErrorException expected) {
+            // expected: 5xx
+            assertThat(expected.getStatusCode().value()).isEqualTo(500);
         }
     }
 
@@ -411,5 +422,57 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
             log.error("Could not get final status: {}", e.getMessage(), e);
         }
         throw new AssertionError("Task did not complete within " + timeoutMs + "ms. " + finalStatusMsg);
+    }
+
+    /**
+     * Waits for file completion by polling the status endpoint until fileStatus is SUCCESSFUL or FAILED.
+     * Needed because publishStatus can become SUCCESSFUL before fileStatus is updated.
+     */
+    private void waitForFileCompletion(UUID courtListId, long timeoutMs) throws Exception {
+        long startTime = System.currentTimeMillis();
+        long pollInterval = 500;
+        int pollCount = 0;
+
+        log.info("Waiting for file completion for courtListId: {}", courtListId);
+
+        while (System.currentTimeMillis() - startTime < timeoutMs) {
+            try {
+                ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
+                if (statusResponse.getStatusCode().is2xxSuccessful()) {
+                    JsonNode statusBody = parseResponse(statusResponse);
+                    String fileStatusStr = statusBody.get("fileStatus").asText();
+                    log.debug("Poll #{}: fileStatus = {}", pollCount, fileStatusStr);
+                    try {
+                        Status fileStatus = Status.valueOf(fileStatusStr);
+                        if (Status.SUCCESSFUL.equals(fileStatus) || Status.FAILED.equals(fileStatus)) {
+                            log.info("File completed with status: {}", fileStatus);
+                            return;
+                        }
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Invalid file status value: {}", fileStatusStr);
+                    }
+                }
+            } catch (Exception e) {
+                if (pollCount % 10 == 0) {
+                    log.warn("Poll #{}: Error checking file status - {}", pollCount, e.getMessage());
+                }
+            }
+            pollCount++;
+            Thread.sleep(pollInterval);
+        }
+
+        String finalStatusMsg = "timeout";
+        try {
+            ResponseEntity<String> finalStatus = getStatusRequest(courtListId);
+            if (finalStatus.getStatusCode().is2xxSuccessful()) {
+                JsonNode statusBody = parseResponse(finalStatus);
+                finalStatusMsg = "publishStatus=" + statusBody.get("publishStatus").asText()
+                        + ", fileStatus=" + (statusBody.has("fileStatus") ? statusBody.get("fileStatus").asText() : "n/a");
+                log.error("Final status: {}", finalStatusMsg);
+            }
+        } catch (Exception e) {
+            log.error("Could not get final status: {}", e.getMessage(), e);
+        }
+        throw new AssertionError("File did not complete within " + timeoutMs + "ms. " + finalStatusMsg);
     }
 }

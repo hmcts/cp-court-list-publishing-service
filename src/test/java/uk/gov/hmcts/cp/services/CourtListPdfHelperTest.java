@@ -62,15 +62,16 @@ class CourtListPdfHelperTest {
     }
 
     @Test
-    void generateAndUploadPdf_shouldReturnNull_whenPdfGenerationThrowsException() throws IOException {
+    void generateAndUploadPdf_shouldThrowRuntimeException_whenPdfGenerationThrowsException() throws IOException {
         jakarta.json.JsonObject payloadJson = jakarta.json.Json.createObjectBuilder().build();
         when(objectConverter.convertFromObject(payload)).thenReturn(payloadJson);
         when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId)))
                 .thenThrow(new IOException("PDF generation failed"));
 
-        UUID result = pdfHelper.generateAndUploadPdf(payload, courtListId);
-
-        assertThat(result).isNull();
+        assertThatThrownBy(() -> pdfHelper.generateAndUploadPdf(payload, courtListId))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Failed to generate or upload PDF")
+                .hasMessageContaining("PDF generation failed");
         verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId));
     }
 }
