@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
+
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 
 import java.util.UUID;
@@ -25,7 +27,7 @@ public class PdfGenerationTaskIntegrationTest extends AbstractTest {
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private static final String PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publish";
     private static final String GET_STATUS_ENDPOINT = BASE_URL + "/api/court-list-publish/publish-status";
-    private static final String COURT_LIST_TYPE_PUBLIC = "PUBLIC";
+    private static final String COURT_LIST_TYPE_ONLINE_PUBLIC = CourtListType.ONLINE_PUBLIC.toString();
 
     private final RestTemplate http = new RestTemplate();
     private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
@@ -69,7 +71,7 @@ public class PdfGenerationTaskIntegrationTest extends AbstractTest {
                 "endDate": "2026-01-20",
                 "courtListType": "%s"
             }
-            """.formatted(courtCentreId, COURT_LIST_TYPE_PUBLIC);
+            """.formatted(courtCentreId, COURT_LIST_TYPE_ONLINE_PUBLIC);
     }
 
     private static final String CJSCPPUID_HEADER = "CJSCPPUID";

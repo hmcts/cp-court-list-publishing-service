@@ -16,6 +16,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 
 import java.util.UUID;
@@ -30,7 +31,6 @@ class FileDownloadIntegrationTest extends AbstractTest {
     private static final MediaType ACCEPT_FILES_DOWNLOAD = new MediaType("application", "vnd.courtlistpublishing-service.files.download+json");
     private static final String CJSCPPUID_HEADER = "CJSCPPUID";
     private static final String INTEGRATION_TEST_USER_ID = "integration-test-user-id";
-    private static final String COURT_LIST_TYPE_PUBLIC = "PUBLIC";
 
     private final RestTemplate http = createRestTemplateForFileDownload();
 
@@ -122,7 +122,7 @@ class FileDownloadIntegrationTest extends AbstractTest {
                 "endDate": "2026-01-20",
                 "courtListType": "%s"
             }
-            """.formatted(courtCentreId, COURT_LIST_TYPE_PUBLIC);
+            """.formatted(courtCentreId, CourtListType.ONLINE_PUBLIC.toString());
     }
 
     private HttpEntity<String> createPublishHttpEntity(String json) {
