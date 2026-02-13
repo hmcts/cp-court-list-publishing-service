@@ -23,7 +23,12 @@ import java.util.Map;
 @Slf4j
 public class CaTHService {
 
-    private static final Map<CourtListType, String> COURT_LIST_MAPPINGS = ImmutableMap.of(CourtListType.ONLINE_PUBLIC, "MAGISTRATES_PUBLIC_LIST", CourtListType.STANDARD, "MAGISTRATES_STANDARD_LIST");
+    record CathHeaderInfo(String cathCourtListType, String sensitivity){}
+
+
+    private static final Map<CourtListType, CathHeaderInfo> COURT_LIST_MAPPINGS = ImmutableMap.of(
+            CourtListType.ONLINE_PUBLIC, new CathHeaderInfo("MAGISTRATES_PUBLIC_LIST", "PUBLIC"),
+            CourtListType.STANDARD, new CathHeaderInfo("MAGISTRATES_STANDARD_LIST", "CLASSIFIED"));
 
     @Autowired
     private final CourtListPublisher caTHPublisher;
@@ -41,9 +46,9 @@ public class CaTHService {
                     ? courtListDocument.getCourtIdNumeric()
                     : "0";
 
-            final String cathListType = COURT_LIST_MAPPINGS.get(courtListType);
+            final CathHeaderInfo cathListInfo = COURT_LIST_MAPPINGS.get(courtListType);
 
-            if(cathListType == null) {
+            if(cathListInfo == null) {
                 throw new IllegalStateException("Unsupported court list type "+courtListType);
             }
 
@@ -51,11 +56,11 @@ public class CaTHService {
             final DtsMeta dtsMeta = DtsMeta.builder()
                     .provenance("COMMON_PLATFORM")
                     .type("LIST")
-                    .listType(cathListType)
+                    .listType(cathListInfo.cathCourtListType())
                     .courtId(courtIdFromRefData)
                     .contentDate(now.toString())
                     .language("ENGLISH")
-                    .sensitivity("PUBLIC")// Thi sneeds to be dynamic along with other params here
+                    .sensitivity(cathListInfo.sensitivity())
                     .displayFrom(now.toString())
                     .displayTo(now.plus(7, ChronoUnit.DAYS).toString())
                     .build();
