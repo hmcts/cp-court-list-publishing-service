@@ -99,7 +99,7 @@ class JsonSchemaValidatorServiceTest {
 
         // Transform the payload to CourtListDocument using the transformation service
         // Note: Validation is done separately, so transformation service doesn't need validator
-        CourtListTransformationService transformationService = new CourtListTransformationService();
+        StandardCourtListTransformationService transformationService = new StandardCourtListTransformationService();
 
         CourtListDocument document = transformationService.transform(payload);
 
@@ -115,7 +115,7 @@ class JsonSchemaValidatorServiceTest {
 
         // Transform the payload to CourtListDocument using the transformation service
         // Note: Validation is done separately, so transformation service doesn't need validator
-        PublicCourtListTransformationService transformationService = new PublicCourtListTransformationService();
+        OnlinePublicCourtListTransformationService transformationService = new OnlinePublicCourtListTransformationService();
 
         CourtListDocument document = transformationService.transform(payload);
 

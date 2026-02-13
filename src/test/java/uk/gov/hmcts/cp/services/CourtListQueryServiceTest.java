@@ -24,10 +24,10 @@ class CourtListQueryServiceTest {
     private CourtListDataService courtListDataService;
 
     @Mock
-    private CourtListTransformationService transformationService;
+    private StandardCourtListTransformationService transformationService;
 
     @Mock
-    private PublicCourtListTransformationService publicCourtListTransformationService;
+    private OnlinePublicCourtListTransformationService onlinePublicCourtListTransformationService;
 
     @Mock
     private JsonSchemaValidatorService jsonSchemaValidatorService;
@@ -61,14 +61,14 @@ class CourtListQueryServiceTest {
         // Then
         assertThat(result).isEqualTo(standardDocument);
         verify(transformationService).transform(payload);
-        verify(publicCourtListTransformationService, never()).transform(any());
+        verify(onlinePublicCourtListTransformationService, never()).transform(any());
         verify(jsonSchemaValidatorService).validate(standardDocument, "schema/court-list-schema.json");
     }
 
     @Test
     void buildCourtListDocumentFromPayload_shouldUsePublicTransformation_whenListIdIsPublic() {
         // Given
-        when(publicCourtListTransformationService.transform(payload)).thenReturn(publicDocument);
+        when(onlinePublicCourtListTransformationService.transform(payload)).thenReturn(publicDocument);
         doNothing().when(jsonSchemaValidatorService).validate(publicDocument, "schema/public-court-list-schema.json");
 
         // When
@@ -76,7 +76,7 @@ class CourtListQueryServiceTest {
 
         // Then
         assertThat(result).isEqualTo(publicDocument);
-        verify(publicCourtListTransformationService).transform(payload);
+        verify(onlinePublicCourtListTransformationService).transform(payload);
         verify(transformationService, never()).transform(any());
         verify(jsonSchemaValidatorService).validate(publicDocument, "schema/public-court-list-schema.json");
     }

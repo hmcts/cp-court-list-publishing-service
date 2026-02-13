@@ -18,8 +18,8 @@ public class CourtListQueryService {
     private static final String PUBLIC_COURT_LIST_SCHEMA_PATH = "schema/public-court-list-schema.json";
 
     private final CourtListDataService courtListDataService;
-    private final CourtListTransformationService transformationService;
-    private final PublicCourtListTransformationService publicCourtListTransformationService;
+    private final StandardCourtListTransformationService transformationService;
+    private final OnlinePublicCourtListTransformationService onlinePublicCourtListTransformationService;
     private final JsonSchemaValidatorService jsonSchemaValidatorService;
 
     /**
@@ -29,7 +29,7 @@ public class CourtListQueryService {
     public CourtListDocument buildCourtListDocumentFromPayload(CourtListPayload payload, CourtListType listId) {
         if (CourtListType.PUBLIC.equals(listId)) {
             log.info("Using PublicCourtListTransformationService for PUBLIC list type");
-            CourtListDocument document = publicCourtListTransformationService.transform(payload);
+            CourtListDocument document = onlinePublicCourtListTransformationService.transform(payload);
             jsonSchemaValidatorService.validate(document, PUBLIC_COURT_LIST_SCHEMA_PATH);
             return document;
         }
