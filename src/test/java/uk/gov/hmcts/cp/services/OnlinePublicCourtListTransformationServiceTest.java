@@ -14,16 +14,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-class PublicCourtListTransformationServiceTest {
+class OnlinePublicCourtListTransformationServiceTest {
 
-    private PublicCourtListTransformationService transformationService;
+    private OnlinePublicCourtListTransformationService transformationService;
     private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
     private CourtListPayload payload;
 
     @BeforeEach
     void setUp() throws Exception {
         // Create transformation service
-        transformationService = new PublicCourtListTransformationService();
+        transformationService = new OnlinePublicCourtListTransformationService();
         
         payload = loadPayloadFromStubData("stubdata/court-list-payload-public.json");
     }

@@ -12,18 +12,16 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class CourtListTransformationService {
+public class OnlinePublicCourtListTransformationService {
 
-    private static final DateTimeFormatter DOB_FORMATTER = DateTimeFormatter.ofPattern("d MMM yyyy");
     private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
     public CourtListDocument transform(CourtListPayload payload) {
-        log.info("Transforming progression court list payload to document format");
+        log.info("Transforming progression public court list payload to document format");
 
         // Get current date/time for publicationDate (ISO 8601 format)
         String publicationDate = java.time.OffsetDateTime.now(ZoneOffset.UTC)
@@ -36,7 +34,7 @@ public class CourtListTransformationService {
         // Transform venue address
         Venue venue = transformVenue(payload);
 
-        // Transform court lists
+        // Transform court lists (simplified for public lists)
         List<CourtList> courtLists = transformCourtLists(payload);
 
         CourtListDocument result = CourtListDocument.builder()
@@ -66,10 +64,6 @@ public class CourtListTransformationService {
         List<CourtList> courtLists = new ArrayList<>();
 
         if (payload.getHearingDates() != null && !payload.getHearingDates().isEmpty()) {
-            // Group by court house (using court centre name)
-            String courtHouseName = payload.getCourtCentreName();
-            String lja = payload.getCourtCentreName(); // Using court centre name as LJA placeholder
-
             List<CourtRoomSchema> courtRooms = new ArrayList<>();
 
             for (HearingDate hearingDate : payload.getHearingDates()) {
@@ -84,9 +78,8 @@ public class CourtListTransformationService {
             }
 
             if (!courtRooms.isEmpty()) {
+                // According to public court list schema, courtHouse should not have courtHouseName or lja
                 CourtHouse courtHouse = CourtHouse.builder()
-                        .courtHouseName(courtHouseName)
-                        .lja(lja)
                         .courtRoom(courtRooms)
                         .build();
 
@@ -105,7 +98,6 @@ public class CourtListTransformationService {
         List<SessionSchema> sessions = new ArrayList<>();
 
         if (courtRoom.getTimeslots() != null) {
-            // Group hearings by session (judiciary)
             SessionSchema session = transformSession(courtRoom, hearingDate);
             if (session != null) {
                 sessions.add(session);
@@ -123,10 +115,7 @@ public class CourtListTransformationService {
     }
 
     private SessionSchema transformSession(CourtRoom courtRoom, HearingDate hearingDate) {
-        // Transform judiciary
         List<Judiciary> judiciary = transformJudiciary(courtRoom.getJudiciaryNames());
-
-        // Transform sittings
         List<Sitting> sittings = new ArrayList<>();
 
         if (courtRoom.getTimeslots() != null) {
@@ -154,14 +143,13 @@ public class CourtListTransformationService {
         List<Judiciary> judiciary = new ArrayList<>();
         
         if (judiciaryNames != null && !judiciaryNames.trim().isEmpty()) {
-            // Split by comma or semicolon and create judiciary entries
             String[] names = judiciaryNames.split("[,;]");
             for (int i = 0; i < names.length; i++) {
                 String name = names[i].trim();
                 if (!name.isEmpty()) {
                     Judiciary j = Judiciary.builder()
                             .johKnownAs(name)
-                            .isPresiding(i == 0) // First one is presiding
+                            .isPresiding(i == 0)
                             .build();
                     judiciary.add(j);
                 }
@@ -176,7 +164,6 @@ public class CourtListTransformationService {
             return null;
         }
 
-        // Get sitting start time from first hearing
         String sittingStart = convertToIsoDateTime(timeslot.getHearings().get(0).getStartTime(), hearingDate.getHearingDate());
 
         List<HearingSchema> hearings = new ArrayList<>();
@@ -198,19 +185,23 @@ public class CourtListTransformationService {
     }
 
     private HearingSchema transformHearing(Hearing hearing) {
-        // Transform cases
+        // For public lists, only include case number and defendant name
         List<CaseSchema> cases = transformCases(hearing);
 
         if (cases.isEmpty()) {
             return null;
         }
 
+        // According to public court list schema, channel and application should be arrays (can be empty)
+        List<String> channels = new ArrayList<>();
+        List<Application> applications = new ArrayList<>();
+
         return HearingSchema.builder()
                 .hearingType(hearing.getHearingType())
                 .caseList(cases)
-                .panel(null) // Not available in source data
-                .channel(null) // Not available in source data
-                .application(null) // Not available in source data
+                .panel(null)
+                .channel(channels)
+                .application(applications)
                 .build();
     }
 
@@ -221,14 +212,29 @@ public class CourtListTransformationService {
             return cases;
         }
 
-        // Create a case for each defendant
+        // For public lists, create simplified cases with minimal party information
         for (Defendant defendant : hearing.getDefendants()) {
-            List<Party> parties = transformParties(defendant, hearing);
+            List<Party> parties = new ArrayList<>();
+            
+            // Only include basic individual details (name only for public lists)
+            if (defendant.getFirstName() != null || defendant.getSurname() != null) {
+                IndividualDetails individualDetails = IndividualDetails.builder()
+                        .individualForenames(defendant.getFirstName())
+                        .individualSurname(defendant.getSurname())
+                        .build();
+
+                Party party = Party.builder()
+                        .partyRole("DEFENDANT")
+                        .individualDetails(individualDetails)
+                        .build();
+
+                parties.add(party);
+            }
 
             CaseSchema caseSchema = CaseSchema.builder()
                     .caseUrn(hearing.getCaseNumber())
                     .reportingRestriction(hearing.getReportingRestrictionReason() != null && !hearing.getReportingRestrictionReason().trim().isEmpty())
-                    .caseSequenceIndicator(null) // Not available in source data
+                    .caseSequenceIndicator(null)
                     .party(parties)
                     .build();
 
@@ -236,108 +242,6 @@ public class CourtListTransformationService {
         }
 
         return cases;
-    }
-
-    private List<Party> transformParties(Defendant defendant, Hearing hearing) {
-        List<Party> parties = new ArrayList<>();
-
-        // Determine party role - default to DEFENDANT if not specified
-        String partyRole = "DEFENDANT"; // Default role
-
-        // Transform individual details if defendant is an individual
-        IndividualDetails individualDetails = null;
-        if (defendant.getFirstName() != null || defendant.getSurname() != null) {
-            individualDetails = IndividualDetails.builder()
-                    .individualForenames(defendant.getFirstName())
-                    .individualMiddleName(null) // Not available in source data
-                    .individualSurname(defendant.getSurname())
-                    .dateOfBirth(convertDateOfBirthToIso(defendant.getDateOfBirth()))
-                    .age(convertAge(defendant.getAge()))
-                    .address(transformAddressSchemaFromDefendant(defendant.getAddress()))
-                    .inCustody(null) // Not available in source data
-                    .gender(null) // Not available in source data
-                    .asn(null) // Not available in source data
-                    .build();
-        }
-
-        // Transform offences
-        List<OffenceSchema> offences = transformOffenceSchemas(defendant.getOffences());
-
-        // Transform organisation details if defendant is an organisation
-        OrganisationDetails organisationDetails = null;
-        if (defendant.getOrganisationName() != null && !defendant.getOrganisationName().trim().isEmpty()) {
-            organisationDetails = OrganisationDetails.builder()
-                    .organisationName(defendant.getOrganisationName())
-                    .organisationAddress(transformAddressSchemaFromDefendant(defendant.getAddress()))
-                    .build();
-        }
-
-        Party party = Party.builder()
-                .partyRole(partyRole)
-                .individualDetails(individualDetails)
-                .offence(offences)
-                .organisationDetails(organisationDetails)
-                .subject(null) // Not available in source data
-                .build();
-
-        parties.add(party);
-
-        // Add prosecutor as a party if available
-        if (hearing.getProsecutorType() != null && !hearing.getProsecutorType().trim().isEmpty()) {
-            Party prosecutorParty = Party.builder()
-                    .partyRole("PROSECUTING_AUTHORITY")
-                    .individualDetails(null)
-                    .offence(null)
-                    .organisationDetails(OrganisationDetails.builder()
-                            .organisationName(hearing.getProsecutorType())
-                            .organisationAddress(null)
-                            .build())
-                    .subject(null)
-                    .build();
-            parties.add(prosecutorParty);
-        }
-
-        return parties;
-    }
-
-    private List<OffenceSchema> transformOffenceSchemas(List<uk.gov.hmcts.cp.models.Offence> offences) {
-        if (offences == null || offences.isEmpty()) {
-            return null;
-        }
-
-        return offences.stream()
-                .map(this::transformOffenceSchema)
-                .collect(Collectors.toList());
-    }
-
-    private OffenceSchema transformOffenceSchema(uk.gov.hmcts.cp.models.Offence offence) {
-        return OffenceSchema.builder()
-                .offenceCode(offence.getId()) // Using ID as offence code
-                .offenceTitle(offence.getOffenceTitle())
-                .offenceWording(offence.getOffenceWording())
-                .offenceMaxPen(null) // Not available in source data
-                .reportingRestriction(null) // Not available in source data
-                .convictionDate(null) // Not available in source data
-                .adjournedDate(null) // Not available in source data
-                .plea(null) // Not available in source data
-                .pleaDate(null) // Not available in source data
-                .offenceLegislation(null) // Not available in source data
-                .build();
-    }
-
-    private AddressSchema transformAddressSchemaFromDefendant(uk.gov.hmcts.cp.models.Address address) {
-        if (address == null) {
-            return null;
-        }
-
-        return transformAddressSchemaFromStrings(
-                address.getAddress1(),
-                address.getAddress2(),
-                address.getAddress3(),
-                address.getAddress4(),
-                address.getAddress5(),
-                address.getPostcode()
-        );
     }
 
     private AddressSchema transformAddressSchemaFromStrings(String address1, String address2) {
@@ -363,8 +267,12 @@ public class CourtListTransformationService {
             lines.add(address5.trim());
         }
 
-        // Extract town and county from address lines if possible
-        // This is a simplified approach - may need adjustment based on actual data format
+        // According to public court list schema, line and postCode are required
+        // Ensure line is never null (empty list if no address lines)
+        if (lines.isEmpty()) {
+            lines = new ArrayList<>();
+        }
+
         String town = null;
         String county = null;
         if (lines.size() >= 2) {
@@ -378,36 +286,8 @@ public class CourtListTransformationService {
                 .line(lines)
                 .town(town)
                 .county(county)
-                .postCode(postcode)
+                .postCode(postcode) // postCode is required per schema, but may be null if not available in payload
                 .build();
-    }
-
-    private String convertDateOfBirthToIso(String dob) {
-        if (dob == null || dob.trim().isEmpty()) {
-            return null;
-        }
-
-        try {
-            // Parse "5 Jan 2006" format and convert to ISO format "01-01-1901"
-            LocalDate date = LocalDate.parse(dob.trim(), DOB_FORMATTER);
-            return date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-        } catch (Exception e) {
-            log.warn("Failed to parse date of birth: {}", dob, e);
-            return null;
-        }
-    }
-
-    private Integer convertAge(String age) {
-        if (age == null || age.trim().isEmpty()) {
-            return null;
-        }
-
-        try {
-            return Integer.parseInt(age.trim());
-        } catch (NumberFormatException e) {
-            log.warn("Failed to parse age: {}", age, e);
-            return null;
-        }
     }
 
     private String convertToIsoDateTime(String time, String date) {
@@ -416,10 +296,7 @@ public class CourtListTransformationService {
         }
 
         try {
-            // Parse date (assuming format like "2026-01-05")
             LocalDate localDate = LocalDate.parse(date);
-            
-            // Parse time (assuming format like "10:00:00" or "10:00")
             String[] timeParts = time.split(":");
             int hour = timeParts.length > 0 ? Integer.parseInt(timeParts[0]) : 0;
             int minute = timeParts.length > 1 ? Integer.parseInt(timeParts[1]) : 0;
