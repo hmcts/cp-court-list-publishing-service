@@ -2,6 +2,7 @@ package uk.gov.hmcts.cp.domain;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 /**
  * Metadata for publishing hub publications.
@@ -11,6 +12,7 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@ToString
 public class DtsMeta {
     
     private final String provenance;

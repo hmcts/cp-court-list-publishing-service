@@ -33,6 +33,9 @@ public class PublishingService {
      * @return the HTTP status code of the response
      */
     public Integer sendData(final String payload, final DtsMeta metadata) {
+        log.warn("TODO: remove this --- CaTH publish request payload: {}", payload);
+        log.warn("TODO: remove this --- CaTH publish request metadata: {}", metadata);
+
         final Response response = restEasyClientService.post(
                 applicationParameters.getAzureLocalDtsApimUrl(),
                 payload,
@@ -40,7 +43,11 @@ public class PublishingService {
                 azureIdentityService.getTokenFromRemoteClientSecretCredentials(),
                 metadata
         );
-        log.info(APIM_LOGGER, applicationParameters.getAzureLocalDtsApimUrl(), response.getStatus());
-        return response.getStatus();
+
+        final int status = response.getStatus();
+        final String responseBody = response.readEntity(String.class);
+        log.warn("TODO: remove this --- CaTH publish response status: {}, body: {}", status, responseBody);
+        log.info(APIM_LOGGER, applicationParameters.getAzureLocalDtsApimUrl(), status);
+        return status;
     }
 }
