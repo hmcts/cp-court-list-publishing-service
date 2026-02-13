@@ -4,7 +4,7 @@
     "urlPathPattern": "/listing-service/query/api/rest/listing/courtlistpayload.*",
     "queryParameters": {
       "listId": {
-        "equalTo": "PUBLIC"
+        "equalTo": "ONLINE_PUBLIC"
       }
     },
     "headers": {
