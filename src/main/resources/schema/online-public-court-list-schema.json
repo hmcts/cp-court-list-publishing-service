@@ -44,39 +44,14 @@
         }
       }
     },
-    "judiciary": {
-      "title": "Judiciary",
-      "description": "An array of judiciary",
-      "type": "object",
-      "properties": {
-        "isPresiding": {
-          "description": "A flag to indicate whether a judiciary is presiding",
-          "title": "Is Presiding",
-          "type": "boolean",
-          "examples": [
-            true
-          ],
-          "pattern": "^(?!.*<[^>]+>).*$"
-        },
-        "johKnownAs": {
-          "description": "Name and salutations, titles to be presented on publications",
-          "title": "JOH Known As",
-          "type": "string",
-          "examples": [
-            "judge"
-          ],
-          "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
-        }
-      }
-    },
     "party": {
       "title": "Party",
       "description": "A party",
       "type": "object",
       "properties": {
         "partyRole": {
-          "description": "Role of the party, selectable list of roles, i.e. prosecution, solicitor defence etc",
           "title": "Party Role",
+          "description": "Role of the party, selectable list of roles, i.e. prosecution, solicitor defence etc",
           "type": "string",
           "examples": [
             "DEFENDANT",
@@ -111,25 +86,6 @@
             }
           }
         },
-        "offence": {
-          "title": "offence",
-          "description": "The offence and details of offences associated with the case. It is also known as charges.",
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "offenceTitle": {
-                "description": "Short description of offence",
-                "title": "Offence title",
-                "type": "string",
-                "examples": [
-                  "drink driving"
-                ],
-                "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
-              }
-            }
-          }
-        },
         "organisationDetails": {
           "title": "Organisation Details",
           "description": "Organisation Details",
@@ -139,13 +95,32 @@
           ],
           "properties": {
             "organisationName": {
-              "description": "Party name of organisation",
               "title": "Organisation Name",
+              "description": "Party name of organisation",
               "type": "string",
               "examples": [
                 "A & B Solicitors"
               ],
               "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
+            }
+          }
+        },
+        "offence": {
+          "title": "offence",
+          "description": "The offence and details of offences associated with the case. It is also known as charges.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "offenceTitle": {
+                "title": "Offence title",
+                "description": "Short description of offence",
+                "type": "string",
+                "examples": [
+                  "drink driving"
+                ],
+                "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
+              }
             }
           }
         },
@@ -157,6 +132,31 @@
             "true"
           ],
           "pattern": "^(?!.*<[^>]+>).*$"
+        }
+      }
+    },
+    "judiciary": {
+      "title": "Judiciary",
+      "description": "An array of judiciary",
+      "type": "object",
+      "properties": {
+        "isPresiding": {
+          "description": "A flag to indicate whether a judiciary is presiding",
+          "title": "Is Presiding",
+          "type": "boolean",
+          "examples": [
+            true
+          ],
+          "pattern": "^(?!.*<[^>]+>).*$"
+        },
+        "johKnownAs": {
+          "description": "Name and salutations, titles to be presented on publications",
+          "title": "JOH Known As",
+          "type": "string",
+          "examples": [
+            "judge"
+          ],
+          "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
         }
       }
     }
@@ -270,6 +270,7 @@
                                         "examples": [
                                           "mda"
                                         ],
+                                        "default": "",
                                         "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
                                       },
                                       "case": {
@@ -278,13 +279,11 @@
                                           "type": "object",
                                           "title": "Case",
                                           "description": "Case Details",
-                                          "required": [
-                                            "caseUrn"
-                                          ],
+                                          "required": ["caseUrn"],
                                           "properties": {
                                             "caseUrn": {
                                               "title": "Case Urn",
-                                              "description": "A unique identifier for a case",
+                                              "description": "A unique identifier a case",
                                               "type": "string",
                                               "examples": [
                                                 "45684548"
@@ -298,7 +297,7 @@
                                             },
                                             "party": {
                                               "title": "Party",
-                                              "description": "Parties involved in the case (defence, prosecution)",
+                                              "description": "Parties involved in the case",
                                               "type": "array",
                                               "items": {
                                                 "type": "object",
@@ -313,17 +312,24 @@
                                         "items": {
                                           "type": "object",
                                           "title": "Application",
-                                          "description": "Application associated with the case",
-                                          "required": [
-                                            "applicationReference"
-                                          ],
+                                          "description": "Application details",
+                                          "required": ["applicationReference"],
                                           "properties": {
                                             "applicationReference": {
                                               "title": "Application Reference",
-                                              "description": "application reference",
+                                              "description": "Reference for the application",
                                               "type": "string",
                                               "examples": [
                                                 "ABC1234567D"
+                                              ],
+                                              "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
+                                            },
+                                            "applicationType": {
+                                              "title": "Application Type",
+                                              "description": "Type of application",
+                                              "type": "string",
+                                              "examples": [
+                                                "application type example"
                                               ],
                                               "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
                                             },
@@ -334,7 +340,7 @@
                                             },
                                             "party": {
                                               "title": "Party",
-                                              "description": "Parties involved in the case (defence, prosecution)",
+                                              "description": "Parties involved in the application",
                                               "type": "array",
                                               "items": {
                                                 "type": "object",
@@ -348,7 +354,7 @@
                                         "type": "array",
                                         "items": {
                                           "description": "Channel if different from in court",
-                                          "title": "Sitting Channel",
+                                          "title": "Hearing Channel",
                                           "type": "string",
                                           "examples": [
                                             "VIDEO HEARING"

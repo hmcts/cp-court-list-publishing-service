@@ -91,6 +91,11 @@ class StandardCourtListTransformationServiceTest {
         assertThat(hearing).isNotNull();
         assertThat(hearing.getHearingType()).isEqualTo("First hearing");
         assertThat(hearing.getCaseList()).isNotEmpty();
+        // Schema: channel and application are arrays (empty when no source data)
+        assertThat(hearing.getChannel()).isNotNull();
+        assertThat(hearing.getChannel()).isEmpty();
+        assertThat(hearing.getApplication()).isNotNull();
+        assertThat(hearing.getApplication()).isEmpty();
         
         // Verify first Case
         CaseSchema caseObj = hearing.getCaseList().get(0);
@@ -108,7 +113,7 @@ class StandardCourtListTransformationServiceTest {
         IndividualDetails individualDetails = party.getIndividualDetails();
         assertThat(individualDetails.getIndividualForenames()).isEqualTo("Robert"); // From payload
         assertThat(individualDetails.getIndividualSurname()).isEqualTo("Ormsby"); // From payload
-        assertThat(individualDetails.getDateOfBirth()).isEqualTo("13-01-1964"); // Converted from "13 Jan 1964"
+        assertThat(individualDetails.getDateOfBirth()).isEqualTo("1964-01-13"); // Converted from "13 Jan 1964" to ISO date (yyyy-MM-dd) per schema
         assertThat(individualDetails.getAge()).isEqualTo(62); // Converted from "62"
         
         // Verify Address transformation
