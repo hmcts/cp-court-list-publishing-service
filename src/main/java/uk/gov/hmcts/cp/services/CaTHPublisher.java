@@ -4,7 +4,6 @@ import uk.gov.hmcts.cp.domain.DtsMeta;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,46 +16,34 @@ public class CaTHPublisher implements CourtListPublisher {
 
     @Override
     public int publish(final String payload, final DtsMeta metadata) {
-        Integer statusCode = HttpStatus.OK.value();
-        String localToken = null;
+        log.info("Attempting to fetch local token...");
+        String localToken;
         try {
-            log.info("Attempting to fetch local token...");
             localToken = azureIdentityService.getTokenFromLocalClientSecretCredentials();
-            if (localToken != null) {
-                log.info("Successfully fetched local token");
-            } else {
-                log.warn("Local token fetch returned null");
+            if (localToken == null) {
+                throw new RuntimeException("Local token fetch returned null");
             }
+            log.info("Successfully fetched local token");
         } catch (Exception e) {
-            log.error("Failed to fetch local token: " + e.getMessage(), e);
-            statusCode = 500;
+            log.error("Failed to fetch local token: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to fetch local token: " + e.getMessage(), e);
         }
 
-        // Fetch remote token independently with try/catch
-        String remoteToken = null;
+        log.info("Attempting to fetch remote token...");
         try {
-            log.info("Attempting to fetch remote token...");
-            remoteToken = azureIdentityService.getTokenFromRemoteClientSecretCredentials();
-            if (remoteToken != null) {
-                log.info("Successfully fetched remote token");
-            } else {
-                log.warn("Remote token fetch returned null");
+            String remoteToken = azureIdentityService.getTokenFromRemoteClientSecretCredentials();
+            if (remoteToken == null) {
+                throw new RuntimeException("Remote token fetch returned null");
             }
+            log.info("Successfully fetched remote token");
         } catch (Exception e) {
-            log.error("Failed to fetch remote token: " + e.getMessage(), e);
-            statusCode = 500;
+            log.error("Failed to fetch remote token: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to fetch remote token: " + e.getMessage(), e);
         }
 
-        if (HttpStatus.OK.value() == statusCode) {
-            log.info("=========about to publish dummy pauload");
-            statusCode = publishingService.sendData(payload, metadata);
-            log.info("=========successfully published dummy pauload and status is {}", statusCode);
-        } else {
-            log.info("=========did not publish as token gen failed with status {}",  statusCode);
-        }
-
-        log.info("Test auth completed with status code: {}", statusCode);
-
-        return statusCode.intValue();
+        log.info("Publishing payload to CaTH");
+        int statusCode = publishingService.sendData(payload, metadata);
+        log.info("Successfully published to CaTH with status: {}", statusCode);
+        return statusCode;
     }
 }

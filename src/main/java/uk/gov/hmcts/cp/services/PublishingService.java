@@ -27,27 +27,32 @@ public class PublishingService {
 
     /**
      * Sends data to the Publishing Hub V2 endpoint using Azure managed identity authentication.
-     * 
+     * The response is always closed to release the HTTP connection.
+     *
      * @param payload the JSON payload to send
      * @param metadata the metadata for the publication
-     * @return the HTTP status code of the response
+     * @return the HTTP status code of the response (2xx only; otherwise throws)
+     * @throws RuntimeException if the response status is not 2xx
      */
     public Integer sendData(final String payload, final DtsMeta metadata) {
-        log.warn("TODO: remove this --- CaTH publish request payload: {}", payload);
-        log.warn("TODO: remove this --- CaTH publish request metadata: {}", metadata);
+        log.info("TODO: remove this --- CaTH publish request payload: {}", payload);
+        log.info("TODO: remove this --- CaTH publish request metadata: {}", metadata);
 
-        final Response response = restEasyClientService.post(
+        try(final Response response = restEasyClientService.post(
                 applicationParameters.getAzureLocalDtsApimUrl(),
                 payload,
                 azureIdentityService.getTokenFromLocalClientSecretCredentials(),
                 azureIdentityService.getTokenFromRemoteClientSecretCredentials(),
-                metadata
-        );
+                metadata)) {
+            final int status = response.getStatus();
+            final String responseBody = response.readEntity(String.class);
+            log.info("TODO: remove this --- CaTH publish response status: {}, body: {}", status, responseBody);
+            log.info(APIM_LOGGER, applicationParameters.getAzureLocalDtsApimUrl(), status);
 
-        final int status = response.getStatus();
-        final String responseBody = response.readEntity(String.class);
-        log.warn("TODO: remove this --- CaTH publish response status: {}, body: {}", status, responseBody);
-        log.info(APIM_LOGGER, applicationParameters.getAzureLocalDtsApimUrl(), status);
-        return status;
+            if (status < 200 || status >= 300) {
+                throw new RuntimeException("CaTH publish failed with HTTP status " + status + ": " + responseBody);
+            }
+            return status;
+        }
     }
 }

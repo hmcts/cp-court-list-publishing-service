@@ -418,6 +418,33 @@ class CourtListPublishAndPDFGenerationTaskTest {
     }
 
     @Test
+    void execute_shouldStoreCaTHPublishErrorInPublishErrorMessageColumn_whenCaTHReturnsNon2xx() {
+        // Given - CaTH returns 400 so exception is thrown and stored in publish_error_message
+        JsonObject jobData = createJobDataWithCourtListId(courtListId);
+        when(executionInfo.getJobData()).thenReturn(jobData);
+        when(repository.getByCourtListId(courtListId)).thenReturn(entity);
+
+        CourtListPayload payload = new CourtListPayload();
+        CourtListDocument courtListDocument = CourtListDocument.builder().build();
+        when(courtListQueryService.getCourtListPayload(any(), any(), any(), any(), any())).thenReturn(payload);
+        when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
+                .thenReturn(courtListDocument);
+
+        doThrow(new RuntimeException("CaTH publish failed with HTTP status 400: Invalid payload"))
+                .when(cathService).sendCourtListToCaTH(any(), any());
+
+        // When
+        ExecutionInfo result = task.execute(executionInfo);
+
+        // Then - error stored in publish_error_message column, publish status FAILED (same as other errors)
+        assertThat(result).isNotNull();
+        assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
+        assertThat(entity.getPublishErrorMessage()).contains("CaTH publish failed", "400", "Invalid payload");
+        assertThat(entity.getPublishStatus()).isEqualTo(Status.FAILED);
+        verify(repository).save(entity);
+    }
+
+    @Test
     void execute_shouldSavePublishErrorMessageAndSetPublishStatusFailed_whenBuildCourtListDocumentThrows() {
         // Given - buildCourtListDocumentFromPayload throws (e.g. transform error)
         String errorMessage = "Transform failed";
