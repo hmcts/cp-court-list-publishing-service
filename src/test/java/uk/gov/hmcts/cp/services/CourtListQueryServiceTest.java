@@ -37,7 +37,7 @@ class CourtListQueryServiceTest {
 
     private CourtListPayload payload;
     private CourtListDocument standardDocument;
-    private CourtListDocument publicDocument;
+    private CourtListDocument onlinePublicDocument;
 
     @BeforeEach
     void setUp() {
@@ -46,14 +46,14 @@ class CourtListQueryServiceTest {
                 .build();
 
         standardDocument = CourtListDocument.builder().build();
-        publicDocument = CourtListDocument.builder().build();
+        onlinePublicDocument = CourtListDocument.builder().build();
     }
 
     @Test
     void buildCourtListDocumentFromPayload_shouldUseStandardTransformation_whenListIdIsStandard() {
         // Given
         when(transformationService.transform(payload)).thenReturn(standardDocument);
-        doNothing().when(jsonSchemaValidatorService).validate(standardDocument, "schema/court-list-schema.json");
+        doNothing().when(jsonSchemaValidatorService).validate(standardDocument, "schema/standard-court-list-schema.json");
 
         // When
         CourtListDocument result = courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.STANDARD);
@@ -62,23 +62,23 @@ class CourtListQueryServiceTest {
         assertThat(result).isEqualTo(standardDocument);
         verify(transformationService).transform(payload);
         verify(onlinePublicCourtListTransformationService, never()).transform(any());
-        verify(jsonSchemaValidatorService).validate(standardDocument, "schema/court-list-schema.json");
+        verify(jsonSchemaValidatorService).validate(standardDocument, "schema/standard-court-list-schema.json");
     }
 
     @Test
     void buildCourtListDocumentFromPayload_shouldUsePublicTransformation_whenListIdIsPublic() {
         // Given
-        when(onlinePublicCourtListTransformationService.transform(payload)).thenReturn(publicDocument);
-        doNothing().when(jsonSchemaValidatorService).validate(publicDocument, "schema/public-court-list-schema.json");
+        when(onlinePublicCourtListTransformationService.transform(payload)).thenReturn(onlinePublicDocument);
+        doNothing().when(jsonSchemaValidatorService).validate(onlinePublicDocument, "schema/online-public-court-list-schema.json");
 
         // When
-        CourtListDocument result = courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC);
+        CourtListDocument result = courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC);
 
         // Then
-        assertThat(result).isEqualTo(publicDocument);
+        assertThat(result).isEqualTo(onlinePublicDocument);
         verify(onlinePublicCourtListTransformationService).transform(payload);
         verify(transformationService, never()).transform(any());
-        verify(jsonSchemaValidatorService).validate(publicDocument, "schema/public-court-list-schema.json");
+        verify(jsonSchemaValidatorService).validate(onlinePublicDocument, "schema/online-public-court-list-schema.json");
     }
 
     @Test
