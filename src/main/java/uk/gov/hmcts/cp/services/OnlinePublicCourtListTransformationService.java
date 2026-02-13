@@ -199,7 +199,6 @@ public class OnlinePublicCourtListTransformationService {
         return HearingSchema.builder()
                 .hearingType(hearing.getHearingType())
                 .caseList(cases)
-                .panel(null)
                 .channel(channels)
                 .application(applications)
                 .build();
@@ -234,7 +233,6 @@ public class OnlinePublicCourtListTransformationService {
             CaseSchema caseSchema = CaseSchema.builder()
                     .caseUrn(hearing.getCaseNumber())
                     .reportingRestriction(hearing.getReportingRestrictionReason() != null && !hearing.getReportingRestrictionReason().trim().isEmpty())
-                    .caseSequenceIndicator(null)
                     .party(parties)
                     .build();
 

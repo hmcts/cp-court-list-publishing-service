@@ -72,12 +72,20 @@ class OnlinePublicCourtListTransformationServiceTest {
         HearingSchema hearing = sitting.getHearing().get(0);
         assertThat(hearing).isNotNull();
         assertThat(hearing.getCaseList()).isNotEmpty();
-        
+        // Online public schema: no panel; channel and application are arrays (empty when no source data)
+        assertThat(hearing.getPanel()).isNull();
+        assertThat(hearing.getChannel()).isNotNull();
+        assertThat(hearing.getChannel()).isEmpty();
+        assertThat(hearing.getApplication()).isNotNull();
+        assertThat(hearing.getApplication()).isEmpty();
+
         // For public lists, verify simplified case structure
         CaseSchema caseObj = hearing.getCaseList().get(0);
         assertThat(caseObj).isNotNull();
         assertThat(caseObj.getCaseUrn()).isNotNull();
         assertThat(caseObj.getParty()).isNotEmpty();
+        // Online public schema has no caseSequenceIndicator
+        assertThat(caseObj.getCaseSequenceIndicator()).isNull();
         
         // Verify party has minimal information (name only for public lists)
         Party party = caseObj.getParty().get(0);

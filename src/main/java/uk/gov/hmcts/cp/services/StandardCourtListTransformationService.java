@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -208,9 +209,9 @@ public class StandardCourtListTransformationService {
         return HearingSchema.builder()
                 .hearingType(hearing.getHearingType())
                 .caseList(cases)
-                .panel(null) // Not available in source data
-                .channel(null) // Not available in source data
-                .application(null) // Not available in source data
+                .panel(hearing.getPanel())
+                .channel(Collections.emptyList())
+                .application(Collections.emptyList())
                 .build();
     }
 
@@ -388,9 +389,9 @@ public class StandardCourtListTransformationService {
         }
 
         try {
-            // Parse "5 Jan 2006" format and convert to ISO format "01-01-1901"
+            // Parse "5 Jan 2006" format and convert to ISO date format "yyyy-MM-dd" per schema
             LocalDate date = LocalDate.parse(dob.trim(), DOB_FORMATTER);
-            return date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            return date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         } catch (Exception e) {
             log.warn("Failed to parse date of birth: {}", dob, e);
             return null;
