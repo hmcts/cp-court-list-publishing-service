@@ -14,8 +14,8 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 @Slf4j
 public class CourtListQueryService {
 
-    private static final String COURT_LIST_SCHEMA_PATH = "schema/court-list-schema.json";
-    private static final String PUBLIC_COURT_LIST_SCHEMA_PATH = "schema/public-court-list-schema.json";
+    private static final String STANDARD_COURT_LIST_SCHEMA_JSON = "schema/standard-court-list-schema.json";
+    private static final String ONLINE_PUBLIC_COURT_LIST_SCHEMA_JSON = "schema/online-public-court-list-schema.json";
 
     private final CourtListDataService courtListDataService;
     private final StandardCourtListTransformationService transformationService;
@@ -27,15 +27,15 @@ public class CourtListQueryService {
      * Use when the payload was already obtained so that getCourtListPayload is not called again.
      */
     public CourtListDocument buildCourtListDocumentFromPayload(CourtListPayload payload, CourtListType listId) {
-        if (CourtListType.PUBLIC.equals(listId)) {
+        if (CourtListType.ONLINE_PUBLIC.equals(listId)) {
             log.info("Using PublicCourtListTransformationService for PUBLIC list type");
             CourtListDocument document = onlinePublicCourtListTransformationService.transform(payload);
-            jsonSchemaValidatorService.validate(document, PUBLIC_COURT_LIST_SCHEMA_PATH);
+            jsonSchemaValidatorService.validate(document, ONLINE_PUBLIC_COURT_LIST_SCHEMA_JSON);
             return document;
         }
         log.info("Using CourtListTransformationService for list type: {}", listId);
         CourtListDocument document = transformationService.transform(payload);
-        jsonSchemaValidatorService.validate(document, COURT_LIST_SCHEMA_PATH);
+        jsonSchemaValidatorService.validate(document, STANDARD_COURT_LIST_SCHEMA_JSON);
         return document;
     }
 
