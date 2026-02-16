@@ -51,7 +51,8 @@ public class PdfGenerationService {
     private static final String STANDARD_TEMPLATE_NAME = "courtlist/BenchAndStandardCourtList";
 
     private static final Map<CourtListType, String> TEMPLATE_BY_COURT_LIST_TYPE = ImmutableMap.of(
-            CourtListType.ONLINE_PUBLIC, ONLINE_PUBLIC_TEMPLATE_NAME
+            CourtListType.ONLINE_PUBLIC, ONLINE_PUBLIC_TEMPLATE_NAME,
+            CourtListType.STANDARD, STANDARD_TEMPLATE_NAME
     );
 
     private static final String KEY_TEMPLATE_PAYLOAD = "templatePayload";
@@ -73,6 +74,9 @@ public class PdfGenerationService {
     public UUID generateAndUploadPdf(JsonObject payload, UUID courtListId, CourtListType courtListType) throws IOException {
         LOGGER.info("Generating PDF for court list ID: {}", courtListId);
         String templateName = getTemplateName(courtListType);
+        if (templateName == null) {
+            throw new IllegalArgumentException("No template defined for court list type: " + courtListType);
+        }
         byte[] pdfBytes;
         try {
             pdfBytes = generatePdfDocument(payload, templateName);
@@ -179,10 +183,9 @@ public class PdfGenerationService {
     }
 
     /**
-     * Returns the document generator template name for the given court list type.
-     * ONLINE_PUBLIC uses OnlinePublicCourtList; null and any other type use BenchAndStandardCourtList.
+     * Returns the document generator template name for the given court list type, or null if not mapped.
      */
     public String getTemplateName(CourtListType courtListType) {
-        return TEMPLATE_BY_COURT_LIST_TYPE.getOrDefault(courtListType, STANDARD_TEMPLATE_NAME);
+        return TEMPLATE_BY_COURT_LIST_TYPE.get(courtListType);
     }
 }

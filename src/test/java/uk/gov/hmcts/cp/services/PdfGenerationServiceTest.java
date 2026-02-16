@@ -276,9 +276,31 @@ class PdfGenerationServiceTest {
     }
 
     @Test
-    void getTemplateName_shouldReturnStandardTemplate_whenCourtListTypeIsPublic() {
-        assertThat(pdfGenerationService.getTemplateName(CourtListType.PUBLIC))
-                .isEqualTo("courtlist/BenchAndStandardCourtList");
+    void getTemplateName_shouldReturnNull_whenCourtListTypeIsPublic() {
+        assertThat(pdfGenerationService.getTemplateName(CourtListType.PUBLIC)).isNull();
+    }
+
+    @Test
+    void getTemplateName_shouldReturnNull_whenCourtListTypeIsNull() {
+        assertThat(pdfGenerationService.getTemplateName(null)).isNull();
+    }
+
+    @Test
+    void generateAndUploadPdf_shouldThrowIllegalArgumentException_whenCourtListTypeHasNoTemplate() throws IOException {
+        JsonObject payload = Json.createObjectBuilder().build();
+
+        assertThatThrownBy(() -> pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.PUBLIC))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No template defined for court list type: PUBLIC");
+    }
+
+    @Test
+    void generateAndUploadPdf_shouldThrowIllegalArgumentException_whenCourtListTypeIsNull() throws IOException {
+        JsonObject payload = Json.createObjectBuilder().build();
+
+        assertThatThrownBy(() -> pdfGenerationService.generateAndUploadPdf(payload, courtListId, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No template defined for court list type: null");
     }
 
     @Test

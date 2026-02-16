@@ -44,6 +44,9 @@ public class CourtListPdfHelper {
             UUID fileId = pdfGenerationService.generateAndUploadPdf(payloadJson, courtListId, courtListType);
             log.info("Successfully generated and uploaded PDF for court list ID: {}", courtListId);
             return fileId;
+        } catch (IllegalArgumentException e) {
+            log.warn("No PDF template for court list type: {} (court list ID: {})", courtListType, courtListId);
+            throw new RuntimeException("No PDF template defined for court list type: " + courtListType, e);
         } catch (IOException e) {
             log.error("Error generating and uploading PDF for court list ID: {}", courtListId, e);
             throw new RuntimeException("Failed to generate or upload PDF: " + e.getMessage(), e);
