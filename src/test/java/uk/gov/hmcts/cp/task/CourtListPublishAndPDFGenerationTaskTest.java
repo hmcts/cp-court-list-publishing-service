@@ -519,7 +519,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         )).thenReturn(payload);
         when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
                 .thenReturn(CourtListDocument.builder().build());
-        when(pdfHelper.generateAndUploadPdf(payload, courtListId)).thenReturn(courtListId);
+        when(pdfHelper.generateAndUploadPdf(payload, courtListId, CourtListType.PUBLIC)).thenReturn(courtListId);
 
         // When
         ExecutionInfo result = task.execute(executionInfo);
@@ -534,7 +534,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 publishDate,
                 TEST_USER_ID
         );
-        verify(pdfHelper).generateAndUploadPdf(payload, courtListId);
+        verify(pdfHelper).generateAndUploadPdf(payload, courtListId, CourtListType.PUBLIC);
     }
 
     @Test
@@ -555,7 +555,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(pdfHelper, never()).generateAndUploadPdf(any(), any());
+        verify(pdfHelper, never()).generateAndUploadPdf(any(), any(), any());
     }
 
     @Test
@@ -569,7 +569,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         when(courtListQueryService.getCourtListPayload(any(), any(), any(), any(), any())).thenReturn(payload);
         when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
                 .thenReturn(CourtListDocument.builder().build());
-        when(pdfHelper.generateAndUploadPdf(payload, courtListId))
+        when(pdfHelper.generateAndUploadPdf(payload, courtListId, CourtListType.PUBLIC))
                 .thenThrow(new RuntimeException("PDF generation error"));
 
         // When
@@ -579,7 +579,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(pdfHelper).generateAndUploadPdf(payload, courtListId);
+        verify(pdfHelper).generateAndUploadPdf(payload, courtListId, CourtListType.PUBLIC);
         // Verify error message is saved to fileErrorMessage and file status is FAILED
         assertThat(entity.getFileErrorMessage()).contains("PDF generation error");
         assertThat(entity.getFileStatus()).isEqualTo(Status.FAILED);
@@ -600,7 +600,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         when(courtListQueryService.getCourtListPayload(any(), any(), any(), any(), any())).thenReturn(payload);
         when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.PUBLIC))
                 .thenReturn(CourtListDocument.builder().build());
-        when(pdfHelper.generateAndUploadPdf(payload, courtListId))
+        when(pdfHelper.generateAndUploadPdf(payload, courtListId, CourtListType.PUBLIC))
                 .thenThrow(new RuntimeException(errorMessage, new IllegalStateException(causeMessage)));
 
         // When

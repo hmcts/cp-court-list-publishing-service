@@ -1,5 +1,6 @@
 package uk.gov.hmcts.cp.services;
 
+import com.google.common.collect.ImmutableMap;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonWriter;
@@ -22,12 +23,14 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
+import java.util.Map;
 import java.util.UUID;
 
 import static java.lang.String.format;
@@ -44,7 +47,13 @@ public class PdfGenerationService {
 
     // Constants for document generator service (same as progression: render endpoint)
     private static final String RENDER_PATH = "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render";
-    private static final String TEMPLATE_NAME = "PublicCourtList";
+    private static final String ONLINE_PUBLIC_TEMPLATE_NAME = "courtlist/OnlinePublicCourtList";
+    private static final String STANDARD_TEMPLATE_NAME = "courtlist/BenchAndStandardCourtList";
+
+    private static final Map<CourtListType, String> TEMPLATE_BY_COURT_LIST_TYPE = ImmutableMap.of(
+            CourtListType.ONLINE_PUBLIC, ONLINE_PUBLIC_TEMPLATE_NAME
+    );
+
     private static final String KEY_TEMPLATE_PAYLOAD = "templatePayload";
     private static final String KEY_CONVERSION_FORMAT = "conversionFormat";
     private static final String DOCUMENT_CONVERSION_FORMAT_PDF = "pdf";
@@ -61,11 +70,12 @@ public class PdfGenerationService {
      * Generates a PDF from the payload, uploads it to Azure Blob Storage as {courtListId}.pdf,
      * and returns the file ID (court list ID).
      */
-    public UUID generateAndUploadPdf(JsonObject payload, UUID courtListId) throws IOException {
+    public UUID generateAndUploadPdf(JsonObject payload, UUID courtListId, CourtListType courtListType) throws IOException {
         LOGGER.info("Generating PDF for court list ID: {}", courtListId);
+        String templateName = getTemplateName(courtListType);
         byte[] pdfBytes;
         try {
-            pdfBytes = generatePdfDocument(payload, TEMPLATE_NAME);
+            pdfBytes = generatePdfDocument(payload, templateName);
             LOGGER.info("Successfully generated PDF for court list ID: {}, size: {} bytes",
                     courtListId, pdfBytes.length);
         } catch (Exception e) {
@@ -166,5 +176,13 @@ public class PdfGenerationService {
             jsonWriter.write(jsonObject);
         }
         return stringWriter.toString();
+    }
+
+    /**
+     * Returns the document generator template name for the given court list type.
+     * ONLINE_PUBLIC uses OnlinePublicCourtList; null and any other type use BenchAndStandardCourtList.
+     */
+    public String getTemplateName(CourtListType courtListType) {
+        return TEMPLATE_BY_COURT_LIST_TYPE.getOrDefault(courtListType, STANDARD_TEMPLATE_NAME);
     }
 }
