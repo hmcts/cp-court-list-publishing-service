@@ -50,14 +50,32 @@ public class OnlinePublicCourtListTransformationService {
     }
 
     private Venue transformVenue(CourtListPayload payload) {
-        AddressSchema venueAddress = transformAddressSchemaFromStrings(
-                payload.getCourtCentreAddress1(),
-                payload.getCourtCentreAddress2()
-        );
-
         return Venue.builder()
-                .venueAddress(venueAddress)
+                .venueAddress(buildVenueAddressFromPayload(payload))
                 .build();
+    }
+
+    /**
+     * Build venue address from payload address1, address2, address3, address4, address5 and postcode.
+     * Schema requires venueAddress.line and venueAddress.postCode (never null).
+     */
+    private AddressSchema buildVenueAddressFromPayload(CourtListPayload payload) {
+        List<String> lines = new ArrayList<>();
+        if (isNonBlank(payload.getAddress1())) lines.add(payload.getAddress1().trim());
+        if (isNonBlank(payload.getAddress2())) lines.add(payload.getAddress2().trim());
+        if (isNonBlank(payload.getAddress3())) lines.add(payload.getAddress3().trim());
+        if (isNonBlank(payload.getAddress4())) lines.add(payload.getAddress4().trim());
+        if (isNonBlank(payload.getAddress5())) lines.add(payload.getAddress5().trim());
+
+        String postcode = payload.getPostcode() != null ? payload.getPostcode().trim() : "";
+        return AddressSchema.builder()
+                .line(lines.isEmpty() ? new ArrayList<>() : lines)
+                .postCode(postcode)
+                .build();
+    }
+
+    private static boolean isNonBlank(String s) {
+        return s != null && !s.trim().isEmpty();
     }
 
     private List<CourtList> transformCourtLists(CourtListPayload payload) {
@@ -240,52 +258,6 @@ public class OnlinePublicCourtListTransformationService {
         }
 
         return cases;
-    }
-
-    private AddressSchema transformAddressSchemaFromStrings(String address1, String address2) {
-        return transformAddressSchemaFromStrings(address1, address2, null, null, null, null);
-    }
-
-    private AddressSchema transformAddressSchemaFromStrings(String address1, String address2, String address3, String address4, String address5, String postcode) {
-        List<String> lines = new ArrayList<>();
-        
-        if (address1 != null && !address1.trim().isEmpty()) {
-            lines.add(address1.trim());
-        }
-        if (address2 != null && !address2.trim().isEmpty()) {
-            lines.add(address2.trim());
-        }
-        if (address3 != null && !address3.trim().isEmpty()) {
-            lines.add(address3.trim());
-        }
-        if (address4 != null && !address4.trim().isEmpty()) {
-            lines.add(address4.trim());
-        }
-        if (address5 != null && !address5.trim().isEmpty()) {
-            lines.add(address5.trim());
-        }
-
-        // According to public court list schema, line and postCode are required
-        // Ensure line is never null (empty list if no address lines)
-        if (lines.isEmpty()) {
-            lines = new ArrayList<>();
-        }
-
-        String town = null;
-        String county = null;
-        if (lines.size() >= 2) {
-            town = lines.get(lines.size() - 2);
-            if (lines.size() >= 3) {
-                county = lines.get(lines.size() - 3);
-            }
-        }
-
-        return AddressSchema.builder()
-                .line(lines)
-                .town(town)
-                .county(county)
-                .postCode(postcode) // postCode is required per schema, but may be null if not available in payload
-                .build();
     }
 
     private String convertToIsoDateTime(String time, String date) {

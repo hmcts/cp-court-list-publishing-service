@@ -5,9 +5,7 @@
   },
   "response": {
     "status": 200,
-    "headers": {
-      "Content-Type": "application/pdf"
-    },
+    "headers": {"Content-Type": "application/pdf"},
     "bodyFileName": "minimal-pdf.pdf"
   },
   "priority": 1

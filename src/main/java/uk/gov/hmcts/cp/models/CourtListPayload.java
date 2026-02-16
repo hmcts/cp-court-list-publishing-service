@@ -27,6 +27,27 @@ public class CourtListPayload {
     
     @JsonProperty("courtCentreAddress2")
     private String courtCentreAddress2;
+
+    /**
+     * Venue address from reference data (when enriched). Used with address1-5 and postcode for schema line/postCode.
+     */
+    @JsonProperty("address1")
+    private String address1;
+
+    @JsonProperty("address2")
+    private String address2;
+
+    @JsonProperty("address3")
+    private String address3;
+
+    @JsonProperty("address4")
+    private String address4;
+
+    @JsonProperty("address5")
+    private String address5;
+
+    @JsonProperty("postcode")
+    private String postcode;
     
     @JsonProperty("welshCourtCentreName")
     private String welshCourtCentreName;

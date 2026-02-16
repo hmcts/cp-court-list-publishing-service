@@ -129,13 +129,62 @@ class OnlinePublicCourtListTransformationServiceTest {
         // When
         CourtListDocument document = transformationService.transform(payload);
 
-        // Then
+        // Then - schema requires venueAddress.line and venueAddress.postCode
         assertThat(document).isNotNull();
         Venue venue = document.getVenue();
         assertThat(venue).isNotNull();
         AddressSchema venueAddress = venue.getVenueAddress();
         assertThat(venueAddress).isNotNull();
         assertThat(venueAddress.getLine()).isNotNull();
+        assertThat(venueAddress.getPostCode()).isNotNull(); // required by schema, never null
+    }
+
+    @Test
+    void transform_shouldUseAddress1AndAddress2FromPayload() throws Exception {
+        // Payload has address1, address2 (e.g. from enrichment or court centre fallback)
+        payload.setAddress1("176A Lavender Hill London");
+        payload.setAddress2("SW11 1JU");
+
+        CourtListDocument document = transformationService.transform(payload);
+
+        AddressSchema venueAddress = document.getVenue().getVenueAddress();
+        assertThat(venueAddress.getLine()).hasSize(2);
+        assertThat(venueAddress.getLine().get(0)).isEqualTo("176A Lavender Hill London");
+        assertThat(venueAddress.getLine().get(1)).isEqualTo("SW11 1JU");
+        assertThat(venueAddress.getPostCode()).isEmpty();
+    }
+
+    @Test
+    void transform_shouldUseAddress1Address2AndPostcodeFromPayload() throws Exception {
+        payload.setAddress1("176A Lavender Hill London");
+        payload.setAddress2("SW11 1JU");
+        payload.setPostcode("SW11 1JU");
+
+        CourtListDocument document = transformationService.transform(payload);
+
+        AddressSchema venueAddress = document.getVenue().getVenueAddress();
+        assertThat(venueAddress.getLine()).hasSize(2);
+        assertThat(venueAddress.getLine().get(0)).isEqualTo("176A Lavender Hill London");
+        assertThat(venueAddress.getLine().get(1)).isEqualTo("SW11 1JU");
+        assertThat(venueAddress.getPostCode()).isEqualTo("SW11 1JU");
+    }
+
+    @Test
+    void transform_shouldUseVenueAddressFromReferenceDataWhenPresent() throws Exception {
+        // Given – payload enriched with reference data (address1-5, postcode)
+        payload.setAddress1("176A Lavender Hill");
+        payload.setAddress2("London");
+        payload.setPostcode("SW11 1JU");
+
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then – venue uses full address and postcode from reference data
+        AddressSchema venueAddress = document.getVenue().getVenueAddress();
+        assertThat(venueAddress.getLine()).hasSize(2);
+        assertThat(venueAddress.getLine().get(0)).isEqualTo("176A Lavender Hill");
+        assertThat(venueAddress.getLine().get(1)).isEqualTo("London");
+        assertThat(venueAddress.getPostCode()).isEqualTo("SW11 1JU");
     }
 
     @Test

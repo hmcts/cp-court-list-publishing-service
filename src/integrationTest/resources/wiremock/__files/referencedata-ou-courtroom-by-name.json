@@ -6,6 +6,8 @@
   "oucodeL3Name": "Test Court",
   "address1": "123 Test Street",
   "address2": "Test City",
+  "address3": "Test Town",
+  "address4": "Test County",
   "postcode": "TE1 1ST",
   "defaultStartTime": "10:00",
   "courtId": "415",
