@@ -63,7 +63,7 @@ class CourtListDataServiceTest {
                 eq(false),
                 eq("request-user-id")))
                 .thenReturn(listingJson);
-        when(referenceDataService.getCourtCenterDataByCourtName(eq("Lavender Hill Magistrates' Court"), eq("system-user-id")))
+        when(referenceDataService.getCourtCenterDataByCourtCentreId(eq("f8254db1-1683-483e-afb3-b87fde5a0a26"), eq("system-user-id")))
                 .thenReturn(Optional.of(refData));
 
         String result = courtListDataService.getCourtListData(
@@ -88,14 +88,14 @@ class CourtListDataServiceTest {
                 eq("2024-01-15"),
                 eq(false),
                 eq("request-user-id"));
-        verify(referenceDataService).getCourtCenterDataByCourtName(eq("Lavender Hill Magistrates' Court"), eq("system-user-id"));
+        verify(referenceDataService).getCourtCenterDataByCourtCentreId(eq("f8254db1-1683-483e-afb3-b87fde5a0a26"), eq("system-user-id"));
     }
 
     @Test
     void getCourtListData_returnsListingPayloadAsIsWhenReferenceDataEmpty() {
         String listingJson = "{\"listType\":\"public\",\"courtCentreName\":\"Unknown Court\"}";
         when(listingQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean(), any())).thenReturn(listingJson);
-        when(referenceDataService.getCourtCenterDataByCourtName(eq("Unknown Court"), any())).thenReturn(Optional.empty());
+        when(referenceDataService.getCourtCenterDataByCourtCentreId(eq("f8254db1-1683-483e-afb3-b87fde5a0a26"), any())).thenReturn(Optional.empty());
 
         String result = courtListDataService.getCourtListData(
                 CourtListType.PUBLIC,
@@ -121,7 +121,7 @@ class CourtListDataServiceTest {
                 eq(true),
                 eq("user-id")))
                 .thenReturn("{\"listType\":\"standard\",\"courtCentreName\":\"Test Court\"}");
-        when(referenceDataService.getCourtCenterDataByCourtName(eq("Test Court"), any()))
+        when(referenceDataService.getCourtCenterDataByCourtCentreId(eq("courtCentre1"), any()))
                 .thenReturn(Optional.of(CourtCentreData.builder()
                         .id(UUID.fromString("f8254db1-1683-483e-afb3-b87fde5a0a26"))
                         .ouCode("B01LY")
@@ -150,7 +150,7 @@ class CourtListDataServiceTest {
                 eq(false),
                 isNull()))
                 .thenReturn("{\"listType\":\"public\",\"courtCentreName\":\"A Court\"}");
-        when(referenceDataService.getCourtCenterDataByCourtName(eq("A Court"), any())).thenReturn(Optional.empty());
+        when(referenceDataService.getCourtCenterDataByCourtCentreId(eq("courtCentre1"), any())).thenReturn(Optional.empty());
 
         CourtListPayload result = courtListDataService.getCourtListPayload(
                 CourtListType.PUBLIC, "courtCentre1", "2026-01-05", "2026-01-12", null);
