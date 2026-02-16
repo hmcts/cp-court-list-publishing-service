@@ -150,9 +150,10 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             logger.warn("Missing courtListId for PDF generation");
             return null;
         }
+        CourtListType listId = extractCourtListType(jobData);
         logger.info("Generating PDF for court list ID: {}", courtListId);
         try {
-            UUID fileId = pdfHelper.generateAndUploadPdf(payload, courtListId);
+            UUID fileId = pdfHelper.generateAndUploadPdf(payload, courtListId, listId);
             logger.info("Successfully generated and uploaded PDF for court list ID: {}", courtListId);
             return fileId;
         } catch (Exception e) {

@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -68,7 +69,7 @@ class PdfGenerationServiceTest {
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
 
-        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD);
 
         assertThat(result).isEqualTo(courtListId);
         verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
@@ -82,7 +83,7 @@ class PdfGenerationServiceTest {
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
 
-        UUID result = pdfGenerationService.generateAndUploadPdf(null, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(null, courtListId, CourtListType.STANDARD);
 
         assertThat(result).isEqualTo(courtListId);
         verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
@@ -98,7 +99,7 @@ class PdfGenerationServiceTest {
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
 
-        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD);
 
         assertThat(result).isEqualTo(courtListId);
         verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
@@ -114,7 +115,7 @@ class PdfGenerationServiceTest {
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
 
-        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD);
 
         assertThat(result).isEqualTo(courtListId);
         verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
@@ -132,7 +133,7 @@ class PdfGenerationServiceTest {
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
 
-        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD);
 
         assertThat(result).isEqualTo(courtListId);
         verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
@@ -146,7 +147,7 @@ class PdfGenerationServiceTest {
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
 
-        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD);
 
         assertThat(result).isEqualTo(courtListId);
         verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
@@ -162,8 +163,8 @@ class PdfGenerationServiceTest {
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
 
-        UUID result1 = pdfGenerationService.generateAndUploadPdf(payload, courtListId1);
-        UUID result2 = pdfGenerationService.generateAndUploadPdf(payload, courtListId2);
+        UUID result1 = pdfGenerationService.generateAndUploadPdf(payload, courtListId1, CourtListType.STANDARD);
+        UUID result2 = pdfGenerationService.generateAndUploadPdf(payload, courtListId2, CourtListType.STANDARD);
 
         assertThat(result1).isEqualTo(courtListId1);
         assertThat(result2).isEqualTo(courtListId2);
@@ -180,7 +181,7 @@ class PdfGenerationServiceTest {
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
 
-        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD);
 
         assertThat(result).isEqualTo(courtListId);
         verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
@@ -197,7 +198,7 @@ class PdfGenerationServiceTest {
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
 
-        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD);
 
         assertThat(result).isEqualTo(courtListId);
         verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
@@ -211,7 +212,7 @@ class PdfGenerationServiceTest {
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
 
-        UUID result = pdfGenerationService.generateAndUploadPdf(payload, null);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, null, CourtListType.STANDARD);
 
         assertThat(result).isNull();
         verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(null));
@@ -227,7 +228,7 @@ class PdfGenerationServiceTest {
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
 
-        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD);
 
         assertThat(result).isEqualTo(courtListId);
         verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
@@ -243,7 +244,7 @@ class PdfGenerationServiceTest {
                 .thenThrow(new RuntimeException("PDF generation failed"));
 
         // When & Then
-        assertThatThrownBy(() -> pdfGenerationService.generateAndUploadPdf(payload, courtListId))
+        assertThatThrownBy(() -> pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD))
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining("Failed to generate PDF")
                 .hasCauseInstanceOf(RuntimeException.class);
@@ -257,9 +258,49 @@ class PdfGenerationServiceTest {
         when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
 
-        pdfGenerationService.generateAndUploadPdf(payload, courtListId);
+        pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD);
 
         verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
+    }
+
+    @Test
+    void getTemplateName_shouldReturnOnlinePublicTemplate_whenCourtListTypeIsOnlinePublic() {
+        assertThat(pdfGenerationService.getTemplateName(CourtListType.ONLINE_PUBLIC))
+                .isEqualTo("courtlist/OnlinePublicCourtList");
+    }
+
+    @Test
+    void getTemplateName_shouldReturnStandardTemplate_whenCourtListTypeIsStandard() {
+        assertThat(pdfGenerationService.getTemplateName(CourtListType.STANDARD))
+                .isEqualTo("courtlist/BenchAndStandardCourtList");
+    }
+
+    @Test
+    void getTemplateName_shouldReturnNull_whenCourtListTypeIsPublic() {
+        assertThat(pdfGenerationService.getTemplateName(CourtListType.PUBLIC)).isNull();
+    }
+
+    @Test
+    void getTemplateName_shouldReturnNull_whenCourtListTypeIsNull() {
+        assertThat(pdfGenerationService.getTemplateName(null)).isNull();
+    }
+
+    @Test
+    void generateAndUploadPdf_shouldThrowIllegalArgumentException_whenCourtListTypeHasNoTemplate() throws IOException {
+        JsonObject payload = Json.createObjectBuilder().build();
+
+        assertThatThrownBy(() -> pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.PUBLIC))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No template defined for court list type: PUBLIC");
+    }
+
+    @Test
+    void generateAndUploadPdf_shouldThrowIllegalArgumentException_whenCourtListTypeIsNull() throws IOException {
+        JsonObject payload = Json.createObjectBuilder().build();
+
+        assertThatThrownBy(() -> pdfGenerationService.generateAndUploadPdf(payload, courtListId, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No template defined for court list type: null");
     }
 
     @Test

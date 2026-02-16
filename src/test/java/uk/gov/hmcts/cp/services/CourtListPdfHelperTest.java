@@ -15,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.cp.models.CourtListPayload;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.taskmanager.domain.converter.JsonObjectConverter;
 
 import java.io.IOException;
@@ -45,33 +46,33 @@ class CourtListPdfHelperTest {
     void generateAndUploadPdf_shouldReturnFileId_whenSuccessful() throws IOException {
         jakarta.json.JsonObject payloadJson = jakarta.json.Json.createObjectBuilder().build();
         when(objectConverter.convertFromObject(payload)).thenReturn(payloadJson);
-        when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId))).thenReturn(courtListId);
+        when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId), any())).thenReturn(courtListId);
 
-        UUID result = pdfHelper.generateAndUploadPdf(payload, courtListId);
+        UUID result = pdfHelper.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD);
 
         assertThat(result).isEqualTo(courtListId);
-        verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId));
+        verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId), eq(CourtListType.STANDARD));
     }
 
     @Test
     void generateAndUploadPdf_shouldReturnNull_whenPayloadIsNull() throws IOException {
-        UUID result = pdfHelper.generateAndUploadPdf(null, courtListId);
+        UUID result = pdfHelper.generateAndUploadPdf(null, courtListId, CourtListType.STANDARD);
 
         assertThat(result).isNull();
-        verify(pdfGenerationService, never()).generateAndUploadPdf(any(), any());
+        verify(pdfGenerationService, never()).generateAndUploadPdf(any(), any(), any());
     }
 
     @Test
     void generateAndUploadPdf_shouldThrowRuntimeException_whenPdfGenerationThrowsException() throws IOException {
         jakarta.json.JsonObject payloadJson = jakarta.json.Json.createObjectBuilder().build();
         when(objectConverter.convertFromObject(payload)).thenReturn(payloadJson);
-        when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId)))
+        when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId), any()))
                 .thenThrow(new IOException("PDF generation failed"));
 
-        assertThatThrownBy(() -> pdfHelper.generateAndUploadPdf(payload, courtListId))
+        assertThatThrownBy(() -> pdfHelper.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to generate or upload PDF")
                 .hasMessageContaining("PDF generation failed");
-        verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId));
+        verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId), eq(CourtListType.STANDARD));
     }
 }
