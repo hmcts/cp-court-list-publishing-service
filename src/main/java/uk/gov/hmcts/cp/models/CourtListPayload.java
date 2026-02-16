@@ -75,5 +75,11 @@ public class CourtListPayload {
      */
     @JsonProperty("courtIdNumeric")
     private String courtIdNumeric;
+
+    /**
+     * Whether the court centre supports Welsh, from reference data.
+     */
+    @JsonProperty("isWelsh")
+    private Boolean isWelsh;
 }
 
