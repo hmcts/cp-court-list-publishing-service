@@ -21,7 +21,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.HttpServerErrorException;
 
-import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 
 @Slf4j
@@ -194,6 +193,35 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
     }
 
     @Test
+    void publishCourtList_shouldSetPublishFailedWithErrorMessage_whenSchemaValidationFails() throws Exception {
+        // Given - listing API returns payload that transforms to document failing schema validation (e.g. case with null caseUrn)
+        addSchemaInvalidPayloadStub();
+        try {
+            UUID courtCentreId = UUID.randomUUID();
+            String requestJson = createPublishRequestJson(courtCentreId, ONLINE_PUBLIC.toString());
+
+            // When - Publish court list (task will fetch invalid payload, transform, then schema validation fails)
+            ResponseEntity<String> publishResponse = postPublishRequest(requestJson);
+            assertThat(publishResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode publishBody = parseResponse(publishResponse);
+            UUID courtListId = UUID.fromString(publishBody.get("courtListId").asText());
+
+            waitForTaskCompletion(courtListId, 120000);
+
+            // Then - publishStatus is FAILED and publishErrorMessage contains schema validation failure
+            ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
+            assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+            JsonNode statusBody = parseResponse(statusResponse);
+            assertThat(statusBody.get("publishStatus").asText()).isEqualTo("FAILED");
+            assertThat(statusBody.has("fileErrorMessage")).isTrue();
+            String fileErrorMessage = statusBody.get("fileErrorMessage").asText();
+            assertThat(fileErrorMessage).contains("JSON schema validation failed");
+        } finally {
+            AbstractTest.resetWireMock();
+        }
+    }
+
+    @Test
     void publishCourtList_shouldStillUpdateStatus_whenQueryApiFails() throws Exception {
         // Given
         UUID courtCentreId = UUID.randomUUID();
@@ -341,6 +369,39 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         } catch (HttpServerErrorException expected) {
             // expected: 5xx
             assertThat(expected.getStatusCode().value()).isEqualTo(500);
+        }
+    }
+
+    /**
+     * Adds a WireMock stub so the listing API returns a payload that, when transformed,
+     * fails JSON schema validation (e.g. hearing with null caseNumber → case with null caseUrn).
+     * Call {@link AbstractTest#resetWireMock()} in a finally block after the test.
+     */
+    private void addSchemaInvalidPayloadStub() {
+        String mappingJson = """
+            {
+              "request": {
+                "method": "GET",
+                "urlPathPattern": "/listing-service/query/api/rest/listing/courtlistpayload.*",
+                "queryParameters": {"listId": {"equalTo": "ONLINE_PUBLIC"}}
+              },
+              "response": {
+                "status": 200,
+                "headers": {"Content-Type": "application/json"},
+                "bodyFileName": "court-list-payload-public-schema-invalid.json"
+              },
+              "priority": 0
+            }
+            """;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        ResponseEntity<String> response = http.exchange(
+                WIREMOCK_MAPPINGS_URL,
+                HttpMethod.POST,
+                new HttpEntity<>(mappingJson, headers),
+                String.class);
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new IllegalStateException("Failed to add schema-invalid payload stub: " + response.getStatusCode());
         }
     }
 

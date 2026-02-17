@@ -1,0 +1,73 @@
+{
+  "listType": "public",
+  "courtCentreName": "Lavender Hill Magistrates' Court",
+  "courtCentreDefaultStartTime": "10:00:00",
+  "courtCentreAddress1": "176A Lavender Hill London",
+  "courtCentreAddress2": "   SW11 1JU",
+  "welshCourtCentreName": "Llys Ynadon Lavender Hill",
+  "welshCourtCentreAddress1": " ",
+  "welshCourtCentreAddress2": "   SW11 1JU",
+  "hearingDates": [
+    {
+      "hearingDate": "invalidDate",
+      "hearingDateWelsh": "5 Ionawr 2026",
+      "courtRooms": [
+        {
+          "courtRoomName": "Courtroom 01",
+          "welshCourtRoomName": "Courtroom 01",
+          "judiciaryNames": "",
+          "welshJudiciaryNames": "",
+          "timeslots": [
+            {
+              "hearings": [
+                {
+                  "id": "887ddce4-0ee1-4c5f-a5a4-af8a24820792",
+                  "sequence": 1,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:30",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": null,
+                  "caseId": "aa5c0b37-12da-428d-abd0-3c808a916948",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "1b4ffa2a-aeb4-4d03-993e-b40e2e404c7d",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Tommie",
+                      "surname": "Bogisich",
+                      "welshSurname": "Bogisich",
+                      "dateOfBirth": "5 Jan 2006",
+                      "age": "20",
+                      "nationality": "",
+                      "address": {
+                        "address1": "40 Market Place",
+                        "address2": "Market Place",
+                        "address3": "Bristol",
+                        "postcode": "NW1 5BR"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "8d6bee74-73d8-4b5c-b8c3-fecbc0b0e75e",
+                          "offenceTitle": "Attempt theft of motor vehicle",
+                          "welshOffenceTitle": "Ymgais i ddwyn cerbyd modur",
+                          "offenceWording": "Attempt theft to vehicle"
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "templateName": "PublicCourtList"
+}
