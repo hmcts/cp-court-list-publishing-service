@@ -274,19 +274,19 @@ class PdfGenerationServiceTest {
     @Test
     void getTemplateName_shouldReturnOnlinePublicTemplate_whenCourtListTypeIsOnlinePublicAndIsWelshFalse() {
         assertThat(pdfGenerationService.getTemplateName(CourtListType.ONLINE_PUBLIC, false))
-                .isEqualTo("courtlist/OnlinePublicCourtList");
+                .isEqualTo("OnlinePublicCourtList");
     }
 
     @Test
     void getTemplateName_shouldReturnStandardTemplate_whenCourtListTypeIsStandardAndIsWelshFalse() {
         assertThat(pdfGenerationService.getTemplateName(CourtListType.STANDARD, false))
-                .isEqualTo("courtlist/BenchAndStandardCourtList");
+                .isEqualTo("BenchAndStandardCourtList");
     }
 
     @Test
     void getTemplateName_shouldReturnWelshTemplate_whenIsWelshTrueAndOnlinePublic() {
         assertThat(pdfGenerationService.getTemplateName(CourtListType.ONLINE_PUBLIC, true))
-                .isEqualTo("courtlist/OnlinePublicCourtListEnglishWelsh");
+                .isEqualTo("OnlinePublicCourtListEnglishWelsh");
     }
 
     @Test
