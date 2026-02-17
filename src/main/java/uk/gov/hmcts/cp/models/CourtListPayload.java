@@ -82,6 +82,42 @@ public class CourtListPayload {
     private String courtIdNumeric;
 
     /**
+     * OU code L1 name from reference data (e.g. "Magistrates' Courts").
+     */
+    @JsonProperty("oucodeL1Name")
+    private String oucodeL1Name;
+
+    /**
+     * OU code L3 name from reference data (e.g. "Test Court").
+     */
+    @JsonProperty("oucodeL3Name")
+    private String oucodeL3Name;
+
+    /**
+     * OU code L3 Welsh name from reference data (e.g. "Llys Y Goron Croydon").
+     */
+    @JsonProperty("oucodeL3WelshName")
+    private String oucodeL3WelshName;
+
+    /**
+     * Default start time for the court list (e.g. "10:00" or "10:00:00").
+     */
+    @JsonProperty("defaultStartTime")
+    private String defaultStartTime;
+
+    /**
+     * Default duration in hours (e.g. "07:00:00").
+     */
+    @JsonProperty("defaultDurationHrs")
+    private String defaultDurationHrs;
+
+    /**
+     * Court location code from reference data (e.g. "0418").
+     */
+    @JsonProperty("courtLocationCode")
+    private String courtLocationCode;
+
+    /**
      * Whether the court centre supports Welsh, from reference data.
      */
     @JsonProperty("isWelsh")
