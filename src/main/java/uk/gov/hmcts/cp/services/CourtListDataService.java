@@ -79,6 +79,7 @@ public class CourtListDataService {
         String listingJson = listingQueryService.getCourtListPayload(
                 listId, courtCentreId, courtRoomId, startDate, endDate, restricted, currentUserId);
 
+        log.info("TODO: remove this --- Court List Payload we got from listing is: {}", listingJson);
         JsonNode root;
         try {
             root = OBJECT_MAPPER.readTree(listingJson);
