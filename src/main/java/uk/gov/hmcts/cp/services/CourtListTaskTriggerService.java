@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
+import uk.gov.hmcts.cp.task.JobDataConstant;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus;
 import uk.gov.hmcts.cp.taskmanager.service.ExecutionService;
@@ -65,11 +66,11 @@ public class CourtListTaskTriggerService {
 
         // Create jobData with courtListId, courtCentreId, courtListType, and userId (CJSCPPUID)
         JsonObject jobData = Json.createObjectBuilder()
-                .add("courtListId", response.getCourtListId().toString())
-                .add("courtCentreId", response.getCourtCentreId().toString())
-                .add("courtListType", response.getCourtListType().toString())
-                .add("publishDate", response.getPublishDate().toString())
-                .add("userId", userId)
+                .add(JobDataConstant.COURT_LIST_ID, response.getCourtListId().toString())
+                .add(JobDataConstant.COURT_CENTRE_ID, response.getCourtCentreId().toString())
+                .add(JobDataConstant.COURT_LIST_TYPE, response.getCourtListType().toString())
+                .add(JobDataConstant.PUBLISH_DATE, response.getPublishDate().toString())
+                .add(JobDataConstant.USER_ID, userId)
                 .build();
 
         ExecutionInfo executionInfo = executionInfo()

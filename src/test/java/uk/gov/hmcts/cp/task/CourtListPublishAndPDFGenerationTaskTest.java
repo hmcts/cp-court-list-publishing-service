@@ -29,6 +29,7 @@ import uk.gov.hmcts.cp.services.CourtListPdfHelper;
 import uk.gov.hmcts.cp.services.CourtListQueryService;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
+import uk.gov.hmcts.cp.task.JobDataConstant;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 
 import java.time.Instant;
@@ -139,7 +140,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Given
         // JsonObjectBuilder doesn't allow null values, so we mock JsonObject to return null
         JsonObject mockJobData = org.mockito.Mockito.mock(JsonObject.class);
-        when(mockJobData.getString("courtListId", null)).thenReturn(null);
+        when(mockJobData.getString(JobDataConstant.COURT_LIST_ID, null)).thenReturn(null);
         when(executionInfo.getJobData()).thenReturn(mockJobData);
 
         // When
@@ -156,7 +157,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
     void execute_shouldReturnCompletedStatus_whenCourtListIdHasInvalidUuidFormat() {
         // Given
         JsonObject jobData = Json.createObjectBuilder()
-                .add("courtListId", "invalid-uuid-format")
+                .add(JobDataConstant.COURT_LIST_ID, "invalid-uuid-format")
                 .build();
         when(executionInfo.getJobData()).thenReturn(jobData);
 
@@ -275,8 +276,9 @@ class CourtListPublishAndPDFGenerationTaskTest {
     @Test
     void execute_shouldQueryCourtListAndSendToCaTH_whenValidJobDataProvided() {
         // Given
-        String publishDate = LocalDate.now().toString();
         JsonObject jobData = createJobDataWithCourtListId(courtListId);
+        String publishDateStr = jobData.getString(JobDataConstant.PUBLISH_DATE);
+        LocalDate publishDate = LocalDate.parse(publishDateStr);
         when(executionInfo.getJobData()).thenReturn(jobData);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
 
@@ -285,8 +287,8 @@ class CourtListPublishAndPDFGenerationTaskTest {
         when(courtListQueryService.getCourtListPayload(
                 CourtListType.ONLINE_PUBLIC,
                 courtCentreId.toString(),
-                publishDate,
-                publishDate,
+                publishDateStr,
+                publishDateStr,
                 TEST_USER_ID
         )).thenReturn(payload);
         when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC))
@@ -301,12 +303,12 @@ class CourtListPublishAndPDFGenerationTaskTest {
         verify(courtListQueryService).getCourtListPayload(
                 CourtListType.ONLINE_PUBLIC,
                 courtCentreId.toString(),
-                publishDate,
-                publishDate,
+                publishDateStr,
+                publishDateStr,
                 TEST_USER_ID
         );
         verify(courtListQueryService).buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC);
-        verify(cathService).sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC);
+        verify(cathService).sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, publishDate);
         verify(repository).getByCourtListId(courtListId);
         verify(repository).save(entity);
     }
@@ -323,15 +325,15 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService, never()).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(cathService, never()).sendCourtListToCaTH(any(), any());
+        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
     }
 
     @Test
     void execute_shouldNotQueryCourtList_whenListIdIsMissing() {
         // Given
         JsonObject jobData = Json.createObjectBuilder()
-                .add("courtListId", courtListId.toString())
-                .add("courtCentreId", courtCentreId.toString())
+                .add(JobDataConstant.COURT_LIST_ID, courtListId.toString())
+                .add(JobDataConstant.COURT_CENTRE_ID, courtCentreId.toString())
                 .build();
         when(executionInfo.getJobData()).thenReturn(jobData);
 
@@ -342,15 +344,15 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService, never()).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(cathService, never()).sendCourtListToCaTH(any(), any());
+        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
     }
 
     @Test
     void execute_shouldNotQueryCourtList_whenCourtCentreIdIsMissing() {
         // Given
         JsonObject jobData = Json.createObjectBuilder()
-                .add("courtListId", courtListId.toString())
-                .add("courtListType", "PUBLIC")
+                .add(JobDataConstant.COURT_LIST_ID, courtListId.toString())
+                .add(JobDataConstant.COURT_LIST_TYPE, "PUBLIC")
                 .build();
         when(executionInfo.getJobData()).thenReturn(jobData);
 
@@ -361,7 +363,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService, never()).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(cathService, never()).sendCourtListToCaTH(any(), any());
+        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
     }
 
     @Test
@@ -382,7 +384,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(cathService, never()).sendCourtListToCaTH(any(), any());
+        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
         verify(repository).getByCourtListId(courtListId);
     }
 
@@ -390,6 +392,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
     void execute_shouldHandleException_whenCaTHServiceThrowsException() {
         // Given - CaTH throws so publish error is saved to DB
         JsonObject jobData = createJobDataWithCourtListId(courtListId);
+        LocalDate publishDate = LocalDate.parse(jobData.getString(JobDataConstant.PUBLISH_DATE));
         when(executionInfo.getJobData()).thenReturn(jobData);
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
 
@@ -400,7 +403,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 .thenReturn(courtListDocument);
 
         doThrow(new RuntimeException("CaTH service error"))
-                .when(cathService).sendCourtListToCaTH(any(), any());
+                .when(cathService).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
 
         // When
         ExecutionInfo result = task.execute(executionInfo);
@@ -410,7 +413,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
         verify(courtListQueryService).buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC);
-        verify(cathService).sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC);
+        verify(cathService).sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, publishDate);
         assertThat(entity.getPublishErrorMessage()).contains("CaTH service error", "RuntimeException");
         assertThat(entity.getPublishStatus()).isEqualTo(Status.FAILED);
         verify(repository, times(1)).getByCourtListId(courtListId);
@@ -431,7 +434,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 .thenReturn(courtListDocument);
 
         doThrow(new RuntimeException("CaTH publish failed with HTTP status 400: Invalid payload"))
-                .when(cathService).sendCourtListToCaTH(any(), any());
+                .when(cathService).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
 
         // When
         ExecutionInfo result = task.execute(executionInfo);
@@ -615,11 +618,11 @@ class CourtListPublishAndPDFGenerationTaskTest {
 
     private JsonObject createJobDataWithCourtListId(UUID courtListId) {
         return Json.createObjectBuilder()
-                .add("courtListId", courtListId.toString())
-                .add("courtCentreId", courtCentreId.toString())
-                .add("courtListType", "ONLINE_PUBLIC")
-                .add("publishDate", LocalDate.now().toString())
-                .add("userId", TEST_USER_ID)
+                .add(JobDataConstant.COURT_LIST_ID, courtListId.toString())
+                .add(JobDataConstant.COURT_CENTRE_ID, courtCentreId.toString())
+                .add(JobDataConstant.COURT_LIST_TYPE, "ONLINE_PUBLIC")
+                .add(JobDataConstant.PUBLISH_DATE, LocalDate.now().toString())
+                .add(JobDataConstant.USER_ID, TEST_USER_ID)
                 .build();
     }
 }

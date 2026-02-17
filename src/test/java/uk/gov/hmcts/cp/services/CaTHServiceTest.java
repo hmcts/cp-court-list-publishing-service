@@ -1,5 +1,6 @@
 package uk.gov.hmcts.cp.services;
 
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import java.time.LocalDate;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,7 +44,8 @@ class CaTHServiceTest {
         when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
 
         // When
-        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC);
+        LocalDate publishDate = LocalDate.of(2024, 1, 15);
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, publishDate);
 
         // Then - Verify CaTHPublisher was called
         ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
@@ -60,6 +64,7 @@ class CaTHServiceTest {
         assertThat(capturedMeta.getType()).isEqualTo("LIST");
         // When document has no courtIdNumeric, DtsMeta uses fallback "0"
         assertThat(capturedMeta.getCourtId()).isEqualTo("0");
+        assertThat(capturedMeta.getDisplayTo()).isEqualTo("2024-01-15T23:59:00Z");
     }
 
     @Test
@@ -71,7 +76,7 @@ class CaTHServiceTest {
         when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
 
         // When
-        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC);
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15));
 
         // Then - DtsMeta uses courtId from reference data
         ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
@@ -86,7 +91,7 @@ class CaTHServiceTest {
                 .thenThrow(new RuntimeException("Publishing failed"));
 
         // When & Then
-        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC))
+        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15)))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to send court list document to CaTH");
     }
@@ -98,8 +103,15 @@ class CaTHServiceTest {
                 .thenThrow(new RuntimeException("Unexpected error"));
 
         // When & Then
-        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC))
+        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15)))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to send court list document to CaTH");
+    }
+
+    @Test
+    void testGetDisplayTo() {
+        final LocalDate now = LocalDate.now();
+        final String expected = CaTHService.getDisplayTo(now);
+        assertThat(expected).isEqualTo(now + "T23:59:00Z");
     }
 }

@@ -19,6 +19,8 @@ import uk.gov.hmcts.cp.taskmanager.service.task.Task;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.UUID;
 
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
@@ -30,10 +32,6 @@ import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
     private static final Logger logger = LoggerFactory.getLogger(CourtListPublishAndPDFGenerationTask.class);
-    private static final String COURT_LIST_ID = "courtListId";
-    private static final String COURT_CENTRE_ID = "courtCentreId";
-    private static final String COURT_LIST_TYPE = "courtListType";
-    private static final String USER_ID = "userId";
 
     private final CourtListStatusRepository repository;
     private final CourtListQueryService courtListQueryService;
@@ -64,11 +62,11 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         if (jobData != null) {
             CourtListType listId = extractCourtListType(jobData);
             String courtCentreId = extractCourtCentreId(jobData);
-            String publishDate = extractPublishDate(jobData);
+            LocalDate publishDate = extractPublishDate(jobData);
             if (listId != null && courtCentreId != null && publishDate != null) {
                 try {
                     payload = courtListQueryService.getCourtListPayload(
-                            listId, courtCentreId, publishDate, publishDate, userId);
+                            listId, courtCentreId, publishDate.toString(), publishDate.toString(), userId);
                 } catch (Exception e) {
                     logger.error("Error fetching court list payload", e);
                 }
@@ -121,6 +119,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             return;
         }
         CourtListType listId = extractCourtListType(jobData);
+        LocalDate publishDate = extractPublishDate(jobData);
         if (listId == null) {
             logger.warn("Missing listId (courtListType), cannot send court list to CaTH");
             return;
@@ -128,7 +127,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         try {
             var courtListDocument = courtListQueryService.buildCourtListDocumentFromPayload(payload, listId);
             logger.info("Sending transformed court list document to CaTH endpoint");
-            cathService.sendCourtListToCaTH(courtListDocument, listId);
+            cathService.sendCourtListToCaTH(courtListDocument, listId, publishDate);
             logger.info("Successfully sent court list document to CaTH endpoint");
         } catch (Exception e) {
             logger.error("Error building document or sending court list to CaTH", e);
@@ -164,7 +163,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
     private CourtListType extractCourtListType(JsonObject jobData) {
         try {
-            return CourtListType.valueOf(jobData.getString(COURT_LIST_TYPE, "").toUpperCase());
+            return CourtListType.valueOf(jobData.getString(JobDataConstant.COURT_LIST_TYPE, "").toUpperCase());
         } catch (Exception e) {
             logger.warn("Could not extract listId (courtListType) from JsonObject", e);
             return null;
@@ -173,16 +172,26 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
     private String extractCourtCentreId(JsonObject jobData) {
         try {
-            return jobData.getString(COURT_CENTRE_ID, null);
+            return jobData.getString(JobDataConstant.COURT_CENTRE_ID, null);
         } catch (Exception e) {
             logger.warn("Could not extract courtCentreId from JsonObject", e);
             return null;
         }
     }
 
-    private String extractPublishDate(JsonObject jobData) {
+    private LocalDate extractPublishDate(JsonObject jobData) {
+        if (jobData == null) {
+            return null;
+        }
         try {
-            return jobData.getString("publishDate", null);
+            String value = jobData.getString(JobDataConstant.PUBLISH_DATE, null);
+            if (value == null || value.isBlank()) {
+                return null;
+            }
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException e) {
+            logger.warn("Could not parse publishDate from JsonObject: {}", e.getMessage());
+            return null;
         } catch (Exception e) {
             logger.warn("Could not extract publishDate from JsonObject", e);
             return null;
@@ -193,11 +202,11 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
      * Reads userId from jobData (CJSCPPUID from request). May be null if header was not sent.
      */
     private String extractUserId(JsonObject jobData) {
-        if (jobData == null || !jobData.containsKey(USER_ID)) {
+        if (jobData == null || !jobData.containsKey(JobDataConstant.USER_ID)) {
             return null;
         }
         try {
-            String value = jobData.getString(USER_ID, null);
+            String value = jobData.getString(JobDataConstant.USER_ID, null);
             return (value != null && !value.isBlank()) ? value : null;
         } catch (Exception e) {
             logger.warn("Could not extract userId from JsonObject", e);
@@ -260,10 +269,10 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
     private UUID extractCourtListId(JsonObject jobData) {
         try {
-            String courtListIdStr = jobData.getString(COURT_LIST_ID, null);
+            String courtListIdStr = jobData.getString(JobDataConstant.COURT_LIST_ID, null);
             return courtListIdStr != null ? UUID.fromString(courtListIdStr) : null;
         } catch (IllegalArgumentException e) {
-            logger.warn("Invalid UUID format for courtListId: {}", jobData.getString(COURT_LIST_ID, null), e);
+            logger.warn("Invalid UUID format for courtListId: {}", jobData.getString(JobDataConstant.COURT_LIST_ID, null), e);
             return null;
         } catch (Exception e) {
             logger.warn("Could not extract courtListId from JsonObject", e);

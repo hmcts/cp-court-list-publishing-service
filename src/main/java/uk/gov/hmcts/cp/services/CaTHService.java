@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -15,7 +16,8 @@ import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Map;
 
 @Service
@@ -35,7 +37,7 @@ public class CaTHService {
 
     private static final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
 
-    public void sendCourtListToCaTH(CourtListDocument courtListDocument, final CourtListType courtListType) {
+    public void sendCourtListToCaTH(CourtListDocument courtListDocument, final CourtListType courtListType, final LocalDate publishDate) {
         try {
             log.info("Sending court list document to CaTH endpoint");
 
@@ -62,7 +64,7 @@ public class CaTHService {
                     .language("ENGLISH")
                     .sensitivity(cathListInfo.sensitivity())
                     .displayFrom(now.toString())
-                    .displayTo(now.plus(7, ChronoUnit.DAYS).toString())
+                    .displayTo(getDisplayTo(publishDate))
                     .build();
 
             final Integer res = caTHPublisher.publish(objectMapper.writeValueAsString(courtListDocument), dtsMeta);
@@ -72,5 +74,9 @@ public class CaTHService {
             log.error("Error sending court list document to CaTH endpoint: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to send court list document to CaTH: " + e.getMessage(), e);
         }
+    }
+
+    static @NotNull String getDisplayTo(final LocalDate publishDate) {
+        return publishDate.plusDays(1).atStartOfDay().minusMinutes(1).toInstant(ZoneOffset.UTC).toString();
     }
 }
