@@ -63,8 +63,8 @@ class StandardCourtListTransformationServiceTest {
         
         // Verify CourtHouse
         CourtHouse courtHouse = courtList.getCourtHouse();
-        assertThat(courtHouse.getCourtHouseName()).isEqualTo("Lavender Hill Magistrates' Court");
-        assertThat(courtHouse.getLja()).isEqualTo("Lavender Hill Magistrates' Court");
+        assertThat(courtHouse.getCourtHouseName()).isEqualTo("Croydon Crown Court");
+        assertThat(courtHouse.getLja()).isEqualTo("Croydon Crown Court");
         assertThat(courtHouse.getCourtRoom()).isNotEmpty();
         
         // Verify first CourtRoom
@@ -100,7 +100,7 @@ class StandardCourtListTransformationServiceTest {
         // Verify first Case
         CaseSchema caseObj = hearing.getCaseList().get(0);
         assertThat(caseObj).isNotNull();
-        assertThat(caseObj.getCaseUrn()).isEqualTo("29GD1486826"); // From payload
+        assertThat(caseObj.getCaseUrn()).isEqualTo("38GD6504026"); // From payload
         assertThat(caseObj.getParty()).isNotEmpty();
         
         // Verify first Party (DEFENDANT)
@@ -111,43 +111,43 @@ class StandardCourtListTransformationServiceTest {
         
         // Verify IndividualDetails
         IndividualDetails individualDetails = party.getIndividualDetails();
-        assertThat(individualDetails.getIndividualForenames()).isEqualTo("Robert"); // From payload
-        assertThat(individualDetails.getIndividualSurname()).isEqualTo("Ormsby"); // From payload
-        assertThat(individualDetails.getDateOfBirth()).isEqualTo("1964-01-13"); // Converted from "13 Jan 1964" to ISO date (yyyy-MM-dd) per schema
-        assertThat(individualDetails.getAge()).isEqualTo(62); // Converted from "62"
+        assertThat(individualDetails.getIndividualForenames()).isEqualTo("Alysson"); // From payload
+        assertThat(individualDetails.getIndividualSurname()).isEqualTo("Cummings"); // From payload
+        assertThat(individualDetails.getDateOfBirth()).isEqualTo("1981-02-21"); // Converted from "21 Feb 1981" to ISO date (yyyy-MM-dd) per schema
+        assertThat(individualDetails.getAge()).isEqualTo(44); // Converted from "62"
         
         // Verify Address transformation
         AddressSchema address = individualDetails.getAddress();
         assertThat(address).isNotNull();
         assertThat(address.getLine()).isNotEmpty();
-        assertThat(address.getLine().get(0)).isEqualTo("True Close"); // From payload address1
-        assertThat(address.getLine().get(1)).isEqualTo("StreetDescription"); // From payload address2
-        assertThat(address.getLine().get(2)).isEqualTo("Locality2O"); // From payload address3
-        
+        assertThat(address.getLine().get(0)).isEqualTo("Address line 1"); // From payload address1
+        assertThat(address.getLine().get(1)).isEqualTo("Address line 2"); // From payload address2
+        assertThat(address.getLine().get(2)).isEqualTo("Address line 3"); // From payload address3
+
         // Verify Offences transformation
         List<OffenceSchema> offences = party.getOffence();
         assertThat(offences).isNotNull();
         assertThat(offences).isNotEmpty();
 
-        // Verify first Offence
+        // Verify first Offence (from stub: id, title, wording)
         OffenceSchema offence = offences.get(0);
         assertThat(offence).isNotNull();
-        assertThat(offence.getOffenceCode()).isEqualTo("72357c7f-c4d1-4027-bed3-d42fb52a164e"); // From offence id
-        assertThat(offence.getOffenceTitle()).isEqualTo("Occupy reserved seat / berth without a valid ticket on the Tyne and Wear Metro"); // From payload
-        assertThat(offence.getOffenceWording()).contains("Has a violent past"); // From payload
+        assertThat(offence.getOffenceCode()).isEqualTo("48fdbe30-6191-42ad-bded-0f70fb2a283e"); // From offence id
+        assertThat(offence.getOffenceTitle()).isEqualTo("Use a television set without a licence"); // From payload
+        assertThat(offence.getOffenceWording()).contains("television"); // From payload
 
-        // Stub payload has no ouCode/courtId/courtIdNumeric (reference data not in stub) - document has nulls
-        assertThat(document.getOuCode()).isNull();
-        assertThat(document.getCourtId()).isNull();
-        assertThat(document.getCourtIdNumeric()).isNull();
+        // Stub payload includes ouCode/courtId/courtIdNumeric (court-list-payload-standard.json)
+        assertThat(document.getOuCode()).isEqualTo("C01CY00");
+        assertThat(document.getCourtId()).isEqualTo("07e45c88-9e5d-3e44-b664-d5345bb13be2");
+        assertThat(document.getCourtIdNumeric()).isEqualTo("418");
 
-        // Verify second Party (PROSECUTING_AUTHORITY) if exists
+        // Verify second Party (PROSECUTING_AUTHORITY) from prosecutorType
         if (caseObj.getParty().size() > 1) {
             Party prosecutorParty = caseObj.getParty().get(1);
             assertThat(prosecutorParty).isNotNull();
             assertThat(prosecutorParty.getPartyRole()).isEqualTo("PROSECUTING_AUTHORITY");
             assertThat(prosecutorParty.getOrganisationDetails()).isNotNull();
-            assertThat(prosecutorParty.getOrganisationDetails().getOrganisationName()).isEqualTo("DERPF"); // From prosecutorType
+            assertThat(prosecutorParty.getOrganisationDetails().getOrganisationName()).isEqualTo("CITYPF"); // From prosecutorType in stub
         }
     }
 
