@@ -51,8 +51,8 @@ public class PdfGenerationService {
     private record TemplateInfo(String code, String englishTemplate, String welshTemplate) {}
 
     private static final Map<CourtListType, TemplateInfo> TEMPLATE_BY_COURT_LIST_TYPE = ImmutableMap.of(
-            CourtListType.ONLINE_PUBLIC, new TemplateInfo("ONLINE_PUBLIC", "courtlist/OnlinePublicCourtList", "courtlist/OnlinePublicCourtListEnglishWelsh"),
-            CourtListType.STANDARD, new TemplateInfo("STANDARD", "courtlist/BenchAndStandardCourtList", null)
+            CourtListType.ONLINE_PUBLIC, new TemplateInfo("ONLINE_PUBLIC", "OnlinePublicCourtList", "OnlinePublicCourtListEnglishWelsh"),
+            CourtListType.STANDARD, new TemplateInfo("STANDARD", "BenchAndStandardCourtList", null)
     );
 
     private static final String KEY_TEMPLATE_PAYLOAD = "templatePayload";
