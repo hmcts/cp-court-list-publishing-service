@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -19,9 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.HttpServerErrorException;
-
-import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 
 @Slf4j
@@ -66,14 +62,13 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         assertThat(statusBody.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
     }
 
-    @Disabled
     @Test
     void publishCourtList_shouldStillUpdateStatus_whenCaTHEndpointFails() throws Exception {
         // Given - CaTH returns 500 (add stub with priority 0 so it wins over default success)
         addCathFailureStub();
         try {
             UUID courtCentreId = UUID.randomUUID();
-            String requestJson = createPublishRequestJson(courtCentreId, "STANDARD");
+            String requestJson = createPublishRequestJson(courtCentreId, ONLINE_PUBLIC.toString());
 
             // When - Publish court list (task will call CaTH and get 500)
             ResponseEntity<String> publishResponse = postPublishRequest(requestJson);
@@ -96,7 +91,6 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         }
     }
 
-    @Disabled
     @Test
     void publishCourtList_shouldSetPublishFailedAndSavePublishErrorMessage_whenCaTHFails() throws Exception {
         // Given - CaTH returns 500 (add stub with priority 0 so it wins over default success)
@@ -126,7 +120,6 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         }
     }
 
-    @Disabled
     @Test
     void publishCourtList_shouldSetFileFailedAndSaveFileErrorMessage_whenPdfGenerationFails() throws Exception {
         // Given - Add stub so document-generator returns 500 (only for this test)
@@ -157,7 +150,6 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         }
     }
 
-    @Disabled
     @Test
     void publishCourtList_shouldCreateDbEntry_triggerTask_andUpdateFileUrlWithPdfUrl() throws Exception {
         UUID courtCentreId = UUID.randomUUID();
@@ -301,7 +293,9 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
      * Call {@link AbstractTest#resetWireMock()} in a finally block after the test so other tests get default mappings.
      */
     private void addCathFailureStub() {
-        String mappingJson = """
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        String mapping = """
             {
               "request": {
                 "method": "POST",
@@ -315,32 +309,13 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
               "priority": 0
             }
             """;
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
         ResponseEntity<String> response = http.exchange(
                 WIREMOCK_MAPPINGS_URL,
                 HttpMethod.POST,
-                new HttpEntity<>(mappingJson, headers),
+                new HttpEntity<>(mapping, headers),
                 String.class);
         if (!response.getStatusCode().is2xxSuccessful()) {
             throw new IllegalStateException("Failed to add CaTH failure stub: " + response.getStatusCode());
-        }
-
-        // Sanity check: ensure WireMock is actually returning 500 for CaTH on the host-mapped port
-        // (helps diagnose cases where the stub isn't applied).
-        try {
-            HttpHeaders cathHeaders = new HttpHeaders();
-            cathHeaders.setContentType(MediaType.APPLICATION_JSON);
-            http.exchange(
-                    WIREMOCK_BASE_URL + "/courtlistpublisher/publication",
-                    HttpMethod.POST,
-                    new HttpEntity<>("{}", cathHeaders),
-                    String.class
-            );
-            throw new AssertionError("Expected WireMock CaTH endpoint to return 500 after adding failure stub");
-        } catch (HttpServerErrorException expected) {
-            // expected: 5xx
-            assertThat(expected.getStatusCode().value()).isEqualTo(500);
         }
     }
 

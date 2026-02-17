@@ -47,12 +47,12 @@ public class PdfGenerationService {
 
     // Constants for document generator service (same as progression: render endpoint)
     private static final String RENDER_PATH = "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render";
-    private static final String ONLINE_PUBLIC_TEMPLATE_NAME = "courtlist/OnlinePublicCourtList";
-    private static final String STANDARD_TEMPLATE_NAME = "courtlist/BenchAndStandardCourtList";
 
-    private static final Map<CourtListType, String> TEMPLATE_BY_COURT_LIST_TYPE = ImmutableMap.of(
-            CourtListType.ONLINE_PUBLIC, ONLINE_PUBLIC_TEMPLATE_NAME,
-            CourtListType.STANDARD, STANDARD_TEMPLATE_NAME
+    private record TemplateInfo(String code, String englishTemplate, String welshTemplate) {}
+
+    private static final Map<CourtListType, TemplateInfo> TEMPLATE_BY_COURT_LIST_TYPE = ImmutableMap.of(
+            CourtListType.ONLINE_PUBLIC, new TemplateInfo("ONLINE_PUBLIC", "courtlist/OnlinePublicCourtList", "courtlist/OnlinePublicCourtListEnglishWelsh"),
+            CourtListType.STANDARD, new TemplateInfo("STANDARD", "courtlist/BenchAndStandardCourtList", null)
     );
 
     private static final String KEY_TEMPLATE_PAYLOAD = "templatePayload";
@@ -71,9 +71,9 @@ public class PdfGenerationService {
      * Generates a PDF from the payload, uploads it to Azure Blob Storage as {courtListId}.pdf,
      * and returns the file ID (court list ID).
      */
-    public UUID generateAndUploadPdf(JsonObject payload, UUID courtListId, CourtListType courtListType) throws IOException {
+    public UUID generateAndUploadPdf(JsonObject payload, UUID courtListId, CourtListType courtListType, boolean isWelsh) throws IOException {
         LOGGER.info("Generating PDF for court list ID: {}", courtListId);
-        String templateName = getTemplateName(courtListType);
+        String templateName = getTemplateName(courtListType, isWelsh);
         if (templateName == null) {
             throw new IllegalArgumentException("No template defined for court list type: " + courtListType);
         }
@@ -183,9 +183,17 @@ public class PdfGenerationService {
     }
 
     /**
-     * Returns the document generator template name for the given court list type, or null if not mapped.
+     * Returns the document generator template name for the given court list type and condition.
+     * When the boolean (e.g. isWelsh) is true, returns the English/Welsh template; otherwise the default template. Returns null if not mapped.
      */
-    public String getTemplateName(CourtListType courtListType) {
-        return TEMPLATE_BY_COURT_LIST_TYPE.get(courtListType);
+    public String getTemplateName(CourtListType courtListType, boolean isWelsh) {
+        TemplateInfo templateInfo = TEMPLATE_BY_COURT_LIST_TYPE.get(courtListType);
+        if (templateInfo == null) {
+            return null;
+        }
+        if (isWelsh) {
+            return templateInfo.welshTemplate();
+        }
+        return templateInfo.englishTemplate();
     }
 }

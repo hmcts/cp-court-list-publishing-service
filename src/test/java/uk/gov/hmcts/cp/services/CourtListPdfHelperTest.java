@@ -3,6 +3,7 @@ package uk.gov.hmcts.cp.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -46,12 +47,25 @@ class CourtListPdfHelperTest {
     void generateAndUploadPdf_shouldReturnFileId_whenSuccessful() throws IOException {
         jakarta.json.JsonObject payloadJson = jakarta.json.Json.createObjectBuilder().build();
         when(objectConverter.convertFromObject(payload)).thenReturn(payloadJson);
-        when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId), any())).thenReturn(courtListId);
+        when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId), eq(CourtListType.STANDARD), eq(Boolean.TRUE.equals(payload.getIsWelsh())))).thenReturn(courtListId);
 
         UUID result = pdfHelper.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD);
 
         assertThat(result).isEqualTo(courtListId);
-        verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId), eq(CourtListType.STANDARD));
+        verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId), eq(CourtListType.STANDARD), eq(Boolean.TRUE.equals(payload.getIsWelsh())));
+    }
+
+    @Test
+    void generateAndUploadPdf_shouldPassFalseForNonWelsh_whenPayloadIsWelshFalse() throws IOException {
+        payload.setIsWelsh(false);
+        jakarta.json.JsonObject payloadJson = jakarta.json.Json.createObjectBuilder().build();
+        when(objectConverter.convertFromObject(payload)).thenReturn(payloadJson);
+        when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId), eq(CourtListType.STANDARD), eq(false))).thenReturn(courtListId);
+
+        UUID result = pdfHelper.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD);
+
+        assertThat(result).isEqualTo(courtListId);
+        verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId), eq(CourtListType.STANDARD), eq(false));
     }
 
     @Test
@@ -59,20 +73,20 @@ class CourtListPdfHelperTest {
         UUID result = pdfHelper.generateAndUploadPdf(null, courtListId, CourtListType.STANDARD);
 
         assertThat(result).isNull();
-        verify(pdfGenerationService, never()).generateAndUploadPdf(any(), any(), any());
+        verify(pdfGenerationService, never()).generateAndUploadPdf(any(), any(), any(), anyBoolean());
     }
 
     @Test
     void generateAndUploadPdf_shouldThrowRuntimeException_whenPdfGenerationThrowsException() throws IOException {
         jakarta.json.JsonObject payloadJson = jakarta.json.Json.createObjectBuilder().build();
         when(objectConverter.convertFromObject(payload)).thenReturn(payloadJson);
-        when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId), any()))
+        when(pdfGenerationService.generateAndUploadPdf(any(), eq(courtListId), eq(CourtListType.STANDARD), eq(Boolean.TRUE.equals(payload.getIsWelsh()))))
                 .thenThrow(new IOException("PDF generation failed"));
 
         assertThatThrownBy(() -> pdfHelper.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to generate or upload PDF")
                 .hasMessageContaining("PDF generation failed");
-        verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId), eq(CourtListType.STANDARD));
+        verify(pdfGenerationService).generateAndUploadPdf(any(), eq(courtListId), eq(CourtListType.STANDARD), eq(Boolean.TRUE.equals(payload.getIsWelsh())));
     }
 }
