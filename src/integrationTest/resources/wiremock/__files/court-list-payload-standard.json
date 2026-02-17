@@ -71,6 +71,8 @@
       ]
     }
   ],
-  "templateName": "BenchAndStandardCourtList"
+  "templateName": "BenchAndStandardCourtList",
+  "courtIdNumeric": "325",
+  "isWelsh": false
 }
 

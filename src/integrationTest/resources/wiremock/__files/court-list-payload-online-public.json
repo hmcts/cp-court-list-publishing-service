@@ -303,6 +303,10 @@
       ]
     }
   ],
-  "templateName": "PublicCourtList"
+  "templateName": "OnlinePublicCourtList",
+  "ouCode": "OU123",
+  "courtId": "415",
+  "courtIdNumeric": "325",
+  "isWelsh": false
 }
 

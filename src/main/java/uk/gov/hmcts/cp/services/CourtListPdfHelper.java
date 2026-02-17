@@ -41,7 +41,7 @@ public class CourtListPdfHelper {
         try {
             log.info("Generating and uploading PDF for court list ID: {}", courtListId);
             JsonObject payloadJson = objectConverter.convertFromObject(payload);
-            UUID fileId = pdfGenerationService.generateAndUploadPdf(payloadJson, courtListId, courtListType);
+            UUID fileId = pdfGenerationService.generateAndUploadPdf(payloadJson, courtListId, courtListType, Boolean.TRUE.equals(payload.getIsWelsh()));
             log.info("Successfully generated and uploaded PDF for court list ID: {}", courtListId);
             return fileId;
         } catch (IllegalArgumentException e) {
