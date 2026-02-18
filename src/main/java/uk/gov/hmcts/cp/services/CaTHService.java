@@ -55,13 +55,14 @@ public class CaTHService {
             }
 
             final Instant now = Instant.now();
+            final String language = Boolean.TRUE.equals(courtListDocument.getIsWelsh()) ? "WELSH" : "ENGLISH";
             final DtsMeta dtsMeta = DtsMeta.builder()
                     .provenance("COMMON_PLATFORM")
                     .type("LIST")
                     .listType(cathListInfo.cathCourtListType())
                     .courtId(courtIdFromRefData)
                     .contentDate(now.toString())
-                    .language("ENGLISH")
+                    .language(language)
                     .sensitivity(cathListInfo.sensitivity())
                     .displayFrom(now.toString())
                     .displayTo(getDisplayTo(publishDate))
