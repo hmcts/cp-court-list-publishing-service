@@ -38,6 +38,12 @@ public class CourtCentreData {
     @JsonProperty("oucodeL3Name")
     private String oucodeL3Name;
 
+    /**
+     * LJA (Local Justice Area) code from reference data, used to fetch LJA details (name, welsh name).
+     */
+    @JsonProperty("lja")
+    private String lja;
+
     @JsonProperty("address1")
     private String address1;
 
