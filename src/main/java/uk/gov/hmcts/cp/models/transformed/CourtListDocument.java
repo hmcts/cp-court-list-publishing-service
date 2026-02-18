@@ -36,5 +36,9 @@ public class CourtListDocument {
     /** Numeric court id from reference data, used for CaTH DtsMeta. */
     @JsonProperty("courtIdNumeric")
     private String courtIdNumeric;
+
+    /** Whether the court supports Welsh; used for CaTH DtsMeta language (WELSH vs ENGLISH). */
+    @JsonProperty("isWelsh")
+    private Boolean isWelsh;
 }
 

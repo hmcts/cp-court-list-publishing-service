@@ -65,6 +65,8 @@ class CaTHServiceTest {
         // When document has no courtIdNumeric, DtsMeta uses fallback "0"
         assertThat(capturedMeta.getCourtId()).isEqualTo("0");
         assertThat(capturedMeta.getDisplayTo()).isEqualTo("2024-01-15T23:59:00Z");
+        // When isWelsh is null or false, language is ENGLISH
+        assertThat(capturedMeta.getLanguage()).isEqualTo("ENGLISH");
     }
 
     @Test
@@ -82,6 +84,40 @@ class CaTHServiceTest {
         ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
         verify(cathPublisher).publish(anyString(), metaCaptor.capture());
         assertThat(metaCaptor.getValue().getCourtId()).isEqualTo("325");
+    }
+
+    @Test
+    void sendCourtListToCaTH_shouldSetLanguageWelsh_whenIsWelshTrue() {
+        // Given - document with isWelsh true
+        courtListDocument = CourtListDocument.builder()
+                .isWelsh(true)
+                .build();
+        when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
+
+        // When
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15));
+
+        // Then - DtsMeta has language WELSH
+        ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
+        verify(cathPublisher).publish(anyString(), metaCaptor.capture());
+        assertThat(metaCaptor.getValue().getLanguage()).isEqualTo("WELSH");
+    }
+
+    @Test
+    void sendCourtListToCaTH_shouldSetLanguageEnglish_whenIsWelshFalseOrNull() {
+        // Given - document with isWelsh false
+        courtListDocument = CourtListDocument.builder()
+                .isWelsh(false)
+                .build();
+        when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
+
+        // When
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15));
+
+        // Then - DtsMeta has language ENGLISH
+        ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
+        verify(cathPublisher).publish(anyString(), metaCaptor.capture());
+        assertThat(metaCaptor.getValue().getLanguage()).isEqualTo("ENGLISH");
     }
 
     @Test

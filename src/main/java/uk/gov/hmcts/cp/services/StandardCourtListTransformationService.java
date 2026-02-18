@@ -47,6 +47,7 @@ public class StandardCourtListTransformationService {
                 .ouCode(payload.getOuCode())
                 .courtId(payload.getCourtId())
                 .courtIdNumeric(payload.getCourtIdNumeric())
+                .isWelsh(payload.getIsWelsh())
                 .build();
 
         return result;
