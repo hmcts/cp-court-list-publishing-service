@@ -86,5 +86,23 @@ public class CourtListPayload {
      */
     @JsonProperty("isWelsh")
     private Boolean isWelsh;
+
+    /**
+     * LJA (Local Justice Area) code from reference data, aligned with progression.search.court.list.
+     */
+    @JsonProperty("ljaCode")
+    private String ljaCode;
+
+    /**
+     * LJA name from reference data.
+     */
+    @JsonProperty("ljaName")
+    private String ljaName;
+
+    /**
+     * LJA Welsh name from reference data.
+     */
+    @JsonProperty("welshLjaName")
+    private String welshLjaName;
 }
 

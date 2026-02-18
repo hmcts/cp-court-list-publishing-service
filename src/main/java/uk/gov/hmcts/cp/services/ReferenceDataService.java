@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import uk.gov.hmcts.cp.models.CourtCentreData;
+import uk.gov.hmcts.cp.models.EnforcementAreaResponse;
+import uk.gov.hmcts.cp.models.LjaDetails;
 import uk.gov.hmcts.cp.models.OuCourtroomsResponse;
 
 import java.net.URI;
@@ -31,7 +33,10 @@ public class ReferenceDataService {
     private String commonPlatformQueryApiBaseUrl;
 
     private static final String COURTROOMS_PATH = "/referencedata-query-api/query/api/rest/referencedata/courtrooms";
+    private static final String ENFORCEMENT_AREA_PATH = "/referencedata-query-api/query/api/rest/referencedata/enforcement-area";
     private static final String ACCEPT_OU_COURTROOMS = "application/vnd.referencedata.ou-courtrooms+json";
+    private static final String ACCEPT_ENFORCEMENT_AREA = "application/vnd.referencedata.query.enforcement-area+json";
+    private static final String LJA_QUERY_PARAM = "localJusticeAreaNationalCourtCode";
 
     /**
      * Fetches court centre data by courtId (numeric string, e.g. "4" or "325").
@@ -87,6 +92,63 @@ public class ReferenceDataService {
                 .toUri();
 
         return getCourtCentreData(uri, cjscppuid, "courtCentreId", courtCentreId);
+    }
+
+    /**
+     * Fetches LJA (Local Justice Area) details by LJA code, aligned with progression's referenceDataService.getLjaDetails.
+     * Uses GET /enforcement-area?localJusticeAreaNationalCourtCode=... with Accept application/vnd.referencedata.query.enforcement-area+json.
+     *
+     * @param ljaCode   LJA national court code (e.g. from court centre "lja" field)
+     * @param cjscppuid user ID for CJSCPPUID header; set when non-blank.
+     * @return optional with ljaCode, ljaName, welshLjaName if found
+     */
+    public Optional<LjaDetails> getLjaDetails(String ljaCode, String cjscppuid) {
+        if (ljaCode == null || ljaCode.isBlank()) {
+            log.debug("LJA code is null or blank, skipping LJA details lookup");
+            return Optional.empty();
+        }
+        if (commonPlatformQueryApiBaseUrl == null || commonPlatformQueryApiBaseUrl.isBlank()) {
+            log.warn("Reference data API base URL is not configured, skipping LJA details lookup");
+            return Optional.empty();
+        }
+
+        URI uri = UriComponentsBuilder
+                .fromUriString(commonPlatformQueryApiBaseUrl)
+                .path(ENFORCEMENT_AREA_PATH)
+                .queryParam(LJA_QUERY_PARAM, ljaCode)
+                .build()
+                .toUri();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Accept", ACCEPT_ENFORCEMENT_AREA);
+        if (cjscppuid != null && !cjscppuid.isBlank()) {
+            headers.set("CJSCPPUID", cjscppuid);
+        }
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<EnforcementAreaResponse> response = restTemplate.exchange(
+                    uri,
+                    HttpMethod.GET,
+                    requestEntity,
+                    EnforcementAreaResponse.class
+            );
+            EnforcementAreaResponse body = response.getBody();
+            if (body != null && body.getLocalJusticeArea() != null) {
+                EnforcementAreaResponse.LocalJusticeArea lja = body.getLocalJusticeArea();
+                LjaDetails details = LjaDetails.builder()
+                        .ljaCode(lja.getNationalCourtCode())
+                        .ljaName(lja.getName())
+                        .welshLjaName(lja.getWelshName())
+                        .build();
+                log.debug("Retrieved LJA details for ljaCode: {}", ljaCode);
+                return Optional.of(details);
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            log.warn("Failed to fetch LJA details for ljaCode '{}': {}", ljaCode, e.getMessage());
+            return Optional.empty();
+        }
     }
 
     private Optional<CourtCentreData> getCourtCentreData(URI uri, String cjscppuid, String paramName, String paramValue) {

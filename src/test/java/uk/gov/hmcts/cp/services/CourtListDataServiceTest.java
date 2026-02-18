@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import uk.gov.hmcts.cp.models.CourtCentreData;
 import uk.gov.hmcts.cp.models.CourtListPayload;
+import uk.gov.hmcts.cp.models.LjaDetails;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 import java.util.Optional;
@@ -89,6 +90,43 @@ class CourtListDataServiceTest {
                 eq(false),
                 eq("request-user-id"));
         verify(referenceDataService).getCourtCenterDataByCourtCentreId(eq("f8254db1-1683-483e-afb3-b87fde5a0a26"), eq("system-user-id"));
+    }
+
+    @Test
+    void getCourtListData_enrichesWithLjaDetailsWhenCourtCentreHasLja() {
+        String listingJson = "{\"listType\":\"standard\",\"courtCentreName\":\"Lavender Hill\"}";
+        CourtCentreData refData = CourtCentreData.builder()
+                .id(UUID.randomUUID())
+                .ouCode("B01LY00")
+                .courtIdNumeric("325")
+                .lja("2577")
+                .oucodeL3Name("South Western (Lavender Hill)")
+                .build();
+        LjaDetails ljaDetails = LjaDetails.builder()
+                .ljaCode("2577")
+                .ljaName("Lavender Hill Magistrates' Court")
+                .welshLjaName("Llys Y Goron Lavender Hill")
+                .build();
+
+        when(listingQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean(), any())).thenReturn(listingJson);
+        when(referenceDataService.getCourtCenterDataByCourtCentreId(eq("f8254db1-1683-483e-afb3-b87fde5a0a26"), eq("system-user-id")))
+                .thenReturn(Optional.of(refData));
+        when(referenceDataService.getLjaDetails(eq("2577"), eq("system-user-id"))).thenReturn(Optional.of(ljaDetails));
+
+        String result = courtListDataService.getCourtListData(
+                CourtListType.STANDARD,
+                "f8254db1-1683-483e-afb3-b87fde5a0a26",
+                null,
+                "2024-01-15",
+                "2024-01-15",
+                false,
+                "request-user-id",
+                "system-user-id");
+
+        assertThat(result).contains("\"ljaCode\":\"2577\"");
+        assertThat(result).contains("\"ljaName\":\"Lavender Hill Magistrates' Court\"");
+        assertThat(result).contains("\"welshLjaName\":\"Llys Y Goron Lavender Hill\"");
+        verify(referenceDataService).getLjaDetails(eq("2577"), eq("system-user-id"));
     }
 
     @Test

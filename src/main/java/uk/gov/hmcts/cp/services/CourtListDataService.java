@@ -11,6 +11,7 @@ import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.models.CourtCentreData;
 import uk.gov.hmcts.cp.models.CourtListPayload;
+import uk.gov.hmcts.cp.models.LjaDetails;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 /**
@@ -54,6 +55,9 @@ public class CourtListDataService {
     private static final String WELSH_COURT_CENTRE_NAME = "welshCourtCentreName";
     private static final String WELSH_COURT_CENTRE_ADDRESS1 = "welshCourtCentreAddress1";
     private static final String WELSH_COURT_CENTRE_ADDRESS2 = "welshCourtCentreAddress2";
+    private static final String LJA_CODE = "ljaCode";
+    private static final String LJA_NAME = "ljaName";
+    private static final String WELSH_LJA_NAME = "welshLjaName";
 
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
 
@@ -92,7 +96,13 @@ public class CourtListDataService {
         ObjectNode object = (ObjectNode) root;
         if (courtCentreId != null && !courtCentreId.isBlank()) {
             referenceDataService.getCourtCenterDataByCourtCentreId(courtCentreId, systemUserId)
-                    .ifPresent(data -> addCourtCentreIds(object, data));
+                    .ifPresent(data -> {
+                        addCourtCentreIds(object, data);
+                        if (data.getLja() != null && !data.getLja().isBlank()) {
+                            referenceDataService.getLjaDetails(data.getLja(), systemUserId)
+                                    .ifPresent(lja -> addLjaDetails(object, lja));
+                        }
+                    });
         }
         // Ensure venue address fields (address1, address2) are set for transformation; use court centre when reference data did not provide them
         if (!object.has(ADDRESS1) && object.has(COURT_CENTRE_ADDRESS1)) {
@@ -209,23 +219,22 @@ public class CourtListDataService {
         if (data.getEmail() != null) {
             object.put(EMAIL, data.getEmail());
         }
-        if (data.getAddress1() != null) {
-            object.put(COURT_CENTRE_ADDRESS1, data.getAddress1());
+
+    }
+
+    /**
+     * Adds LJA (Local Justice Area) details to the court list payload, aligned with progression.search.court.list
+     * (ljaCode, ljaName, welshLjaName from reference data enforcement-area).
+     */
+    private void addLjaDetails(ObjectNode object, LjaDetails lja) {
+        if (lja.getLjaCode() != null) {
+            object.put(LJA_CODE, lja.getLjaCode());
         }
-        if (data.getAddress2() != null) {
-            object.put(COURT_CENTRE_ADDRESS2, data.getAddress2());
+        if (lja.getLjaName() != null) {
+            object.put(LJA_NAME, lja.getLjaName());
         }
-        if (data.getDefaultStartTime() != null) {
-            object.put(COURT_CENTRE_DEFAULT_START_TIME, data.getDefaultStartTime());
-        }
-        if (data.getOucodeL3WelshName() != null) {
-            object.put(WELSH_COURT_CENTRE_NAME, data.getOucodeL3WelshName());
-        }
-        if (data.getWelshAddress1() != null) {
-            object.put(WELSH_COURT_CENTRE_ADDRESS1, data.getWelshAddress1());
-        }
-        if (data.getWelshAddress2() != null) {
-            object.put(WELSH_COURT_CENTRE_ADDRESS2, data.getWelshAddress2());
+        if (lja.getWelshLjaName() != null) {
+            object.put(WELSH_LJA_NAME, lja.getWelshLjaName());
         }
     }
 }
