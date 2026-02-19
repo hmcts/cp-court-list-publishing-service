@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
 import uk.gov.hmcts.cp.models.CourtListPayload;
+import uk.gov.hmcts.cp.models.Defendant;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 import uk.gov.hmcts.cp.models.transformed.schema.*;
 
@@ -198,6 +199,14 @@ class OnlinePublicCourtListTransformationServiceTest {
         assertThat(documentSchema.getPublicationDate()).isNotNull();
         // Verify it's a valid ISO 8601 date-time string
         assertThat(documentSchema.getPublicationDate()).matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}([.]\\d{1,3})?Z$");
+    }
+
+    @Test
+    void transform_shouldDeserializeDefendantAsnFromPayload() throws Exception {
+        // Stub court-list-payload-public.json has first defendant with "asn": "REF456"
+        Defendant firstDefendant = payload.getHearingDates().get(0).getCourtRooms().get(0)
+                .getTimeslots().get(0).getHearings().get(0).getDefendants().get(0);
+        assertThat(firstDefendant.getAsn()).isEqualTo("REF456");
     }
 
     private CourtListPayload loadPayloadFromStubData(String resourcePath) throws Exception {
