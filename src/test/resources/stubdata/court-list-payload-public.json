@@ -35,6 +35,7 @@
                   "defendants": [
                     {
                       "id": "1b4ffa2a-aeb4-4d03-993e-b40e2e404c7d",
+                      "asn": "REF456",
                       "organisationName": "",
                       "welshOrganisationName": "",
                       "firstName": "Tommie",
