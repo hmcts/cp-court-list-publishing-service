@@ -55,3 +55,8 @@ cath:
   base-url: ${CATH_BASE_URL:http://host.docker.internal:8090}
   endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
 
+# Task manager schema (e.g. for job data validation)
+taskmanager:
+  schema:
+    enabled: true
+

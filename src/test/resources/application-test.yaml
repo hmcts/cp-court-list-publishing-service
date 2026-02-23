@@ -44,3 +44,8 @@ courtlistpublishing:
 cath:
   base-url: ${CATH_BASE_URL:https://spnl-apim-int-gw.cpp.nonlive}
   endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
+
+# Task manager schema enabled for tests
+taskmanager:
+  schema:
+    enabled: true

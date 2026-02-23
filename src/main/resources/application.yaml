@@ -36,7 +36,7 @@ cath:
   endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
 taskmanager:
   schema:
-    enabled=true:
+    enabled: true
 # Temporarily commented out due to SpringDoc compatibility issues with Spring Boot 4.0.0-M3
 # springdoc:
 #   packagesToScan: uk.gov.hmcts.cp.controllers
