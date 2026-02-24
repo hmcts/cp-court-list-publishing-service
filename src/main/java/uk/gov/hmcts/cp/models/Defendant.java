@@ -49,6 +49,15 @@ public class Defendant {
     @JsonProperty("offences")
     private List<Offence> offences;
 
+    @JsonProperty("prosecutionCounsels")
+    private List<Counsel> prosecutionCounsels;
+
+    @JsonProperty("defenceCounsels")
+    private List<Counsel> defenceCounsels;
+
+    @JsonProperty("personDefendant")
+    private PersonDefendant personDefendant;
+
     @JsonProperty("asn")
     private String asn;
 }

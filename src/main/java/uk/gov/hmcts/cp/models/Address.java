@@ -28,5 +28,20 @@ public class Address {
     
     @JsonProperty("postcode")
     private String postcode;
+
+    @JsonProperty("welshAddress1")
+    private String welshAddress1;
+
+    @JsonProperty("welshAddress2")
+    private String welshAddress2;
+
+    @JsonProperty("welshAddress3")
+    private String welshAddress3;
+
+    @JsonProperty("welshAddress4")
+    private String welshAddress4;
+
+    @JsonProperty("welshAddress5")
+    private String welshAddress5;
 }
 

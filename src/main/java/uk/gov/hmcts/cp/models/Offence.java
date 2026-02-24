@@ -22,5 +22,26 @@ public class Offence {
     
     @JsonProperty("offenceWording")
     private String offenceWording;
+
+    @JsonProperty("offenceCode")
+    private String offenceCode;
+
+    @JsonProperty("listingNumber")
+    private Integer listingNumber;
+
+    @JsonProperty("maxPenalty")
+    private String maxPenalty;
+
+    @JsonProperty("alcoholReadingAmount")
+    private String alcoholReadingAmount;
+
+    @JsonProperty("convictedOn")
+    private String convictedOn;
+
+    @JsonProperty("adjournedDate")
+    private String adjournedDate;
+
+    @JsonProperty("adjournedHearingType")
+    private String adjournedHearingType;
 }
 
