@@ -12,6 +12,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -234,19 +235,24 @@ public class OnlinePublicCourtListTransformationService {
             List<Party> parties = new ArrayList<>();
             
             // Only include basic individual details (name only for public lists)
+            IndividualDetails individualDetails = null;
             if (defendant.getFirstName() != null || defendant.getSurname() != null) {
-                IndividualDetails individualDetails = IndividualDetails.builder()
+                individualDetails = IndividualDetails.builder()
                         .individualForenames(defendant.getFirstName())
                         .individualSurname(defendant.getSurname())
                         .build();
-
-                Party party = Party.builder()
-                        .partyRole("DEFENDANT")
-                        .individualDetails(individualDetails)
-                        .build();
-
-                parties.add(party);
             }
+
+            // Offence list per schema (offenceTitle only for public lists)
+            List<OffenceSchema> offences = transformOffencesForPublicList(defendant.getOffences());
+
+            Party party = Party.builder()
+                    .partyRole("DEFENDANT")
+                    .individualDetails(individualDetails)
+                    .offence(offences)
+                    .build();
+
+            parties.add(party);
 
             CaseSchema caseSchema = CaseSchema.builder()
                     .caseUrn(hearing.getCaseNumber())
@@ -258,6 +264,20 @@ public class OnlinePublicCourtListTransformationService {
         }
 
         return cases;
+    }
+
+    /**
+     * Transform offences for public list: schema only requires offenceTitle per offence item.
+     */
+    private List<OffenceSchema> transformOffencesForPublicList(List<uk.gov.hmcts.cp.models.Offence> offences) {
+        if (offences == null || offences.isEmpty()) {
+            return null;
+        }
+        return offences.stream()
+                .map(o -> OffenceSchema.builder()
+                        .offenceTitle(o.getOffenceTitle())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     private String convertToIsoDateTime(String time, String date) {
