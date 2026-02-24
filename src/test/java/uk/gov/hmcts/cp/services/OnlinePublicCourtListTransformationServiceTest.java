@@ -100,7 +100,9 @@ class OnlinePublicCourtListTransformationServiceTest {
         // Public lists should not include sensitive information like DOB, address, etc.
         assertThat(individualDetails.getDateOfBirth()).isNull();
         assertThat(individualDetails.getAddress()).isNull();
-        assertThat(party.getOffence()).isNull();
+        // Stub defendant has offences; public list includes offenceTitle per schema
+        assertThat(party.getOffence()).isNotEmpty();
+        assertThat(party.getOffence().get(0).getOffenceTitle()).isEqualTo("Attempt theft of motor vehicle");
 
         // Stub payload has no reference data - document has nulls
         assertThat(document.getOuCode()).isNull();

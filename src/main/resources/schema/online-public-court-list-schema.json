@@ -7,7 +7,7 @@
         "line": {
           "title": "Address Line",
           "type": "array",
-          "items": {
+          "items":{
             "title": "Items",
             "type": "string",
             "examples": [
@@ -44,94 +44,99 @@
         }
       }
     },
-    "party": {
+    "party" : {
       "title": "Party",
       "description": "A party",
       "type": "object",
-      "properties": {
-        "partyRole": {
-          "title": "Party Role",
-          "description": "Role of the party, selectable list of roles, i.e. prosecution, solicitor defence etc",
-          "type": "string",
-          "examples": [
-            "DEFENDANT",
-            "PROSECUTING_AUTHORITY",
-            "APPLICANT",
-            "RESPONDENT"
-          ],
-          "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
-        },
-        "individualDetails": {
-          "title": "Individual Details",
-          "description": "Individual Details",
-          "type": "object",
-          "properties": {
-            "individualForenames": {
-              "description": "Forename of party",
-              "title": "Individual Forenames",
-              "type": "string",
-              "examples": [
-                "John Smith"
-              ],
-              "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
-            },
-            "individualSurname": {
-              "description": "Surname of party",
-              "title": "Individual Surname",
-              "type": "string",
-              "examples": [
-                "Surname"
-              ],
-              "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
-            }
-          }
-        },
-        "organisationDetails": {
-          "title": "Organisation Details",
-          "description": "Organisation Details",
-          "type": "object",
-          "required": [
-            "organisationName"
-          ],
-          "properties": {
-            "organisationName": {
-              "title": "Organisation Name",
-              "description": "Party name of organisation",
-              "type": "string",
-              "examples": [
-                "A & B Solicitors"
-              ],
-              "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
-            }
-          }
-        },
-        "offence": {
-          "title": "offence",
-          "description": "The offence and details of offences associated with the case. It is also known as charges.",
-          "type": "array",
-          "items": {
+      "items": {
+        "title": "Party",
+        "description": "A party",
+        "type": "object",
+        "properties": {
+          "partyRole": {
+            "title": "Party Role",
+            "description": "Role of the party, selectable list of roles, i.e. prosecution, solicitor defence etc",
+            "type": "string",
+            "examples": [
+              "DEFENDANT",
+              "PROSECUTING_AUTHORITY",
+              "APPLICANT",
+              "RESPONDENT"
+            ],
+            "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
+          },
+          "individualDetails": {
+            "title": "Individual Details",
+            "description": "Individual Details",
             "type": "object",
             "properties": {
-              "offenceTitle": {
-                "title": "Offence title",
-                "description": "Short description of offence",
+              "individualForenames": {
+                "description": "Forename of party",
+                "title": "Individual Forenames",
                 "type": "string",
                 "examples": [
-                  "drink driving"
+                  "John Smith"
+                ],
+                "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
+              },
+              "individualSurname": {
+                "description": "Surname of party",
+                "title": "Individual Surname",
+                "type": "string",
+                "examples": [
+                  "Surname"
                 ],
                 "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
               }
             }
+          },
+          "organisationDetails": {
+            "title": "Organisation Details",
+            "description": "Organisation Details",
+            "type": "object",
+            "required": [
+              "organisationName"
+            ],
+            "properties": {
+              "organisationName": {
+                "title": "Organisation Name",
+                "description": "Party name of organisation",
+                "type": "string",
+                "examples": [
+                  "A & B Solicitors"
+                ],
+                "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
+              }
+            }
+          },
+          "offence": {
+            "title": "offence",
+            "description": "The offence and details of offences associated with the case. It is also known as charges.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "offenceTitle": {
+                  "title": "Offence title",
+                  "description": "Short description of offence",
+                  "type": "string",
+                  "examples": [
+                    "drink driving"
+                  ],
+                  "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
+                }
+              }
+            }
+          },
+          "subject": {
+            "title": "Subject Restriction",
+            "description": "Party is subject of the application/case",
+            "type": "boolean",
+            "examples": [
+              "true"
+            ],
+            "pattern": "^(?!.*<[^>]+>).*$"
           }
-        },
-        "subject": {
-          "title": "Subject Restriction",
-          "description": "Party is subject of the application/case",
-          "type": "boolean",
-          "examples": [
-            "true"
-          ],
-          "pattern": "^(?!.*<[^>]+>).*$"
         }
       }
     },
@@ -237,7 +242,7 @@
                             "type": "array",
                             "description": "Judiciary for the session",
                             "title": "Judiciary",
-                            "items": {
+                            "items":{
                               "type": "object",
                               "$ref": "#/$defs/judiciary"
                             }
@@ -245,7 +250,7 @@
                           "sittings": {
                             "title": "Sittings",
                             "type": "array",
-                            "items": {
+                            "items":{
                               "type": "object",
                               "required": ["sittingStart", "hearing"],
                               "properties": {
