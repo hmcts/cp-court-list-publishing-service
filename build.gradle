@@ -125,11 +125,6 @@ dependencies {
     // JSON Schema Validation (same as cp-framework-libraries context)
     implementation "com.github.erosb:everit-json-schema:${everitJsonSchemaVersion}"
 
-    // RestEasy and JAX-RS for Publishing Hub integration
-    implementation 'org.jboss.resteasy:resteasy-client:6.2.8.Final'
-    implementation 'org.jboss.resteasy:resteasy-client-api:6.2.8.Final'
-    implementation 'org.jboss.resteasy:resteasy-json-binding-provider:6.2.8.Final'
-    implementation 'jakarta.ws.rs:jakarta.ws.rs-api:4.0.0'
     implementation 'com.google.guava:guava:33.3.1-jre'
 
     // Azure Blob Storage
