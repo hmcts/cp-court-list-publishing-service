@@ -54,23 +54,35 @@ public class StandardCourtListTransformationService {
     }
 
     private Venue transformVenue(CourtListPayload payload) {
-        AddressSchema venueAddress = transformAddressSchemaFromStrings(
-                payload.getCourtCentreAddress1(),
-                payload.getCourtCentreAddress2()
-        );
-
+        AddressSchema venueAddress = buildVenueAddressFromPayload(payload);
         return Venue.builder()
                 .venueAddress(venueAddress)
                 .build();
+    }
+
+    /**
+     * Build venue address per schema: prefer address1-5 and postcode (from reference data), else courtCentreAddress1/2.
+     */
+    private AddressSchema buildVenueAddressFromPayload(CourtListPayload payload) {
+        if (isNonBlank(payload.getAddress1()) || isNonBlank(payload.getAddress2()) || isNonBlank(payload.getAddress3())
+                || isNonBlank(payload.getAddress4()) || isNonBlank(payload.getAddress5()) || isNonBlank(payload.getPostcode())) {
+            return transformAddressSchemaFromStrings(
+                    payload.getAddress1(), payload.getAddress2(), payload.getAddress3(),
+                    payload.getAddress4(), payload.getAddress5(), payload.getPostcode());
+        }
+        return transformAddressSchemaFromStrings(payload.getCourtCentreAddress1(), payload.getCourtCentreAddress2());
+    }
+
+    private static boolean isNonBlank(String s) {
+        return s != null && !s.trim().isEmpty();
     }
 
     private List<CourtList> transformCourtLists(CourtListPayload payload) {
         List<CourtList> courtLists = new ArrayList<>();
 
         if (payload.getHearingDates() != null && !payload.getHearingDates().isEmpty()) {
-            // Group by court house (using court centre name)
             String courtHouseName = payload.getCourtCentreName();
-            String lja = payload.getCourtCentreName(); // Using court centre name as LJA placeholder
+            String lja = isNonBlank(payload.getLjaName()) ? payload.getLjaName() : payload.getCourtCentreName();
 
             List<CourtRoomSchema> courtRooms = new ArrayList<>();
 
@@ -227,9 +239,14 @@ public class StandardCourtListTransformationService {
         for (Defendant defendant : hearing.getDefendants()) {
             List<Party> parties = transformParties(defendant, hearing);
 
+            List<String> reportingRestrictionDetails = null;
+            if (isNonBlank(hearing.getReportingRestrictionReason())) {
+                reportingRestrictionDetails = Collections.singletonList(hearing.getReportingRestrictionReason().trim());
+            }
             CaseSchema caseSchema = CaseSchema.builder()
                     .caseUrn(hearing.getCaseNumber())
                     .reportingRestriction(hearing.getReportingRestrictionReason() != null && !hearing.getReportingRestrictionReason().trim().isEmpty())
+                    .reportingRestrictionDetails(reportingRestrictionDetails)
                     .caseSequenceIndicator(null) // Not available in source data
                     .party(parties)
                     .build();
@@ -317,10 +334,11 @@ public class StandardCourtListTransformationService {
                 .offenceCode(offence.getId()) // Using ID as offence code
                 .offenceTitle(offence.getOffenceTitle())
                 .offenceWording(offence.getOffenceWording())
-                .offenceMaxPen(null) // Not available in source data
+                .offenceMaxPen(offence.getMaxPenalty()) // Map from source when available
                 .reportingRestriction(null) // Not available in source data
+                .reportingRestrictionDetails(null) // Not available in source data
                 .convictionDate(null) // Not available in source data
-                .adjournedDate(null) // Not available in source data
+                .adjournedDate(offence.getAdjournedDate()) // Map from source when available
                 .plea(null) // Not available in source data
                 .pleaDate(null) // Not available in source data
                 .offenceLegislation(null) // Not available in source data

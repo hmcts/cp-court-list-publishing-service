@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -25,6 +27,9 @@ public class OffenceSchema {
     
     @JsonProperty("reportingRestriction")
     private Boolean reportingRestriction;
+
+    @JsonProperty("reportingRestrictionDetails")
+    private List<String> reportingRestrictionDetails;
     
     @JsonProperty("convictionDate")
     private String convictionDate;
