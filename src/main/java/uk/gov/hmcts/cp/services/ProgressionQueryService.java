@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import uk.gov.hmcts.cp.config.AppConstant;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 import java.net.URI;
@@ -28,8 +30,7 @@ public class ProgressionQueryService {
     private static final String ACCEPT_COURT_LIST_DATA = "application/vnd.progression.search.court.list.data+json";
     private static final String ACCEPT_PRISON_COURT_LIST_DATA = "application/vnd.progression.search.prison.court.list.data+json";
     private static final String PRISON = "PRISON";
-    /** Header name for user ID (progression query API expects this). */
-    private static final String USER_ID_HEADER = "userId";
+
 
     private final RestTemplate restTemplate;
 
@@ -81,7 +82,7 @@ public class ProgressionQueryService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", accept);
-        headers.set(USER_ID_HEADER, cjscppuid);
+        headers.set(AppConstant.CJSCPPUID, cjscppuid);
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
         ResponseEntity<String> response = restTemplate.exchange(

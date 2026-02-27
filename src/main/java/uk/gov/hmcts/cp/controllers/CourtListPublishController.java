@@ -2,6 +2,8 @@ package uk.gov.hmcts.cp.controllers;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+
+import uk.gov.hmcts.cp.config.AppConstant;
 import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
@@ -104,8 +106,8 @@ public class CourtListPublishController implements CourtListPublishApi {
         if (cjscppuid == null || cjscppuid.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CJSCPPUID header is required");
         }
-        LOG.info("Fetching court list data from progression for listId: {}, courtCentreId: {}, startDate: {}, endDate: {}",
-                listId, courtCentreId, startDate, endDate);
+        LOG.info("Fetching court list data from progression for listId: {}, courtCentreId: {}, startDate: {}, endDate: {} and user ID {}",
+                listId, courtCentreId, startDate, endDate, cjscppuid);
         String courtCentreIdStr = courtCentreId != null ? courtCentreId.toString() : null;
         String startStr = startDate != null ? startDate.toString() : null;
         String endStr = endDate != null ? endDate.toString() : null;
@@ -166,7 +168,7 @@ public class CourtListPublishController implements CourtListPublishApi {
     private static String getCjscppuidFromRequest() {
         var attrs = RequestContextHolder.getRequestAttributes();
         if (attrs instanceof ServletRequestAttributes servletAttrs) {
-            return servletAttrs.getRequest().getHeader("CJSCPPUID");
+            return servletAttrs.getRequest().getHeader(AppConstant.CJSCPPUID);
         }
         return null;
     }
