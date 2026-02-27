@@ -51,6 +51,9 @@ public class CourtListDataService {
             String cjscppuid) {
         boolean restricted = cjscppuid != null && !cjscppuid.trim().isEmpty();
         String json = getCourtListData(listId, courtCentreId, null, startDate, endDate, restricted, cjscppuid);
+
+        log.info("======= TODO: remove this --- Original CPP Payload is: {}", json);
+
         try {
             return OBJECT_MAPPER.readValue(json, CourtListPayload.class);
         } catch (JsonProcessingException e) {
