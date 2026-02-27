@@ -17,6 +17,7 @@ import java.net.URI;
 /**
  * Calls progression service GET /courtlistdata (application/vnd.progression.search.court.list.data+json).
  * Returns the same court list data shape as progression's court list document payload, without PDF/Word generation.
+ * CJSCPPUID (user ID) must always be provided; it is sent on the User-Id header to progression.
  */
 @Service
 @RequiredArgsConstructor
@@ -37,9 +38,9 @@ public class ProgressionQueryService {
 
     /**
      * Fetches court list data from progression /courtlistdata.
-     * Returns raw JSON string (same shape as progression court list payload, optionally enriched with ouCode/courtId).
+     * Returns raw JSON string (same shape as progression court list payload).
      *
-     * @param cjscppuid user ID for the request; set on User-Id header when non-blank.
+     * @param cjscppuid user ID for the request (required); sent on User-Id header to progression.
      */
     public String getCourtListPayload(
             CourtListType listId,
@@ -51,6 +52,9 @@ public class ProgressionQueryService {
             String cjscppuid) {
         if (baseUrl == null || baseUrl.isBlank()) {
             throw new IllegalStateException("common-platform-query-api.base-url is not configured");
+        }
+        if (cjscppuid == null || cjscppuid.isBlank()) {
+            throw new IllegalArgumentException("CJSCPPUID (user ID) is required when calling progression courtlistdata");
         }
         log.info("Fetching court list data from progression for listId: {}, courtCentreId: {}, startDate: {}, endDate: {}",
                 listId, courtCentreId, startDate, endDate);
@@ -77,9 +81,7 @@ public class ProgressionQueryService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", accept);
-        if (cjscppuid != null && !cjscppuid.isBlank()) {
-            headers.set(USER_ID_HEADER, cjscppuid);
-        }
+        headers.set(USER_ID_HEADER, cjscppuid);
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
         ResponseEntity<String> response = restTemplate.exchange(
