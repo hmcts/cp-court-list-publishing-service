@@ -1,15 +1,15 @@
 {
   "request": {
     "method": "GET",
-    "urlPathPattern": "/listing-service/query/api/rest/listing/courtlistpayload.*",
+    "urlPathPattern": "/progression-service/query/api/rest/progression/courtlistdata.*",
     "queryParameters": {
       "listId": {
-        "equalTo": "ONLINE_PUBLIC"
+        "equalTo": "STANDARD"
       }
     },
     "headers": {
       "Accept": {
-        "equalTo": "application/vnd.listing.search.court.list.payload+json"
+        "equalTo": "application/vnd.progression.search.court.list.data+json"
       }
     }
   },
@@ -18,7 +18,7 @@
     "headers": {
       "Content-Type": "application/json"
     },
-    "bodyFileName": "court-list-payload-online-public.json"
+    "bodyFileName": "court-list-payload-multiple-dates.json"
   },
   "priority": 1
 }

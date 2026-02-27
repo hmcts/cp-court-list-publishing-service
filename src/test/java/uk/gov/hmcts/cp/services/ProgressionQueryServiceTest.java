@@ -22,28 +22,28 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ListingQueryServiceTest {
+class ProgressionQueryServiceTest {
 
     @Mock
     private RestTemplate restTemplate;
 
     @InjectMocks
-    private ListingQueryService listingQueryService;
+    private ProgressionQueryService progressionQueryService;
 
     @BeforeEach
     void setUp() throws Exception {
-        var field = ListingQueryService.class.getDeclaredField("baseUrl");
+        var field = ProgressionQueryService.class.getDeclaredField("baseUrl");
         field.setAccessible(true);
-        field.set(listingQueryService, "https://listing.example.com");
+        field.set(progressionQueryService, "https://progression.example.com");
     }
 
     @Test
-    void getCourtListPayload_callsListingCourtlistpayloadWithCorrectParams() {
+    void getCourtListPayload_callsProgressionCourtlistdataWithCorrectParams() {
         String expectedJson = "{\"listType\":\"standard\",\"courtCentreName\":\"Test\"}";
         when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(), eq(String.class)))
                 .thenReturn(new ResponseEntity<>(expectedJson, HttpStatus.OK));
 
-        String result = listingQueryService.getCourtListPayload(
+        String result = progressionQueryService.getCourtListPayload(
                 CourtListType.STANDARD,
                 "f8254db1-1683-483e-afb3-b87fde5a0a26",
                 null,
@@ -58,11 +58,11 @@ class ListingQueryServiceTest {
 
     @Test
     void getCourtListPayload_throwsWhenBaseUrlNotConfigured() throws Exception {
-        var field = ListingQueryService.class.getDeclaredField("baseUrl");
+        var field = ProgressionQueryService.class.getDeclaredField("baseUrl");
         field.setAccessible(true);
-        field.set(listingQueryService, "");
+        field.set(progressionQueryService, "");
 
-        assertThatThrownBy(() -> listingQueryService.getCourtListPayload(
+        assertThatThrownBy(() -> progressionQueryService.getCourtListPayload(
                 CourtListType.STANDARD,
                 "f8254db1-1683-483e-afb3-b87fde5a0a26",
                 null,

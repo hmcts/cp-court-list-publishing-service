@@ -104,19 +104,14 @@ public class CourtListPublishController implements CourtListPublishApi {
         if (cjscppuid == null || cjscppuid.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CJSCPPUID header is required");
         }
-        String systemUserId = systemUserConfig.getSystemUserId();
-        if (systemUserId == null || systemUserId.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "COURTLISTPUBLISHING_SYSTEM_USER_ID is not configured");
-        }
-        LOG.info("Fetching court list data (listing + reference data only) for listId: {}, courtCentreId: {}, startDate: {}, endDate: {}",
+        LOG.info("Fetching court list data from progression for listId: {}, courtCentreId: {}, startDate: {}, endDate: {}",
                 listId, courtCentreId, startDate, endDate);
         String courtCentreIdStr = courtCentreId != null ? courtCentreId.toString() : null;
         String startStr = startDate != null ? startDate.toString() : null;
         String endStr = endDate != null ? endDate.toString() : null;
         boolean rest = Boolean.TRUE.equals(restricted);
         String json = courtListDataService.getCourtListData(listId, courtCentreIdStr, null, startStr, endStr, rest,
-                cjscppuid, systemUserId);
+                cjscppuid);
         try {
             CourtListData data = ObjectMapperConfig.getObjectMapper().readValue(json, CourtListData.class);
             return ResponseEntity.ok(data);

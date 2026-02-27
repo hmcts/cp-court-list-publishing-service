@@ -188,7 +188,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
 
     @Test
     void publishCourtList_shouldSetPublishFailedWithErrorMessage_whenSchemaValidationFails() throws Exception {
-        // Given - listing API returns payload that transforms to document failing schema validation (e.g. case with null caseUrn)
+        // Given - progression courtlistdata API returns payload that transforms to document failing schema validation (e.g. case with null caseUrn)
         addSchemaInvalidPayloadStub();
         try {
             UUID courtCentreId = UUID.randomUUID();
@@ -350,7 +350,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
     }
 
     /**
-     * Adds a WireMock stub so the listing API returns a payload that, when transformed,
+     * Adds a WireMock stub so the progression courtlistdata API returns a payload that, when transformed,
      * fails JSON schema validation (e.g. hearing with null caseNumber → case with null caseUrn).
      * Call {@link AbstractTest#resetWireMock()} in a finally block after the test.
      */
@@ -359,7 +359,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
             {
               "request": {
                 "method": "GET",
-                "urlPathPattern": "/listing-service/query/api/rest/listing/courtlistpayload.*",
+                "urlPathPattern": "/progression-service/query/api/rest/progression/courtlistdata.*",
                 "queryParameters": {"listId": {"equalTo": "ONLINE_PUBLIC"}}
               },
               "response": {

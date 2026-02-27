@@ -15,16 +15,20 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import java.net.URI;
 
 /**
- * Calls listing service court list payload endpoint only (no progression).
- * Same contract as progression's /courtlistdata source: listing.search.court.list.payload.
+ * Calls progression service GET /courtlistdata (application/vnd.progression.search.court.list.data+json).
+ * Returns the same court list data shape as progression's court list document payload, without PDF/Word generation.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ListingQueryService {
+public class ProgressionQueryService {
 
-    private static final String LISTING_COURTLIST_PAYLOAD_PATH = "/listing-service/query/api/rest/listing/courtlistpayload";
-    private static final String ACCEPT_LISTING_PAYLOAD = "application/vnd.listing.search.court.list.payload+json";
+    private static final String PROGRESSION_COURTLISTDATA_PATH = "/progression-service/query/api/rest/progression/courtlistdata";
+    private static final String ACCEPT_COURT_LIST_DATA = "application/vnd.progression.search.court.list.data+json";
+    private static final String ACCEPT_PRISON_COURT_LIST_DATA = "application/vnd.progression.search.prison.court.list.data+json";
+    private static final String PRISON = "PRISON";
+    /** Header name for user ID (progression query API expects this). */
+    private static final String USER_ID_HEADER = "userId";
 
     private final RestTemplate restTemplate;
 
@@ -32,9 +36,10 @@ public class ListingQueryService {
     private String baseUrl;
 
     /**
-     * Fetches court list payload from listing only (no progression).
-     * Returns raw JSON string to preserve exact response shape.
-     * @param cjscppuid user ID from CJSCPPUID header; set on request when non-blank.
+     * Fetches court list data from progression /courtlistdata.
+     * Returns raw JSON string (same shape as progression court list payload, optionally enriched with ouCode/courtId).
+     *
+     * @param cjscppuid user ID for the request; set on User-Id header when non-blank.
      */
     public String getCourtListPayload(
             CourtListType listId,
@@ -47,28 +52,33 @@ public class ListingQueryService {
         if (baseUrl == null || baseUrl.isBlank()) {
             throw new IllegalStateException("common-platform-query-api.base-url is not configured");
         }
-        log.info("Fetching court list payload from listing for listId: {}, courtCentreId: {}, startDate: {}, endDate: {}",
+        log.info("Fetching court list data from progression for listId: {}, courtCentreId: {}, startDate: {}, endDate: {}",
                 listId, courtCentreId, startDate, endDate);
 
         var builder = UriComponentsBuilder
                 .fromUriString(baseUrl)
-                .path(LISTING_COURTLIST_PAYLOAD_PATH)
-                .queryParam("listId", listId.name())
+                .path(PROGRESSION_COURTLISTDATA_PATH)
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate)
                 .queryParam("endDate", endDate)
                 .queryParam("restricted", restricted);
+        if (PRISON.equals(listId.name())) {
+            // Prison list: no listId query param, use prison Accept
+        } else {
+            builder.queryParam("listId", listId.name());
+        }
         if (courtRoomId != null && !courtRoomId.isBlank()) {
             builder.queryParam("courtRoomId", courtRoomId);
         }
         URI uri = builder.build().toUri();
 
-        log.debug("Calling listing courtlistpayload with URI: {}", uri);
+        String accept = PRISON.equals(listId.name()) ? ACCEPT_PRISON_COURT_LIST_DATA : ACCEPT_COURT_LIST_DATA;
+        log.debug("Calling progression courtlistdata with URI: {}, Accept: {}", uri, accept);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Accept", ACCEPT_LISTING_PAYLOAD);
+        headers.set("Accept", accept);
         if (cjscppuid != null && !cjscppuid.isBlank()) {
-            headers.set("CJSCPPUID", cjscppuid);
+            headers.set(USER_ID_HEADER, cjscppuid);
         }
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
@@ -78,7 +88,7 @@ public class ListingQueryService {
                 requestEntity,
                 String.class
         );
-        log.info("Successfully retrieved court list payload from listing");
+        log.info("Successfully retrieved court list data from progression");
         return response.getBody() != null ? response.getBody() : "{}";
     }
 }
