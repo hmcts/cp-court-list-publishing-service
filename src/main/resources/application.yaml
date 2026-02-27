@@ -34,6 +34,8 @@ common-platform-query-api:
 cath:
   base-url: ${CATH_BASE_URL:https://spnl-apim-int-gw.cpp.nonlive}
   endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
+  # Set CATH_PUBLISHING_ENABLED=true to enable publishing to CaTH; default is false
+  publishing-enabled: ${CATH_PUBLISHING_ENABLED:false}
 taskmanager:
   schema:
     enabled: true

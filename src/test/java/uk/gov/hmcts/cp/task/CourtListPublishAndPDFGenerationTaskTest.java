@@ -73,12 +73,13 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 CourtListType.ONLINE_PUBLIC,
                 Instant.now()
         );
-        // Initialize task with mocked dependencies
+        // Initialize task with mocked dependencies (CaTH publishing enabled for tests that verify CaTH call)
         task = new CourtListPublishAndPDFGenerationTask(
                 repository,
                 courtListQueryService,
                 cathService,
-                pdfHelper
+                pdfHelper,
+                true
         );
     }
 
@@ -311,6 +312,31 @@ class CourtListPublishAndPDFGenerationTaskTest {
         verify(cathService).sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, publishDate);
         verify(repository).getByCourtListId(courtListId);
         verify(repository).save(entity);
+    }
+
+    @Test
+    void execute_shouldNotSendToCaTH_whenCaTHPublishingDisabled() {
+        // Given - task with CaTH publishing disabled
+        CourtListPublishAndPDFGenerationTask taskWithCathDisabled = new CourtListPublishAndPDFGenerationTask(
+                repository,
+                courtListQueryService,
+                cathService,
+                pdfHelper,
+                false
+        );
+        JsonObject jobData = createJobDataWithCourtListId(courtListId);
+        when(executionInfo.getJobData()).thenReturn(jobData);
+
+        // When
+        ExecutionInfo result = taskWithCathDisabled.execute(executionInfo);
+
+        // Then - task completes, CaTH was never called, publish status is not set to SUCCESSFUL
+        assertThat(result).isNotNull();
+        assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
+        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
+        verify(repository, never()).getByCourtListId(any());
+        verify(repository, never()).save(any());
+        assertThat(entity.getPublishStatus()).isEqualTo(Status.REQUESTED);
     }
 
     @Test

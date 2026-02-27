@@ -3,6 +3,7 @@ package uk.gov.hmcts.cp.task;
 import jakarta.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.models.CourtListPayload;
@@ -37,16 +38,19 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
     private final CourtListQueryService courtListQueryService;
     private final CaTHService cathService;
     private final CourtListPdfHelper pdfHelper;
+    private final boolean cathPublishingEnabled;
     private enum ErrorContext { PUBLISH, FILE }
 
     public CourtListPublishAndPDFGenerationTask(CourtListStatusRepository repository,
                                                 CourtListQueryService courtListQueryService,
                                                 CaTHService cathService,
-                                                CourtListPdfHelper pdfHelper) {
+                                                CourtListPdfHelper pdfHelper,
+                                                @Value("${cath.publishing-enabled:false}") boolean cathPublishingEnabled) {
         this.repository = repository;
         this.courtListQueryService = courtListQueryService;
         this.cathService = cathService;
         this.pdfHelper = pdfHelper;
+        this.cathPublishingEnabled = cathPublishingEnabled;
     }
 
     @Override
@@ -73,16 +77,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             }
         }
 
-        boolean cathSucceeded = false;
-        try {
-            queryAndSendCourtListToCaTH(executionInfo, payload);
-            cathSucceeded = true;
-        } catch (Exception e) {
-            logger.error("Error querying or sending court list to CaTH", e);
-            if (courtListId != null) {
-                updateErrorMessage(courtListId, e, ErrorContext.PUBLISH);
-            }
-        }
+        boolean cathSucceeded = tryPublishToCaTH(executionInfo, payload, courtListId);
 
         try {
             if (courtListId != null && cathSucceeded) {
@@ -107,6 +102,27 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         return executionInfo().from(executionInfo)
                 .withExecutionStatus(COMPLETED)
                 .build();
+    }
+
+    /**
+     * Attempts to publish the court list to CaTH when enabled.
+     * @return true if CaTH publish completed successfully; false if disabled or an error occurred.
+     */
+    private boolean tryPublishToCaTH(ExecutionInfo executionInfo, CourtListPayload payload, UUID courtListId) {
+        if (!cathPublishingEnabled) {
+            logger.debug("CaTH publishing is disabled (CATH_PUBLISHING_ENABLED=false), skipping CaTH send");
+            return false;
+        }
+        try {
+            queryAndSendCourtListToCaTH(executionInfo, payload);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error querying or sending court list to CaTH", e);
+            if (courtListId != null) {
+                updateErrorMessage(courtListId, e, ErrorContext.PUBLISH);
+            }
+            return false;
+        }
     }
 
     private void queryAndSendCourtListToCaTH(ExecutionInfo executionInfo, CourtListPayload payload) {
