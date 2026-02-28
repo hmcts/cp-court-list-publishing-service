@@ -265,7 +265,8 @@ dockerCompose {
     startedServices = ['app', 'db']
 
     buildBeforeUp = true
-    waitForTcpPorts = true
+    // Rely on Compose healthcheck (actuator/health) only; plugin's TCP wait on all ports can hang on debug port 8787 (JDWP)
+    waitForTcpPorts = false
     upAdditionalArgs = ['--wait', '--wait-timeout', '120']
 
     captureContainersOutput = true

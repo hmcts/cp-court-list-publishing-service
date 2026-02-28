@@ -36,6 +36,9 @@ services:
       CP_CLP_AUTHZ_ENABLED: "false"
       CP_CLP_HTTP_AUDIT_ENABLED: "false"
       CP_CLP_AUDIT_ENABLED: "false"
+      PUBLIC_COURT_LIST_ENABLED: "true"
+      PUBLIC_COURT_LIST_PROGRESSION_API_BASE_URL: "https://progression-test.example/"
+      PUBLIC_COURT_LIST_DOCUMENT_GENERATOR_BASE_URL: "https://docgen-test.example/"
     depends_on:
       db:
         condition: service_healthy

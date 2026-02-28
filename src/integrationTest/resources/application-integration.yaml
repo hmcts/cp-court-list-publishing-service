@@ -5,6 +5,13 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.jms.JmsAutoConfiguration
 
+public-court-list:
+  enabled: true
+  progression-api:
+    base-url: https://progression-test.example/
+  document-generator:
+    base-url: https://docgen-test.example/
+
 azure:
   storage:
     enabled: false

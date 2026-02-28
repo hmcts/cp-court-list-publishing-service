@@ -22,3 +22,12 @@ then
   $o.setSuccess(true);
 end
 
+rule "Allow – public-court-list"
+when
+  $o: Outcome()
+  $a: Action(name == "courtlistpublishing-service.public-court-list.get")
+  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, "Legal Advisers","District Judge","System Users"))
+then
+  $o.setSuccess(true);
+end
+

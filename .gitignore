@@ -2,6 +2,8 @@ gradle
 bin/*
 !bin/run-in-docker.sh
 .gradle
+.sdkman
+.sdkmanrc
 /build/
 !gradle/wrapper/gradle-wrapper.properties
 !gradle/wrapper/gradle-wrapper.jar
