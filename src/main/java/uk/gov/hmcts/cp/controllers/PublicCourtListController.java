@@ -2,6 +2,7 @@ package uk.gov.hmcts.cp.controllers;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,9 @@ public class PublicCourtListController {
         if (courtCentreId == null || courtCentreId.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "courtCentreId is required");
         }
+        if (!isValidUuid(courtCentreId.trim())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "courtCentreId must be a valid UUID");
+        }
 
         LocalDate start = parseDate("startDate", startDate);
         LocalDate end = parseDate("endDate", endDate);
@@ -53,7 +57,7 @@ public class PublicCourtListController {
         }
 
         try {
-            byte[] pdf = publicCourtListService.generatePublicCourtListPdf(courtCentreId, start, end);
+            byte[] pdf = publicCourtListService.generatePublicCourtListPdf(courtCentreId.trim(), start, end);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.set(HttpHeaders.CONTENT_DISPOSITION, CONTENT_DISPOSITION_VALUE);
@@ -63,6 +67,18 @@ public class PublicCourtListController {
         } catch (PublicCourtListException e) {
             LOG.warn("Public court list error: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, e.getMessage());
+        }
+    }
+
+    private static boolean isValidUuid(String value) {
+        if (value == null) {
+            return false;
+        }
+        try {
+            UUID.fromString(value);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
         }
     }
 

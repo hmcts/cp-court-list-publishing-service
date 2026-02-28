@@ -33,6 +33,22 @@ public class PublicCourtListService {
     private static final String ACCEPT_COURT_LIST_JSON = "application/vnd.progression.search.court.list+json";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
 
+    /** Sanitize user-provided values before logging to prevent log injection (CR/LF and control chars). */
+    private static String sanitizeForLog(String value) {
+        if (value == null) {
+            return null;
+        }
+        String withoutCrLf = value.replace('\r', ' ').replace('\n', ' ');
+        StringBuilder cleaned = new StringBuilder(withoutCrLf.length());
+        for (int i = 0; i < withoutCrLf.length(); i++) {
+            char c = withoutCrLf.charAt(i);
+            if (!Character.isISOControl(c)) {
+                cleaned.append(c);
+            }
+        }
+        return cleaned.toString();
+    }
+
     private final RestTemplate restTemplate;
     private final String progressionBaseUrl;
     private final String documentGeneratorBaseUrl;
@@ -48,7 +64,7 @@ public class PublicCourtListService {
 
     public byte[] generatePublicCourtListPdf(final String courtCentreId, final LocalDate startDate, final LocalDate endDate) {
         LOG.info("Generating public court list PDF for courtCentreId={}, startDate={}, endDate={}",
-                courtCentreId, startDate, endDate);
+                sanitizeForLog(courtCentreId), startDate, endDate);
 
         Map<String, Object> payload = fetchCourtListPayload(courtCentreId, startDate, endDate);
         if (payload == null || payload.isEmpty()) {
@@ -59,7 +75,8 @@ public class PublicCourtListService {
                 ? String.valueOf(payload.get(KEY_TEMPLATE_NAME))
                 : TEMPLATE_PUBLIC_COURT_LIST;
         byte[] pdf = generatePdf(payload, templateName);
-        LOG.info("Public court list PDF generated for courtCentreId={}, size={} bytes", courtCentreId, pdf.length);
+        LOG.info("Public court list PDF generated for courtCentreId={}, size={} bytes",
+                sanitizeForLog(courtCentreId), pdf.length);
         return pdf;
     }
 
@@ -82,7 +99,7 @@ public class PublicCourtListService {
                     new ParameterizedTypeReference<Map<String, Object>>() {});
             return response.getBody();
         } catch (RestClientException e) {
-            LOG.error("Progression API call failed for courtCentreId={}", courtCentreId, e);
+            LOG.error("Progression API call failed for courtCentreId={}", sanitizeForLog(courtCentreId), e);
             throw new PublicCourtListException("Failed to fetch court list: " + e.getMessage(), e);
         }
     }

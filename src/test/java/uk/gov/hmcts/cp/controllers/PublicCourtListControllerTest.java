@@ -81,6 +81,15 @@ class PublicCourtListControllerTest {
     }
 
     @Test
+    void getPublicCourtListPdf_returns400_whenCourtCentreIdNotValidUuid() throws Exception {
+        mockMvc.perform(get(BASE_URL)
+                        .param("courtCentreId", "not-a-valid-uuid")
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void getPublicCourtListPdf_returns400_whenStartDateMissing() throws Exception {
         mockMvc.perform(get(BASE_URL)
                         .param("courtCentreId", COURT_CENTRE_ID)
