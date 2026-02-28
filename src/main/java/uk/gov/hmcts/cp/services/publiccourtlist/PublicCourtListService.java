@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +50,18 @@ public class PublicCourtListService {
         return cleaned.toString();
     }
 
+    /** Parse string as UUID or throw; returns canonical form so URL uses validated value only (SSRF mitigation). */
+    private static String parseUuidOrThrow(String value, String paramName) {
+        if (value == null || value.isBlank()) {
+            throw new PublicCourtListException(paramName + " is required");
+        }
+        try {
+            return UUID.fromString(value.trim()).toString();
+        } catch (IllegalArgumentException e) {
+            throw new PublicCourtListException(paramName + " must be a valid UUID");
+        }
+    }
+
     private final RestTemplate restTemplate;
     private final String progressionBaseUrl;
     private final String documentGeneratorBaseUrl;
@@ -81,9 +94,11 @@ public class PublicCourtListService {
     }
 
     private Map<String, Object> fetchCourtListPayload(String courtCentreId, LocalDate startDate, LocalDate endDate) {
+        // Validate UUID so only a safe identifier is used in the request (SSRF mitigation; controller also validates).
+        final String validatedCourtCentreId = parseUuidOrThrow(courtCentreId, "courtCentreId");
         String url = UriComponentsBuilder.fromUriString(progressionBaseUrl + "courtlist")
                 .queryParam("listId", LIST_ID_PUBLIC)
-                .queryParam("courtCentreId", courtCentreId)
+                .queryParam("courtCentreId", validatedCourtCentreId)
                 .queryParam("startDate", startDate.format(DATE_FORMAT))
                 .queryParam("endDate", endDate.format(DATE_FORMAT))
                 .queryParam("restricted", false)
