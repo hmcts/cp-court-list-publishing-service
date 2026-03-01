@@ -26,8 +26,8 @@ public class PublicCourtListConfig {
     @Bean
     @ConditionalOnProperty(name = "public-court-list.enabled", havingValue = "true")
     public PdfGenerationService pdfGenerationService(
-            @Qualifier("documentGeneratorRestTemplate") RestTemplate documentGeneratorRestTemplate,
-            @Value("${public-court-list.document-generator.base-url}") String documentGeneratorBaseUrl) {
+            @Qualifier("documentGeneratorRestTemplate") final RestTemplate documentGeneratorRestTemplate,
+            @Value("${public-court-list.document-generator.base-url}") final String documentGeneratorBaseUrl) {
         return new PdfGenerationService(documentGeneratorRestTemplate, documentGeneratorBaseUrl);
     }
 }

@@ -2,6 +2,7 @@ package uk.gov.hmcts.cp.controllers;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -50,15 +51,15 @@ public class PublicCourtListController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "courtCentreId must be a valid UUID");
         }
 
-        LocalDate start = parseDate("startDate", startDate);
-        LocalDate end = parseDate("endDate", endDate);
+        final LocalDate start = parseDate("startDate", startDate);
+        final LocalDate end = parseDate("endDate", endDate);
         if (end.isBefore(start)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endDate must be on or after startDate");
         }
 
         try {
-            byte[] pdf = publicCourtListService.generatePublicCourtListPdf(courtCentreId.trim(), start, end);
-            HttpHeaders headers = new HttpHeaders();
+            final byte[] pdf = publicCourtListService.generatePublicCourtListPdf(courtCentreId.trim(), start, end);
+            final HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.set(HttpHeaders.CONTENT_DISPOSITION, CONTENT_DISPOSITION_VALUE);
             return ResponseEntity.ok()
@@ -70,16 +71,17 @@ public class PublicCourtListController {
         }
     }
 
-    private static boolean isValidUuid(String value) {
-        if (value == null) {
-            return false;
+    private static boolean isValidUuid(final String value) {
+        boolean valid = false;
+        if (value != null) {
+            try {
+                UUID.fromString(value);
+                valid = true;
+            } catch (IllegalArgumentException ignored) {
+                // invalid UUID format
+            }
         }
-        try {
-            UUID.fromString(value);
-            return true;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
+        return valid;
     }
 
     private static LocalDate parseDate(final String paramName, final String value) {
@@ -88,7 +90,7 @@ public class PublicCourtListController {
         }
         try {
             return LocalDate.parse(value.trim(), DATE_FORMATTER);
-        } catch (Exception e) {
+        } catch (DateTimeParseException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, paramName + " must be in format " + DATE_PATTERN);
         }
     }
