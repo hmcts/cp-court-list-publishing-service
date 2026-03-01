@@ -3,7 +3,6 @@ package uk.gov.hmcts.cp.services.publiccourtlist;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -22,6 +21,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.util.UriComponentsBuilder;
+import uk.gov.hmcts.cp.services.pdf.PdfGenerationException;
+import uk.gov.hmcts.cp.services.pdf.PdfGenerationService;
 
 @Service
 @ConditionalOnProperty(name = "public-court-list.enabled", havingValue = "true")
@@ -64,15 +65,15 @@ public class PublicCourtListService {
 
     private final RestTemplate restTemplate;
     private final String progressionBaseUrl;
-    private final String documentGeneratorBaseUrl;
+    private final PdfGenerationService pdfGenerationService;
 
     public PublicCourtListService(
             @Qualifier("publicCourtListRestTemplate") final RestTemplate restTemplate,
             @Value("${public-court-list.progression-api.base-url}") final String progressionBaseUrl,
-            @Value("${public-court-list.document-generator.base-url}") final String documentGeneratorBaseUrl) {
+            final PdfGenerationService pdfGenerationService) {
         this.restTemplate = restTemplate;
         this.progressionBaseUrl = progressionBaseUrl.endsWith("/") ? progressionBaseUrl : progressionBaseUrl + "/";
-        this.documentGeneratorBaseUrl = documentGeneratorBaseUrl.endsWith("/") ? documentGeneratorBaseUrl : documentGeneratorBaseUrl + "/";
+        this.pdfGenerationService = pdfGenerationService;
     }
 
     public byte[] generatePublicCourtListPdf(final String courtCentreId, final LocalDate startDate, final LocalDate endDate) {
@@ -87,7 +88,12 @@ public class PublicCourtListService {
         String templateName = payload.containsKey(KEY_TEMPLATE_NAME)
                 ? String.valueOf(payload.get(KEY_TEMPLATE_NAME))
                 : TEMPLATE_PUBLIC_COURT_LIST;
-        byte[] pdf = generatePdf(payload, templateName);
+        byte[] pdf;
+        try {
+            pdf = pdfGenerationService.generatePdf(templateName, payload);
+        } catch (PdfGenerationException e) {
+            throw new PublicCourtListException(e.getMessage(), e);
+        }
         LOG.info("Public court list PDF generated for courtCentreId={}, size={} bytes",
                 sanitizeForLog(courtCentreId), pdf.length);
         return pdf;
@@ -119,25 +125,4 @@ public class PublicCourtListService {
         }
     }
 
-    private byte[] generatePdf(Map<String, Object> payload, String templateName) {
-        String url = documentGeneratorBaseUrl + "generate-pdf";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        Map<String, Object> body = new HashMap<>();
-        body.put(KEY_TEMPLATE_NAME, templateName);
-        body.put("payload", payload);
-
-        try {
-            ResponseEntity<byte[]> response = restTemplate.exchange(
-                    url, HttpMethod.POST, new HttpEntity<>(body, headers), byte[].class);
-            byte[] pdf = response.getBody();
-            if (pdf == null || pdf.length == 0) {
-                throw new PublicCourtListException("Document generator returned empty PDF");
-            }
-            return pdf;
-        } catch (RestClientException e) {
-            LOG.error("Document generator call failed for template={}", templateName, e);
-            throw new PublicCourtListException("PDF generation failed: " + e.getMessage(), e);
-        }
-    }
 }
