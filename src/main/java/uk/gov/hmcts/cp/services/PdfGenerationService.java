@@ -61,7 +61,7 @@ public class PdfGenerationService {
     private static final String RENDER_MEDIA_TYPE = "application/vnd.systemdocgenerator.render+json";
 
     private final CourtListPublisherBlobClientService blobClientService;
-    private final HttpClientFactory httpClientFactory;
+    private final RestTemplate restTemplate;
     private final CourtListPublishingSystemUserConfig systemUserConfig;
 
     @Value("${common-platform-query-api.base-url}")
@@ -102,7 +102,6 @@ public class PdfGenerationService {
 
     public byte[] generatePdfDocument(final JsonObject jsonData, final String templateIdentifier) throws IOException {
         try {
-            RestTemplate restTemplate = httpClientFactory.getClient();
             ResponseEntity<byte[]> response = callDocumentGeneratorPDFService(restTemplate, jsonData, templateIdentifier);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
