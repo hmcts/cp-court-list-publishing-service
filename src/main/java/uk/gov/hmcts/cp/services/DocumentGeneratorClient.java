@@ -41,14 +41,13 @@ public class DocumentGeneratorClient {
     private static final String DOCUMENT_CONVERSION_FORMAT_PDF = "pdf";
     private static final String RENDER_MEDIA_TYPE = "application/vnd.systemdocgenerator.render+json";
 
-    private final HttpClientFactory httpClientFactory;
+    private final RestTemplate restTemplate;
     private final CourtListPublishingSystemUserConfig systemUserConfig;
 
     @Value("${common-platform-query-api.base-url}")
     private String commonPlatformQueryApiBaseUrl;
 
     public byte[] generatePdf(final JsonObject templatePayload, final String templateName) throws IOException {
-        RestTemplate restTemplate = httpClientFactory.getClient();
         try {
             ResponseEntity<byte[]> response = callRender(restTemplate, templatePayload, templateName);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && response.getBody().length > 0) {
