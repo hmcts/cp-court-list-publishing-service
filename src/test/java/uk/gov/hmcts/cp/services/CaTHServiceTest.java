@@ -45,7 +45,7 @@ class CaTHServiceTest {
 
         // When
         LocalDate publishDate = LocalDate.of(2024, 1, 15);
-        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, publishDate);
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, publishDate, null, null);
 
         // Then - Verify CaTHPublisher was called
         ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
@@ -70,17 +70,14 @@ class CaTHServiceTest {
     }
 
     @Test
-    void sendCourtListToCaTH_shouldUseCourtIdNumericFromDocument_whenPresent() {
-        // Given - document with reference data courtId (from getCourtCenterDataByCourtName)
-        courtListDocument = CourtListDocument.builder()
-                .courtIdNumeric("325")
-                .build();
+    void sendCourtListToCaTH_shouldUseCourtIdNumericFromPayload_whenPresent() {
+        // Given - courtIdNumeric passed from payload (reference data)
         when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
 
         // When
-        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15));
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), "325", null);
 
-        // Then - DtsMeta uses courtId from reference data
+        // Then - DtsMeta uses courtId from payload
         ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
         verify(cathPublisher).publish(anyString(), metaCaptor.capture());
         assertThat(metaCaptor.getValue().getCourtId()).isEqualTo("325");
@@ -88,14 +85,11 @@ class CaTHServiceTest {
 
     @Test
     void sendCourtListToCaTH_shouldSetLanguageWelsh_whenIsWelshTrue() {
-        // Given - document with isWelsh true
-        courtListDocument = CourtListDocument.builder()
-                .isWelsh(true)
-                .build();
+        // Given - isWelsh true passed from payload
         when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
 
         // When
-        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15));
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), null, true);
 
         // Then - DtsMeta has language WELSH
         ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
@@ -105,14 +99,11 @@ class CaTHServiceTest {
 
     @Test
     void sendCourtListToCaTH_shouldSetLanguageEnglish_whenIsWelshFalseOrNull() {
-        // Given - document with isWelsh false
-        courtListDocument = CourtListDocument.builder()
-                .isWelsh(false)
-                .build();
+        // Given - isWelsh false passed from payload
         when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
 
         // When
-        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15));
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), null, false);
 
         // Then - DtsMeta has language ENGLISH
         ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
@@ -127,7 +118,7 @@ class CaTHServiceTest {
                 .thenThrow(new RuntimeException("Publishing failed"));
 
         // When & Then
-        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15)))
+        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), null, null))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to send court list document to CaTH");
     }
@@ -139,7 +130,7 @@ class CaTHServiceTest {
                 .thenThrow(new RuntimeException("Unexpected error"));
 
         // When & Then
-        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15)))
+        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), null, null))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to send court list document to CaTH");
     }

@@ -37,15 +37,16 @@ public class CaTHService {
 
     private static final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
 
-    public void sendCourtListToCaTH(CourtListDocument courtListDocument, final CourtListType courtListType, final LocalDate publishDate) {
+    public void sendCourtListToCaTH(CourtListDocument courtListDocument, final CourtListType courtListType, final LocalDate publishDate,
+                                    String courtIdNumeric, Boolean isWelsh) {
         try {
             log.info("Sending court list document to CaTH endpoint");
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            final String courtIdFromRefData = courtListDocument.getCourtIdNumeric() != null && !courtListDocument.getCourtIdNumeric().isBlank()
-                    ? courtListDocument.getCourtIdNumeric()
+            final String courtIdFromRefData = courtIdNumeric != null && !courtIdNumeric.isBlank()
+                    ? courtIdNumeric
                     : "0";
 
             final CathHeaderInfo cathListInfo = COURT_LIST_MAPPINGS.get(courtListType);
@@ -55,7 +56,7 @@ public class CaTHService {
             }
 
             final Instant now = Instant.now();
-            final String language = Boolean.TRUE.equals(courtListDocument.getIsWelsh()) ? "WELSH" : "ENGLISH";
+            final String language = Boolean.TRUE.equals(isWelsh) ? "WELSH" : "ENGLISH";
             final DtsMeta dtsMeta = DtsMeta.builder()
                     .provenance("COMMON_PLATFORM")
                     .type("LIST")

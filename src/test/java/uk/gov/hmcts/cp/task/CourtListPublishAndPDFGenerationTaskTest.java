@@ -2,6 +2,7 @@ package uk.gov.hmcts.cp.task;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -309,7 +310,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 TEST_USER_ID
         );
         verify(courtListQueryService).buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC);
-        verify(cathService).sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, publishDate);
+        verify(cathService).sendCourtListToCaTH(eq(courtListDocument), eq(CourtListType.ONLINE_PUBLIC), eq(publishDate), any(), any());
         verify(repository).getByCourtListId(courtListId);
         verify(repository).save(entity);
     }
@@ -333,7 +334,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then - task completes, CaTH was never called, publish status is not set to SUCCESSFUL
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
+        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class), any(), any());
         verify(repository, never()).getByCourtListId(any());
         verify(repository, never()).save(any());
         assertThat(entity.getPublishStatus()).isEqualTo(Status.REQUESTED);
@@ -351,7 +352,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService, never()).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
+        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class), any(), any());
     }
 
     @Test
@@ -370,7 +371,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService, never()).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
+        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class), any(), any());
     }
 
     @Test
@@ -389,7 +390,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService, never()).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
+        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class), any(), any());
     }
 
     @Test
@@ -410,7 +411,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
-        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
+        verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class), any(), any());
         verify(repository).getByCourtListId(courtListId);
     }
 
@@ -429,7 +430,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 .thenReturn(courtListDocument);
 
         doThrow(new RuntimeException("CaTH service error"))
-                .when(cathService).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
+                .when(cathService).sendCourtListToCaTH(any(), any(), any(LocalDate.class), any(), any());
 
         // When
         ExecutionInfo result = task.execute(executionInfo);
@@ -439,7 +440,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any());
         verify(courtListQueryService).buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC);
-        verify(cathService).sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, publishDate);
+        verify(cathService).sendCourtListToCaTH(eq(courtListDocument), eq(CourtListType.ONLINE_PUBLIC), eq(publishDate), any(), any());
         assertThat(entity.getPublishErrorMessage()).contains("CaTH service error", "RuntimeException");
         assertThat(entity.getPublishStatus()).isEqualTo(Status.FAILED);
         verify(repository, times(1)).getByCourtListId(courtListId);
@@ -460,7 +461,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 .thenReturn(courtListDocument);
 
         doThrow(new RuntimeException("CaTH publish failed with HTTP status 400: Invalid payload"))
-                .when(cathService).sendCourtListToCaTH(any(), any(), any(LocalDate.class));
+                .when(cathService).sendCourtListToCaTH(any(), any(), any(LocalDate.class), any(), any());
 
         // When
         ExecutionInfo result = task.execute(executionInfo);
