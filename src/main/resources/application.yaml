@@ -34,6 +34,12 @@ common-platform-query-api:
 cath:
   base-url: ${CATH_BASE_URL:https://spnl-apim-int-gw.cpp.nonlive}
   endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
+# Public court list (optional): progression API for court list data; PDF via common-platform-query-api (document generator)
+public-court-list:
+  enabled: ${PUBLIC_COURT_LIST_ENABLED:false}
+  progression-api:
+    base-url: ${PUBLIC_COURT_LIST_PROGRESSION_API_BASE_URL:}
+
 taskmanager:
   schema:
     enabled: true

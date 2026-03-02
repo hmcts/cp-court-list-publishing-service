@@ -5,15 +5,9 @@ import jakarta.json.JsonObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
-import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 import java.io.ByteArrayOutputStream;
@@ -24,12 +18,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 
 @ExtendWith(MockitoExtension.class)
 class PdfGenerationServiceTest {
@@ -38,44 +28,26 @@ class PdfGenerationServiceTest {
     private CourtListPublisherBlobClientService blobClientService;
 
     @Mock
-    private HttpClientFactory httpClientFactory;
-
-    @Mock
-    private RestTemplate restTemplate;
-
-    @Mock
-    private CourtListPublishingSystemUserConfig systemUserConfig;
+    private DocumentGeneratorClient documentGeneratorClient;
 
     @InjectMocks
     private PdfGenerationService pdfGenerationService;
 
     private UUID courtListId;
     private UUID courtCentreId;
-
-    @Captor
-    private ArgumentCaptor<HttpEntity<String>> httpEntityCaptor;
+    private byte[] mockPdfBytes;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         courtListId = UUID.randomUUID();
         courtCentreId = UUID.randomUUID();
-        // Mock HttpClientFactory to return RestTemplate (lenient for tests that don't use it)
-        lenient().when(httpClientFactory.getClient()).thenReturn(restTemplate);
-        lenient().when(systemUserConfig.getSystemUserId()).thenReturn("ba4e97ab-2174-4fa2-abfe-3ac2bb04bc75");
-
-        // Set the base URL field using reflection since it's @Value injected
-        java.lang.reflect.Field field = PdfGenerationService.class.getDeclaredField("commonPlatformQueryApiBaseUrl");
-        field.setAccessible(true);
-        field.set(pdfGenerationService, "http://localhost:8080");
+        mockPdfBytes = "Mock PDF content".getBytes();
     }
 
     @Test
     void generateAndUploadPdf_shouldReturnFileId_whenValidInput() throws IOException {
         JsonObject payload = Json.createObjectBuilder().build();
-        byte[] mockPdfBytes = "Mock PDF content".getBytes();
-
-        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
-                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
+        when(documentGeneratorClient.generatePdf(eq(payload), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
 
         UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD, false);
 
@@ -85,11 +57,7 @@ class PdfGenerationServiceTest {
 
     @Test
     void generateAndUploadPdf_shouldReturnFileId_whenPayloadIsNull() throws IOException {
-        String expectedBlobName = courtListId + ".pdf";
-        byte[] mockPdfBytes = "Mock PDF content".getBytes();
-
-        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
-                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
 
         UUID result = pdfGenerationService.generateAndUploadPdf(null, courtListId, CourtListType.STANDARD, false);
 
@@ -102,10 +70,7 @@ class PdfGenerationServiceTest {
         JsonObject payload = Json.createObjectBuilder()
                 .add("courtCentreId", courtCentreId.toString())
                 .build();
-        byte[] mockPdfBytes = "Mock PDF content".getBytes();
-
-        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
-                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
+        when(documentGeneratorClient.generatePdf(eq(payload), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
 
         UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD, false);
 
@@ -118,10 +83,7 @@ class PdfGenerationServiceTest {
         JsonObject payload = Json.createObjectBuilder()
                 .add("courtListType", "PUBLIC")
                 .build();
-        byte[] mockPdfBytes = "Mock PDF content".getBytes();
-
-        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
-                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
+        when(documentGeneratorClient.generatePdf(eq(payload), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
 
         UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD, false);
 
@@ -136,10 +98,7 @@ class PdfGenerationServiceTest {
                 .add("courtListType", "STANDARD")
                 .add("otherField", "otherValue")
                 .build();
-        byte[] mockPdfBytes = "Mock PDF content".getBytes();
-
-        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
-                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
+        when(documentGeneratorClient.generatePdf(eq(payload), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
 
         UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD, false);
 
@@ -150,10 +109,7 @@ class PdfGenerationServiceTest {
     @Test
     void generateAndUploadPdf_shouldReturnFileId_whenEmptyPayload() throws IOException {
         JsonObject payload = Json.createObjectBuilder().build();
-        byte[] mockPdfBytes = "Mock PDF content".getBytes();
-
-        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
-                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
+        when(documentGeneratorClient.generatePdf(eq(payload), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
 
         UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD, false);
 
@@ -166,10 +122,7 @@ class PdfGenerationServiceTest {
         UUID courtListId1 = UUID.randomUUID();
         UUID courtListId2 = UUID.randomUUID();
         JsonObject payload = Json.createObjectBuilder().build();
-        byte[] mockPdfBytes = "Mock PDF content".getBytes();
-
-        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
-                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
 
         UUID result1 = pdfGenerationService.generateAndUploadPdf(payload, courtListId1, CourtListType.STANDARD, false);
         UUID result2 = pdfGenerationService.generateAndUploadPdf(payload, courtListId2, CourtListType.STANDARD, false);
@@ -184,10 +137,7 @@ class PdfGenerationServiceTest {
         JsonObject payload = Json.createObjectBuilder()
                 .add("courtListType", "PUBLIC & STANDARD")
                 .build();
-        byte[] mockPdfBytes = "Mock PDF content".getBytes();
-
-        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
-                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
+        when(documentGeneratorClient.generatePdf(eq(payload), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
 
         UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD, false);
 
@@ -201,10 +151,7 @@ class PdfGenerationServiceTest {
                 .add("courtCentreId", courtCentreId.toString())
                 .add("courtListType", "PUBLIC")
                 .build();
-        byte[] mockPdfBytes = "Mock PDF content".getBytes();
-
-        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
-                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
+        when(documentGeneratorClient.generatePdf(eq(payload), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
 
         UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD, false);
 
@@ -215,10 +162,7 @@ class PdfGenerationServiceTest {
     @Test
     void generateAndUploadPdf_shouldHandleNullCourtListId() throws IOException {
         JsonObject payload = Json.createObjectBuilder().build();
-        byte[] mockPdfBytes = "Mock PDF content".getBytes();
-
-        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
-                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
 
         UUID result = pdfGenerationService.generateAndUploadPdf(payload, null, CourtListType.STANDARD, false);
 
@@ -231,10 +175,7 @@ class PdfGenerationServiceTest {
         JsonObject payload = Json.createObjectBuilder()
                 .add("someOtherField", "someValue")
                 .build();
-        byte[] mockPdfBytes = "Mock PDF content".getBytes();
-
-        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
-                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
+        when(documentGeneratorClient.generatePdf(eq(payload), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
 
         UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD, false);
 
@@ -243,28 +184,21 @@ class PdfGenerationServiceTest {
     }
 
     @Test
-    void generateAndUploadPdf_shouldThrowIOException_whenPdfGenerationFails() {
-        // Given
+    void generateAndUploadPdf_shouldThrowIOException_whenPdfGenerationFails() throws IOException {
         JsonObject payload = Json.createObjectBuilder().build();
-        
-        // Mock PDF generation service to throw exception
-        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
-                .thenThrow(new RuntimeException("PDF generation failed"));
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList")))
+                .thenThrow(new IOException("PDF generation failed"));
 
-        // When & Then
         assertThatThrownBy(() -> pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD, false))
                 .isInstanceOf(IOException.class)
                 .hasMessageContaining("Failed to generate PDF")
-                .hasCauseInstanceOf(RuntimeException.class);
+                .hasCauseInstanceOf(IOException.class);
     }
 
     @Test
     void generateAndUploadPdf_shouldUseCorrectFileId() throws IOException {
         JsonObject payload = Json.createObjectBuilder().build();
-        byte[] mockPdfBytes = "Mock PDF content".getBytes();
-
-        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(byte[].class)))
-                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
+        when(documentGeneratorClient.generatePdf(eq(payload), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
 
         pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD, false);
 
@@ -311,16 +245,12 @@ class PdfGenerationServiceTest {
     @Test
     void generateAndUploadPdf_shouldUseWelshTemplate_whenIsWelshTrue() throws IOException {
         JsonObject payload = Json.createObjectBuilder().build();
-        byte[] mockPdfBytes = "Mock PDF content".getBytes();
-
-        when(restTemplate.exchange(any(java.net.URI.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(byte[].class)))
-                .thenReturn(new ResponseEntity<>(mockPdfBytes, HttpStatus.OK));
+        when(documentGeneratorClient.generatePdf(eq(payload), eq("OnlinePublicCourtListEnglishWelsh"))).thenReturn(mockPdfBytes);
 
         pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.ONLINE_PUBLIC, true);
 
-        verify(restTemplate).exchange(any(java.net.URI.class), eq(HttpMethod.POST), httpEntityCaptor.capture(), eq(byte[].class));
-        String requestBody = httpEntityCaptor.getValue().getBody();
-        assertThat(requestBody).contains("OnlinePublicCourtListEnglishWelsh");
+        verify(documentGeneratorClient).generatePdf(eq(payload), eq("OnlinePublicCourtListEnglishWelsh"));
+        verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
     }
 
     @Test
