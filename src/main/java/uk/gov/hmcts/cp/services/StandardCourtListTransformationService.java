@@ -274,8 +274,8 @@ public class StandardCourtListTransformationService {
                     .age(convertAge(defendant.getAge()))
                     .address(transformAddressSchemaFromDefendant(defendant.getAddress()))
                     .inCustody(null) // Not available in source data
-                    .gender(null) // Not available in source data
-                    .asn(null) // Not available in source data
+                    .gender(defendant.getGender()) // Not available in source data
+                    .asn(defendant.getAsn()) // Not available in source data
                     .build();
         }
 
@@ -331,17 +331,17 @@ public class StandardCourtListTransformationService {
 
     private OffenceSchema transformOffenceSchema(uk.gov.hmcts.cp.models.Offence offence) {
         return OffenceSchema.builder()
-                .offenceCode(offence.getId()) // Using ID as offence code
+                .offenceCode(offence.getOffenceCode())
                 .offenceTitle(offence.getOffenceTitle())
                 .offenceWording(offence.getOffenceWording())
-                .offenceMaxPen(offence.getMaxPenalty()) // Map from source when available
+                .offenceMaxPen(offence.getMaxPenalty())
                 .reportingRestriction(null) // Not available in source data
                 .reportingRestrictionDetails(null) // Not available in source data
-                .convictionDate(null) // Not available in source data
-                .adjournedDate(offence.getAdjournedDate()) // Map from source when available
-                .plea(null) // Not available in source data
-                .pleaDate(null) // Not available in source data
-                .offenceLegislation(null) // Not available in source data
+                .convictionDate(offence.getConvictedOn()) // Not available in source data
+                .adjournedDate(offence.getAdjournedDate()) // Not available in source data
+                .plea(offence.getPlea()) // Not available in source data
+                .pleaDate(offence.getPleaDate()) // Not available in source data
+                .offenceLegislation(offence.getOffenceLegislation()) // Not available in source data
                 .build();
     }
 

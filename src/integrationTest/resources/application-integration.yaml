@@ -54,6 +54,7 @@ common-platform-query-api:
 cath:
   base-url: ${CATH_BASE_URL:http://host.docker.internal:8090}
   endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
+  publishing-enabled: ${CATH_PUBLISHING_ENABLED:true}
 
 # Task manager schema (e.g. for job data validation)
 taskmanager:

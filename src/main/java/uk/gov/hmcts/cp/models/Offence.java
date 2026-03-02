@@ -43,5 +43,20 @@ public class Offence {
 
     @JsonProperty("adjournedHearingType")
     private String adjournedHearingType;
+
+    @JsonProperty("offenceLegislation")
+    private String offenceLegislation;
+
+    @JsonProperty("offenceLegislationWelsh")
+    private String offenceLegislationWelsh;
+
+    @JsonProperty("alcoholReadingMethodDescription")
+    private String alcoholReadingMethodDescription;
+
+    @JsonProperty("plea")
+    private String plea;
+
+    @JsonProperty("pleaDate")
+    private String pleaDate;
 }
 

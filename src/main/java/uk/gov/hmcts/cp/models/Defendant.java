@@ -18,9 +18,21 @@ public class Defendant {
     
     @JsonProperty("organisationName")
     private String organisationName;
+
+    /**
+     * Display name (e.g. for organisation defendants or combined person name).
+     */
+    @JsonProperty("name")
+    private String name;
     
     @JsonProperty("welshOrganisationName")
     private String welshOrganisationName;
+
+    @JsonProperty("gender")
+    private String gender;
+
+    @JsonProperty("defenceOrganization")
+    private String defenceOrganization;
     
     @JsonProperty("firstName")
     private String firstName;

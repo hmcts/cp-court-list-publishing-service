@@ -69,6 +69,7 @@ services:
       # WireMock service running in Docker container
       COMMON_PLATFORM_QUERY_API_BASE_URL: "http://wiremock:8080"
       CATH_BASE_URL: "http://wiremock:8080"
+      CATH_PUBLISHING_ENABLED: "true"
     depends_on:
       db:
         condition: service_healthy

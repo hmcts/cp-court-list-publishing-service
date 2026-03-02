@@ -38,9 +38,6 @@ class PdfGenerationServiceTest {
     private CourtListPublisherBlobClientService blobClientService;
 
     @Mock
-    private HttpClientFactory httpClientFactory;
-
-    @Mock
     private RestTemplate restTemplate;
 
     @Mock
@@ -59,8 +56,6 @@ class PdfGenerationServiceTest {
     void setUp() throws Exception {
         courtListId = UUID.randomUUID();
         courtCentreId = UUID.randomUUID();
-        // Mock HttpClientFactory to return RestTemplate (lenient for tests that don't use it)
-        lenient().when(httpClientFactory.getClient()).thenReturn(restTemplate);
         lenient().when(systemUserConfig.getSystemUserId()).thenReturn("ba4e97ab-2174-4fa2-abfe-3ac2bb04bc75");
 
         // Set the base URL field using reflection since it's @Value injected

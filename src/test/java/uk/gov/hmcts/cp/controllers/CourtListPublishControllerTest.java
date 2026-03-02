@@ -219,7 +219,7 @@ class CourtListPublishControllerTest {
     }
 
     @Test
-    void getCourtlistData_returnsCourtListDataFromListingAndReferenceData() throws Exception {
+    void getCourtlistData_returnsCourtListDataFromProgression() throws Exception {
         String payload = "{\"listType\":\"standard\",\"courtCentreName\":\"Test Court\",\"templateName\":\"PublicCourtList\"}";
         when(courtListDataService.getCourtListData(
                 eq(CourtListType.STANDARD),
@@ -228,8 +228,7 @@ class CourtListPublishControllerTest {
                 eq("2024-01-15"),
                 eq("2024-01-15"),
                 eq(false),
-                eq("test-cjscppuid"),
-                any()))
+                eq("test-cjscppuid")))
                 .thenReturn(payload);
 
         mockMvc.perform(get(COURTLISTDATA_URL)
@@ -251,8 +250,7 @@ class CourtListPublishControllerTest {
                 eq("2024-01-15"),
                 eq("2024-01-15"),
                 eq(false),
-                eq("test-cjscppuid"),
-                eq(TEST_SYSTEM_USER_ID));
+                eq("test-cjscppuid"));
     }
 
     @Test
