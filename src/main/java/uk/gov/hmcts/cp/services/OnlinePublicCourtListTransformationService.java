@@ -38,11 +38,17 @@ public class OnlinePublicCourtListTransformationService {
         // Transform court lists (simplified for public lists)
         List<CourtList> courtLists = transformCourtLists(payload);
 
-        return CourtListDocument.builder()
+        CourtListDocument result = CourtListDocument.builder()
                 .document(document)
                 .venue(venue)
                 .courtLists(courtLists)
+                .ouCode(payload.getOuCode())
+                .courtId(payload.getCourtId())
+                .courtIdNumeric(payload.getCourtIdNumeric())
+                .isWelsh(payload.getIsWelsh())
                 .build();
+
+        return result;
     }
 
     private Venue transformVenue(CourtListPayload payload) {

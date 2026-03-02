@@ -24,5 +24,21 @@ public class CourtListDocument {
     
     @JsonProperty("courtLists")
     private List<CourtList> courtLists;
+
+    /** OU code from reference data (getCourtCenterDataByCourtName). */
+    @JsonProperty("ouCode")
+    private String ouCode;
+
+    /** Court centre id (UUID) from reference data. */
+    @JsonProperty("courtId")
+    private String courtId;
+
+    /** Numeric court id from reference data, used for CaTH DtsMeta. */
+    @JsonProperty("courtIdNumeric")
+    private String courtIdNumeric;
+
+    /** Whether the court supports Welsh; used for CaTH DtsMeta language (WELSH vs ENGLISH). */
+    @JsonProperty("isWelsh")
+    private Boolean isWelsh;
 }
 

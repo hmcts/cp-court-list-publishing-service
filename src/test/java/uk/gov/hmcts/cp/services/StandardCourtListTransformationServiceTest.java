@@ -136,6 +136,11 @@ class StandardCourtListTransformationServiceTest {
         assertThat(offence.getOffenceTitle()).isEqualTo("Use a television set without a licence"); // From payload
         assertThat(offence.getOffenceWording()).contains("television"); // From payload
 
+        // Stub payload includes ouCode/courtId/courtIdNumeric (court-list-payload-standard.json)
+        assertThat(document.getOuCode()).isEqualTo("C01CY00");
+        assertThat(document.getCourtId()).isEqualTo("07e45c88-9e5d-3e44-b664-d5345bb13be2");
+        assertThat(document.getCourtIdNumeric()).isEqualTo("418");
+
         // Verify second Party (PROSECUTING_AUTHORITY) from prosecutorType
         if (caseObj.getParty().size() > 1) {
             Party prosecutorParty = caseObj.getParty().get(1);
@@ -231,6 +236,23 @@ class StandardCourtListTransformationServiceTest {
         AddressSchema venueAddress = venue.getVenueAddress();
         assertThat(venueAddress).isNotNull();
         assertThat(venueAddress.getLine()).isNotNull();
+    }
+
+    @Test
+    void transform_shouldCopyReferenceDataFieldsFromPayloadToDocument() throws Exception {
+        // Given - payload enriched with ouCode/courtId from getCourtCenterDataByCourtName
+        payload.setOuCode("B01LY00");
+        payload.setCourtId("f8254db1-1683-483e-afb3-b87fde5a0a26");
+        payload.setCourtIdNumeric("325");
+
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then - reference data fields are present on document (for CaTH and list publishing)
+        assertThat(document).isNotNull();
+        assertThat(document.getOuCode()).isEqualTo("B01LY00");
+        assertThat(document.getCourtId()).isEqualTo("f8254db1-1683-483e-afb3-b87fde5a0a26");
+        assertThat(document.getCourtIdNumeric()).isEqualTo("325");
     }
 
     /**
