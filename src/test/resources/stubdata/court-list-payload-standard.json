@@ -55,6 +55,7 @@
                       "offences": [
                         {
                           "id": "48fdbe30-6191-42ad-bded-0f70fb2a283e",
+                          "offenceCode": "OFFCODE112",
                           "offenceTitle": "Use a television set without a licence",
                           "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
                           "offenceWording": "From 18 January 2026, used a television receiver without a licence."
@@ -143,6 +144,7 @@
                       "offences": [
                         {
                           "id": "52077ee6-b68e-4131-a7b2-8a6b678caec6",
+                          "offenceCode": "OFFCODE111",
                           "offenceTitle": "Use a television set without a licence",
                           "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
                           "offenceWording": "From 18 January 2026, used a television receiver without a licence."
@@ -3314,6 +3316,7 @@
                       "offences": [
                         {
                           "id": "48fdbe30-6191-42ad-bded-0f70fb2a283e",
+                          "offenceCode": "OFFCODE112",
                           "offenceTitle": "Use a television set without a licence",
                           "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
                           "offenceWording": "From 18 January 2026, used a television receiver without a licence."
