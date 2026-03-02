@@ -26,17 +26,15 @@ courtlistpublishing:
 common-platform-query-api:
   base-url: ${CP_CLP_BASE_URL:http://localhost:8080}
   ssl:
-    # Set to false to disable SSL certificate verification (development only)
-    # WARNING: Only use false in development environments!
     verify: ${COMMON_PLATFORM_QUERY_API_SSL_VERIFY:false}
 
-# CaTH endpoint configuration
-cath:
-  base-url: ${CATH_BASE_URL:https://spnl-apim-int-gw.cpp.nonlive}
-  endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
-taskmanager:
-  schema:
-    enabled: true
+# Public court list (optional): court list data from configurable API (same contract progression used);
+# PDF via common-platform-query-api (document generator). Progression is not called.
+public-court-list:
+  enabled: ${PUBLIC_COURT_LIST_ENABLED:false}
+  court-list-data:
+    path: ${PUBLIC_COURT_LIST_DATA_PATH:progression-service/query/api/rest/progression/courtlist}
+
 # Temporarily commented out due to SpringDoc compatibility issues with Spring Boot 4.0.0-M3
 # springdoc:
 #   packagesToScan: uk.gov.hmcts.cp.controllers
