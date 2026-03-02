@@ -18,6 +18,9 @@ public class CaseSchema {
     
     @JsonProperty("reportingRestriction")
     private Boolean reportingRestriction;
+
+    @JsonProperty("reportingRestrictionDetails")
+    private List<String> reportingRestrictionDetails;
     
     @JsonProperty("caseSequenceIndicator")
     private String caseSequenceIndicator;
