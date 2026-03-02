@@ -143,7 +143,8 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         try {
             var courtListDocument = courtListQueryService.buildCourtListDocumentFromPayload(payload, listId);
             logger.info("Sending transformed court list document to CaTH endpoint");
-            cathService.sendCourtListToCaTH(courtListDocument, listId, publishDate);
+            cathService.sendCourtListToCaTH(courtListDocument, listId, publishDate,
+                    payload.getCourtIdNumeric(), payload.getIsWelsh());
             logger.info("Successfully sent court list document to CaTH endpoint");
         } catch (Exception e) {
             logger.error("Error building document or sending court list to CaTH", e);

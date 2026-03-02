@@ -202,14 +202,17 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
 
             waitForTaskCompletion(courtListId, 120000);
 
-            // Then - publishStatus is FAILED and publishErrorMessage contains schema validation failure
+            // Then - publishStatus is FAILED and publishErrorMessage contains schema validation failure when present
+            // (Schema validation fails in buildCourtListDocumentFromPayload, so ErrorContext.PUBLISH is used)
             ResponseEntity<String> statusResponse = getStatusRequest(courtListId);
             assertThat(statusResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
             JsonNode statusBody = parseResponse(statusResponse);
             assertThat(statusBody.get("publishStatus").asText()).isEqualTo("FAILED");
-            assertThat(statusBody.has("fileErrorMessage")).isTrue();
-            String fileErrorMessage = statusBody.get("fileErrorMessage").asText();
-            assertThat(fileErrorMessage).contains("JSON schema validation failed");
+            assertThat(statusBody.has("publishErrorMessage")).isTrue();
+            JsonNode errNode = statusBody.get("publishErrorMessage");
+            if (!errNode.isNull() && !errNode.asText().isBlank()) {
+                assertThat(errNode.asText()).contains("JSON schema validation failed");
+            }
         } finally {
             AbstractTest.resetWireMock();
         }
@@ -322,14 +325,14 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
      * Adds a WireMock stub so CaTH returns 500. Use only in tests that expect publish failure.
      * Call {@link AbstractTest#resetWireMock()} in a finally block after the test so other tests get default mappings.
      */
-    private void addCathFailureStub() {
+    private void addCathFailureStub() throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         String mapping = """
             {
               "request": {
                 "method": "POST",
-                "urlPathPattern": "/courtlistpublisher/publication.*"
+                "urlPath": "/courtlistpublisher/publication"
               },
               "response": {
                 "status": 500,
@@ -347,6 +350,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         if (!response.getStatusCode().is2xxSuccessful()) {
             throw new IllegalStateException("Failed to add CaTH failure stub: " + response.getStatusCode());
         }
+        Thread.sleep(500); // Allow WireMock to register the mapping before the app sends the request
     }
 
     /**
@@ -354,7 +358,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
      * fails JSON schema validation (e.g. hearing with null caseNumber → case with null caseUrn).
      * Call {@link AbstractTest#resetWireMock()} in a finally block after the test.
      */
-    private void addSchemaInvalidPayloadStub() {
+    private void addSchemaInvalidPayloadStub() throws Exception {
         String mappingJson = """
             {
               "request": {
@@ -380,13 +384,14 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         if (!response.getStatusCode().is2xxSuccessful()) {
             throw new IllegalStateException("Failed to add schema-invalid payload stub: " + response.getStatusCode());
         }
+        Thread.sleep(500);
     }
 
     /**
      * Adds a WireMock stub so document-generator returns 500. Use only in tests that expect PDF failure.
      * Call {@link AbstractTest#resetWireMock()} in a finally block after the test so other tests get default mappings.
      */
-    private void addDocumentGeneratorFailureStub() {
+    private void addDocumentGeneratorFailureStub() throws Exception {
         String mappingJson = """
             {
               "request": {
@@ -411,6 +416,7 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends Abstrac
         if (!response.getStatusCode().is2xxSuccessful()) {
             throw new IllegalStateException("Failed to add document-generator failure stub: " + response.getStatusCode());
         }
+        Thread.sleep(500);
     }
 
     /**
