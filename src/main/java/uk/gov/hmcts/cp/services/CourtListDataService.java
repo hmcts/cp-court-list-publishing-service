@@ -2,31 +2,59 @@ package uk.gov.hmcts.cp.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.services.publiccourtlist.PublicCourtListException;
 
-/**
- * Returns court list data from progression GET /courtlistdata (payload already includes ouCode, courtId, LJA etc.).
- * No reference data enrichment needed.
- */
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.Map;
+
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class CourtListDataService {
 
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
+    private static final String LIST_ID_PUBLIC = "PUBLIC";
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
 
     private final ProgressionQueryService progressionQueryService;
+    private final RestTemplate publicCourtListRestTemplate;
+    private final String courtListDataBaseUrl;
+    private final String courtListDataPath;
+    private final String courtListDataAcceptHeader;
 
-    /**
-     * Fetches court list data from progression /courtlistdata and returns it as JSON string.
-     *
-     * @param currentUserId user ID for progression call (e.g. CJSCPPUID from request).
-     */
+    public CourtListDataService(
+            ProgressionQueryService progressionQueryService,
+            @Autowired(required = false) @Qualifier("publicCourtListRestTemplate") RestTemplate publicCourtListRestTemplate,
+            @Value("${common-platform-query-api.base-url:}") String courtListDataBaseUrl,
+            @Value("${public-court-list.court-list-data.path:}") String courtListDataPath,
+            @Value("${public-court-list.court-list-data.accept-header:}") String courtListDataAcceptHeader) {
+        this.progressionQueryService = progressionQueryService;
+        this.publicCourtListRestTemplate = publicCourtListRestTemplate;
+        String base = courtListDataBaseUrl != null ? courtListDataBaseUrl : "";
+        this.courtListDataBaseUrl = base.endsWith("/") ? base : base + "/";
+        String path = courtListDataPath != null ? courtListDataPath : "";
+        this.courtListDataPath = path.startsWith("/") ? path.substring(1) : path;
+        this.courtListDataAcceptHeader = courtListDataAcceptHeader != null ? courtListDataAcceptHeader : "";
+    }
+
     public String getCourtListData(
             CourtListType listId,
             String courtCentreId,
@@ -40,9 +68,6 @@ public class CourtListDataService {
         return json != null ? json : "{}";
     }
 
-    /**
-     * Fetches court list data from progression and returns as CourtListPayload.
-     */
     public CourtListPayload getCourtListPayload(
             CourtListType listId,
             String courtCentreId,
@@ -52,13 +77,38 @@ public class CourtListDataService {
         boolean restricted = cjscppuid != null && !cjscppuid.trim().isEmpty();
         String json = getCourtListData(listId, courtCentreId, null, startDate, endDate, restricted, cjscppuid);
 
-        log.info("======= TODO: remove this --- Original CPP Payload is: {}", json);
-
         try {
             return OBJECT_MAPPER.readValue(json, CourtListPayload.class);
         } catch (JsonProcessingException e) {
             log.error("Failed to deserialize court list data to CourtListPayload: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to parse court list payload", e);
+        }
+    }
+
+    public Map<String, Object> getPublicCourtListPayload(String courtCentreId, LocalDate startDate, LocalDate endDate) {
+        if (publicCourtListRestTemplate == null || courtListDataPath.isBlank() || courtListDataAcceptHeader.isBlank()) {
+            throw new IllegalStateException("Public court list data is not configured");
+        }
+        String url = UriComponentsBuilder.fromUriString(courtListDataBaseUrl + courtListDataPath)
+                .queryParam("listId", LIST_ID_PUBLIC)
+                .queryParam("courtCentreId", courtCentreId)
+                .queryParam("startDate", startDate.format(DATE_FORMAT))
+                .queryParam("endDate", endDate.format(DATE_FORMAT))
+                .queryParam("restricted", false)
+                .build()
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.parseMediaType(courtListDataAcceptHeader)));
+
+        try {
+            ResponseEntity<Map<String, Object>> response = publicCourtListRestTemplate.exchange(
+                    url, HttpMethod.GET, new HttpEntity<>(headers),
+                    new ParameterizedTypeReference<Map<String, Object>>() {});
+            return response.getBody();
+        } catch (RestClientException e) {
+            log.error("Court list data API call failed for courtCentreId={}", courtCentreId, e);
+            throw new PublicCourtListException("Failed to fetch court list: " + e.getMessage(), e);
         }
     }
 }

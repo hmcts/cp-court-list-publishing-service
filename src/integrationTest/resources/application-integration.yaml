@@ -11,7 +11,8 @@ common-platform-query-api:
 public-court-list:
   enabled: true
   court-list-data:
-    path: progression-service/query/api/rest/progression/courtlist
+    path: ${PUBLIC_COURT_LIST_DATA_PATH:courtlist}
+    accept-header: ${PUBLIC_COURT_LIST_ACCEPT_HEADER:application/vnd.courtlist.search.court.list+json}
 
 azure:
   storage:

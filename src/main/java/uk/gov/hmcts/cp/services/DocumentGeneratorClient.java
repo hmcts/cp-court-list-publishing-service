@@ -29,10 +29,6 @@ import java.net.URI;
 
 import static java.lang.String.format;
 
-/**
- * Shared client for the document generator render API.
- * Used by court list publishing (generate + upload) and by the public court list endpoint (generate only).
- */
 @Component
 @RequiredArgsConstructor
 @ConditionalOnExpression("${azure.storage.enabled:false} or ${public-court-list.enabled:false}")
@@ -51,14 +47,6 @@ public class DocumentGeneratorClient {
     @Value("${common-platform-query-api.base-url}")
     private String commonPlatformQueryApiBaseUrl;
 
-    /**
-     * Calls the document generator to produce a PDF from the given template payload and template name.
-     *
-     * @param templatePayload the payload for the template (court list data etc.)
-     * @param templateName    the document generator template identifier
-     * @return PDF bytes, never null or empty
-     * @throws IOException if the call fails or response is empty
-     */
     public byte[] generatePdf(final JsonObject templatePayload, final String templateName) throws IOException {
         RestTemplate restTemplate = httpClientFactory.getClient();
         try {

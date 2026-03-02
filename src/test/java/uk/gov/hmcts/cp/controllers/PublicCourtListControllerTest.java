@@ -72,6 +72,15 @@ class PublicCourtListControllerTest {
     }
 
     @Test
+    void getPublicCourtListPdf_returns400_whenCourtCentreIdBlank() throws Exception {
+        mockMvc.perform(get(BASE_URL)
+                        .param("courtCentreId", " ")
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void getPublicCourtListPdf_returns400_whenCourtCentreIdNotValidUuid() throws Exception {
         mockMvc.perform(get(BASE_URL)
                         .param("courtCentreId", "not-a-valid-uuid")
@@ -89,11 +98,28 @@ class PublicCourtListControllerTest {
     }
 
     @Test
+    void getPublicCourtListPdf_returns400_whenEndDateMissing() throws Exception {
+        mockMvc.perform(get(BASE_URL)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", START_DATE))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void getPublicCourtListPdf_returns400_whenEndDateBeforeStartDate() throws Exception {
         mockMvc.perform(get(BASE_URL)
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", "2026-02-28")
                         .param("endDate", "2026-02-27"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getPublicCourtListPdf_returns400_whenStartDateInvalidFormat() throws Exception {
+        mockMvc.perform(get(BASE_URL)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", "27-02-2026")
+                        .param("endDate", END_DATE))
                 .andExpect(status().isBadRequest());
     }
 

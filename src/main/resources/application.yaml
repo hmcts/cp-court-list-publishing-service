@@ -18,22 +18,19 @@ spring:
     virtual:
       enabled: ${VIRTUAL_THREADS:false}
 
-# Court list publishing config - system user (UUID) for reference data and document generator
 courtlistpublishing:
   system-user-id: ${COURTLISTPUBLISHING_SYSTEM_USER_ID:}
 
-# Common Platform Query API configuration
 common-platform-query-api:
   base-url: ${CP_CLP_BASE_URL:http://localhost:8080}
   ssl:
     verify: ${COMMON_PLATFORM_QUERY_API_SSL_VERIFY:false}
 
-# Public court list (optional): court list data from configurable API (same contract progression used);
-# PDF via common-platform-query-api (document generator). Progression is not called.
 public-court-list:
   enabled: ${PUBLIC_COURT_LIST_ENABLED:false}
   court-list-data:
-    path: ${PUBLIC_COURT_LIST_DATA_PATH:progression-service/query/api/rest/progression/courtlist}
+    path: ${PUBLIC_COURT_LIST_DATA_PATH:}
+    accept-header: ${PUBLIC_COURT_LIST_ACCEPT_HEADER:}
 
 # Temporarily commented out due to SpringDoc compatibility issues with Spring Boot 4.0.0-M3
 # springdoc:
