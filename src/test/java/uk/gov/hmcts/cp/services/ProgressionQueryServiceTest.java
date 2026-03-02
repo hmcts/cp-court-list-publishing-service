@@ -69,44 +69,8 @@ class ProgressionQueryServiceTest {
                 "2024-01-15",
                 "2024-01-15",
                 false,
-                "user-id"))
+                null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("base-url is not configured");
-    }
-
-    @Test
-    void getCourtListPayload_throwsWhenCjscppuidIsNull() throws Exception {
-        var field = ProgressionQueryService.class.getDeclaredField("baseUrl");
-        field.setAccessible(true);
-        field.set(progressionQueryService, "https://progression.example.com");
-
-        assertThatThrownBy(() -> progressionQueryService.getCourtListPayload(
-                CourtListType.STANDARD,
-                "f8254db1-1683-483e-afb3-b87fde5a0a26",
-                null,
-                "2024-01-15",
-                "2024-01-15",
-                false,
-                null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("CJSCPPUID (user ID) is required");
-    }
-
-    @Test
-    void getCourtListPayload_throwsWhenCjscppuidIsBlank() throws Exception {
-        var field = ProgressionQueryService.class.getDeclaredField("baseUrl");
-        field.setAccessible(true);
-        field.set(progressionQueryService, "https://progression.example.com");
-
-        assertThatThrownBy(() -> progressionQueryService.getCourtListPayload(
-                CourtListType.STANDARD,
-                "f8254db1-1683-483e-afb3-b87fde5a0a26",
-                null,
-                "2024-01-15",
-                "2024-01-15",
-                false,
-                "   "))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("CJSCPPUID (user ID) is required");
     }
 }

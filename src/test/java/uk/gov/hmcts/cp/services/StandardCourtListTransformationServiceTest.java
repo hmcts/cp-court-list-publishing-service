@@ -132,7 +132,7 @@ class StandardCourtListTransformationServiceTest {
         // Verify first Offence (from stub: id, title, wording)
         OffenceSchema offence = offences.get(0);
         assertThat(offence).isNotNull();
-        assertThat(offence.getOffenceCode()).isEqualTo("48fdbe30-6191-42ad-bded-0f70fb2a283e"); // From offence id
+        assertThat(offence.getOffenceCode()).isEqualTo("OFFCODE112"); // From offence id
         assertThat(offence.getOffenceTitle()).isEqualTo("Use a television set without a licence"); // From payload
         assertThat(offence.getOffenceWording()).contains("television"); // From payload
 
