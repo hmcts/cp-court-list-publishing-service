@@ -79,7 +79,7 @@ public class PublicCourtListService {
     }
 
     private Map<String, Object> fetchCourtListPayload(final String courtCentreId, final LocalDate startDate, final LocalDate endDate) {
-        String url = UriComponentsBuilder.fromHttpUrl(progressionBaseUrl + "courtlist")
+        String url = UriComponentsBuilder.fromUriString(progressionBaseUrl + "courtlist")
                 .queryParam("listId", LIST_ID_PUBLIC)
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate.format(DATE_FORMAT))

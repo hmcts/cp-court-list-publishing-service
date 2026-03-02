@@ -57,7 +57,7 @@ class PdfGenerationServiceTest {
 
     @Test
     void generateAndUploadPdf_shouldReturnFileId_whenPayloadIsNull() throws IOException {
-        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
+        when(documentGeneratorClient.generatePdf(nullable(JsonObject.class), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
 
         UUID result = pdfGenerationService.generateAndUploadPdf(null, courtListId, CourtListType.STANDARD, false);
 
