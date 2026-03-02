@@ -28,6 +28,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Map;
 
+/**
+ * Generates the public court list PDF by calling the court list data API directly
+ * (the same backend that progression used) and then the document generator.
+ * Progression is not used; this allows progression to remove its public court list logic.
+ */
 @Service
 @ConditionalOnProperty(name = "public-court-list.enabled", havingValue = "true")
 public class PublicCourtListService {
@@ -36,19 +41,23 @@ public class PublicCourtListService {
     private static final String LIST_ID_PUBLIC = "PUBLIC";
     private static final String TEMPLATE_PUBLIC_COURT_LIST = "PublicCourtList";
     private static final String KEY_TEMPLATE_NAME = "templateName";
+    /** Accept header for public court list JSON (same contract as the court list data API). */
     private static final String ACCEPT_COURT_LIST_JSON = "application/vnd.progression.search.court.list+json";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
 
     private final RestTemplate restTemplate;
-    private final String progressionBaseUrl;
+    private final String courtListDataBaseUrl;
+    private final String courtListDataPath;
     private final DocumentGeneratorClient documentGeneratorClient;
 
     public PublicCourtListService(
             @Qualifier("publicCourtListRestTemplate") final RestTemplate restTemplate,
-            @Value("${public-court-list.progression-api.base-url}") final String progressionBaseUrl,
+            @Value("${common-platform-query-api.base-url}") final String courtListDataBaseUrl,
+            @Value("${public-court-list.court-list-data.path}") final String courtListDataPath,
             final DocumentGeneratorClient documentGeneratorClient) {
         this.restTemplate = restTemplate;
-        this.progressionBaseUrl = progressionBaseUrl.endsWith("/") ? progressionBaseUrl : progressionBaseUrl + "/";
+        this.courtListDataBaseUrl = courtListDataBaseUrl.endsWith("/") ? courtListDataBaseUrl : courtListDataBaseUrl + "/";
+        this.courtListDataPath = courtListDataPath.startsWith("/") ? courtListDataPath.substring(1) : courtListDataPath;
         this.documentGeneratorClient = documentGeneratorClient;
     }
 
@@ -58,7 +67,7 @@ public class PublicCourtListService {
 
         Map<String, Object> payload = fetchCourtListPayload(courtCentreId, startDate, endDate);
         if (payload == null || payload.isEmpty()) {
-            throw new PublicCourtListException("Progression returned empty court list payload");
+            throw new PublicCourtListException("Court list data API returned empty payload");
         }
 
         String templateName = payload.containsKey(KEY_TEMPLATE_NAME)
@@ -78,8 +87,12 @@ public class PublicCourtListService {
         return pdf;
     }
 
+    /**
+     * Fetches public court list payload from the court list data API (same backend contract
+     * that progression used). Progression is not involved; this call can replace progression's role.
+     */
     private Map<String, Object> fetchCourtListPayload(final String courtCentreId, final LocalDate startDate, final LocalDate endDate) {
-        String url = UriComponentsBuilder.fromUriString(progressionBaseUrl + "courtlist")
+        String url = UriComponentsBuilder.fromUriString(courtListDataBaseUrl + courtListDataPath)
                 .queryParam("listId", LIST_ID_PUBLIC)
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate.format(DATE_FORMAT))
@@ -97,7 +110,7 @@ public class PublicCourtListService {
                     new ParameterizedTypeReference<Map<String, Object>>() {});
             return response.getBody();
         } catch (RestClientException e) {
-            LOG.error("Progression API call failed for courtCentreId={}", sanitizeForLog(courtCentreId), e);
+            LOG.error("Court list data API call failed for courtCentreId={}", sanitizeForLog(courtCentreId), e);
             throw new PublicCourtListException("Failed to fetch court list: " + e.getMessage(), e);
         }
     }

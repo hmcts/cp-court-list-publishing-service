@@ -8,7 +8,7 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class PublicCourtListConfig {
 
-    @Bean("publicCourtListRestTemplate")
+    @Bean
     @ConditionalOnProperty(name = "public-court-list.enabled", havingValue = "true")
     public RestTemplate publicCourtListRestTemplate() {
         return new RestTemplate();
