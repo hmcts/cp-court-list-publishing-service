@@ -2,6 +2,7 @@ package uk.gov.hmcts.cp.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,12 +22,14 @@ import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.services.publiccourtlist.PublicCourtListException;
 
+import jakarta.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class CourtListDataService {
 
@@ -35,24 +38,27 @@ public class CourtListDataService {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
 
     private final ProgressionQueryService progressionQueryService;
-    private final RestTemplate publicCourtListRestTemplate;
-    private final String courtListDataBaseUrl;
-    private final String courtListDataPath;
-    private final String courtListDataAcceptHeader;
 
-    public CourtListDataService(
-            ProgressionQueryService progressionQueryService,
-            @Autowired(required = false) @Qualifier("publicCourtListRestTemplate") RestTemplate publicCourtListRestTemplate,
-            @Value("${common-platform-query-api.base-url:}") String courtListDataBaseUrl,
-            @Value("${public-court-list.court-list-data.path:}") String courtListDataPath,
-            @Value("${public-court-list.court-list-data.accept-header:}") String courtListDataAcceptHeader) {
-        this.progressionQueryService = progressionQueryService;
-        this.publicCourtListRestTemplate = publicCourtListRestTemplate;
+    @Autowired(required = false)
+    @Qualifier("publicCourtListRestTemplate")
+    private RestTemplate publicCourtListRestTemplate;
+
+    @Value("${common-platform-query-api.base-url:}")
+    private String courtListDataBaseUrl;
+
+    @Value("${public-court-list.court-list-data.path:}")
+    private String courtListDataPath;
+
+    @Value("${public-court-list.court-list-data.accept-header:}")
+    private String courtListDataAcceptHeader;
+
+    @PostConstruct
+    void normalizeConfig() {
         String base = courtListDataBaseUrl != null ? courtListDataBaseUrl : "";
-        this.courtListDataBaseUrl = base.endsWith("/") ? base : base + "/";
+        courtListDataBaseUrl = base.endsWith("/") ? base : base + "/";
         String path = courtListDataPath != null ? courtListDataPath : "";
-        this.courtListDataPath = path.startsWith("/") ? path.substring(1) : path;
-        this.courtListDataAcceptHeader = courtListDataAcceptHeader != null ? courtListDataAcceptHeader : "";
+        courtListDataPath = path.startsWith("/") ? path.substring(1) : path;
+        courtListDataAcceptHeader = courtListDataAcceptHeader != null ? courtListDataAcceptHeader : "";
     }
 
     public String getCourtListData(
