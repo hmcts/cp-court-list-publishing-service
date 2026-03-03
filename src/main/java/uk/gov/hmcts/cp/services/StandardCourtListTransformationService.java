@@ -9,10 +9,8 @@ import uk.gov.hmcts.cp.models.transformed.schema.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.regex.Pattern;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -22,7 +20,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class StandardCourtListTransformationService extends BaseCourtListTransformationService {
 
-    /** Abbreviated month: "5 Jan 2006". September appears as "Sept" or "Sept." in data; Java expects "Sep". */
+    /** Abbreviated month: "5 Jan 2006", "20 Sept 1978". Locale.UK uses "Sept" for September. */
     private static final DateTimeFormatter DOB_FORMATTER = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.UK);
     /** Full month name fallback: "11 September 1972". */
     private static final DateTimeFormatter DOB_FORMATTER_FULL_MONTH = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.UK);
@@ -178,6 +176,17 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         return trimmed;
     }
 
+    /** Schema allows GUILTY, NOT_GUILTY, NONE; map INDICATED_GUILTY from source to GUILTY. */
+    private static String toSchemaPlea(String plea) {
+        if (plea == null || plea.isBlank()) {
+            return null;
+        }
+        if ("INDICATED_GUILTY".equalsIgnoreCase(plea.trim())) {
+            return "GUILTY";
+        }
+        return plea.trim();
+    }
+
     private OffenceSchema transformOffenceSchema(uk.gov.hmcts.cp.models.Offence offence) {
         return OffenceSchema.builder()
                 .offenceCode(offence.getOffenceCode())
@@ -188,7 +197,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                 .reportingRestrictionDetails(null) // Not available in source data
                 .convictionDate(toIsoDateTimeOrNull(offence.getConvictedOn())) // Not available in source data
                 .adjournedDate(toIsoDateTimeOrNull(offence.getAdjournedDate())) // Not available in source data
-                .plea(offence.getPlea()) // Not available in source data
+                .plea(toSchemaPlea(offence.getPlea()))
                 .pleaDate(toIsoDateTimeOrNull(offence.getPleaDate())) // Not available in source data
                 .offenceLegislation(offence.getOffenceLegislation()) // Not available in source data
                 .build();
@@ -256,13 +265,11 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
             return null;
         }
 
-        // Normalise month variants: "Sept"/"Sept." → "Sep" (only September has alternate abbreviations in this data)
-        String normalised = dob.trim()
-                .replace("Sept. ", "Sep ")
-                .replace("Sept ", "Sep ");
+        // Normalise "Sept." to "Sept " only; Locale.UK expects "Sept" for September, not "Sep"
+        String normalised = dob.trim().replace("Sept.", "Sept ");
 
         try {
-            // Try abbreviated month first: "5 Jan 2006", "11 Sep 1972"
+            // Try abbreviated month first: "5 Jan 2006", "20 Sept 1978"
             LocalDate date = LocalDate.parse(normalised, DOB_FORMATTER);
             return date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         } catch (Exception e1) {
