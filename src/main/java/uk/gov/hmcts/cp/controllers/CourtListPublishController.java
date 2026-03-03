@@ -8,11 +8,14 @@ import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
 import uk.gov.hmcts.cp.openapi.model.CourtListData;
+import uk.gov.hmcts.cp.openapi.model.CourtListDownloadRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.CourtListDataService;
+import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
+import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 
 import org.slf4j.Logger;
@@ -20,6 +23,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,11 +45,16 @@ public class CourtListPublishController implements CourtListPublishApi {
 
     private static final String PRISON = "PRISON";
 
+    private static final String PDF_FILENAME = "CourtList.pdf";
+    private static final String CONTENT_DISPOSITION_VALUE = "attachment; filename=\"" + PDF_FILENAME + "\"";
+
     private final CourtListPublishStatusService service;
     private final CourtListTaskTriggerService courtListTaskTriggerService;
     private final CourtListDataService courtListDataService;
     private final CourtListPublishingSystemUserConfig systemUserConfig;
-    private static final Logger LOG = LoggerFactory.getLogger(CourtListPublishController.class);
+
+    @Autowired(required = false)
+    private CourtListDownloadService courtListDownloadService;
 
     public CourtListPublishController(final CourtListPublishStatusService service,
                                      CourtListTaskTriggerService courtListTaskTriggerService,
@@ -54,6 +64,10 @@ public class CourtListPublishController implements CourtListPublishApi {
         this.courtListTaskTriggerService = courtListTaskTriggerService;
         this.courtListDataService = courtListDataService;
         this.systemUserConfig = systemUserConfig;
+    }
+
+    void setCourtListDownloadService(CourtListDownloadService courtListDownloadService) {
+        this.courtListDownloadService = courtListDownloadService;
     }
 
     @Override
@@ -121,6 +135,49 @@ public class CourtListPublishController implements CourtListPublishApi {
             logUnknownPropertiesFromDeserializationError(e, CourtListData.class);
             LOG.warn("Could not parse court list data as CourtListData, returning error: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to parse court list data");
+        }
+    }
+
+    @Override
+    public ResponseEntity<byte[]> downloadCourtList(@RequestBody CourtListDownloadRequest request) {
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
+        }
+        if (request.getCourtCentreId() == null || request.getCourtCentreId().toString().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "courtCentreId is required");
+        }
+        if (request.getStartDate() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "startDate is required (format: yyyy-MM-dd)");
+        }
+        if (request.getEndDate() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endDate is required (format: yyyy-MM-dd)");
+        }
+        if (request.getCourtListType() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "courtListType is required");
+        }
+        if (!CourtListType.PUBLIC.equals(request.getCourtListType())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Only PUBLIC court list type is supported for download. Got: " + request.getCourtListType());
+        }
+        if (request.getEndDate().isBefore(request.getStartDate())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endDate must be on or after startDate");
+        }
+        if (courtListDownloadService == null) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                "Public court list download is not enabled (public-court-list.enabled=false)");
+        }
+        try {
+            byte[] pdf = courtListDownloadService.generatePublicCourtListPdf(
+                request.getCourtCentreId().toString(),
+                request.getStartDate(),
+                request.getEndDate());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.set(HttpHeaders.CONTENT_DISPOSITION, CONTENT_DISPOSITION_VALUE);
+            return ResponseEntity.ok().headers(headers).body(pdf);
+        } catch (CourtListDownloadException e) {
+            LOG.warn("Public court list download error: {}", e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, e.getMessage());
         }
     }
 

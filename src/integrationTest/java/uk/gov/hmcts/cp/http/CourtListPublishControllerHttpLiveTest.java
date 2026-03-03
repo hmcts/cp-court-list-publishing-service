@@ -27,6 +27,8 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
 
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private static final String PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publish";
+    private static final String DOWNLOAD_ENDPOINT = BASE_URL + "/api/court-list-publish/download";
+    private static final String DOWNLOAD_CONTENT_TYPE = "application/vnd.courtlistpublishing-service.download.post+json";
     private static final String REQUESTED_STATUS = Status.REQUESTED.toString();
     private static final String COURT_LIST_TYPE_PUBLIC = CourtListType.PUBLIC.toString();
     private static final String COURT_LIST_TYPE_FINAL = CourtListType.FINAL.toString();
@@ -267,6 +269,35 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                     HttpClientErrorException ex = (HttpClientErrorException) exception;
                     assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
                 });
+    }
+
+    @Test
+    void postDownloadCourtList_returnsPdf_whenPublicCourtListEnabledAndStubbed() throws Exception {
+        String requestJson = """
+            {
+                "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",
+                "startDate": "2026-02-27",
+                "endDate": "2026-02-27",
+                "courtListType": "PUBLIC"
+            }
+            """;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(DOWNLOAD_CONTENT_TYPE));
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
+        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+
+        ResponseEntity<byte[]> response = http.exchange(
+                DOWNLOAD_ENDPOINT,
+                HttpMethod.POST,
+                entity,
+                byte[].class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_PDF);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
+                .contains("attachment", "CourtList.pdf");
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().length).isGreaterThan(0);
     }
 }
 

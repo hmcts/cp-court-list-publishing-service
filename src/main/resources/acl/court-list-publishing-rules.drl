@@ -17,7 +17,8 @@ when
   $o: Outcome()
   $a: Action(name == "courtlistpublishing-service.publish.post" ||
              name == "courtlistpublishing-service.publish.get" ||
-             name == "courtlistpublishing-service.files.download")
+             name == "courtlistpublishing-service.files.download" ||
+             name == "courtlistpublishing-service.download.post")
   eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, "Legal Advisers","District Judge","System Users"))
 then
   $o.setSuccess(true);

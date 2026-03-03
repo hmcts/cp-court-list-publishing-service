@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-public class PublicCourtListConfig {
+public class CourtListDownloadConfig {
 
     @Bean
     @ConditionalOnProperty(name = "public-court-list.enabled", havingValue = "true")

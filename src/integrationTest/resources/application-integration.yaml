@@ -70,3 +70,8 @@ taskmanager:
   schema:
     enabled: true
 
+public-court-list:
+  enabled: true
+  court-list-data:
+    path: ${PUBLIC_COURT_LIST_DATA_PATH:courtlist}
+
