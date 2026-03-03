@@ -20,7 +20,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
-import uk.gov.hmcts.cp.services.publiccourtlist.PublicCourtListException;
+import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 
 import jakarta.annotation.PostConstruct;
 import java.time.LocalDate;
@@ -87,7 +87,7 @@ public class CourtListDataService {
             return OBJECT_MAPPER.readValue(json, CourtListPayload.class);
         } catch (JsonProcessingException e) {
             log.error("Failed to deserialize court list data to CourtListPayload: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to parse court list payload", e);
+            throw new IllegalStateException("Failed to parse court list payload", e);
         }
     }
 
@@ -114,7 +114,7 @@ public class CourtListDataService {
             return response.getBody();
         } catch (RestClientException e) {
             log.error("Court list data API call failed for courtCentreId={}", courtCentreId, e);
-            throw new PublicCourtListException("Failed to fetch court list: " + e.getMessage(), e);
+            throw new CourtListDownloadException("Failed to fetch court list: " + e.getMessage(), e);
         }
     }
 }

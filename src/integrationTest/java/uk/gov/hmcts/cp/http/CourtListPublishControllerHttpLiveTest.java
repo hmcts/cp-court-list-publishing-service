@@ -272,7 +272,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     @Test
-    void postDownloadCourtList_returnsPdf_whenPublicCourtListEnabledAndStubbed() throws Exception {
+    void postDownloadCourtListReturnsPdfWhenPublicCourtListEnabledAndStubbed() throws Exception {
         String requestJson = """
             {
                 "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",

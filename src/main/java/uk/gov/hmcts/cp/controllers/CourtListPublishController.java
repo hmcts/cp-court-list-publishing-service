@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 
 import uk.gov.hmcts.cp.config.AppConstant;
-import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
 import uk.gov.hmcts.cp.openapi.model.CourtListData;
@@ -20,6 +19,8 @@ import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.lang.Nullable;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -43,6 +45,7 @@ import java.util.UUID;
 @RestController
 public class CourtListPublishController implements CourtListPublishApi {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CourtListPublishController.class);
     private static final String PRISON = "PRISON";
 
     private static final String PDF_FILENAME = "CourtList.pdf";
@@ -51,19 +54,16 @@ public class CourtListPublishController implements CourtListPublishApi {
     private final CourtListPublishStatusService service;
     private final CourtListTaskTriggerService courtListTaskTriggerService;
     private final CourtListDataService courtListDataService;
-    private final CourtListPublishingSystemUserConfig systemUserConfig;
 
     @Autowired(required = false)
     private CourtListDownloadService courtListDownloadService;
 
     public CourtListPublishController(final CourtListPublishStatusService service,
                                      CourtListTaskTriggerService courtListTaskTriggerService,
-                                     CourtListDataService courtListDataService,
-                                     CourtListPublishingSystemUserConfig systemUserConfig) {
+                                     CourtListDataService courtListDataService) {
         this.service = service;
         this.courtListTaskTriggerService = courtListTaskTriggerService;
         this.courtListDataService = courtListDataService;
-        this.systemUserConfig = systemUserConfig;
     }
 
     void setCourtListDownloadService(CourtListDownloadService courtListDownloadService) {
@@ -139,7 +139,8 @@ public class CourtListPublishController implements CourtListPublishApi {
     }
 
     @Override
-    public ResponseEntity<byte[]> downloadCourtList(@RequestBody CourtListDownloadRequest request) {
+    public ResponseEntity<Resource> downloadCourtList(@RequestBody CourtListDownloadRequest request,
+                                                      @RequestParam(value = "courtRoomId", required = false) UUID courtRoomId) {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
         }
@@ -174,7 +175,7 @@ public class CourtListPublishController implements CourtListPublishApi {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.set(HttpHeaders.CONTENT_DISPOSITION, CONTENT_DISPOSITION_VALUE);
-            return ResponseEntity.ok().headers(headers).body(pdf);
+            return ResponseEntity.ok().headers(headers).body(new ByteArrayResource(pdf));
         } catch (CourtListDownloadException e) {
             LOG.warn("Public court list download error: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, e.getMessage());

@@ -8,7 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import uk.gov.hmcts.cp.services.CourtListDataService;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
@@ -45,13 +44,11 @@ class CourtListDownloadControllerTest {
     @Mock
     private CourtListDataService courtListDataService;
     @Mock
-    private CourtListPublishingSystemUserConfig systemUserConfig;
-    @Mock
     private CourtListDownloadService courtListDownloadService;
 
     @BeforeEach
     void setUp() {
-        CourtListPublishController controller = new CourtListPublishController(service, courtListTaskTriggerService, courtListDataService, systemUserConfig);
+        CourtListPublishController controller = new CourtListPublishController(service, courtListTaskTriggerService, courtListDataService);
         controller.setCourtListDownloadService(courtListDownloadService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
