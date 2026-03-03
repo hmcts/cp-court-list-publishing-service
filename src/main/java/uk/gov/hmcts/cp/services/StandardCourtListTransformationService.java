@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class StandardCourtListTransformationService extends BaseCourtListTransformationService {
 
-    private static final DateTimeFormatter DOB_FORMATTER = DateTimeFormatter.ofPattern("d MMM yyyy");
     /** Abbreviated month: "5 Jan 2006". September appears as "Sept" or "Sept." in data; Java expects "Sep". */
     private static final DateTimeFormatter DOB_FORMATTER = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.UK);
     /** Full month name fallback: "11 September 1972". */
