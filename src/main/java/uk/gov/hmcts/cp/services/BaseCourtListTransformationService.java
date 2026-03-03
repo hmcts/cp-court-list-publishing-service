@@ -57,10 +57,6 @@ public abstract class BaseCourtListTransformationService {
                 .document(document)
                 .venue(venue)
                 .courtLists(courtLists)
-                .ouCode(payload.getOuCode())
-                .courtId(payload.getCourtId())
-                .courtIdNumeric(payload.getCourtIdNumeric())
-                .isWelsh(payload.getIsWelsh())
                 .build();
     }
 

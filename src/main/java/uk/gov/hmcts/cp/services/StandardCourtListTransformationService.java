@@ -71,6 +71,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
             return cases;
         }
 
+        // Create a case for each defendant
         for (Defendant defendant : hearing.getDefendants()) {
             List<Party> parties = transformParties(defendant, hearing);
 
@@ -82,7 +83,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                     .caseUrn(hearing.getCaseNumber())
                     .reportingRestriction(hearing.getReportingRestrictionReason() != null && !hearing.getReportingRestrictionReason().trim().isEmpty())
                     .reportingRestrictionDetails(reportingRestrictionDetails)
-                    .caseSequenceIndicator(null)
+                    .caseSequenceIndicator(null) // Not available in source data
                     .party(parties)
                     .build();
 
@@ -94,25 +95,30 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
 
     private List<Party> transformParties(Defendant defendant, Hearing hearing) {
         List<Party> parties = new ArrayList<>();
-        String partyRole = "DEFENDANT";
 
+        // Determine party role - default to DEFENDANT if not specified
+        String partyRole = "DEFENDANT"; // Default role
+
+        // Transform individual details if defendant is an individual
         IndividualDetails individualDetails = null;
         if (defendant.getFirstName() != null || defendant.getSurname() != null) {
             individualDetails = IndividualDetails.builder()
                     .individualForenames(defendant.getFirstName())
-                    .individualMiddleName(null)
+                    .individualMiddleName(null) // Not available in source data
                     .individualSurname(defendant.getSurname())
                     .dateOfBirth(convertDateOfBirthToIso(defendant.getDateOfBirth()))
                     .age(convertAge(defendant.getAge()))
                     .address(transformAddressSchemaFromDefendant(defendant.getAddress()))
-                    .inCustody(null)
-                    .gender(defendant.getGender())
-                    .asn(defendant.getAsn())
+                    .inCustody(null) // Not available in source data
+                    .gender(defendant.getGender()) // Not available in source data
+                    .asn(defendant.getAsn()) // Not available in source data
                     .build();
         }
 
+        // Transform offences
         List<OffenceSchema> offences = transformOffenceSchemas(defendant.getOffences());
 
+        // Transform organisation details if defendant is an organisation
         OrganisationDetails organisationDetails = null;
         if (defendant.getOrganisationName() != null && !defendant.getOrganisationName().trim().isEmpty()) {
             organisationDetails = OrganisationDetails.builder()
@@ -153,13 +159,13 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                 .offenceTitle(offence.getOffenceTitle())
                 .offenceWording(offence.getOffenceWording())
                 .offenceMaxPen(offence.getMaxPenalty())
-                .reportingRestriction(null)
-                .reportingRestrictionDetails(null)
-                .convictionDate(offence.getConvictedOn())
-                .adjournedDate(offence.getAdjournedDate())
-                .plea(offence.getPlea())
-                .pleaDate(offence.getPleaDate())
-                .offenceLegislation(offence.getOffenceLegislation())
+                .reportingRestriction(null) // Not available in source data
+                .reportingRestrictionDetails(null) // Not available in source data
+                .convictionDate(offence.getConvictedOn()) // Not available in source data
+                .adjournedDate(offence.getAdjournedDate()) // Not available in source data
+                .plea(offence.getPlea()) // Not available in source data
+                .pleaDate(offence.getPleaDate()) // Not available in source data
+                .offenceLegislation(offence.getOffenceLegislation()) // Not available in source data
                 .build();
     }
 
@@ -201,6 +207,8 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
             lines.add(address5.trim());
         }
 
+        // Extract town and county from address lines if possible
+        // This is a simplified approach - may need adjustment based on actual data format
         String town = null;
         String county = null;
         if (lines.size() >= 2) {
@@ -224,6 +232,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         }
 
         try {
+            // Parse "5 Jan 2006" format and convert to ISO date format "yyyy-MM-dd" per schema
             LocalDate date = LocalDate.parse(dob.trim(), DOB_FORMATTER);
             return date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         } catch (Exception e) {

@@ -111,11 +111,6 @@ class OnlinePublicCourtListTransformationServiceTest {
         assertThat(prosecutorParty.getPartyRole()).isEqualTo("PROSECUTING_AUTHORITY");
         assertThat(prosecutorParty.getOrganisationDetails()).isNotNull();
         assertThat(prosecutorParty.getOrganisationDetails().getOrganisationName()).isEqualTo("CITYPF");
-
-        // Stub payload has no reference data - document has nulls
-        assertThat(document.getOuCode()).isNull();
-        assertThat(document.getCourtId()).isNull();
-        assertThat(document.getCourtIdNumeric()).isNull();
     }
 
     @Test
@@ -130,9 +125,6 @@ class OnlinePublicCourtListTransformationServiceTest {
 
         // Then - reference data fields are present on document
         assertThat(document).isNotNull();
-        assertThat(document.getOuCode()).isEqualTo("B01LY00");
-        assertThat(document.getCourtId()).isEqualTo("f8254db1-1683-483e-afb3-b87fde5a0a26");
-        assertThat(document.getCourtIdNumeric()).isEqualTo("325");
     }
 
     @Test

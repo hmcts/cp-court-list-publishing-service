@@ -45,12 +45,14 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
 
     @Override
     protected HearingSchema transformHearing(Hearing hearing) {
+        // For public lists, only include case number and defendant name
         List<CaseSchema> cases = transformCases(hearing);
 
         if (cases.isEmpty()) {
             return null;
         }
 
+        // According to public court list schema, channel and application should be arrays (can be empty)
         List<String> channels = new ArrayList<>();
         List<Application> applications = new ArrayList<>();
 
@@ -69,9 +71,11 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
             return cases;
         }
 
+        // For public lists, create simplified cases with minimal party information
         for (Defendant defendant : hearing.getDefendants()) {
             List<Party> parties = new ArrayList<>();
 
+            // Only include basic individual details (name only for public lists)
             IndividualDetails individualDetails = null;
             if (defendant.getFirstName() != null || defendant.getSurname() != null) {
                 individualDetails = IndividualDetails.builder()
@@ -80,6 +84,7 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
                         .build();
             }
 
+            // Offence list per schema (offenceTitle only for public lists)
             List<OffenceSchema> offences = transformOffencesForPublicList(defendant.getOffences());
 
             parties.add(Party.builder()
@@ -103,6 +108,9 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
         return cases;
     }
 
+    /**
+     * Transform offences for public list: schema only requires offenceTitle per offence item.
+     */
     private List<OffenceSchema> transformOffencesForPublicList(List<uk.gov.hmcts.cp.models.Offence> offences) {
         if (offences == null || offences.isEmpty()) {
             return null;
