@@ -176,15 +176,25 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         return trimmed;
     }
 
-    /** Schema allows GUILTY, NOT_GUILTY, NONE; map INDICATED_GUILTY from source to GUILTY. */
+    /** Schema allows only GUILTY, NOT_GUILTY, NONE; map INDICATED_GUILTY to GUILTY, reject other unknowns. */
     private static String toSchemaPlea(String plea) {
         if (plea == null || plea.isBlank()) {
             return null;
         }
-        if ("INDICATED_GUILTY".equalsIgnoreCase(plea.trim())) {
+        String p = plea.trim();
+        if ("INDICATED_GUILTY".equalsIgnoreCase(p)) {
             return "GUILTY";
         }
-        return plea.trim();
+        if ("GUILTY".equalsIgnoreCase(p)) {
+            return "GUILTY";
+        }
+        if ("NOT_GUILTY".equalsIgnoreCase(p)) {
+            return "NOT_GUILTY";
+        }
+        if ("NONE".equalsIgnoreCase(p)) {
+            return "NONE";
+        }
+        return null;
     }
 
     private OffenceSchema transformOffenceSchema(uk.gov.hmcts.cp.models.Offence offence) {
