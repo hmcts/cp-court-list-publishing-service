@@ -9,8 +9,12 @@ import uk.gov.hmcts.cp.models.transformed.schema.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Locale;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,6 +23,13 @@ import java.util.stream.Collectors;
 public class StandardCourtListTransformationService extends BaseCourtListTransformationService {
 
     private static final DateTimeFormatter DOB_FORMATTER = DateTimeFormatter.ofPattern("d MMM yyyy");
+    /** Abbreviated month: "5 Jan 2006". September appears as "Sept" or "Sept." in data; Java expects "Sep". */
+    private static final DateTimeFormatter DOB_FORMATTER = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.UK);
+    /** Full month name fallback: "11 September 1972". */
+    private static final DateTimeFormatter DOB_FORMATTER_FULL_MONTH = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.UK);
+    private static final DateTimeFormatter ISO_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    /** Date-only pattern (YYYY-MM-DD) for normalising to ISO date-time for schema. */
+    private static final Pattern DATE_ONLY_PATTERN = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}$");
 
     @Override
     protected String getTransformLogMessage() {
@@ -153,6 +164,21 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Normalises a date string for schema fields that require ISO 8601 date-time (e.g. pleaDate, convictionDate, adjournedDate).
+     * If the value is date-only (YYYY-MM-DD), appends T00:00:00.000Z; otherwise returns the value unchanged (or null).
+     */
+    private static String toIsoDateTimeOrNull(String dateStr) {
+        if (dateStr == null || dateStr.isBlank()) {
+            return null;
+        }
+        String trimmed = dateStr.trim();
+        if (DATE_ONLY_PATTERN.matcher(trimmed).matches()) {
+            return trimmed + "T00:00:00.000Z";
+        }
+        return trimmed;
+    }
+
     private OffenceSchema transformOffenceSchema(uk.gov.hmcts.cp.models.Offence offence) {
         return OffenceSchema.builder()
                 .offenceCode(offence.getOffenceCode())
@@ -161,10 +187,10 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                 .offenceMaxPen(offence.getMaxPenalty())
                 .reportingRestriction(null) // Not available in source data
                 .reportingRestrictionDetails(null) // Not available in source data
-                .convictionDate(offence.getConvictedOn()) // Not available in source data
-                .adjournedDate(offence.getAdjournedDate()) // Not available in source data
+                .convictionDate(toIsoDateTimeOrNull(offence.getConvictedOn())) // Not available in source data
+                .adjournedDate(toIsoDateTimeOrNull(offence.getAdjournedDate())) // Not available in source data
                 .plea(offence.getPlea()) // Not available in source data
-                .pleaDate(offence.getPleaDate()) // Not available in source data
+                .pleaDate(toIsoDateTimeOrNull(offence.getPleaDate())) // Not available in source data
                 .offenceLegislation(offence.getOffenceLegislation()) // Not available in source data
                 .build();
     }
@@ -231,13 +257,24 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
             return null;
         }
 
+        // Normalise month variants: "Sept"/"Sept." → "Sep" (only September has alternate abbreviations in this data)
+        String normalised = dob.trim()
+                .replace("Sept. ", "Sep ")
+                .replace("Sept ", "Sep ");
+
         try {
-            // Parse "5 Jan 2006" format and convert to ISO date format "yyyy-MM-dd" per schema
-            LocalDate date = LocalDate.parse(dob.trim(), DOB_FORMATTER);
+            // Try abbreviated month first: "5 Jan 2006", "11 Sep 1972"
+            LocalDate date = LocalDate.parse(normalised, DOB_FORMATTER);
             return date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        } catch (Exception e) {
-            log.warn("Failed to parse date of birth: {}", dob, e);
-            return null;
+        } catch (Exception e1) {
+            try {
+                // Fallback: full month name e.g. "11 September 1972"
+                LocalDate date = LocalDate.parse(normalised, DOB_FORMATTER_FULL_MONTH);
+                return date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            } catch (Exception e2) {
+                log.warn("Failed to parse date of birth: {}", dob, e1);
+                return null;
+            }
         }
     }
 

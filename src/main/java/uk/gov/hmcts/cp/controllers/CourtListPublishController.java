@@ -56,6 +56,7 @@ public class CourtListPublishController implements CourtListPublishApi {
         this.systemUserConfig = systemUserConfig;
     }
 
+
     @Override
     public ResponseEntity<CourtListPublishResponse> publishCourtList(
             @RequestBody final CourtListPublishRequest request) {
