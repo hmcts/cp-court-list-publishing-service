@@ -11,6 +11,7 @@ import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 import uk.gov.hmcts.cp.models.transformed.schema.*;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -231,6 +232,71 @@ class StandardCourtListTransformationServiceTest {
         AddressSchema venueAddress = venue.getVenueAddress();
         assertThat(venueAddress).isNotNull();
         assertThat(venueAddress.getLine()).isNotNull();
+    }
+
+    @Test
+    void transform_shouldSetReportingRestrictionFromDefendantReportingRestrictionsArray() throws Exception {
+        // Given - defendant with reportingRestrictions array
+        Hearing hearing = payload.getHearingDates().get(0).getCourtRooms().get(0)
+                .getTimeslots().get(0).getHearings().get(0);
+        Defendant defendant = hearing.getDefendants().get(0);
+        defendant.setReportingRestrictions(List.of(
+                ReportingRestriction.builder().label("Section 49 of the Children and Young Persons Act 1933 applies").build()
+        ));
+
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then - case level
+        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
+                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+        assertThat(caseObj.getReportingRestriction()).isTrue();
+        assertThat(caseObj.getReportingRestrictionDetails())
+                .containsExactly("Section 49 of the Children and Young Persons Act 1933 applies");
+
+        // Then - offence level
+        List<OffenceSchema> offences = caseObj.getParty().get(0).getOffence();
+        assertThat(offences).isNotEmpty();
+        OffenceSchema offence = offences.get(0);
+        assertThat(offence.getReportingRestriction()).isTrue();
+        assertThat(offence.getReportingRestrictionDetails())
+                .containsExactly("Section 49 of the Children and Young Persons Act 1933 applies");
+    }
+
+    @Test
+    void transform_shouldSetNoReportingRestrictionWhenDefendantHasNoReportingRestrictions() throws Exception {
+        // Given - stub has reportingRestrictions: [] on defendant; ensure no restrictions
+        Hearing hearing = payload.getHearingDates().get(0).getCourtRooms().get(0)
+                .getTimeslots().get(0).getHearings().get(0);
+        hearing.getDefendants().get(0).setReportingRestrictions(Collections.emptyList());
+
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then - case level
+        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
+                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+        assertThat(caseObj.getReportingRestriction()).isFalse();
+        assertThat(caseObj.getReportingRestrictionDetails()).isNull();
+
+        // Then - offence level
+        OffenceSchema offence = caseObj.getParty().get(0).getOffence().get(0);
+        assertThat(offence.getReportingRestriction()).isNull();
+        assertThat(offence.getReportingRestrictionDetails()).isNull();
+    }
+
+    @Test
+    void transform_shouldSetNoReportingRestrictionWhenDefendantReportingRestrictionsIsNull() throws Exception {
+        Hearing hearing = payload.getHearingDates().get(0).getCourtRooms().get(0)
+                .getTimeslots().get(0).getHearings().get(0);
+        hearing.getDefendants().get(0).setReportingRestrictions(null);
+
+        CourtListDocument document = transformationService.transform(payload);
+
+        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
+                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+        assertThat(caseObj.getReportingRestriction()).isFalse();
+        assertThat(caseObj.getReportingRestrictionDetails()).isNull();
     }
 
     /**

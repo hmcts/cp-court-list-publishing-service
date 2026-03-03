@@ -85,7 +85,7 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
             }
 
             // Offence list per schema (offenceTitle only for public lists)
-            List<OffenceSchema> offences = transformOffencesForPublicList(defendant.getOffences());
+            List<OffenceSchema> offences = transformOffencesForPublicList(defendant.getOffences(), defendant);
 
             parties.add(Party.builder()
                     .partyRole("DEFENDANT")
@@ -98,9 +98,12 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
                 parties.add(prosecutorParty);
             }
 
+            List<String> reportingRestrictionDetails = getReportingRestrictionDetails(defendant);
+            boolean hasReportingRestriction = hasReportingRestriction(defendant);
             cases.add(CaseSchema.builder()
                     .caseUrn(hearing.getCaseNumber())
-                    .reportingRestriction(hearing.getReportingRestrictionReason() != null && !hearing.getReportingRestrictionReason().trim().isEmpty())
+                    .reportingRestriction(hasReportingRestriction)
+                    .reportingRestrictionDetails(reportingRestrictionDetails)
                     .party(parties)
                     .build());
         }
@@ -109,15 +112,56 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
     }
 
     /**
-     * Transform offences for public list: schema only requires offenceTitle per offence item.
+     * Resolves reporting restriction details from the defendant's reportingRestrictions array (labels).
      */
-    private List<OffenceSchema> transformOffencesForPublicList(List<uk.gov.hmcts.cp.models.Offence> offences) {
+    private List<String> getReportingRestrictionDetails(Defendant defendant) {
+        if (defendant.getReportingRestrictions() == null || defendant.getReportingRestrictions().isEmpty()) {
+            return null;
+        }
+        List<String> labels = defendant.getReportingRestrictions().stream()
+                .map(ReportingRestriction::getLabel)
+                .filter(label -> label != null && !label.trim().isEmpty())
+                .map(String::trim)
+                .collect(Collectors.toList());
+        return labels.isEmpty() ? null : labels;
+    }
+
+    private boolean hasReportingRestriction(Defendant defendant) {
+        if (defendant.getReportingRestrictions() == null || defendant.getReportingRestrictions().isEmpty()) {
+            return false;
+        }
+        return defendant.getReportingRestrictions().stream()
+                .anyMatch(r -> r.getLabel() != null && !r.getLabel().trim().isEmpty());
+    }
+
+    /**
+     * Transform offences for public list: schema only requires offenceTitle per offence item;
+     * reporting restriction fields are populated from the defendant when present.
+     */
+    private List<OffenceSchema> transformOffencesForPublicList(List<uk.gov.hmcts.cp.models.Offence> offences, Defendant defendant) {
         if (offences == null || offences.isEmpty()) {
             return null;
         }
+        List<String> offenceReportingDetails = null;
+        Boolean offenceReportingRestriction = null;
+        if (defendant != null && defendant.getReportingRestrictions() != null && !defendant.getReportingRestrictions().isEmpty()) {
+            offenceReportingDetails = defendant.getReportingRestrictions().stream()
+                    .map(ReportingRestriction::getLabel)
+                    .filter(label -> label != null && !label.trim().isEmpty())
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            offenceReportingRestriction = offenceReportingDetails != null && !offenceReportingDetails.isEmpty();
+            if (offenceReportingDetails != null && offenceReportingDetails.isEmpty()) {
+                offenceReportingDetails = null;
+            }
+        }
+        final List<String> details = offenceReportingDetails;
+        final Boolean restriction = offenceReportingRestriction;
         return offences.stream()
                 .map(o -> OffenceSchema.builder()
                         .offenceTitle(o.getOffenceTitle())
+                        .reportingRestriction(restriction)
+                        .reportingRestrictionDetails(details)
                         .build())
                 .collect(Collectors.toList());
     }
