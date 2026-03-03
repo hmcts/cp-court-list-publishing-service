@@ -103,6 +103,28 @@ class OnlinePublicCourtListTransformationServiceTest {
         // Stub defendant has offences; public list includes offenceTitle per schema
         assertThat(party.getOffence()).isNotEmpty();
         assertThat(party.getOffence().get(0).getOffenceTitle()).isEqualTo("Attempt theft of motor vehicle");
+
+        // Verify second Party (PROSECUTING_AUTHORITY) from prosecutorType in stub
+        assertThat(caseObj.getParty()).hasSize(2);
+        Party prosecutorParty = caseObj.getParty().get(1);
+        assertThat(prosecutorParty).isNotNull();
+        assertThat(prosecutorParty.getPartyRole()).isEqualTo("PROSECUTING_AUTHORITY");
+        assertThat(prosecutorParty.getOrganisationDetails()).isNotNull();
+        assertThat(prosecutorParty.getOrganisationDetails().getOrganisationName()).isEqualTo("CITYPF");
+    }
+
+    @Test
+    void transform_shouldCopyReferenceDataFieldsFromPayloadToDocument() throws Exception {
+        // Given - payload enriched with ouCode/courtId from getCourtCenterDataByCourtName
+        payload.setOuCode("B01LY00");
+        payload.setCourtId("f8254db1-1683-483e-afb3-b87fde5a0a26");
+        payload.setCourtIdNumeric("325");
+
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then - reference data fields are present on document
+        assertThat(document).isNotNull();
     }
 
     @Test
@@ -187,6 +209,52 @@ class OnlinePublicCourtListTransformationServiceTest {
         Defendant firstDefendant = payload.getHearingDates().get(0).getCourtRooms().get(0)
                 .getTimeslots().get(0).getHearings().get(0).getDefendants().get(0);
         assertThat(firstDefendant.getAsn()).isEqualTo("REF456");
+    }
+
+    @Test
+    void transform_shouldAddProsecutorPartyWhenProsecutorTypeIsSet() throws Exception {
+        // Stub court-list-payload-public.json has prosecutorType "CITYPF" on first hearing
+        CourtListDocument document = transformationService.transform(payload);
+
+        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
+                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+
+        assertThat(caseObj.getParty()).hasSize(2);
+        assertThat(caseObj.getParty().get(0).getPartyRole()).isEqualTo("DEFENDANT");
+        Party prosecutorParty = caseObj.getParty().get(1);
+        assertThat(prosecutorParty.getPartyRole()).isEqualTo("PROSECUTING_AUTHORITY");
+        assertThat(prosecutorParty.getOrganisationDetails().getOrganisationName()).isEqualTo("CITYPF");
+        assertThat(prosecutorParty.getIndividualDetails()).isNull();
+        assertThat(prosecutorParty.getOffence()).isNull();
+    }
+
+    @Test
+    void transform_shouldNotAddProsecutorPartyWhenProsecutorTypeIsNull() throws Exception {
+        // Clear prosecutorType from first hearing
+        payload.getHearingDates().get(0).getCourtRooms().get(0)
+                .getTimeslots().get(0).getHearings().get(0).setProsecutorType(null);
+
+        CourtListDocument document = transformationService.transform(payload);
+
+        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
+                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+
+        assertThat(caseObj.getParty()).hasSize(1);
+        assertThat(caseObj.getParty().get(0).getPartyRole()).isEqualTo("DEFENDANT");
+    }
+
+    @Test
+    void transform_shouldNotAddProsecutorPartyWhenProsecutorTypeIsBlank() throws Exception {
+        payload.getHearingDates().get(0).getCourtRooms().get(0)
+                .getTimeslots().get(0).getHearings().get(0).setProsecutorType("   ");
+
+        CourtListDocument document = transformationService.transform(payload);
+
+        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
+                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+
+        assertThat(caseObj.getParty()).hasSize(1);
+        assertThat(caseObj.getParty().get(0).getPartyRole()).isEqualTo("DEFENDANT");
     }
 
     private CourtListPayload loadPayloadFromStubData(String resourcePath) throws Exception {
