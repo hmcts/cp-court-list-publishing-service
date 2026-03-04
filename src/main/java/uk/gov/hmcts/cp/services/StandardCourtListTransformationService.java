@@ -9,10 +9,8 @@ import uk.gov.hmcts.cp.models.transformed.schema.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.regex.Pattern;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -22,7 +20,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class StandardCourtListTransformationService extends BaseCourtListTransformationService {
 
-    /** Abbreviated month: "5 Jan 2006". September appears as "Sept" or "Sept." in data; Java expects "Sep". */
+    /** Abbreviated month: "5 Jan 2006", "20 Sept 1978". Locale.UK uses "Sept" for September. */
     private static final DateTimeFormatter DOB_FORMATTER = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.UK);
     /** Full month name fallback: "11 September 1972". */
     private static final DateTimeFormatter DOB_FORMATTER_FULL_MONTH = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.UK);
@@ -85,13 +83,11 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         for (Defendant defendant : hearing.getDefendants()) {
             List<Party> parties = transformParties(defendant, hearing);
 
-            List<String> reportingRestrictionDetails = null;
-            if (isNonBlank(hearing.getReportingRestrictionReason())) {
-                reportingRestrictionDetails = Collections.singletonList(hearing.getReportingRestrictionReason().trim());
-            }
+            List<String> reportingRestrictionDetails = getReportingRestrictionDetails(defendant);
+            boolean hasReportingRestriction = hasReportingRestriction(defendant);
             CaseSchema caseSchema = CaseSchema.builder()
                     .caseUrn(hearing.getCaseNumber())
-                    .reportingRestriction(hearing.getReportingRestrictionReason() != null && !hearing.getReportingRestrictionReason().trim().isEmpty())
+                    .reportingRestriction(hasReportingRestriction)
                     .reportingRestrictionDetails(reportingRestrictionDetails)
                     .caseSequenceIndicator(null) // Not available in source data
                     .party(parties)
@@ -101,6 +97,29 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         }
 
         return cases;
+    }
+
+    /**
+     * Resolves reporting restriction details from the defendant's reportingRestrictions array (labels).
+     */
+    private List<String> getReportingRestrictionDetails(Defendant defendant) {
+        if (defendant.getReportingRestrictions() == null || defendant.getReportingRestrictions().isEmpty()) {
+            return null;
+        }
+        List<String> labels = defendant.getReportingRestrictions().stream()
+                .map(ReportingRestriction::getLabel)
+                .filter(label -> label != null && !label.trim().isEmpty())
+                .map(String::trim)
+                .collect(Collectors.toList());
+        return labels.isEmpty() ? null : labels;
+    }
+
+    private boolean hasReportingRestriction(Defendant defendant) {
+        if (defendant.getReportingRestrictions() == null || defendant.getReportingRestrictions().isEmpty()) {
+            return false;
+        }
+        return defendant.getReportingRestrictions().stream()
+                .anyMatch(r -> r.getLabel() != null && !r.getLabel().trim().isEmpty());
     }
 
     private List<Party> transformParties(Defendant defendant, Hearing hearing) {
@@ -126,7 +145,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         }
 
         // Transform offences
-        List<OffenceSchema> offences = transformOffenceSchemas(defendant.getOffences());
+        List<OffenceSchema> offences = transformOffenceSchemas(defendant.getOffences(), defendant);
 
         // Transform organisation details if defendant is an organisation
         OrganisationDetails organisationDetails = null;
@@ -156,13 +175,13 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         return parties;
     }
 
-    private List<OffenceSchema> transformOffenceSchemas(List<uk.gov.hmcts.cp.models.Offence> offences) {
+    private List<OffenceSchema> transformOffenceSchemas(List<uk.gov.hmcts.cp.models.Offence> offences, Defendant defendant) {
         if (offences == null || offences.isEmpty()) {
             return null;
         }
 
         return offences.stream()
-                .map(this::transformOffenceSchema)
+                .map(offence -> transformOffenceSchema(offence, defendant))
                 .collect(Collectors.toList());
     }
 
@@ -181,17 +200,51 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         return trimmed;
     }
 
-    private OffenceSchema transformOffenceSchema(uk.gov.hmcts.cp.models.Offence offence) {
+    /** Schema allows only GUILTY, NOT_GUILTY, NONE; map INDICATED_GUILTY to GUILTY, reject other unknowns. */
+    private static String toSchemaPlea(String plea) {
+        if (plea == null || plea.isBlank()) {
+            return null;
+        }
+        String p = plea.trim();
+        if ("INDICATED_GUILTY".equalsIgnoreCase(p)) {
+            return "GUILTY";
+        }
+        if ("GUILTY".equalsIgnoreCase(p)) {
+            return "GUILTY";
+        }
+        if ("NOT_GUILTY".equalsIgnoreCase(p)) {
+            return "NOT_GUILTY";
+        }
+        if ("NONE".equalsIgnoreCase(p)) {
+            return "NONE";
+        }
+        return null;
+    }
+
+    private OffenceSchema transformOffenceSchema(uk.gov.hmcts.cp.models.Offence offence, Defendant defendant) {
+        List<String> offenceReportingDetails = null;
+        Boolean offenceReportingRestriction = null;
+        if (defendant != null && defendant.getReportingRestrictions() != null && !defendant.getReportingRestrictions().isEmpty()) {
+            offenceReportingDetails = defendant.getReportingRestrictions().stream()
+                    .map(ReportingRestriction::getLabel)
+                    .filter(label -> label != null && !label.trim().isEmpty())
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            offenceReportingRestriction = offenceReportingDetails != null && !offenceReportingDetails.isEmpty();
+            if (offenceReportingDetails != null && offenceReportingDetails.isEmpty()) {
+                offenceReportingDetails = null;
+            }
+        }
         return OffenceSchema.builder()
                 .offenceCode(offence.getOffenceCode())
                 .offenceTitle(offence.getOffenceTitle())
                 .offenceWording(offence.getOffenceWording())
                 .offenceMaxPen(offence.getMaxPenalty())
-                .reportingRestriction(null) // Not available in source data
-                .reportingRestrictionDetails(null) // Not available in source data
+                .reportingRestriction(offenceReportingRestriction)
+                .reportingRestrictionDetails(offenceReportingDetails)
                 .convictionDate(toIsoDateTimeOrNull(offence.getConvictedOn())) // Not available in source data
                 .adjournedDate(toIsoDateTimeOrNull(offence.getAdjournedDate())) // Not available in source data
-                .plea(offence.getPlea()) // Not available in source data
+                .plea(toSchemaPlea(offence.getPlea()))
                 .pleaDate(toIsoDateTimeOrNull(offence.getPleaDate())) // Not available in source data
                 .offenceLegislation(offence.getOffenceLegislation()) // Not available in source data
                 .build();
@@ -259,13 +312,11 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
             return null;
         }
 
-        // Normalise month variants: "Sept"/"Sept." → "Sep" (only September has alternate abbreviations in this data)
-        String normalised = dob.trim()
-                .replace("Sept. ", "Sep ")
-                .replace("Sept ", "Sep ");
+        // Normalise "Sept." to "Sept " only; Locale.UK expects "Sept" for September, not "Sep"
+        String normalised = dob.trim().replace("Sept.", "Sept ");
 
         try {
-            // Try abbreviated month first: "5 Jan 2006", "11 Sep 1972"
+            // Try abbreviated month first: "5 Jan 2006", "20 Sept 1978"
             LocalDate date = LocalDate.parse(normalised, DOB_FORMATTER);
             return date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         } catch (Exception e1) {

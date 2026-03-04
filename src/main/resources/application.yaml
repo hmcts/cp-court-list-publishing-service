@@ -18,23 +18,18 @@ spring:
     virtual:
       enabled: ${VIRTUAL_THREADS:false}
 
-# Court list publishing config - system user (UUID) for reference data and document generator
 courtlistpublishing:
   system-user-id: ${COURTLISTPUBLISHING_SYSTEM_USER_ID:}
 
-# Common Platform Query API configuration
 common-platform-query-api:
   base-url: ${CP_CLP_BASE_URL:http://localhost:8080}
   ssl:
-    # Set to false to disable SSL certificate verification (development only)
-    # WARNING: Only use false in development environments!
     verify: ${COMMON_PLATFORM_QUERY_API_SSL_VERIFY:false}
 
 # CaTH endpoint configuration
 cath:
   base-url: ${CATH_BASE_URL:https://spnl-apim-int-gw.cpp.nonlive}
   endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
-  # Set CATH_PUBLISHING_ENABLED=true to enable publishing to CaTH; default is false
   publishing-enabled: ${CATH_PUBLISHING_ENABLED:false}
 taskmanager:
   schema:

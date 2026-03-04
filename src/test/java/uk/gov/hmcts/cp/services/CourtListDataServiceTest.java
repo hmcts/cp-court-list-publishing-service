@@ -7,6 +7,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
+
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -126,5 +129,13 @@ class CourtListDataServiceTest {
                 CourtListType.STANDARD, "courtCentre1", "2026-01-05", "2026-01-12", null))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to parse court list payload");
+    }
+
+    @Test
+    void getPublicCourtListPayload_throws_whenNotConfigured() {
+        assertThatThrownBy(() -> courtListDataService.getPublicCourtListPayload(
+                "f8254db1-1683-483e-afb3-b87fde5a0a26", LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27)))
+                .isInstanceOf(CourtListDownloadException.class)
+                .hasMessageContaining("Public court list data is not configured");
     }
 }

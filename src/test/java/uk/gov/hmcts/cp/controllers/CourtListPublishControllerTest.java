@@ -20,6 +20,7 @@ import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.CourtListDataService;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
+import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -59,21 +60,19 @@ class CourtListPublishControllerTest {
     private CourtListDataService courtListDataService;
 
     @Mock
-    private CourtListPublishingSystemUserConfig systemUserConfig;
+    private CourtListDownloadService courtListDownloadService;
 
     @InjectMocks
     private CourtListPublishController controller;
 
     private ObjectMapper objectMapper;
 
-    private static final String TEST_SYSTEM_USER_ID = "ba4e97ab-2174-4fa2-abfe-3ac2bb04bc75";
     private static final String PUBLISH_URL = "/api/court-list-publish/publish";
     private static final String BASE_URL = "/api/court-list-publish";
     private static final String COURTLISTDATA_URL = "/api/court-list-publish/courtlistdata";
 
     @BeforeEach
     void setUp() {
-        lenient().when(systemUserConfig.getSystemUserId()).thenReturn(TEST_SYSTEM_USER_ID);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
         objectMapper = ObjectMapperConfig.getObjectMapper();
     }
