@@ -63,12 +63,80 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
             return null;
         }
 
+        List<Application> applications = transformApplications(hearing);
+
         return HearingSchema.builder()
                 .hearingType(hearing.getHearingType())
                 .caseList(cases)
                 .panel(hearing.getPanel())
                 .channel(Collections.emptyList())
-                .application(Collections.emptyList())
+                .application(applications)
+                .build();
+    }
+
+    /**
+     * Transforms hearing court application data into schema Application list.
+     * When the hearing has courtApplicationId and courtApplication (applicant/respondents), returns a single
+     * Application; otherwise returns an empty list.
+     */
+    private List<Application> transformApplications(Hearing hearing) {
+        if (hearing.getCourtApplication() == null || !isNonBlank(hearing.getCourtApplicationId())) {
+            return Collections.emptyList();
+        }
+
+        CourtApplication courtApplication = hearing.getCourtApplication();
+        List<Party> parties = new ArrayList<>();
+
+        if (courtApplication.getApplicant() != null) {
+            Party applicantParty = buildApplicationParty(courtApplication.getApplicant(), "APPLICANT");
+            if (applicantParty != null) {
+                parties.add(applicantParty);
+            }
+        }
+        if (courtApplication.getRespondents() != null) {
+            for (CourtApplicationParty respondent : courtApplication.getRespondents()) {
+                Party respondentParty = buildApplicationParty(respondent, "RESPONDENT");
+                if (respondentParty != null) {
+                    parties.add(respondentParty);
+                }
+            }
+        }
+
+        Application application = Application.builder()
+                .applicationReference(hearing.getCourtApplicationId().trim())
+                .applicationType(null)
+                .applicationParticulars(null)
+                .reportingRestriction(false)
+                .party(parties.isEmpty() ? null : parties)
+                .build();
+
+        return Collections.singletonList(application);
+    }
+
+    private Party buildApplicationParty(CourtApplicationParty courtParty, String partyRole) {
+        if (courtParty == null) {
+            return null;
+        }
+        IndividualDetails individualDetails = null;
+        if (isNonBlank(courtParty.getName()) || isNonBlank(courtParty.getDateOfBirth())) {
+            individualDetails = IndividualDetails.builder()
+                    .individualForenames(null)
+                    .individualMiddleName(null)
+                    .individualSurname(courtParty.getName())
+                    .dateOfBirth(convertDateOfBirthToIso(courtParty.getDateOfBirth()))
+                    .age(null)
+                    .address(null)
+                    .inCustody(null)
+                    .gender(null)
+                    .asn(null)
+                    .build();
+        }
+        return Party.builder()
+                .partyRole(partyRole)
+                .individualDetails(individualDetails)
+                .offence(null)
+                .organisationDetails(null)
+                .subject(null)
                 .build();
     }
 
