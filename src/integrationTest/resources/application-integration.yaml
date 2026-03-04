@@ -9,10 +9,8 @@ common-platform-query-api:
   base-url: ${COMMON_PLATFORM_QUERY_API_BASE_URL:http://localhost:8080}
 
 public-court-list:
-  enabled: true
   court-list-data:
     path: courtlist
-    accept-header: ${PUBLIC_COURT_LIST_ACCEPT_HEADER:application/vnd.courtlist.search.court.list+json}
 
 azure:
   storage:
@@ -69,8 +67,4 @@ cath:
 taskmanager:
   schema:
     enabled: true
-
-public-court-list:
-  court-list-data:
-    path: courtlist
 

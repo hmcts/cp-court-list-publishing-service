@@ -36,19 +36,16 @@ public class CourtListDataService {
     private final RestTemplate publicCourtListRestTemplate;
     private final String courtListDataBaseUrl;
     private final String courtListDataPath;
-    private final String courtListDataAcceptHeader;
 
     public CourtListDataService(
             final ProgressionQueryService progressionQueryService,
             final RestTemplate publicCourtListRestTemplate,
             @Value("${common-platform-query-api.base-url:}") final String courtListDataBaseUrl,
-            @Value("${public-court-list.court-list-data.path:}") final String courtListDataPath,
-            @Value("${public-court-list.court-list-data.accept-header:}") final String courtListDataAcceptHeader) {
+            @Value("${public-court-list.court-list-data.path:}") final String courtListDataPath) {
         this.progressionQueryService = progressionQueryService;
         this.publicCourtListRestTemplate = publicCourtListRestTemplate;
         this.courtListDataBaseUrl = courtListDataBaseUrl != null ? courtListDataBaseUrl : "";
         this.courtListDataPath = courtListDataPath != null ? courtListDataPath : "";
-        this.courtListDataAcceptHeader = courtListDataAcceptHeader != null ? courtListDataAcceptHeader : "";
     }
 
     public String getCourtListData(
@@ -82,8 +79,8 @@ public class CourtListDataService {
     }
 
     public Map<String, Object> getPublicCourtListPayload(String courtCentreId, LocalDate startDate, LocalDate endDate) {
-        if (courtListDataPath.isBlank() || courtListDataAcceptHeader.isBlank()) {
-            throw new IllegalStateException("Public court list data is not configured");
+        if (courtListDataPath.isBlank()) {
+            throw new CourtListDownloadException("Public court list data is not configured");
         }
         String url = UriComponentsBuilder.fromUriString(courtListDataBaseUrl + "/" + courtListDataPath)
                 .queryParam("listId", LIST_ID_PUBLIC)
@@ -95,7 +92,8 @@ public class CourtListDataService {
                 .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Collections.singletonList(MediaType.parseMediaType(courtListDataAcceptHeader)));
+        headers.setAccept(Collections.singletonList(
+                MediaType.parseMediaType("application/vnd.courtlist.search.court.list+json")));
 
         try {
             ResponseEntity<Map<String, Object>> response = publicCourtListRestTemplate.exchange(

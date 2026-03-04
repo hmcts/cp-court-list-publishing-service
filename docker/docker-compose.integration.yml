@@ -70,8 +70,6 @@ services:
       COMMON_PLATFORM_QUERY_API_BASE_URL: "http://wiremock:8080"
       CATH_BASE_URL: "http://wiremock:8080"
       CATH_PUBLISHING_ENABLED: "true"
-      PUBLIC_COURT_LIST_ENABLED: "true"
-      PUBLIC_COURT_LIST_DATA_PATH: "courtlist"
     depends_on:
       db:
         condition: service_healthy

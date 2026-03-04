@@ -2,29 +2,38 @@ package uk.gov.hmcts.cp.controllers;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+
+import uk.gov.hmcts.cp.config.AppConstant;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
+import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
+import uk.gov.hmcts.cp.openapi.model.CourtListData;
+import uk.gov.hmcts.cp.openapi.model.CourtListDownloadRequest;
+import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
+import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.openapi.model.Status;
+import uk.gov.hmcts.cp.services.CourtListDataService;
+import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
+import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
+import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.server.ResponseStatusException;
-import uk.gov.hmcts.cp.config.AppConstant;
-import uk.gov.hmcts.cp.config.ObjectMapperConfig;
-import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
-import uk.gov.hmcts.cp.openapi.model.*;
-import uk.gov.hmcts.cp.services.CourtListDataService;
-import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
-import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
-import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
-import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -46,9 +55,9 @@ public class CourtListPublishController implements CourtListPublishApi {
     private final CourtListDownloadService courtListDownloadService;
 
     public CourtListPublishController(final CourtListPublishStatusService service,
-                                      CourtListTaskTriggerService courtListTaskTriggerService,
-                                      CourtListDataService courtListDataService,
-                                      CourtListDownloadService courtListDownloadService) {
+                                     CourtListTaskTriggerService courtListTaskTriggerService,
+                                     CourtListDataService courtListDataService,
+                                     CourtListDownloadService courtListDownloadService) {
         this.service = service;
         this.courtListTaskTriggerService = courtListTaskTriggerService;
         this.courtListDataService = courtListDataService;
@@ -142,16 +151,16 @@ public class CourtListPublishController implements CourtListPublishApi {
         }
         if (!CourtListType.PUBLIC.equals(request.getCourtListType())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Only PUBLIC court list type is supported for download. Got: " + request.getCourtListType());
+                "Only PUBLIC court list type is supported for download. Got: " + request.getCourtListType());
         }
         if (request.getEndDate().isBefore(request.getStartDate())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endDate must be on or after startDate");
         }
         try {
             byte[] pdf = courtListDownloadService.generatePublicCourtListPdf(
-                    request.getCourtCentreId().toString(),
-                    request.getStartDate(),
-                    request.getEndDate());
+                request.getCourtCentreId().toString(),
+                request.getStartDate(),
+                request.getEndDate());
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.set(HttpHeaders.CONTENT_DISPOSITION, CONTENT_DISPOSITION_VALUE);

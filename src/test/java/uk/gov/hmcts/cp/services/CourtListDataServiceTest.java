@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 
 import java.time.LocalDate;
 
@@ -134,7 +135,7 @@ class CourtListDataServiceTest {
     void getPublicCourtListPayload_throws_whenNotConfigured() {
         assertThatThrownBy(() -> courtListDataService.getPublicCourtListPayload(
                 "f8254db1-1683-483e-afb3-b87fde5a0a26", LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27)))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("Public court list data is not configured");
     }
 }
