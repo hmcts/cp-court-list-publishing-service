@@ -8,10 +8,6 @@ spring:
 common-platform-query-api:
   base-url: ${COMMON_PLATFORM_QUERY_API_BASE_URL:http://localhost:8080}
 
-public-court-list:
-  court-list-data:
-    path: courtlist
-
 azure:
   storage:
     enabled: false

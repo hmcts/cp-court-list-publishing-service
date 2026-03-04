@@ -31,21 +31,19 @@ public class CourtListDataService {
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
     private static final String LIST_ID_PUBLIC = "PUBLIC";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
+    private static final String COURT_LIST_DATA_PATH = "courtlist";
 
     private final ProgressionQueryService progressionQueryService;
     private final RestTemplate publicCourtListRestTemplate;
     private final String courtListDataBaseUrl;
-    private final String courtListDataPath;
 
     public CourtListDataService(
             final ProgressionQueryService progressionQueryService,
             final RestTemplate publicCourtListRestTemplate,
-            @Value("${common-platform-query-api.base-url:}") final String courtListDataBaseUrl,
-            @Value("${public-court-list.court-list-data.path:}") final String courtListDataPath) {
+            @Value("${common-platform-query-api.base-url:}") final String courtListDataBaseUrl) {
         this.progressionQueryService = progressionQueryService;
         this.publicCourtListRestTemplate = publicCourtListRestTemplate;
         this.courtListDataBaseUrl = courtListDataBaseUrl != null ? courtListDataBaseUrl : "";
-        this.courtListDataPath = courtListDataPath != null ? courtListDataPath : "";
     }
 
     public String getCourtListData(
@@ -79,10 +77,10 @@ public class CourtListDataService {
     }
 
     public Map<String, Object> getPublicCourtListPayload(String courtCentreId, LocalDate startDate, LocalDate endDate) {
-        if (courtListDataPath.isBlank()) {
+        if (courtListDataBaseUrl.isBlank()) {
             throw new CourtListDownloadException("Public court list data is not configured");
         }
-        String url = UriComponentsBuilder.fromUriString(courtListDataBaseUrl + "/" + courtListDataPath)
+        String url = UriComponentsBuilder.fromUriString(courtListDataBaseUrl + "/" + COURT_LIST_DATA_PATH)
                 .queryParam("listId", LIST_ID_PUBLIC)
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate.format(DATE_FORMAT))
