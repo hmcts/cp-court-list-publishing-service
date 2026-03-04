@@ -83,13 +83,11 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         for (Defendant defendant : hearing.getDefendants()) {
             List<Party> parties = transformParties(defendant, hearing);
 
-            List<String> reportingRestrictionDetails = null;
-            if (isNonBlank(hearing.getReportingRestrictionReason())) {
-                reportingRestrictionDetails = Collections.singletonList(hearing.getReportingRestrictionReason().trim());
-            }
+            List<String> reportingRestrictionDetails = getReportingRestrictionDetails(defendant);
+            boolean hasReportingRestriction = hasReportingRestriction(defendant);
             CaseSchema caseSchema = CaseSchema.builder()
                     .caseUrn(hearing.getCaseNumber())
-                    .reportingRestriction(hearing.getReportingRestrictionReason() != null && !hearing.getReportingRestrictionReason().trim().isEmpty())
+                    .reportingRestriction(hasReportingRestriction)
                     .reportingRestrictionDetails(reportingRestrictionDetails)
                     .caseSequenceIndicator(null) // Not available in source data
                     .party(parties)
@@ -99,6 +97,29 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         }
 
         return cases;
+    }
+
+    /**
+     * Resolves reporting restriction details from the defendant's reportingRestrictions array (labels).
+     */
+    private List<String> getReportingRestrictionDetails(Defendant defendant) {
+        if (defendant.getReportingRestrictions() == null || defendant.getReportingRestrictions().isEmpty()) {
+            return null;
+        }
+        List<String> labels = defendant.getReportingRestrictions().stream()
+                .map(ReportingRestriction::getLabel)
+                .filter(label -> label != null && !label.trim().isEmpty())
+                .map(String::trim)
+                .collect(Collectors.toList());
+        return labels.isEmpty() ? null : labels;
+    }
+
+    private boolean hasReportingRestriction(Defendant defendant) {
+        if (defendant.getReportingRestrictions() == null || defendant.getReportingRestrictions().isEmpty()) {
+            return false;
+        }
+        return defendant.getReportingRestrictions().stream()
+                .anyMatch(r -> r.getLabel() != null && !r.getLabel().trim().isEmpty());
     }
 
     private List<Party> transformParties(Defendant defendant, Hearing hearing) {
@@ -124,7 +145,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         }
 
         // Transform offences
-        List<OffenceSchema> offences = transformOffenceSchemas(defendant.getOffences());
+        List<OffenceSchema> offences = transformOffenceSchemas(defendant.getOffences(), defendant);
 
         // Transform organisation details if defendant is an organisation
         OrganisationDetails organisationDetails = null;
@@ -151,13 +172,13 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         return parties;
     }
 
-    private List<OffenceSchema> transformOffenceSchemas(List<uk.gov.hmcts.cp.models.Offence> offences) {
+    private List<OffenceSchema> transformOffenceSchemas(List<uk.gov.hmcts.cp.models.Offence> offences, Defendant defendant) {
         if (offences == null || offences.isEmpty()) {
             return null;
         }
 
         return offences.stream()
-                .map(this::transformOffenceSchema)
+                .map(offence -> transformOffenceSchema(offence, defendant))
                 .collect(Collectors.toList());
     }
 
@@ -197,14 +218,27 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         return null;
     }
 
-    private OffenceSchema transformOffenceSchema(uk.gov.hmcts.cp.models.Offence offence) {
+    private OffenceSchema transformOffenceSchema(uk.gov.hmcts.cp.models.Offence offence, Defendant defendant) {
+        List<String> offenceReportingDetails = null;
+        Boolean offenceReportingRestriction = null;
+        if (defendant != null && defendant.getReportingRestrictions() != null && !defendant.getReportingRestrictions().isEmpty()) {
+            offenceReportingDetails = defendant.getReportingRestrictions().stream()
+                    .map(ReportingRestriction::getLabel)
+                    .filter(label -> label != null && !label.trim().isEmpty())
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            offenceReportingRestriction = offenceReportingDetails != null && !offenceReportingDetails.isEmpty();
+            if (offenceReportingDetails != null && offenceReportingDetails.isEmpty()) {
+                offenceReportingDetails = null;
+            }
+        }
         return OffenceSchema.builder()
                 .offenceCode(offence.getOffenceCode())
                 .offenceTitle(offence.getOffenceTitle())
                 .offenceWording(offence.getOffenceWording())
                 .offenceMaxPen(offence.getMaxPenalty())
-                .reportingRestriction(null) // Not available in source data
-                .reportingRestrictionDetails(null) // Not available in source data
+                .reportingRestriction(offenceReportingRestriction)
+                .reportingRestrictionDetails(offenceReportingDetails)
                 .convictionDate(toIsoDateTimeOrNull(offence.getConvictedOn())) // Not available in source data
                 .adjournedDate(toIsoDateTimeOrNull(offence.getAdjournedDate())) // Not available in source data
                 .plea(toSchemaPlea(offence.getPlea()))
