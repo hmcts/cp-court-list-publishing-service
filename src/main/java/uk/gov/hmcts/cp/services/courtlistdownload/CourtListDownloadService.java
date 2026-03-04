@@ -5,14 +5,12 @@ import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -29,7 +27,6 @@ import java.util.Collections;
 import java.util.Map;
 
 @Service
-@ConditionalOnProperty(name = "public-court-list.enabled", havingValue = "true")
 public class CourtListDownloadService {
 
     private static final Logger LOG = LoggerFactory.getLogger(CourtListDownloadService.class);
@@ -45,7 +42,7 @@ public class CourtListDownloadService {
     private final DocumentGeneratorClient documentGeneratorClient;
 
     public CourtListDownloadService(
-            @Qualifier("publicCourtListRestTemplate") final RestTemplate restTemplate,
+            final RestTemplate restTemplate,
             @Value("${common-platform-query-api.base-url}") final String courtListDataBaseUrl,
             @Value("${public-court-list.court-list-data.path}") final String courtListDataPath,
             final DocumentGeneratorClient documentGeneratorClient) {

@@ -32,9 +32,8 @@ cath:
   endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
   publishing-enabled: ${CATH_PUBLISHING_ENABLED:false}
 public-court-list:
-  enabled: ${PUBLIC_COURT_LIST_ENABLED:false}
   court-list-data:
-    path: ${PUBLIC_COURT_LIST_DATA_PATH:courtlist}
+    path: courtlist
 taskmanager:
   schema:
     enabled: true

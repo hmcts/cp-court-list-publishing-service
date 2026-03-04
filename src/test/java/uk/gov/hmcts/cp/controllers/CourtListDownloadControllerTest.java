@@ -21,9 +21,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class CourtListDownloadControllerTest {
@@ -48,8 +46,8 @@ class CourtListDownloadControllerTest {
 
     @BeforeEach
     void setUp() {
-        CourtListPublishController controller = new CourtListPublishController(service, courtListTaskTriggerService, courtListDataService);
-        controller.setCourtListDownloadService(courtListDownloadService);
+        CourtListPublishController controller = new CourtListPublishController(
+                service, courtListTaskTriggerService, courtListDataService, courtListDownloadService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
