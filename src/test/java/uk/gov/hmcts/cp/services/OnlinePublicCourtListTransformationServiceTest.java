@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
 import uk.gov.hmcts.cp.models.CourtApplication;
+import uk.gov.hmcts.cp.models.CourtApplicationParty;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.models.Defendant;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
@@ -261,9 +262,16 @@ class OnlinePublicCourtListTransformationServiceTest {
     }
 
     @Test
-    void transform_shouldSetSubjectTrueWhenCourtApplicationIdIsSet() throws Exception {
+    void transform_shouldSetSubjectTrueWhenCourtApplicationSubjectMatchesDefendant() throws Exception {
+        CourtApplicationParty subjectParty = CourtApplicationParty.builder()
+                .name("Tommie Bogisich")
+                .dateOfBirth("5 Jan 2006")
+                .build();
         payload.getHearingDates().get(0).getCourtRooms().get(0)
-                .getTimeslots().get(0).getHearings().get(0).setCourtApplicationId("app-123");
+                .getTimeslots().get(0).getHearings().get(0)
+                .setCourtApplication(CourtApplication.builder()
+                        .subject(List.of(subjectParty))
+                        .build());
 
         CourtListDocument document = transformationService.transform(payload);
 
@@ -276,18 +284,23 @@ class OnlinePublicCourtListTransformationServiceTest {
     }
 
     @Test
-    void transform_shouldSetSubjectTrueWhenCourtApplicationIsSet() throws Exception {
+    void transform_shouldSetSubjectFalseWhenCourtApplicationHasNoMatchingSubject() throws Exception {
+        CourtApplicationParty otherSubject = CourtApplicationParty.builder()
+                .name("Other Person")
+                .dateOfBirth("1 Jan 1990")
+                .build();
         payload.getHearingDates().get(0).getCourtRooms().get(0)
-                .getTimeslots().get(0).getHearings().get(0).setCourtApplication(new CourtApplication());
+                .getTimeslots().get(0).getHearings().get(0)
+                .setCourtApplication(CourtApplication.builder()
+                        .subject(List.of(otherSubject))
+                        .build());
 
         CourtListDocument document = transformationService.transform(payload);
 
         CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
                 .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
 
-        Party defendantParty = caseObj.getParty().get(0);
-        assertThat(defendantParty.getPartyRole()).isEqualTo("DEFENDANT");
-        assertThat(defendantParty.getSubject()).isTrue();
+        assertThat(caseObj.getParty().get(0).getSubject()).isFalse();
     }
 
     @Test

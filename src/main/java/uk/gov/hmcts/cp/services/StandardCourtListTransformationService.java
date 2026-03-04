@@ -137,8 +137,8 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                     .build();
         }
 
-        boolean isSubjectOfApplication = isNonBlank(hearing.getCourtApplicationId())
-                || hearing.getCourtApplication() != null;
+        boolean isSubjectOfApplication = hearing.getCourtApplication() != null
+                && isDefendantSubjectOfApplication(defendant, hearing.getCourtApplication());
 
         parties.add(Party.builder()
                 .partyRole(partyRole)
