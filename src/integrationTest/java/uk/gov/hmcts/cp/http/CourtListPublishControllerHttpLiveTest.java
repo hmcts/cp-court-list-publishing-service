@@ -299,5 +299,39 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().length).isGreaterThan(0);
     }
+
+    @Test
+    void postDownloadCourtListReturnsBadRequestWhenCourtListTypeIsAlphabetical() {
+        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.ALPHABETICAL);
+    }
+
+    @Test
+    void postDownloadCourtListReturnsBadRequestWhenCourtListTypeIsUshersCrown() {
+        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.USHERS_CROWN);
+    }
+
+    private void assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType courtListType) {
+        String requestJson = """
+            {
+                "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",
+                "startDate": "2026-02-27",
+                "endDate": "2026-02-27",
+                "courtListType": "%s"
+            }
+            """.formatted(courtListType.name());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(DOWNLOAD_CONTENT_TYPE));
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
+        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+
+        assertThatThrownBy(() -> http.exchange(
+                DOWNLOAD_ENDPOINT,
+                HttpMethod.POST,
+                entity,
+                byte[].class))
+                .isInstanceOf(HttpClientErrorException.BadRequest.class)
+                .hasMessageContaining("Only PUBLIC court list type is supported for download");
+    }
 }
 
