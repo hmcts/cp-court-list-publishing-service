@@ -151,8 +151,7 @@ class StandardCourtListTransformationServiceTest {
     @Test
     void transform_shouldSetSubjectTrueWhenCourtApplicationSubjectMatchesDefendant() throws Exception {
         CourtApplicationParty subjectParty = CourtApplicationParty.builder()
-                .name("Alysson Cummings")
-                .dateOfBirth("21 Feb 1981")
+                .id("3eebde5d-f238-486a-b181-046b3dd9be93")
                 .build();
         Hearing firstHearing = payload.getHearingDates().get(0).getCourtRooms().get(0)
                 .getTimeslots().get(0).getHearings().get(0);
@@ -173,8 +172,7 @@ class StandardCourtListTransformationServiceTest {
     @Test
     void transform_shouldSetSubjectFalseWhenCourtApplicationHasNoMatchingSubject() throws Exception {
         CourtApplicationParty otherSubject = CourtApplicationParty.builder()
-                .name("Other Person")
-                .dateOfBirth("1 Jan 1990")
+                .id("different-id-not-matching-defendant")
                 .build();
         Hearing firstHearing = payload.getHearingDates().get(0).getCourtRooms().get(0)
                 .getTimeslots().get(0).getHearings().get(0);

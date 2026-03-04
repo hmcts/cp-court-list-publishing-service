@@ -71,26 +71,19 @@ public abstract class BaseCourtListTransformationService {
     }
 
     /**
-     * Returns true if the defendant is listed as a subject of the court application in the payload
+     * Returns true if the defendant is listed as a subject of the court application in the payload.
+     * Matches by id: subject id is the same as defendant id (same as applicant/respondent).
      */
     protected static boolean isDefendantSubjectOfApplication(Defendant defendant, CourtApplication courtApplication) {
         if (courtApplication == null || courtApplication.getSubject() == null || courtApplication.getSubject().isEmpty()) {
             return false;
         }
-        String defendantName = isNonBlank(defendant.getName())
-                ? defendant.getName().trim()
-                : ((defendant.getFirstName() != null ? defendant.getFirstName().trim() : "") + " "
-                        + (defendant.getSurname() != null ? defendant.getSurname().trim() : "")).trim();
-        String defendantDob = defendant.getDateOfBirth() != null ? defendant.getDateOfBirth().trim() : null;
-
+        if (!isNonBlank(defendant.getId())) {
+            return false;
+        }
+        String defendantId = defendant.getId().trim();
         for (CourtApplicationParty subjectParty : courtApplication.getSubject()) {
-            String subjectName = subjectParty.getName() != null ? subjectParty.getName().trim() : null;
-            String subjectDob = subjectParty.getDateOfBirth() != null ? subjectParty.getDateOfBirth().trim() : null;
-            boolean nameMatches = isNonBlank(defendantName) && isNonBlank(subjectName)
-                    && defendantName.equalsIgnoreCase(subjectName);
-            boolean dobMatches = (defendantDob == null && subjectDob == null)
-                    || (isNonBlank(defendantDob) && defendantDob.equals(subjectDob));
-            if (nameMatches && dobMatches) {
+            if (isNonBlank(subjectParty.getId()) && subjectParty.getId().trim().equals(defendantId)) {
                 return true;
             }
         }

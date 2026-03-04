@@ -264,8 +264,7 @@ class OnlinePublicCourtListTransformationServiceTest {
     @Test
     void transform_shouldSetSubjectTrueWhenCourtApplicationSubjectMatchesDefendant() throws Exception {
         CourtApplicationParty subjectParty = CourtApplicationParty.builder()
-                .name("Tommie Bogisich")
-                .dateOfBirth("5 Jan 2006")
+                .id("1b4ffa2a-aeb4-4d03-993e-b40e2e404c7d")
                 .build();
         payload.getHearingDates().get(0).getCourtRooms().get(0)
                 .getTimeslots().get(0).getHearings().get(0)
@@ -286,8 +285,7 @@ class OnlinePublicCourtListTransformationServiceTest {
     @Test
     void transform_shouldSetSubjectFalseWhenCourtApplicationHasNoMatchingSubject() throws Exception {
         CourtApplicationParty otherSubject = CourtApplicationParty.builder()
-                .name("Other Person")
-                .dateOfBirth("1 Jan 1990")
+                .id("different-id-not-matching-defendant")
                 .build();
         payload.getHearingDates().get(0).getCourtRooms().get(0)
                 .getTimeslots().get(0).getHearings().get(0)
