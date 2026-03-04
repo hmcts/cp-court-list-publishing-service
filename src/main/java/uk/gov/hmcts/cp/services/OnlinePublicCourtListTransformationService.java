@@ -87,10 +87,14 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
             // Offence list per schema (offenceTitle only for public lists)
             List<OffenceSchema> offences = transformOffencesForPublicList(defendant.getOffences());
 
+            boolean isSubjectOfApplication = isNonBlank(hearing.getCourtApplicationId())
+                    || hearing.getCourtApplication() != null;
+
             parties.add(Party.builder()
                     .partyRole("DEFENDANT")
                     .individualDetails(individualDetails)
                     .offence(offences)
+                    .subject(isSubjectOfApplication)
                     .build());
 
             Party prosecutorParty = createProsecutorParty(hearing.getProsecutorType());

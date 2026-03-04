@@ -137,12 +137,15 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                     .build();
         }
 
+        boolean isSubjectOfApplication = isNonBlank(hearing.getCourtApplicationId())
+                || hearing.getCourtApplication() != null;
+
         parties.add(Party.builder()
                 .partyRole(partyRole)
                 .individualDetails(individualDetails)
                 .offence(offences)
                 .organisationDetails(organisationDetails)
-                .subject(null)
+                .subject(isSubjectOfApplication)
                 .build());
 
         Party prosecutorParty = createProsecutorParty(hearing.getProsecutorType());

@@ -107,6 +107,8 @@ class StandardCourtListTransformationServiceTest {
         Party party = caseObj.getParty().get(0);
         assertThat(party).isNotNull();
         assertThat(party.getPartyRole()).isEqualTo("DEFENDANT");
+        // Stub has no court application, so subject is false
+        assertThat(party.getSubject()).isFalse();
         assertThat(party.getIndividualDetails()).isNotNull();
         
         // Verify IndividualDetails
@@ -144,6 +146,38 @@ class StandardCourtListTransformationServiceTest {
             assertThat(prosecutorParty.getOrganisationDetails()).isNotNull();
             assertThat(prosecutorParty.getOrganisationDetails().getOrganisationName()).isEqualTo("CITYPF"); // From prosecutorType in stub
         }
+    }
+
+    @Test
+    void transform_shouldSetSubjectTrueWhenCourtApplicationIdIsSet() throws Exception {
+        Hearing firstHearing = payload.getHearingDates().get(0).getCourtRooms().get(0)
+                .getTimeslots().get(0).getHearings().get(0);
+        firstHearing.setCourtApplicationId("app-456");
+
+        CourtListDocument document = transformationService.transform(payload);
+
+        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
+                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+
+        Party defendantParty = caseObj.getParty().get(0);
+        assertThat(defendantParty.getPartyRole()).isEqualTo("DEFENDANT");
+        assertThat(defendantParty.getSubject()).isTrue();
+    }
+
+    @Test
+    void transform_shouldSetSubjectTrueWhenCourtApplicationIsSet() throws Exception {
+        Hearing firstHearing = payload.getHearingDates().get(0).getCourtRooms().get(0)
+                .getTimeslots().get(0).getHearings().get(0);
+        firstHearing.setCourtApplication(new CourtApplication());
+
+        CourtListDocument document = transformationService.transform(payload);
+
+        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
+                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+
+        Party defendantParty = caseObj.getParty().get(0);
+        assertThat(defendantParty.getPartyRole()).isEqualTo("DEFENDANT");
+        assertThat(defendantParty.getSubject()).isTrue();
     }
 
     @Test

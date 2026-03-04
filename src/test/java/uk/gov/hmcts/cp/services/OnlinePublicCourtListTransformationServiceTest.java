@@ -6,6 +6,7 @@ import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
+import uk.gov.hmcts.cp.models.CourtApplication;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.models.Defendant;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
@@ -103,6 +104,8 @@ class OnlinePublicCourtListTransformationServiceTest {
         // Stub defendant has offences; public list includes offenceTitle per schema
         assertThat(party.getOffence()).isNotEmpty();
         assertThat(party.getOffence().get(0).getOffenceTitle()).isEqualTo("Attempt theft of motor vehicle");
+        // Stub has no court application, so subject is false
+        assertThat(party.getSubject()).isFalse();
 
         // Verify second Party (PROSECUTING_AUTHORITY) from prosecutorType in stub
         assertThat(caseObj.getParty()).hasSize(2);
@@ -255,6 +258,46 @@ class OnlinePublicCourtListTransformationServiceTest {
 
         assertThat(caseObj.getParty()).hasSize(1);
         assertThat(caseObj.getParty().get(0).getPartyRole()).isEqualTo("DEFENDANT");
+    }
+
+    @Test
+    void transform_shouldSetSubjectTrueWhenCourtApplicationIdIsSet() throws Exception {
+        payload.getHearingDates().get(0).getCourtRooms().get(0)
+                .getTimeslots().get(0).getHearings().get(0).setCourtApplicationId("app-123");
+
+        CourtListDocument document = transformationService.transform(payload);
+
+        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
+                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+
+        Party defendantParty = caseObj.getParty().get(0);
+        assertThat(defendantParty.getPartyRole()).isEqualTo("DEFENDANT");
+        assertThat(defendantParty.getSubject()).isTrue();
+    }
+
+    @Test
+    void transform_shouldSetSubjectTrueWhenCourtApplicationIsSet() throws Exception {
+        payload.getHearingDates().get(0).getCourtRooms().get(0)
+                .getTimeslots().get(0).getHearings().get(0).setCourtApplication(new CourtApplication());
+
+        CourtListDocument document = transformationService.transform(payload);
+
+        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
+                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+
+        Party defendantParty = caseObj.getParty().get(0);
+        assertThat(defendantParty.getPartyRole()).isEqualTo("DEFENDANT");
+        assertThat(defendantParty.getSubject()).isTrue();
+    }
+
+    @Test
+    void transform_shouldSetSubjectFalseWhenNoCourtApplication() throws Exception {
+        CourtListDocument document = transformationService.transform(payload);
+
+        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
+                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+
+        assertThat(caseObj.getParty().get(0).getSubject()).isFalse();
     }
 
     private CourtListPayload loadPayloadFromStubData(String resourcePath) throws Exception {
