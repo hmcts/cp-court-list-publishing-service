@@ -61,7 +61,8 @@
               "DEFENDANT",
               "PROSECUTING_AUTHORITY",
               "APPLICANT",
-              "RESPONDENT"
+              "RESPONDENT",
+              "SUBJECT"
             ],
             "pattern": "^(?!(.|\\r|\\n)*<[^>]+>)(.|\\r|\\n)*$"
           },

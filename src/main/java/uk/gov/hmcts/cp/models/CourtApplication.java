@@ -20,5 +20,5 @@ public class CourtApplication {
     private List<CourtApplicationParty> respondents;
 
     @JsonProperty("subject")
-    private List<CourtApplicationParty> subject;
+    private CourtApplicationParty subject;
 }

@@ -7,6 +7,7 @@ import uk.gov.hmcts.cp.models.*;
 import uk.gov.hmcts.cp.models.transformed.schema.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,33 +46,76 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
 
     @Override
     protected HearingSchema transformHearing(Hearing hearing) {
-        // For public lists, only include case number and defendant name
-        List<CaseSchema> cases = transformCases(hearing);
+        ApplicationTransformResult applicationTransformResult = transformApplications(hearing);
+        List<CaseSchema> cases = transformCases(hearing, applicationTransformResult.subjectPartyId());
 
         if (cases.isEmpty()) {
             return null;
         }
 
-        // According to public court list schema, channel and application should be arrays (can be empty)
         List<String> channels = new ArrayList<>();
-        List<Application> applications = new ArrayList<>();
-
         return HearingSchema.builder()
                 .hearingType(hearing.getHearingType())
                 .caseList(cases)
                 .channel(channels)
-                .application(applications)
+                .application(applicationTransformResult.applications())
                 .build();
     }
 
-    private List<CaseSchema> transformCases(Hearing hearing) {
+    /**
+     * Transforms hearing court application data into schema Application list and subject party id.
+     * Subject party id is derived here and used in buildApplicationParty (Party.subject) and in transformCases (defendant Party.subject).
+     */
+    @Override
+    protected Party buildApplicationParty(CourtApplicationParty courtParty, String partyRole, String subjectPartyId) {
+        if (courtParty == null) {
+            return null;
+        }
+        IndividualDetails individualDetails = null;
+        if (isNonBlank(courtParty.getName())) {
+            individualDetails = IndividualDetails.builder()
+                    .individualForenames(null)
+                    .individualMiddleName(null)
+                    .individualSurname(courtParty.getName())
+                    .dateOfBirth(null)
+                    .age(null)
+                    .address(null)
+                    .inCustody(null)
+                    .gender(null)
+                    .asn(null)
+                    .build();
+        }
+        boolean isSubjectOfApplication = isNonBlank(courtParty.getId())
+                && subjectPartyId != null
+                && subjectPartyId.equals(courtParty.getId().trim());
+
+        return Party.builder()
+                .partyRole(partyRole)
+                .individualDetails(individualDetails)
+                .offence(null)
+                .organisationDetails(null)
+                .subject(isSubjectOfApplication)
+                .build();
+    }
+
+    @Override
+    protected List<Application> buildApplications(Hearing hearing, CourtApplication courtApplication, List<Party> parties) {
+        Application application = Application.builder()
+                .applicationReference(hearing.getCourtApplicationId().trim())
+                .applicationType(null)
+                .reportingRestriction(false)
+                .party(parties.isEmpty() ? null : parties)
+                .build();
+        return Collections.singletonList(application);
+    }
+
+    private List<CaseSchema> transformCases(Hearing hearing, String subjectPartyId) {
         List<CaseSchema> cases = new ArrayList<>();
 
         if (hearing.getDefendants() == null || hearing.getDefendants().isEmpty()) {
             return cases;
         }
 
-        // For public lists, create simplified cases with minimal party information
         for (Defendant defendant : hearing.getDefendants()) {
             List<Party> parties = new ArrayList<>();
 
@@ -87,8 +131,9 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
             // Offence list per schema (offenceTitle only for public lists)
             List<OffenceSchema> offences = transformOffencesForPublicList(defendant.getOffences(), defendant);
 
-            boolean isSubjectOfApplication = hearing.getCourtApplication() != null
-                    && isDefendantSubjectOfApplication(defendant, hearing.getCourtApplication());
+            boolean isSubjectOfApplication = isNonBlank(defendant.getId())
+                    && subjectPartyId != null
+                    && subjectPartyId.equals(defendant.getId().trim());
 
             parties.add(Party.builder()
                     .partyRole("DEFENDANT")
