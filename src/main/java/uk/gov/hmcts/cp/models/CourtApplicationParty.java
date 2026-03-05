@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CourtApplicationParty {
+    @JsonProperty("id")
+    private String id;
+
     @JsonProperty("name")
     private String name;
 

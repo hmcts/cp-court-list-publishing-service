@@ -58,7 +58,7 @@ class StandardCourtListTransformationServiceTest {
         assertThat(courtLists).isNotEmpty();
         
         // Verify first CourtList
-        CourtList courtList = courtLists.get(0);
+        CourtList courtList = courtLists.getFirst();
         assertThat(courtList).isNotNull();
         assertThat(courtList.getCourtHouse()).isNotNull();
         
@@ -69,18 +69,18 @@ class StandardCourtListTransformationServiceTest {
         assertThat(courtHouse.getCourtRoom()).isNotEmpty();
         
         // Verify first CourtRoom
-        CourtRoomSchema courtRoom = courtHouse.getCourtRoom().get(0);
+        CourtRoomSchema courtRoom = courtHouse.getCourtRoom().getFirst();
         assertThat(courtRoom).isNotNull();
         assertThat(courtRoom.getCourtRoomName()).isEqualTo("Courtroom 01");
         assertThat(courtRoom.getSession()).isNotEmpty();
         
         // Verify first Session
-        SessionSchema session = courtRoom.getSession().get(0);
+        SessionSchema session = courtRoom.getSession().getFirst();
         assertThat(session).isNotNull();
         assertThat(session.getSittings()).isNotEmpty();
         
         // Verify first Sitting
-        Sitting sitting = session.getSittings().get(0);
+        Sitting sitting = session.getSittings().getFirst();
         assertThat(sitting).isNotNull();
         assertThat(sitting.getSittingStart()).isNotNull();
         // Verify sittingStart is in ISO 8601 format
@@ -88,7 +88,7 @@ class StandardCourtListTransformationServiceTest {
         assertThat(sitting.getHearing()).isNotEmpty();
         
         // Verify first Hearing
-        HearingSchema hearing = sitting.getHearing().get(0);
+        HearingSchema hearing = sitting.getHearing().getFirst();
         assertThat(hearing).isNotNull();
         assertThat(hearing.getHearingType()).isEqualTo("First hearing");
         assertThat(hearing.getCaseList()).isNotEmpty();
@@ -99,15 +99,17 @@ class StandardCourtListTransformationServiceTest {
         assertThat(hearing.getApplication()).isEmpty();
         
         // Verify first Case
-        CaseSchema caseObj = hearing.getCaseList().get(0);
+        CaseSchema caseObj = hearing.getCaseList().getFirst();
         assertThat(caseObj).isNotNull();
         assertThat(caseObj.getCaseUrn()).isEqualTo("38GD6504026"); // From payload
         assertThat(caseObj.getParty()).isNotEmpty();
         
         // Verify first Party (DEFENDANT)
-        Party party = caseObj.getParty().get(0);
+        Party party = caseObj.getParty().getFirst();
         assertThat(party).isNotNull();
         assertThat(party.getPartyRole()).isEqualTo("DEFENDANT");
+        // Stub has no court application, so subject is false
+        assertThat(party.getSubject()).isFalse();
         assertThat(party.getIndividualDetails()).isNotNull();
         
         // Verify IndividualDetails
@@ -121,7 +123,7 @@ class StandardCourtListTransformationServiceTest {
         AddressSchema address = individualDetails.getAddress();
         assertThat(address).isNotNull();
         assertThat(address.getLine()).isNotEmpty();
-        assertThat(address.getLine().get(0)).isEqualTo("Address line 1"); // From payload address1
+        assertThat(address.getLine().getFirst()).isEqualTo("Address line 1"); // From payload address1
         assertThat(address.getLine().get(1)).isEqualTo("Address line 2"); // From payload address2
         assertThat(address.getLine().get(2)).isEqualTo("Address line 3"); // From payload address3
 
@@ -131,7 +133,7 @@ class StandardCourtListTransformationServiceTest {
         assertThat(offences).isNotEmpty();
 
         // Verify first Offence (from stub: id, title, wording)
-        OffenceSchema offence = offences.get(0);
+        OffenceSchema offence = offences.getFirst();
         assertThat(offence).isNotNull();
         assertThat(offence.getOffenceCode()).isEqualTo("OFFCODE112"); // From offence id
         assertThat(offence.getOffenceTitle()).isEqualTo("Use a television set without a licence"); // From payload
@@ -148,6 +150,46 @@ class StandardCourtListTransformationServiceTest {
     }
 
     @Test
+    void transform_shouldSetSubjectTrueWhenCourtApplicationSubjectMatchesDefendant() {
+        CourtApplicationParty subjectParty = CourtApplicationParty.builder()
+                .id("3eebde5d-f238-486a-b181-046b3dd9be93")
+                .build();
+        Hearing firstHearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
+                .getTimeslots().getFirst().getHearings().getFirst();
+        firstHearing.setCourtApplication(CourtApplication.builder()
+                .subject(subjectParty)
+                .build());
+
+        CourtListDocument document = transformationService.transform(payload);
+
+        CaseSchema caseObj = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
+                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst().getCaseList().getFirst();
+
+        Party defendantParty = caseObj.getParty().getFirst();
+        assertThat(defendantParty.getPartyRole()).isEqualTo("DEFENDANT");
+        assertThat(defendantParty.getSubject()).isTrue();
+    }
+
+    @Test
+    void transform_shouldSetSubjectFalseWhenCourtApplicationHasNoMatchingSubject() {
+        CourtApplicationParty otherSubject = CourtApplicationParty.builder()
+                .id("different-id-not-matching-defendant")
+                .build();
+        Hearing firstHearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
+                .getTimeslots().getFirst().getHearings().getFirst();
+        firstHearing.setCourtApplication(CourtApplication.builder()
+                .subject(otherSubject)
+                .build());
+
+        CourtListDocument document = transformationService.transform(payload);
+
+        CaseSchema caseObj = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
+                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst().getCaseList().getFirst();
+
+        assertThat(caseObj.getParty().getFirst().getSubject()).isFalse();
+    }
+
+    @Test
     void transform_shouldHandleMultipleHearingDates() throws Exception {
         // Given
         payload = loadPayloadFromStubData("stubdata/court-list-payload-multiple-dates.json");
@@ -160,12 +202,12 @@ class StandardCourtListTransformationServiceTest {
         List<CourtList> courtLists = document.getCourtLists();
         assertThat(courtLists).isNotEmpty();
         
-        CourtHouse courtHouse = courtLists.get(0).getCourtHouse();
+        CourtHouse courtHouse = courtLists.getFirst().getCourtHouse();
         List<CourtRoomSchema> courtRooms = courtHouse.getCourtRoom();
         assertThat(courtRooms.size()).isGreaterThanOrEqualTo(2); // Multiple court rooms
         
         // Verify first court room
-        CourtRoomSchema courtRoom1 = courtRooms.get(0);
+        CourtRoomSchema courtRoom1 = courtRooms.getFirst();
         assertThat(courtRoom1.getCourtRoomName()).isEqualTo("Courtroom 01");
         
         // Verify second court room if exists
@@ -193,7 +235,7 @@ class StandardCourtListTransformationServiceTest {
         assertThat(courtLists).isNotNull();
         // Either empty list or list with court house but no court rooms
         if (!courtLists.isEmpty()) {
-            CourtHouse courtHouse = courtLists.get(0).getCourtHouse();
+            CourtHouse courtHouse = courtLists.getFirst().getCourtHouse();
             assertThat(courtHouse.getCourtRoom()).isEmpty();
         }
     }
@@ -208,11 +250,11 @@ class StandardCourtListTransformationServiceTest {
         List<CourtList> courtLists = document.getCourtLists();
         assertThat(courtLists).isNotEmpty();
         
-        CourtHouse courtHouse = courtLists.get(0).getCourtHouse();
+        CourtHouse courtHouse = courtLists.getFirst().getCourtHouse();
         if (!courtHouse.getCourtRoom().isEmpty()) {
-            CourtRoomSchema courtRoom = courtHouse.getCourtRoom().get(0);
+            CourtRoomSchema courtRoom = courtHouse.getCourtRoom().getFirst();
             if (!courtRoom.getSession().isEmpty()) {
-                SessionSchema session = courtRoom.getSession().get(0);
+                SessionSchema session = courtRoom.getSession().getFirst();
                 // Judiciary may be empty if not provided in payload
                 List<Judiciary> judiciary = session.getJudiciary();
                 assertThat(judiciary).isNotNull();
@@ -237,9 +279,9 @@ class StandardCourtListTransformationServiceTest {
     @Test
     void transform_shouldSetReportingRestrictionFromDefendantReportingRestrictionsArray() throws Exception {
         // Given - defendant with reportingRestrictions array
-        Hearing hearing = payload.getHearingDates().get(0).getCourtRooms().get(0)
-                .getTimeslots().get(0).getHearings().get(0);
-        Defendant defendant = hearing.getDefendants().get(0);
+        Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
+                .getTimeslots().getFirst().getHearings().getFirst();
+        Defendant defendant = hearing.getDefendants().getFirst();
         defendant.setReportingRestrictions(List.of(
                 ReportingRestriction.builder().label("Section 49 of the Children and Young Persons Act 1933 applies").build()
         ));
@@ -248,16 +290,16 @@ class StandardCourtListTransformationServiceTest {
         CourtListDocument document = transformationService.transform(payload);
 
         // Then - case level
-        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
-                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+        CaseSchema caseObj = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
+                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst().getCaseList().getFirst();
         assertThat(caseObj.getReportingRestriction()).isTrue();
         assertThat(caseObj.getReportingRestrictionDetails())
                 .containsExactly("Section 49 of the Children and Young Persons Act 1933 applies");
 
         // Then - offence level
-        List<OffenceSchema> offences = caseObj.getParty().get(0).getOffence();
+        List<OffenceSchema> offences = caseObj.getParty().getFirst().getOffence();
         assertThat(offences).isNotEmpty();
-        OffenceSchema offence = offences.get(0);
+        OffenceSchema offence = offences.getFirst();
         assertThat(offence.getReportingRestriction()).isTrue();
         assertThat(offence.getReportingRestrictionDetails())
                 .containsExactly("Section 49 of the Children and Young Persons Act 1933 applies");
@@ -266,35 +308,35 @@ class StandardCourtListTransformationServiceTest {
     @Test
     void transform_shouldSetNoReportingRestrictionWhenDefendantHasNoReportingRestrictions() throws Exception {
         // Given - stub has reportingRestrictions: [] on defendant; ensure no restrictions
-        Hearing hearing = payload.getHearingDates().get(0).getCourtRooms().get(0)
-                .getTimeslots().get(0).getHearings().get(0);
-        hearing.getDefendants().get(0).setReportingRestrictions(Collections.emptyList());
+        Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
+                .getTimeslots().getFirst().getHearings().getFirst();
+        hearing.getDefendants().getFirst().setReportingRestrictions(Collections.emptyList());
 
         // When
         CourtListDocument document = transformationService.transform(payload);
 
         // Then - case level
-        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
-                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+        CaseSchema caseObj = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
+                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst().getCaseList().getFirst();
         assertThat(caseObj.getReportingRestriction()).isFalse();
         assertThat(caseObj.getReportingRestrictionDetails()).isNull();
 
         // Then - offence level
-        OffenceSchema offence = caseObj.getParty().get(0).getOffence().get(0);
+        OffenceSchema offence = caseObj.getParty().getFirst().getOffence().getFirst();
         assertThat(offence.getReportingRestriction()).isNull();
         assertThat(offence.getReportingRestrictionDetails()).isNull();
     }
 
     @Test
     void transform_shouldSetNoReportingRestrictionWhenDefendantReportingRestrictionsIsNull() throws Exception {
-        Hearing hearing = payload.getHearingDates().get(0).getCourtRooms().get(0)
-                .getTimeslots().get(0).getHearings().get(0);
-        hearing.getDefendants().get(0).setReportingRestrictions(null);
+        Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
+                .getTimeslots().getFirst().getHearings().getFirst();
+        hearing.getDefendants().getFirst().setReportingRestrictions(null);
 
         CourtListDocument document = transformationService.transform(payload);
 
-        CaseSchema caseObj = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
-                .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
+        CaseSchema caseObj = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
+                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst().getCaseList().getFirst();
         assertThat(caseObj.getReportingRestriction()).isFalse();
         assertThat(caseObj.getReportingRestrictionDetails()).isNull();
     }
@@ -302,8 +344,8 @@ class StandardCourtListTransformationServiceTest {
     @Test
     void transform_shouldIncludeApplicationsWhenHearingHasCourtApplication() throws Exception {
         // Given - hearing with courtApplicationId and courtApplication (applicant + respondents)
-        Hearing hearing = payload.getHearingDates().get(0).getCourtRooms().get(0)
-                .getTimeslots().get(0).getHearings().get(0);
+        Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
+                .getTimeslots().getFirst().getHearings().getFirst();
         hearing.setCourtApplicationId("APP-REF-12345");
         hearing.setCourtApplication(CourtApplication.builder()
                 .applicant(CourtApplicationParty.builder()
@@ -322,18 +364,18 @@ class StandardCourtListTransformationServiceTest {
         CourtListDocument document = transformationService.transform(payload);
 
         // Then - first hearing has one application
-        List<Application> applications = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
-                .getSession().get(0).getSittings().get(0).getHearing().get(0).getApplication();
+        List<Application> applications = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
+                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst().getApplication();
         assertThat(applications).hasSize(1);
-        Application app = applications.get(0);
+        Application app = applications.getFirst();
         assertThat(app.getApplicationReference()).isEqualTo("APP-REF-12345");
         assertThat(app.getApplicationType()).isNull();
         assertThat(app.getApplicationParticulars()).isNull();
         assertThat(app.getReportingRestriction()).isFalse();
         assertThat(app.getParty()).hasSize(2); // applicant + one respondent
-        assertThat(app.getParty().get(0).getPartyRole()).isEqualTo("APPLICANT");
-        assertThat(app.getParty().get(0).getIndividualDetails().getIndividualSurname()).isEqualTo("Applicant Name");
-        assertThat(app.getParty().get(0).getIndividualDetails().getDateOfBirth()).isEqualTo("1990-01-01");
+        assertThat(app.getParty().getFirst().getPartyRole()).isEqualTo("APPLICANT");
+        assertThat(app.getParty().getFirst().getIndividualDetails().getIndividualSurname()).isEqualTo("Applicant Name");
+        assertThat(app.getParty().getFirst().getIndividualDetails().getDateOfBirth()).isEqualTo("1990-01-01");
         assertThat(app.getParty().get(1).getPartyRole()).isEqualTo("RESPONDENT");
         assertThat(app.getParty().get(1).getIndividualDetails().getIndividualSurname()).isEqualTo("Respondent One");
         assertThat(app.getParty().get(1).getIndividualDetails().getDateOfBirth()).isEqualTo("1985-09-15");

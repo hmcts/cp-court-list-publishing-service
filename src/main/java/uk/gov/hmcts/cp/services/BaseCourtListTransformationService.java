@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -69,6 +70,72 @@ public abstract class BaseCourtListTransformationService {
     protected static boolean isNonBlank(String s) {
         return s != null && !s.trim().isEmpty();
     }
+
+    /**
+     * Extracts the subject party id from the court application. Subject is a single party; returns null if absent or id is blank.
+     */
+    protected final String getSubjectPartyId(CourtApplication courtApplication) {
+        CourtApplicationParty subject = courtApplication != null ? courtApplication.getSubject() : null;
+        if (subject == null) {
+            return null;
+        }
+        String id = subject.getId();
+        return isNonBlank(id) ? id.trim() : null;
+    }
+
+    /**
+     * Result of transforming court application: schema Application list and subject party id (single party) for case parties.
+     */
+    protected record ApplicationTransformResult(List<Application> applications, String subjectPartyId) {
+    }
+
+    /**
+     * Transforms hearing court application into Application list and subject party id.
+     */
+    protected final ApplicationTransformResult transformApplications(Hearing hearing) {
+        String subjectPartyId = getSubjectPartyId(hearing.getCourtApplication());
+        CourtApplication courtApplication = hearing.getCourtApplication();
+
+        if (courtApplication == null || !isNonBlank(hearing.getCourtApplicationId())) {
+            return new ApplicationTransformResult(Collections.emptyList(), subjectPartyId);
+        }
+
+        List<Party> parties = buildApplicationParties(courtApplication, subjectPartyId);
+        List<Application> applications = buildApplications(hearing, courtApplication, parties);
+        return new ApplicationTransformResult(applications, subjectPartyId);
+    }
+
+    /**
+     * Builds the list of parties for the court application (applicant, respondents, subject).
+     */
+    protected final List<Party> buildApplicationParties(CourtApplication courtApplication, String subjectPartyId) {
+        List<Party> parties = new ArrayList<>();
+        if (courtApplication.getApplicant() != null) {
+            Party p = buildApplicationParty(courtApplication.getApplicant(), "APPLICANT", subjectPartyId);
+            if (p != null) parties.add(p);
+        }
+        if (courtApplication.getRespondents() != null) {
+            for (CourtApplicationParty respondent : courtApplication.getRespondents()) {
+                Party p = buildApplicationParty(respondent, "RESPONDENT", subjectPartyId);
+                if (p != null) parties.add(p);
+            }
+        }
+        if (courtApplication.getSubject() != null) {
+            Party p = buildApplicationParty(courtApplication.getSubject(), "SUBJECT", subjectPartyId);
+            if (p != null) parties.add(p);
+        }
+        return parties;
+    }
+
+    /**
+     * Builds a single Party for an application party (applicant, respondent, or subject). Sets {@link Party#getSubject()} when party id equals subject party id.
+     */
+    protected abstract Party buildApplicationParty(CourtApplicationParty courtParty, String partyRole, String subjectPartyId);
+
+    /**
+     * Builds the schema Application list from the hearing, court application, and pre-built parties. Subclasses define application fields (e.g. applicationParticulars).
+     */
+    protected abstract List<Application> buildApplications(Hearing hearing, CourtApplication courtApplication, List<Party> parties);
 
     protected final List<CourtList> transformCourtLists(CourtListPayload payload) {
         List<CourtList> courtLists = new ArrayList<>();

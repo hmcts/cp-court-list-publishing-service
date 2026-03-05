@@ -57,63 +57,28 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
 
     @Override
     protected HearingSchema transformHearing(Hearing hearing) {
-        List<CaseSchema> cases = transformCases(hearing);
+        ApplicationTransformResult appResult = transformApplications(hearing);
+        List<CaseSchema> cases = transformCases(hearing, appResult.subjectPartyId());
 
         if (cases.isEmpty()) {
             return null;
         }
-
-        List<Application> applications = transformApplications(hearing);
 
         return HearingSchema.builder()
                 .hearingType(hearing.getHearingType())
                 .caseList(cases)
                 .panel(hearing.getPanel())
                 .channel(Collections.emptyList())
-                .application(applications)
+                .application(appResult.applications())
                 .build();
     }
 
     /**
-     * Transforms hearing court application data into schema Application list.
-     * When the hearing has courtApplicationId and courtApplication (applicant/respondents), returns a single
-     * Application; otherwise returns an empty list.
+     * Transforms hearing court application data into schema Application list and subject party id.
+     * Subject party id is derived here and used in buildApplicationParty (Party.subject) and in transformCases (defendant Party.subject).
      */
-    private List<Application> transformApplications(Hearing hearing) {
-        if (hearing.getCourtApplication() == null || !isNonBlank(hearing.getCourtApplicationId())) {
-            return Collections.emptyList();
-        }
-
-        CourtApplication courtApplication = hearing.getCourtApplication();
-        List<Party> parties = new ArrayList<>();
-
-        if (courtApplication.getApplicant() != null) {
-            Party applicantParty = buildApplicationParty(courtApplication.getApplicant(), "APPLICANT");
-            if (applicantParty != null) {
-                parties.add(applicantParty);
-            }
-        }
-        if (courtApplication.getRespondents() != null) {
-            for (CourtApplicationParty respondent : courtApplication.getRespondents()) {
-                Party respondentParty = buildApplicationParty(respondent, "RESPONDENT");
-                if (respondentParty != null) {
-                    parties.add(respondentParty);
-                }
-            }
-        }
-
-        Application application = Application.builder()
-                .applicationReference(hearing.getCourtApplicationId().trim())
-                .applicationType(null)
-                .applicationParticulars(null)
-                .reportingRestriction(false)
-                .party(parties.isEmpty() ? null : parties)
-                .build();
-
-        return Collections.singletonList(application);
-    }
-
-    private Party buildApplicationParty(CourtApplicationParty courtParty, String partyRole) {
+    @Override
+    protected Party buildApplicationParty(CourtApplicationParty courtParty, String partyRole, String subjectPartyId) {
         if (courtParty == null) {
             return null;
         }
@@ -131,25 +96,39 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                     .asn(null)
                     .build();
         }
+        boolean isSubjectOfApplication = isNonBlank(courtParty.getId())
+                && subjectPartyId != null
+                && subjectPartyId.equals(courtParty.getId().trim());
         return Party.builder()
                 .partyRole(partyRole)
                 .individualDetails(individualDetails)
                 .offence(null)
                 .organisationDetails(null)
-                .subject(null)
+                .subject(isSubjectOfApplication)
                 .build();
     }
 
-    private List<CaseSchema> transformCases(Hearing hearing) {
+    @Override
+    protected List<Application> buildApplications(Hearing hearing, CourtApplication courtApplication, List<Party> parties) {
+        Application application = Application.builder()
+                .applicationReference(hearing.getCourtApplicationId().trim())
+                .applicationType(null)
+                .applicationParticulars(null)
+                .reportingRestriction(false)
+                .party(parties.isEmpty() ? null : parties)
+                .build();
+        return Collections.singletonList(application);
+    }
+
+    private List<CaseSchema> transformCases(Hearing hearing, String subjectPartyId) {
         List<CaseSchema> cases = new ArrayList<>();
 
         if (hearing.getDefendants() == null || hearing.getDefendants().isEmpty()) {
             return cases;
         }
 
-        // Create a case for each defendant
         for (Defendant defendant : hearing.getDefendants()) {
-            List<Party> parties = transformParties(defendant, hearing);
+            List<Party> parties = transformParties(defendant, hearing, subjectPartyId);
 
             List<String> reportingRestrictionDetails = getReportingRestrictionDetails(defendant);
             boolean hasReportingRestriction = hasReportingRestriction(defendant);
@@ -190,7 +169,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                 .anyMatch(r -> r.getLabel() != null && !r.getLabel().trim().isEmpty());
     }
 
-    private List<Party> transformParties(Defendant defendant, Hearing hearing) {
+    private List<Party> transformParties(Defendant defendant, Hearing hearing, String subjectPartyId) {
         List<Party> parties = new ArrayList<>();
 
         // Determine party role - default to DEFENDANT if not specified
@@ -224,12 +203,16 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                     .build();
         }
 
+        boolean isSubjectOfApplication = isNonBlank(defendant.getId())
+                && subjectPartyId != null
+                && subjectPartyId.equals(defendant.getId().trim());
+
         parties.add(Party.builder()
                 .partyRole(partyRole)
                 .individualDetails(individualDetails)
                 .offence(offences)
                 .organisationDetails(organisationDetails)
-                .subject(null)
+                .subject(isSubjectOfApplication)
                 .build());
 
         Party prosecutorParty = createProsecutorParty(hearing.getProsecutorType());
