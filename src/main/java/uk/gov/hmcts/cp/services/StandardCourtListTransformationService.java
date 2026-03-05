@@ -83,41 +83,64 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
             return null;
         }
         IndividualDetails individualDetails = null;
-        if (isNonBlank(courtParty.getName()) || isNonBlank(courtParty.getDateOfBirth())) {
+        if (isNonBlank(courtParty.getFirstName()) || isNonBlank(courtParty.getSurname()) || isNonBlank(courtParty.getName()) || isNonBlank(courtParty.getDateOfBirth())) {
+            String surname = isNonBlank(courtParty.getSurname()) ? courtParty.getSurname() : courtParty.getName();
             individualDetails = IndividualDetails.builder()
-                    .individualForenames(null)
+                    .individualForenames(courtParty.getFirstName())
                     .individualMiddleName(null)
-                    .individualSurname(courtParty.getName())
+                    .individualSurname(surname)
                     .dateOfBirth(convertDateOfBirthToIso(courtParty.getDateOfBirth()))
-                    .age(null)
-                    .address(null)
+                    .age(convertAge(courtParty.getAge()))
+                    .address(transformAddressSchemaFromDefendant(courtParty.getAddress()))
                     .inCustody(null)
-                    .gender(null)
-                    .asn(null)
+                    .gender(courtParty.getGender())
+                    .asn(courtParty.getAsn())
                     .build();
         }
+        OrganisationDetails organisationDetails = null;
+        if (isNonBlank(courtParty.getOrganisationName())) {
+            organisationDetails = OrganisationDetails.builder()
+                    .organisationName(courtParty.getOrganisationName())
+                    .organisationAddress(transformAddressSchemaFromDefendant(courtParty.getAddress()))
+                    .build();
+        }
+        List<OffenceSchema> offences = transformOffenceSchemasFromRestrictions(
+                courtParty.getOffences(), courtParty.getReportingRestrictions());
         boolean isSubjectOfApplication = isNonBlank(courtParty.getId())
                 && subjectPartyId != null
                 && subjectPartyId.equals(courtParty.getId().trim());
         return Party.builder()
                 .partyRole(partyRole)
                 .individualDetails(individualDetails)
-                .offence(null)
-                .organisationDetails(null)
+                .offence(offences)
+                .organisationDetails(organisationDetails)
                 .subject(isSubjectOfApplication)
                 .build();
     }
 
     @Override
     protected List<Application> buildApplications(Hearing hearing, CourtApplication courtApplication, List<Party> parties) {
+        boolean hasReportingRestriction = hasApplicationPartyReportingRestriction(courtApplication);
         Application application = Application.builder()
                 .applicationReference(hearing.getCourtApplicationId().trim())
-                .applicationType(null)
-                .applicationParticulars(null)
-                .reportingRestriction(false)
+                .applicationType(courtApplication.getApplicationType())
+                .applicationParticulars(courtApplication.getApplicationParticulars())
+                .reportingRestriction(hasReportingRestriction)
                 .party(parties.isEmpty() ? null : parties)
                 .build();
         return Collections.singletonList(application);
+    }
+
+    private boolean hasApplicationPartyReportingRestriction(CourtApplication courtApplication) {
+        if (courtApplication == null) {
+            return false;
+        }
+        CourtApplicationParty applicant = courtApplication.getApplicant();
+        if (applicant == null || applicant.getReportingRestrictions() == null || applicant.getReportingRestrictions().isEmpty()) {
+            return false;
+        }
+        return applicant.getReportingRestrictions().stream()
+                .anyMatch(r -> r != null && isNonBlank(r.getLabel()));
     }
 
     private List<CaseSchema> transformCases(Hearing hearing, String subjectPartyId) {
@@ -227,9 +250,17 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         if (offences == null || offences.isEmpty()) {
             return null;
         }
+        List<ReportingRestriction> restrictions = defendant != null ? defendant.getReportingRestrictions() : null;
+        return transformOffenceSchemasFromRestrictions(offences, restrictions);
+    }
 
+    private List<OffenceSchema> transformOffenceSchemasFromRestrictions(
+            List<uk.gov.hmcts.cp.models.Offence> offences, List<ReportingRestriction> reportingRestrictions) {
+        if (offences == null || offences.isEmpty()) {
+            return null;
+        }
         return offences.stream()
-                .map(offence -> transformOffenceSchema(offence, defendant))
+                .map(offence -> transformOffenceSchemaWithRestrictions(offence, reportingRestrictions))
                 .collect(Collectors.toList());
     }
 
@@ -269,11 +300,12 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         return null;
     }
 
-    private OffenceSchema transformOffenceSchema(uk.gov.hmcts.cp.models.Offence offence, Defendant defendant) {
+    private OffenceSchema transformOffenceSchemaWithRestrictions(
+            uk.gov.hmcts.cp.models.Offence offence, List<ReportingRestriction> reportingRestrictions) {
         List<String> offenceReportingDetails = null;
         Boolean offenceReportingRestriction = null;
-        if (defendant != null && defendant.getReportingRestrictions() != null && !defendant.getReportingRestrictions().isEmpty()) {
-            offenceReportingDetails = defendant.getReportingRestrictions().stream()
+        if (reportingRestrictions != null && !reportingRestrictions.isEmpty()) {
+            offenceReportingDetails = reportingRestrictions.stream()
                     .map(ReportingRestriction::getLabel)
                     .filter(label -> label != null && !label.trim().isEmpty())
                     .map(String::trim)

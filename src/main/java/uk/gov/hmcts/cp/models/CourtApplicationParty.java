@@ -43,6 +43,12 @@ public class CourtApplicationParty {
     @JsonProperty("nationality")
     private String nationality;
 
+    @JsonProperty("asn")
+    private String asn;
+
+    @JsonProperty("gender")
+    private String gender;
+
     @JsonProperty("address")
     private Address address;
 
