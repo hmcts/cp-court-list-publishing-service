@@ -24,4 +24,7 @@ public class Application {
     
     @JsonProperty("applicationType")
     private String applicationType;
+
+    @JsonProperty("applicationParticulars")
+    private String applicationParticulars;
 }

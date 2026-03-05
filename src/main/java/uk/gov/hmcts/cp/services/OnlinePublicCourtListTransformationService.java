@@ -7,6 +7,7 @@ import uk.gov.hmcts.cp.models.*;
 import uk.gov.hmcts.cp.models.transformed.schema.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,13 +55,81 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
 
         // According to public court list schema, channel and application should be arrays (can be empty)
         List<String> channels = new ArrayList<>();
-        List<Application> applications = new ArrayList<>();
+        List<Application> applications = transformApplications(hearing);
 
         return HearingSchema.builder()
                 .hearingType(hearing.getHearingType())
                 .caseList(cases)
                 .channel(channels)
                 .application(applications)
+                .build();
+    }
+
+    /**
+     * Transforms hearing court application data into schema Application list.
+     * When the hearing has courtApplicationId and courtApplication (applicant/respondents), returns a single
+     * Application; otherwise returns an empty list. Public list uses minimal party details (name only).
+     */
+    private List<Application> transformApplications(Hearing hearing) {
+        if (hearing.getCourtApplication() == null || !isNonBlank(hearing.getCourtApplicationId())) {
+            return Collections.emptyList();
+        }
+
+        CourtApplication courtApplication = hearing.getCourtApplication();
+        List<Party> parties = new ArrayList<>();
+
+        if (courtApplication.getApplicant() != null) {
+            Party applicantParty = buildApplicationParty(courtApplication.getApplicant(), "APPLICANT");
+            if (applicantParty != null) {
+                parties.add(applicantParty);
+            }
+        }
+        if (courtApplication.getRespondents() != null) {
+            for (CourtApplicationParty respondent : courtApplication.getRespondents()) {
+                Party respondentParty = buildApplicationParty(respondent, "RESPONDENT");
+                if (respondentParty != null) {
+                    parties.add(respondentParty);
+                }
+            }
+        }
+
+        Application application = Application.builder()
+                .applicationReference(hearing.getCourtApplicationId().trim())
+                .applicationType(null)
+                .reportingRestriction(false)
+                .party(parties.isEmpty() ? null : parties)
+                .build();
+
+        return Collections.singletonList(application);
+    }
+
+    /**
+     * Builds a Party for application applicant/respondent. Public list uses minimal details (name only).
+     */
+    private Party buildApplicationParty(CourtApplicationParty courtParty, String partyRole) {
+        if (courtParty == null) {
+            return null;
+        }
+        IndividualDetails individualDetails = null;
+        if (isNonBlank(courtParty.getName())) {
+            individualDetails = IndividualDetails.builder()
+                    .individualForenames(null)
+                    .individualMiddleName(null)
+                    .individualSurname(courtParty.getName())
+                    .dateOfBirth(null)
+                    .age(null)
+                    .address(null)
+                    .inCustody(null)
+                    .gender(null)
+                    .asn(null)
+                    .build();
+        }
+        return Party.builder()
+                .partyRole(partyRole)
+                .individualDetails(individualDetails)
+                .offence(null)
+                .organisationDetails(null)
+                .subject(null)
                 .build();
     }
 

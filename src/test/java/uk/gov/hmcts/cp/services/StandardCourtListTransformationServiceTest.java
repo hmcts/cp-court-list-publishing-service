@@ -299,6 +299,46 @@ class StandardCourtListTransformationServiceTest {
         assertThat(caseObj.getReportingRestrictionDetails()).isNull();
     }
 
+    @Test
+    void transform_shouldIncludeApplicationsWhenHearingHasCourtApplication() throws Exception {
+        // Given - hearing with courtApplicationId and courtApplication (applicant + respondents)
+        Hearing hearing = payload.getHearingDates().get(0).getCourtRooms().get(0)
+                .getTimeslots().get(0).getHearings().get(0);
+        hearing.setCourtApplicationId("APP-REF-12345");
+        hearing.setCourtApplication(CourtApplication.builder()
+                .applicant(CourtApplicationParty.builder()
+                        .name("Applicant Name")
+                        .dateOfBirth("1 Jan 1990")
+                        .build())
+                .respondents(List.of(
+                        CourtApplicationParty.builder()
+                                .name("Respondent One")
+                                .dateOfBirth("15 Sept 1985")
+                                .build()
+                ))
+                .build());
+
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then - first hearing has one application
+        List<Application> applications = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
+                .getSession().get(0).getSittings().get(0).getHearing().get(0).getApplication();
+        assertThat(applications).hasSize(1);
+        Application app = applications.get(0);
+        assertThat(app.getApplicationReference()).isEqualTo("APP-REF-12345");
+        assertThat(app.getApplicationType()).isNull();
+        assertThat(app.getApplicationParticulars()).isNull();
+        assertThat(app.getReportingRestriction()).isFalse();
+        assertThat(app.getParty()).hasSize(2); // applicant + one respondent
+        assertThat(app.getParty().get(0).getPartyRole()).isEqualTo("APPLICANT");
+        assertThat(app.getParty().get(0).getIndividualDetails().getIndividualSurname()).isEqualTo("Applicant Name");
+        assertThat(app.getParty().get(0).getIndividualDetails().getDateOfBirth()).isEqualTo("1990-01-01");
+        assertThat(app.getParty().get(1).getPartyRole()).isEqualTo("RESPONDENT");
+        assertThat(app.getParty().get(1).getIndividualDetails().getIndividualSurname()).isEqualTo("Respondent One");
+        assertThat(app.getParty().get(1).getIndividualDetails().getDateOfBirth()).isEqualTo("1985-09-15");
+    }
+
     /**
      * Loads CourtListPayload from a stub data JSON file
      */

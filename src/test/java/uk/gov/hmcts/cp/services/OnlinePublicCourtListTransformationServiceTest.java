@@ -6,6 +6,8 @@ import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
+import uk.gov.hmcts.cp.models.CourtApplication;
+import uk.gov.hmcts.cp.models.CourtApplicationParty;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.models.Defendant;
 import uk.gov.hmcts.cp.models.Hearing;
@@ -319,6 +321,43 @@ class OnlinePublicCourtListTransformationServiceTest {
                 .getSession().get(0).getSittings().get(0).getHearing().get(0).getCaseList().get(0);
         assertThat(caseObj.getReportingRestriction()).isFalse();
         assertThat(caseObj.getReportingRestrictionDetails()).isNull();
+    }
+
+    @Test
+    void transform_shouldIncludeApplicationsWhenHearingHasCourtApplication() throws Exception {
+        // Given - hearing with courtApplicationId and courtApplication (applicant + respondents)
+        Hearing hearing = payload.getHearingDates().get(0).getCourtRooms().get(0)
+                .getTimeslots().get(0).getHearings().get(0);
+        hearing.setCourtApplicationId("PUBLIC-APP-REF-99");
+        hearing.setCourtApplication(CourtApplication.builder()
+                .applicant(CourtApplicationParty.builder()
+                        .name("Applicant Name")
+                        .dateOfBirth("1 Jan 1990")
+                        .build())
+                .respondents(List.of(
+                        CourtApplicationParty.builder()
+                                .name("Respondent One")
+                                .build()
+                ))
+                .build());
+
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then - first hearing has one application; public list uses minimal party details (name only)
+        List<Application> applications = document.getCourtLists().get(0).getCourtHouse().getCourtRoom().get(0)
+                .getSession().get(0).getSittings().get(0).getHearing().get(0).getApplication();
+        assertThat(applications).hasSize(1);
+        Application app = applications.get(0);
+        assertThat(app.getApplicationReference()).isEqualTo("PUBLIC-APP-REF-99");
+        assertThat(app.getApplicationType()).isNull();
+        assertThat(app.getReportingRestriction()).isFalse();
+        assertThat(app.getParty()).hasSize(2); // applicant + one respondent
+        assertThat(app.getParty().get(0).getPartyRole()).isEqualTo("APPLICANT");
+        assertThat(app.getParty().get(0).getIndividualDetails().getIndividualSurname()).isEqualTo("Applicant Name");
+        assertThat(app.getParty().get(0).getIndividualDetails().getDateOfBirth()).isNull(); // public list: no DOB
+        assertThat(app.getParty().get(1).getPartyRole()).isEqualTo("RESPONDENT");
+        assertThat(app.getParty().get(1).getIndividualDetails().getIndividualSurname()).isEqualTo("Respondent One");
     }
 
     private CourtListPayload loadPayloadFromStubData(String resourcePath) throws Exception {
