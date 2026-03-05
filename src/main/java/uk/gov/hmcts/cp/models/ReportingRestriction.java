@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReportingRestriction {
+    @JsonProperty("id")
+    private String id;
+
     @JsonProperty("label")
     private String label;
 }

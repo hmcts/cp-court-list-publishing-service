@@ -13,6 +13,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CourtApplication {
+    @JsonProperty("applicationType")
+    private String applicationType;
+
+    @JsonProperty("applicationParticulars")
+    private String applicationParticulars;
+
     @JsonProperty("applicant")
     private CourtApplicationParty applicant;
 
