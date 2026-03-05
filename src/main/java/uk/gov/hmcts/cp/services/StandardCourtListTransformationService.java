@@ -57,7 +57,8 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
 
     @Override
     protected HearingSchema transformHearing(Hearing hearing) {
-        List<CaseSchema> cases = transformCases(hearing);
+        ApplicationTransformResult appResult = transformApplications(hearing);
+        List<CaseSchema> cases = transformCases(hearing, appResult.subjectPartyId());
 
         if (cases.isEmpty()) {
             return null;
@@ -68,20 +69,66 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                 .caseList(cases)
                 .panel(hearing.getPanel())
                 .channel(Collections.emptyList())
-                .application(Collections.emptyList())
+                .application(appResult.applications())
                 .build();
     }
 
-    private List<CaseSchema> transformCases(Hearing hearing) {
+    /**
+     * Transforms hearing court application data into schema Application list and subject party id.
+     * Subject party id is derived here and used in buildApplicationParty (Party.subject) and in transformCases (defendant Party.subject).
+     */
+    @Override
+    protected Party buildApplicationParty(CourtApplicationParty courtParty, String partyRole, String subjectPartyId) {
+        if (courtParty == null) {
+            return null;
+        }
+        IndividualDetails individualDetails = null;
+        if (isNonBlank(courtParty.getName()) || isNonBlank(courtParty.getDateOfBirth())) {
+            individualDetails = IndividualDetails.builder()
+                    .individualForenames(null)
+                    .individualMiddleName(null)
+                    .individualSurname(courtParty.getName())
+                    .dateOfBirth(convertDateOfBirthToIso(courtParty.getDateOfBirth()))
+                    .age(null)
+                    .address(null)
+                    .inCustody(null)
+                    .gender(null)
+                    .asn(null)
+                    .build();
+        }
+        boolean isSubjectOfApplication = isNonBlank(courtParty.getId())
+                && subjectPartyId != null
+                && subjectPartyId.equals(courtParty.getId().trim());
+        return Party.builder()
+                .partyRole(partyRole)
+                .individualDetails(individualDetails)
+                .offence(null)
+                .organisationDetails(null)
+                .subject(isSubjectOfApplication)
+                .build();
+    }
+
+    @Override
+    protected List<Application> buildApplications(Hearing hearing, CourtApplication courtApplication, List<Party> parties) {
+        Application application = Application.builder()
+                .applicationReference(hearing.getCourtApplicationId().trim())
+                .applicationType(null)
+                .applicationParticulars(null)
+                .reportingRestriction(false)
+                .party(parties.isEmpty() ? null : parties)
+                .build();
+        return Collections.singletonList(application);
+    }
+
+    private List<CaseSchema> transformCases(Hearing hearing, String subjectPartyId) {
         List<CaseSchema> cases = new ArrayList<>();
 
         if (hearing.getDefendants() == null || hearing.getDefendants().isEmpty()) {
             return cases;
         }
 
-        // Create a case for each defendant
         for (Defendant defendant : hearing.getDefendants()) {
-            List<Party> parties = transformParties(defendant, hearing);
+            List<Party> parties = transformParties(defendant, hearing, subjectPartyId);
 
             List<String> reportingRestrictionDetails = getReportingRestrictionDetails(defendant);
             boolean hasReportingRestriction = hasReportingRestriction(defendant);
@@ -122,7 +169,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                 .anyMatch(r -> r.getLabel() != null && !r.getLabel().trim().isEmpty());
     }
 
-    private List<Party> transformParties(Defendant defendant, Hearing hearing) {
+    private List<Party> transformParties(Defendant defendant, Hearing hearing, String subjectPartyId) {
         List<Party> parties = new ArrayList<>();
 
         // Determine party role - default to DEFENDANT if not specified
@@ -156,8 +203,9 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                     .build();
         }
 
-        boolean isSubjectOfApplication = hearing.getCourtApplication() != null
-                && isDefendantSubjectOfApplication(defendant, hearing.getCourtApplication());
+        boolean isSubjectOfApplication = isNonBlank(defendant.getId())
+                && subjectPartyId != null
+                && subjectPartyId.equals(defendant.getId().trim());
 
         parties.add(Party.builder()
                 .partyRole(partyRole)
