@@ -124,6 +124,7 @@ public class CourtListPublishController implements CourtListPublishApi {
         String json = courtListDataService.getCourtListData(listId, courtCentreIdStr, null, startStr, endStr, rest,
                 cjscppuid);
         try {
+            LOG.info("TODO: remove this --- CaTH publish Original Payload from CPP is: {}", json);
             CourtListData data = ObjectMapperConfig.getObjectMapper().readValue(json, CourtListData.class);
             return ResponseEntity.ok(data);
         } catch (Exception e) {
