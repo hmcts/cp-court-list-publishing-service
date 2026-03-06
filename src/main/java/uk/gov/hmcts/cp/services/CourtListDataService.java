@@ -69,6 +69,7 @@ public class CourtListDataService {
         String json = getCourtListData(listId, courtCentreId, null, startDate, endDate, restricted, cjscppuid);
 
         try {
+            LOG.info("TODO: remove this --- CaTH publish Original Payload from CPP is: {}", json);
             return OBJECT_MAPPER.readValue(json, CourtListPayload.class);
         } catch (JsonProcessingException e) {
             log.error("Failed to deserialize court list data to CourtListPayload: {}", e.getMessage(), e);

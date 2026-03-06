@@ -3,15 +3,6 @@ import uk.gov.moj.cpp.authz.drools.Action;
 
 global uk.gov.moj.cpp.authz.http.providers.UserAndGroupProvider userAndGroupProvider;
 
-rule "Allow – files"
-when
-  $o: Outcome()
-  $a: Action(name == "courtlistpublishing-service.files")
-  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, "Legal Advisers","District Judge","System Users"))
-then
-  $o.setSuccess(true);
-end
-
 rule "Allow – court-list-publish and download"
 when
   $o: Outcome()
@@ -19,15 +10,6 @@ when
              name == "courtlistpublishing-service.publish.get" ||
              name == "courtlistpublishing-service.files.download" ||
              name == "courtlistpublishing-service.download.post")
-  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, "Legal Advisers","District Judge","System Users"))
-then
-  $o.setSuccess(true);
-end
-
-rule "Allow – courtlistdata"
-when
-  $o: Outcome()
-  $a: Action(name == "courtlistpublishing-service.publish.courtlistdata")
   eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, "Legal Advisers","District Judge","System Users"))
 then
   $o.setSuccess(true);
