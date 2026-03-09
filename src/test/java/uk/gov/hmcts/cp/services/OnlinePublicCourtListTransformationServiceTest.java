@@ -396,12 +396,14 @@ class OnlinePublicCourtListTransformationServiceTest {
         // When
         CourtListDocument document = transformationService.transform(payload);
 
-        // Then - first hearing has one application; public list uses minimal party details (name only)
-        List<Application> applications = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
-                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst().getApplication();
+        // Then - first hearing has one application and no cases (when application exists, cases are excluded); public list uses minimal party details (name only)
+        HearingSchema hearingSchema = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
+                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst();
+        assertThat(hearingSchema.getCaseList()).isEmpty();
+        List<Application> applications = hearingSchema.getApplication();
         assertThat(applications).hasSize(1);
         Application app = applications.getFirst();
-        assertThat(app.getApplicationReference()).isEqualTo("PUBLIC-APP-REF-99");
+        assertThat(app.getApplicationReference()).isEqualTo(hearing.getCaseNumber());
         assertThat(app.getApplicationType()).isNull();
         assertThat(app.getReportingRestriction()).isFalse();
         assertThat(app.getParty()).hasSize(2); // applicant + one respondent

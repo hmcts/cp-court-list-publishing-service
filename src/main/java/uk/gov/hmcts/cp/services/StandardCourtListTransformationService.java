@@ -58,9 +58,17 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
     @Override
     protected HearingSchema transformHearing(Hearing hearing) {
         ApplicationTransformResult appResult = transformApplications(hearing);
-        List<CaseSchema> cases = transformCases(hearing, appResult.subjectPartyId());
+        List<Application> applications = appResult.applications();
+        boolean hasApplications = applications != null && !applications.isEmpty();
 
-        if (cases.isEmpty()) {
+        List<CaseSchema> cases;
+        if (hasApplications) {
+            cases = Collections.emptyList();
+        } else {
+            cases = transformCases(hearing, appResult.subjectPartyId());
+        }
+
+        if (cases.isEmpty() && !hasApplications) {
             return null;
         }
 
@@ -122,7 +130,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
     protected List<Application> buildApplications(Hearing hearing, CourtApplication courtApplication, List<Party> parties) {
         boolean hasReportingRestriction = hasApplicationPartyReportingRestriction(courtApplication);
         Application application = Application.builder()
-                .applicationReference(hearing.getCourtApplicationId().trim())
+                .applicationReference(hearing.getCaseNumber())
                 .applicationType(courtApplication.getApplicationType())
                 .applicationParticulars(courtApplication.getApplicationParticulars())
                 .reportingRestriction(hasReportingRestriction)
