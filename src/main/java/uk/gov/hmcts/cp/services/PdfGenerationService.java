@@ -29,7 +29,7 @@ public class PdfGenerationService {
 
     private static final Map<CourtListType, TemplateInfo> TEMPLATE_BY_COURT_LIST_TYPE = ImmutableMap.of(
             CourtListType.ONLINE_PUBLIC, new TemplateInfo("ONLINE_PUBLIC", "OnlinePublicCourtList", "OnlinePublicCourtListEnglishWelsh"),
-            CourtListType.STANDARD, new TemplateInfo("STANDARD", "BenchAndStandardCourtList", null)
+            CourtListType.STANDARD, new TemplateInfo("STANDARD", "BenchAndStandardCourtList", "BenchAndStandardCourtList")
     );
 
     private final CourtListPublisherBlobClientService blobClientService;
@@ -42,9 +42,7 @@ public class PdfGenerationService {
     public UUID generateAndUploadPdf(JsonObject payload, UUID courtListId, CourtListType courtListType, boolean isWelsh) throws IOException {
         LOGGER.info("Generating PDF for court list ID: {}", courtListId);
         String templateName = getTemplateName(courtListType, isWelsh);
-        if (templateName == null) {
-            throw new IllegalArgumentException("No template defined for court list type: " + courtListType);
-        }
+
         byte[] pdfBytes;
         try {
             pdfBytes = documentGeneratorClient.generatePdf(payload, templateName);
@@ -83,7 +81,7 @@ public class PdfGenerationService {
     public String getTemplateName(CourtListType courtListType, boolean isWelsh) {
         TemplateInfo templateInfo = TEMPLATE_BY_COURT_LIST_TYPE.get(courtListType);
         if (templateInfo == null) {
-            return null;
+            throw new IllegalArgumentException("No template defined for court list type: " + courtListType);
         }
         if (isWelsh) {
             return templateInfo.welshTemplate();

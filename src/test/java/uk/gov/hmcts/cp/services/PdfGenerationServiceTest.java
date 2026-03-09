@@ -224,22 +224,27 @@ class PdfGenerationServiceTest {
     }
 
     @Test
-    void getTemplateName_shouldReturnNull_whenIsWelshTrueAndStandard() {
-        assertThat(pdfGenerationService.getTemplateName(CourtListType.STANDARD, true)).isNull();
+    void getTemplateName_shouldReturnWelshTemplate_whenIsWelshTrueAndStandard() {
+        assertThat(pdfGenerationService.getTemplateName(CourtListType.STANDARD, true))
+                .isEqualTo("BenchAndStandardCourtList");
     }
 
     @Test
-    void getTemplateName_shouldReturnNull_whenCourtListTypeUnmappedAndIsWelshTrue() {
-        assertThat(pdfGenerationService.getTemplateName(CourtListType.PUBLIC, true)).isNull();
-    }
-
-    @Test
-    void generateAndUploadPdf_shouldThrowIllegalArgumentException_whenStandardAndIsWelshTrue() throws IOException {
-        JsonObject payload = Json.createObjectBuilder().build();
-
-        assertThatThrownBy(() -> pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD, true))
+    void getTemplateName_shouldThrow_whenCourtListTypeUnmappedAndIsWelshTrue() {
+        assertThatThrownBy(() -> pdfGenerationService.getTemplateName(CourtListType.PUBLIC, true))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("No template defined for court list type: STANDARD");
+                .hasMessage("No template defined for court list type: PUBLIC");
+    }
+
+    @Test
+    void generateAndUploadPdf_shouldSucceed_whenStandardAndIsWelshTrue() throws IOException {
+        JsonObject payload = Json.createObjectBuilder().build();
+        when(documentGeneratorClient.generatePdf(eq(payload), eq("BenchAndStandardCourtList"))).thenReturn(mockPdfBytes);
+
+        UUID result = pdfGenerationService.generateAndUploadPdf(payload, courtListId, CourtListType.STANDARD, true);
+
+        assertThat(result).isEqualTo(courtListId);
+        verify(blobClientService).uploadPdf(any(InputStream.class), anyLong(), eq(courtListId));
     }
 
     @Test
@@ -254,13 +259,17 @@ class PdfGenerationServiceTest {
     }
 
     @Test
-    void getTemplateName_shouldReturnNull_whenCourtListTypeIsPublicAndIsWelshFalse() {
-        assertThat(pdfGenerationService.getTemplateName(CourtListType.PUBLIC, false)).isNull();
+    void getTemplateName_shouldThrow_whenCourtListTypeIsPublicAndIsWelshFalse() {
+        assertThatThrownBy(() -> pdfGenerationService.getTemplateName(CourtListType.PUBLIC, false))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No template defined for court list type: PUBLIC");
     }
 
     @Test
-    void getTemplateName_shouldReturnNull_whenCourtListTypeIsNullAndIsWelshFalse() {
-        assertThat(pdfGenerationService.getTemplateName(null, false)).isNull();
+    void getTemplateName_shouldThrow_whenCourtListTypeIsNullAndIsWelshFalse() {
+        assertThatThrownBy(() -> pdfGenerationService.getTemplateName(null, false))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No template defined for court list type: null");
     }
 
     @Test
