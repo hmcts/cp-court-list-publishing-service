@@ -11,6 +11,10 @@ common-platform-query-api:
 azure:
   storage:
     enabled: false
+  # SJP (PubHub) flow: DTS APIM URL for PublishingService.sendData() – point at WireMock in integration
+  local:
+    dts:
+      apimUrl: ${AZURE_LOCAL_DTS_APIM_URL:http://wiremock:8080/courtlistpublisher/publication}
 
 # Disable authz and audit filters in integration tests
 authz:

@@ -28,9 +28,13 @@ public class CaTHService {
     record CathHeaderInfo(String cathCourtListType, String sensitivity){}
 
 
-    private static final Map<CourtListType, CathHeaderInfo> COURT_LIST_MAPPINGS = ImmutableMap.of(
-            CourtListType.ONLINE_PUBLIC, new CathHeaderInfo("MAGISTRATES_PUBLIC_LIST", "PUBLIC"),
-            CourtListType.STANDARD, new CathHeaderInfo("MAGISTRATES_STANDARD_LIST", "CLASSIFIED"));
+    private static final Map<CourtListType, CathHeaderInfo> COURT_LIST_MAPPINGS = ImmutableMap.<CourtListType, CathHeaderInfo>builder()
+            .put(CourtListType.ONLINE_PUBLIC, new CathHeaderInfo("MAGISTRATES_PUBLIC_LIST", "PUBLIC"))
+            .put(CourtListType.STANDARD, new CathHeaderInfo("MAGISTRATES_STANDARD_LIST", "CLASSIFIED"))
+            .build();
+
+    /** SJP (Single Justice Procedure) – supported even when not yet in API enum; use list type name "SJP". */
+    private static final String LIST_TYPE_SJP = "SJP";
 
     @Autowired
     private final CourtListPublisher caTHPublisher;
@@ -49,10 +53,12 @@ public class CaTHService {
                     ? courtIdNumeric
                     : "0";
 
-            final CathHeaderInfo cathListInfo = COURT_LIST_MAPPINGS.get(courtListType);
-
-            if(cathListInfo == null) {
-                throw new IllegalStateException("Unsupported court list type "+courtListType);
+            CathHeaderInfo cathListInfo = COURT_LIST_MAPPINGS.get(courtListType);
+            if (cathListInfo == null && courtListType != null && LIST_TYPE_SJP.equals(courtListType.name())) {
+                cathListInfo = new CathHeaderInfo("MAGISTRATES_SJP_LIST", "PUBLIC");
+            }
+            if (cathListInfo == null) {
+                throw new IllegalStateException("Unsupported court list type " + courtListType);
             }
 
             final Instant now = Instant.now();

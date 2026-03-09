@@ -16,6 +16,7 @@ public class CourtListQueryService {
 
     private static final String STANDARD_COURT_LIST_SCHEMA_JSON = "schema/standard-court-list-schema.json";
     private static final String ONLINE_PUBLIC_COURT_LIST_SCHEMA_JSON = "schema/online-public-court-list-schema.json";
+    private static final String SJP_COURT_LIST_SCHEMA_JSON = "schema/sjp-court-list-schema.json";
 
     private final CourtListDataService courtListDataService;
     private final StandardCourtListTransformationService transformationService;
@@ -31,6 +32,12 @@ public class CourtListQueryService {
             log.info("Using PublicCourtListTransformationService for PUBLIC list type");
             CourtListDocument document = onlinePublicCourtListTransformationService.transform(payload);
             jsonSchemaValidatorService.validate(document, ONLINE_PUBLIC_COURT_LIST_SCHEMA_JSON);
+            return document;
+        }
+        if (listId != null && "SJP".equals(listId.name())) {
+            log.info("Using StandardCourtListTransformationService for SJP list type");
+            CourtListDocument document = transformationService.transform(payload);
+            jsonSchemaValidatorService.validate(document, SJP_COURT_LIST_SCHEMA_JSON);
             return document;
         }
         log.info("Using CourtListTransformationService for list type: {}", listId);

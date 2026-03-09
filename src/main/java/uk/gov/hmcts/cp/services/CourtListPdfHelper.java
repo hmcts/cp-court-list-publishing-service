@@ -29,7 +29,7 @@ public class CourtListPdfHelper {
      *
      * @param payload       the court list payload to generate PDF from
      * @param courtListId   the court list ID (used as file ID and blob name)
-     * @param courtListType the court list type (ONLINE_PUBLIC or STANDARD) to select the template
+     * @param courtListType the court list type (ONLINE_PUBLIC, STANDARD, or SJP) to select the template
      * @return the file ID of the uploaded PDF, or null if payload is null
      * @throws RuntimeException when PDF generation/upload fails so the caller can persist the error
      */

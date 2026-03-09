@@ -74,7 +74,6 @@ public class CourtListPublishController implements CourtListPublishApi {
 
         LOG.atInfo().log("Creating or updating court list publish status for court centre ID: {}, type: {}, startDate: {}, endDate: {}",
                 request.getCourtCentreId(), request.getCourtListType(), request.getStartDate(), request.getEndDate());
-
         final CourtListPublishResponse response = service.createOrUpdate(
                 request.getCourtCentreId(),
                 request.getCourtListType(),

@@ -27,10 +27,14 @@ public class PdfGenerationService {
 
     private record TemplateInfo(String code, String englishTemplate, String welshTemplate) {}
 
-    private static final Map<CourtListType, TemplateInfo> TEMPLATE_BY_COURT_LIST_TYPE = ImmutableMap.of(
-            CourtListType.ONLINE_PUBLIC, new TemplateInfo("ONLINE_PUBLIC", "OnlinePublicCourtList", "OnlinePublicCourtListEnglishWelsh"),
-            CourtListType.STANDARD, new TemplateInfo("STANDARD", "BenchAndStandardCourtList", null)
-    );
+    private static final Map<CourtListType, TemplateInfo> TEMPLATE_BY_COURT_LIST_TYPE = ImmutableMap.<CourtListType, TemplateInfo>builder()
+            .put(CourtListType.ONLINE_PUBLIC, new TemplateInfo("ONLINE_PUBLIC", "OnlinePublicCourtList", "OnlinePublicCourtListEnglishWelsh"))
+            .put(CourtListType.STANDARD, new TemplateInfo("STANDARD", "BenchAndStandardCourtList", null))
+            .build();
+
+    /** SJP (Single Justice Procedure) – template name when list type is SJP (by name, for API compatibility). */
+    private static final String LIST_TYPE_SJP = "SJP";
+    private static final String SJP_TEMPLATE_NAME = "SjpCourtList";
 
     private final CourtListPublisherBlobClientService blobClientService;
     private final DocumentGeneratorClient documentGeneratorClient;
@@ -81,6 +85,9 @@ public class PdfGenerationService {
      * When the boolean (e.g. isWelsh) is true, returns the English/Welsh template; otherwise the default template. Returns null if not mapped.
      */
     public String getTemplateName(CourtListType courtListType, boolean isWelsh) {
+        if (courtListType != null && LIST_TYPE_SJP.equals(courtListType.name())) {
+            return isWelsh ? null : SJP_TEMPLATE_NAME;
+        }
         TemplateInfo templateInfo = TEMPLATE_BY_COURT_LIST_TYPE.get(courtListType);
         if (templateInfo == null) {
             return null;

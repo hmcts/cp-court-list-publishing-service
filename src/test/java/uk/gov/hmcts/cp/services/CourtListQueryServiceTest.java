@@ -82,6 +82,20 @@ class CourtListQueryServiceTest {
     }
 
     @Test
+    void buildCourtListDocumentFromPayload_shouldUseStandardTransformationAndSjpSchema_whenListIdIsSjp() {
+        when(transformationService.transform(payload)).thenReturn(standardDocument);
+        doNothing().when(jsonSchemaValidatorService).validate(standardDocument, "schema/sjp-court-list-schema.json");
+        CourtListType sjpType = CourtListType.fromValue("SJP");
+
+        CourtListDocument result = courtListQueryService.buildCourtListDocumentFromPayload(payload, sjpType);
+
+        assertThat(result).isEqualTo(standardDocument);
+        verify(transformationService).transform(payload);
+        verify(onlinePublicCourtListTransformationService, never()).transform(any());
+        verify(jsonSchemaValidatorService).validate(standardDocument, "schema/sjp-court-list-schema.json");
+    }
+
+    @Test
     void getCourtListPayload_shouldReturnPayloadFromCourtListDataService() {
         // Given - CourtListDataService returns payload (already enriched with reference data)
         when(courtListDataService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
