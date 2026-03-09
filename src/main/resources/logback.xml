@@ -1,7 +1,4 @@
 <configuration>
-    <property name="LOG_PATH" value="${LOG_PATH:-./logs}"/>
-    <property name="LOG_FILE" value="${LOG_FILE:-court-list-publishing-service}"/>
-
     <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
@@ -18,21 +15,5 @@
             </providers>
         </encoder>
     </appender>
-
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/${LOG_FILE}.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/${LOG_FILE}.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n%ex</pattern>
-            <charset>UTF-8</charset>
-        </encoder>
-    </appender>
-
-    <root level="DEBUG">
-        <appender-ref ref="JSON"/>
-        <appender-ref ref="FILE"/>
-    </root>
+    <root level="DEBUG"><appender-ref ref="JSON"/></root>
 </configuration>
