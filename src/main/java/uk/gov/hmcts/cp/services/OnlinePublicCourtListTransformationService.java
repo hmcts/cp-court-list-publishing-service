@@ -78,12 +78,12 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
                     .individualForenames(courtParty.getFirstName())
                     .individualMiddleName(null)
                     .individualSurname(surname)
-                    .dateOfBirth(convertDateOfBirthToIso(courtParty.getDateOfBirth()))
-                    .age(convertAge(courtParty.getAge()))
-                    .address(transformAddressSchemaFromDefendant(courtParty.getAddress()))
+                    .dateOfBirth(null)
+                    .age(null)
+                    .address(null)
                     .inCustody(null)
-                    .gender(courtParty.getGender())
-                    .asn(courtParty.getAsn())
+                    .gender(null)
+                    .asn(null)
                     .build();
         }
         OrganisationDetails organisationDetails = null;

@@ -9,7 +9,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import uk.gov.hmcts.cp.api.sjp.PublishSjpCourtListRequest;
 import uk.gov.hmcts.cp.api.sjp.PublishSjpCourtListResponse;
 import uk.gov.hmcts.cp.api.sjp.SjpListPayload;
-import uk.gov.hmcts.cp.services.PublishingService;
+import uk.gov.hmcts.cp.services.CourtListPublisher;
 
 import java.util.List;
 import java.util.Map;
@@ -27,15 +27,14 @@ class SjpCourtListPublishServiceTest {
     private SjpToCathPayloadTransformer transformer;
 
     @Mock
-    private PublishingService publishingService;
+    private CourtListPublisher courtListPublisher;
 
     private SjpCourtListPublishService service;
 
     @BeforeEach
     void setUp() {
-        service = new SjpCourtListPublishService(transformer, publishingService);
+        service = new SjpCourtListPublishService(transformer, courtListPublisher);
         ReflectionTestUtils.setField(service, "cathPublishingEnabled", true);
-        ReflectionTestUtils.setField(service, "azureLocalDtsApimUrl", "https://apim.example.com/publish");
     }
 
     @Test
@@ -71,14 +70,14 @@ class SjpCourtListPublishServiceTest {
                 PublishSjpCourtListRequest.SJP_PUBLISH_LIST, "ENGLISH", "FULL", listPayload);
 
         when(transformer.transform(any(), eq("SJP Public list"), eq(false))).thenReturn("{\"document\":{},\"courtLists\":[]}");
-        when(publishingService.sendData(any(), any())).thenReturn(200);
+        when(courtListPublisher.publish(any(), any())).thenReturn(200);
 
         PublishSjpCourtListResponse response = service.publishSjpCourtList(request);
 
         assertThat(response.getStatus()).isEqualTo("ACCEPTED");
         assertThat(response.getMessage()).contains("published to CaTH");
         verify(transformer).transform(listPayload, "SJP Public list", false);
-        verify(publishingService).sendData(eq("{\"document\":{},\"courtLists\":[]}"), any());
+        verify(courtListPublisher).publish(eq("{\"document\":{},\"courtLists\":[]}"), any());
     }
 
     @Test
@@ -91,7 +90,7 @@ class SjpCourtListPublishServiceTest {
                 PublishSjpCourtListRequest.SJP_PRESS_LIST, "ENGLISH", "FULL", listPayload);
 
         when(transformer.transform(any(), eq("SJP Press list"), eq(true))).thenReturn("{}");
-        when(publishingService.sendData(any(), any())).thenReturn(200);
+        when(courtListPublisher.publish(any(), any())).thenReturn(200);
 
         service.publishSjpCourtList(request);
 

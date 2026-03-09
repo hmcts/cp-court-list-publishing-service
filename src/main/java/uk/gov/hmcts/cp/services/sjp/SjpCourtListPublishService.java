@@ -8,14 +8,14 @@ import uk.gov.hmcts.cp.api.sjp.PublishSjpCourtListRequest;
 import uk.gov.hmcts.cp.api.sjp.PublishSjpCourtListResponse;
 import uk.gov.hmcts.cp.api.sjp.SjpListPayload;
 import uk.gov.hmcts.cp.domain.DtsMeta;
-import uk.gov.hmcts.cp.services.PublishingService;
+import uk.gov.hmcts.cp.services.CourtListPublisher;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 /**
  * Handles publishing of SJP (Single Justice Procedure) court lists to CaTH.
- * Replicates PubHub flow: transform listPayload to CaTH payload, build metadata, POST to Azure APIM.
+ * Replicates PubHub flow: transform listPayload to CaTH payload, build metadata, POST to CaTH (APIM or stub in integration).
  */
 @Service
 public class SjpCourtListPublishService {
@@ -33,19 +33,16 @@ public class SjpCourtListPublishService {
     private static final String DOCUMENT_NAME_PRESS = "SJP Press list";
 
     private final SjpToCathPayloadTransformer transformer;
-    private final PublishingService publishingService;
+    private final CourtListPublisher courtListPublisher;
 
     @Value("${cath.publishing-enabled:false}")
     private boolean cathPublishingEnabled;
 
-    @Value("${azure.local.dts.apimUrl:}")
-    private String azureLocalDtsApimUrl;
-
     public SjpCourtListPublishService(
             SjpToCathPayloadTransformer transformer,
-            PublishingService publishingService) {
+            CourtListPublisher courtListPublisher) {
         this.transformer = transformer;
-        this.publishingService = publishingService;
+        this.courtListPublisher = courtListPublisher;
     }
 
     /**
@@ -73,8 +70,8 @@ public class SjpCourtListPublishService {
                     .build();
         }
 
-        if (!cathPublishingEnabled || azureLocalDtsApimUrl == null || azureLocalDtsApimUrl.isBlank()) {
-            LOG.warn("CaTH publishing is disabled or Azure DTS APIM URL not configured; SJP list not sent to CaTH");
+        if (!cathPublishingEnabled) {
+            LOG.warn("CaTH publishing is disabled; SJP list not sent to CaTH");
             return PublishSjpCourtListResponse.builder()
                     .status(STATUS_ACCEPTED)
                     .listType(listType)
@@ -94,7 +91,7 @@ public class SjpCourtListPublishService {
             String payload = transformer.transform(listPayload, documentName, isPressList);
             DtsMeta meta = buildSjpMeta(cathListType, sensitivity, language);
 
-            Integer status = publishingService.sendData(payload, meta);
+            int status = courtListPublisher.publish(payload, meta);
             LOG.info("SJP court list published to CaTH, listType={}, status={}", listType, status);
 
             return PublishSjpCourtListResponse.builder()
