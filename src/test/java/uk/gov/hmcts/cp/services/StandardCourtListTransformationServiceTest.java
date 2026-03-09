@@ -363,12 +363,14 @@ class StandardCourtListTransformationServiceTest {
         // When
         CourtListDocument document = transformationService.transform(payload);
 
-        // Then - first hearing has one application
-        List<Application> applications = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
-                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst().getApplication();
+        // Then - first hearing has one application and no cases (when application exists, cases are excluded)
+        HearingSchema hearingSchema = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
+                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst();
+        assertThat(hearingSchema.getCaseList()).isEmpty();
+        List<Application> applications = hearingSchema.getApplication();
         assertThat(applications).hasSize(1);
         Application app = applications.getFirst();
-        assertThat(app.getApplicationReference()).isEqualTo("APP-REF-12345");
+        assertThat(app.getApplicationReference()).isEqualTo(hearing.getCaseNumber());
         assertThat(app.getApplicationType()).isNull();
         assertThat(app.getApplicationParticulars()).isNull();
         assertThat(app.getReportingRestriction()).isFalse();
@@ -379,6 +381,74 @@ class StandardCourtListTransformationServiceTest {
         assertThat(app.getParty().get(1).getPartyRole()).isEqualTo("RESPONDENT");
         assertThat(app.getParty().get(1).getIndividualDetails().getIndividualSurname()).isEqualTo("Respondent One");
         assertThat(app.getParty().get(1).getIndividualDetails().getDateOfBirth()).isEqualTo("1985-09-15");
+    }
+
+    @Test
+    void transform_shouldHandleBirminghamPayloadWithCaseOnlyAndApplicationOnlyHearings() throws Exception {
+        // Given - Birmingham payload: first hearing has defendants (case only), second has court application (application only)
+        payload = loadPayloadFromStubData("stubdata/court-list-payload-birmingham-standard.json");
+
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then - document structure
+        assertThat(document).isNotNull();
+        assertThat(document.getDocument()).isNotNull();
+        assertThat(document.getVenue()).isNotNull();
+        assertThat(document.getVenue().getVenueAddress()).isNotNull();
+        assertThat(document.getVenue().getVenueAddress().getLine()).containsExactly(
+                "Victoria Law Courts Corporation Street",
+                "Birmingham   B4 6QA"
+        );
+
+        List<CourtList> courtLists = document.getCourtLists();
+        assertThat(courtLists).hasSize(1);
+        CourtHouse courtHouse = courtLists.getFirst().getCourtHouse();
+        assertThat(courtHouse.getCourtHouseName()).isEqualTo("Birmingham Magistrates' Court");
+        assertThat(courtHouse.getLja()).isEqualTo("Birmingham and Solihull Magistrates' Court");
+        assertThat(courtHouse.getCourtRoom()).hasSize(1);
+        assertThat(courtHouse.getCourtRoom().getFirst().getCourtRoomName()).isEqualTo("Courtroom 01");
+
+        List<HearingSchema> hearings = courtHouse.getCourtRoom().getFirst()
+                .getSession().getFirst().getSittings().getFirst().getHearing();
+        assertThat(hearings).hasSize(2);
+
+        // First hearing: case only (no court application) - caseList populated, application empty
+        HearingSchema firstHearing = hearings.getFirst();
+        assertThat(firstHearing.getHearingType()).isEqualTo("Sentence");
+        assertThat(firstHearing.getPanel()).isEqualTo("ADULT");
+        assertThat(firstHearing.getCaseList()).hasSize(1);
+        assertThat(firstHearing.getApplication()).isEmpty();
+
+        CaseSchema firstCase = firstHearing.getCaseList().getFirst();
+        assertThat(firstCase.getCaseUrn()).isEqualTo("59GD5191026");
+        assertThat(firstCase.getParty()).isNotEmpty();
+        Party defendant = firstCase.getParty().getFirst();
+        assertThat(defendant.getPartyRole()).isEqualTo("DEFENDANT");
+        assertThat(defendant.getIndividualDetails().getIndividualForenames()).isEqualTo("Sebastian");
+        assertThat(defendant.getIndividualDetails().getIndividualSurname()).isEqualTo("Crona");
+        assertThat(defendant.getIndividualDetails().getDateOfBirth()).isEqualTo("1974-08-21");
+        assertThat(defendant.getOffence()).hasSize(1);
+        assertThat(defendant.getOffence().getFirst().getOffenceCode()).isEqualTo("CA03014");
+        assertThat(defendant.getOffence().getFirst().getOffenceTitle())
+                .isEqualTo("Fail / refuse give assistance to person executing Communications Act search warrant");
+        assertThat(firstCase.getParty()).hasSize(2);
+        assertThat(firstCase.getParty().get(1).getPartyRole()).isEqualTo("PROSECUTING_AUTHORITY");
+        assertThat(firstCase.getParty().get(1).getOrganisationDetails().getOrganisationName()).isEqualTo("TVL");
+
+        // Second hearing: application only (has court application) - caseList empty, application populated with caseNumber as applicationReference
+        HearingSchema secondHearing = hearings.get(1);
+        assertThat(secondHearing.getHearingType()).isEqualTo("Sentence");
+        assertThat(secondHearing.getPanel()).isEqualTo("ADULT");
+        assertThat(secondHearing.getCaseList()).isEmpty();
+        assertThat(secondHearing.getApplication()).hasSize(1);
+
+        Application app = secondHearing.getApplication().getFirst();
+        assertThat(app.getApplicationReference()).isEqualTo("59GD5191026");
+        assertThat(app.getApplicationType()).isEqualTo("Application within civil proceedings");
+        assertThat(app.getParty()).hasSize(1);
+        assertThat(app.getParty().getFirst().getPartyRole()).isEqualTo("APPLICANT");
+        assertThat(app.getParty().getFirst().getIndividualDetails().getIndividualSurname()).isEqualTo("TV Licensing");
     }
 
     /**

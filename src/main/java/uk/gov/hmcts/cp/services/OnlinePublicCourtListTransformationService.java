@@ -47,9 +47,17 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
     @Override
     protected HearingSchema transformHearing(Hearing hearing) {
         ApplicationTransformResult applicationTransformResult = transformApplications(hearing);
-        List<CaseSchema> cases = transformCases(hearing, applicationTransformResult.subjectPartyId());
+        List<Application> applications = applicationTransformResult.applications();
+        boolean hasApplications = applications != null && !applications.isEmpty();
 
-        if (cases.isEmpty()) {
+        List<CaseSchema> cases;
+        if (hasApplications) {
+            cases = Collections.emptyList();
+        } else {
+            cases = transformCases(hearing, applicationTransformResult.subjectPartyId());
+        }
+
+        if (cases.isEmpty() && !hasApplications) {
             return null;
         }
 
@@ -188,7 +196,7 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
     protected List<Application> buildApplications(Hearing hearing, CourtApplication courtApplication, List<Party> parties) {
         boolean hasReportingRestriction = hasApplicationPartyReportingRestriction(courtApplication);
         Application application = Application.builder()
-                .applicationReference(hearing.getCourtApplicationId().trim())
+                .applicationReference(hearing.getCaseNumber())
                 .applicationType(courtApplication.getApplicationType())
                 .applicationParticulars(courtApplication.getApplicationParticulars())
                 .reportingRestriction(hasReportingRestriction)

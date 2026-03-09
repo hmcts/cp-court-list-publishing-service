@@ -46,9 +46,7 @@ public class PdfGenerationService {
     public UUID generateAndUploadPdf(JsonObject payload, UUID courtListId, CourtListType courtListType, boolean isWelsh) throws IOException {
         LOGGER.info("Generating PDF for court list ID: {}", courtListId);
         String templateName = getTemplateName(courtListType, isWelsh);
-        if (templateName == null) {
-            throw new IllegalArgumentException("No template defined for court list type: " + courtListType);
-        }
+
         byte[] pdfBytes;
         try {
             pdfBytes = documentGeneratorClient.generatePdf(payload, templateName);
@@ -90,7 +88,7 @@ public class PdfGenerationService {
         }
         TemplateInfo templateInfo = TEMPLATE_BY_COURT_LIST_TYPE.get(courtListType);
         if (templateInfo == null) {
-            return null;
+            throw new IllegalArgumentException("No template defined for court list type: " + courtListType);
         }
         if (isWelsh) {
             return templateInfo.welshTemplate();
