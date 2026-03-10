@@ -272,15 +272,49 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     @Test
-    void postDownloadCourtListReturnsPdfWhenPublicCourtListEnabledAndStubbed() throws Exception {
+    void postDownloadCourtListReturnsPdfWhenPublicAndStubbed() throws Exception {
+        postDownloadCourtListReturnsPdfForType(CourtListType.PUBLIC);
+    }
+
+    @Test
+    void postDownloadCourtListReturnsPdfWhenBenchAndStubbed() throws Exception {
+        postDownloadCourtListReturnsPdfForType(CourtListType.BENCH);
+    }
+
+    @Test
+    void postDownloadCourtListReturnsPdfWhenAlphabeticalAndStubbed() throws Exception {
+        postDownloadCourtListReturnsPdfForType(CourtListType.ALPHABETICAL);
+    }
+
+    @Test
+    void postDownloadCourtListReturnsPdfWhenUshersCrownAndStubbed() throws Exception {
+        postDownloadCourtListReturnsPdfForType(CourtListType.USHERS_CROWN);
+    }
+
+    @Test
+    void postDownloadCourtListReturnsPdfWhenUshersMagistrateAndStubbed() throws Exception {
+        postDownloadCourtListReturnsPdfForType(CourtListType.USHERS_MAGISTRATE);
+    }
+
+    @Test
+    void postDownloadCourtListReturnsBadRequestWhenCourtListTypeIsStandard() {
+        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.STANDARD);
+    }
+
+    @Test
+    void postDownloadCourtListReturnsBadRequestWhenCourtListTypeIsJudge() {
+        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.JUDGE);
+    }
+
+    private void postDownloadCourtListReturnsPdfForType(CourtListType courtListType) throws Exception {
         String requestJson = """
             {
                 "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",
                 "startDate": "2026-02-27",
                 "endDate": "2026-02-27",
-                "courtListType": "PUBLIC"
+                "courtListType": "%s"
             }
-            """;
+            """.formatted(courtListType.name());
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(DOWNLOAD_CONTENT_TYPE));
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
@@ -298,16 +332,6 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 .contains("attachment", "CourtList.pdf");
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().length).isGreaterThan(0);
-    }
-
-    @Test
-    void postDownloadCourtListReturnsBadRequestWhenCourtListTypeIsAlphabetical() {
-        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.ALPHABETICAL);
-    }
-
-    @Test
-    void postDownloadCourtListReturnsBadRequestWhenCourtListTypeIsUshersCrown() {
-        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.USHERS_CROWN);
     }
 
     private void assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType courtListType) {
@@ -331,7 +355,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 entity,
                 byte[].class))
                 .isInstanceOf(HttpClientErrorException.BadRequest.class)
-                .hasMessageContaining("Only PUBLIC court list type is supported for download");
+                .hasMessageContaining("Download supported for PUBLIC, BENCH, ALPHABETICAL, USHERS_CROWN, USHERS_MAGISTRATE only");
     }
 }
 

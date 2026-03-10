@@ -15,6 +15,7 @@ import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
 import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
 
 import java.time.LocalDate;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -66,7 +67,8 @@ class CourtListDownloadControllerTest {
 
     @Test
     void downloadCourtListReturnsPdfWhenValidRequestBody() throws Exception {
-        when(courtListDownloadService.generatePublicCourtListPdf(
+        when(courtListDownloadService.generateCourtListPdf(
+                eq(CourtListType.PUBLIC),
                 eq(COURT_CENTRE_ID),
                 any(LocalDate.class),
                 any(LocalDate.class)))
@@ -80,7 +82,8 @@ class CourtListDownloadControllerTest {
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"CourtList.pdf\""))
                 .andExpect(content().bytes(PDF_BYTES));
 
-        verify(courtListDownloadService).generatePublicCourtListPdf(eq(COURT_CENTRE_ID), any(LocalDate.class), any(LocalDate.class));
+        verify(courtListDownloadService).generateCourtListPdf(
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), any(LocalDate.class), any(LocalDate.class));
     }
 
     @Test
@@ -143,7 +146,7 @@ class CourtListDownloadControllerTest {
 
     @Test
     void downloadCourtListReturns502WhenServiceThrows() throws Exception {
-        when(courtListDownloadService.generatePublicCourtListPdf(any(), any(LocalDate.class), any(LocalDate.class)))
+        when(courtListDownloadService.generateCourtListPdf(any(CourtListType.class), any(), any(LocalDate.class), any(LocalDate.class)))
                 .thenThrow(new CourtListDownloadException("Failed to fetch court list"));
 
         mockMvc.perform(post(DOWNLOAD_URL)
