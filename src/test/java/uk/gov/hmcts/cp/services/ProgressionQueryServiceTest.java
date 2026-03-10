@@ -50,7 +50,8 @@ class ProgressionQueryServiceTest {
                 "2024-01-15",
                 "2024-01-15",
                 false,
-                "test-cjscppuid");
+                "test-cjscppuid",
+                false);
 
         assertThat(result).isEqualTo(expectedJson);
         verify(restTemplate).exchange(any(URI.class), eq(HttpMethod.GET), any(), eq(String.class));
@@ -69,7 +70,8 @@ class ProgressionQueryServiceTest {
                 "2024-01-15",
                 "2024-01-15",
                 false,
-                null))
+                null,
+                false))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("base-url is not configured");
     }

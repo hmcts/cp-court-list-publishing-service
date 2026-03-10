@@ -39,8 +39,8 @@ public class CourtListQueryService {
         return document;
     }
 
-    public @NotNull CourtListPayload getCourtListPayload(final CourtListType listId, final String courtCentreId, final String startDate, final String endDate, final String cjscppuid) {
-        return courtListDataService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid);
+    public @NotNull CourtListPayload getCourtListPayload(final CourtListType listId, final String courtCentreId, final String startDate, final String endDate, final String cjscppuid, final boolean includeApplications) {
+        return courtListDataService.getCourtListPayload(listId, courtCentreId, startDate, endDate, cjscppuid, includeApplications);
     }
 }
 
