@@ -27,6 +27,9 @@ import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -105,15 +108,17 @@ public class CourtListPublishController implements CourtListPublishApi {
         if (request.getCourtListType() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "courtListType is required");
         }
-        if (!CourtListType.PUBLIC.equals(request.getCourtListType())) {
+        if (!isSupportedCourtListTypeForDownload(request.getCourtListType())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Only PUBLIC court list type is supported for download. Got: " + request.getCourtListType());
+                "Download supported for PUBLIC, BENCH, ALPHABETICAL, USHERS_CROWN, USHERS_MAGISTRATE only. Got: "
+                    + request.getCourtListType());
         }
         if (request.getEndDate().isBefore(request.getStartDate())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endDate must be on or after startDate");
         }
         try {
-            byte[] pdf = courtListDownloadService.generatePublicCourtListPdf(
+            byte[] pdf = courtListDownloadService.generateCourtListPdf(
+                request.getCourtListType(),
                 request.getCourtCentreId().toString(),
                 request.getStartDate(),
                 request.getEndDate());
@@ -140,6 +145,17 @@ public class CourtListPublishController implements CourtListPublishApi {
         return ResponseEntity.ok()
                 .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
                 .body(responses);
+    }
+
+    private static final Set<CourtListType> SUPPORTED_DOWNLOAD_COURT_LIST_TYPES = EnumSet.of(
+            CourtListType.PUBLIC,
+            CourtListType.BENCH,
+            CourtListType.ALPHABETICAL,
+            CourtListType.USHERS_CROWN,
+            CourtListType.USHERS_MAGISTRATE);
+
+    private static boolean isSupportedCourtListTypeForDownload(CourtListType courtListType) {
+        return courtListType != null && SUPPORTED_DOWNLOAD_COURT_LIST_TYPES.contains(courtListType);
     }
 
     private static String getCjscppuidFromRequest() {
