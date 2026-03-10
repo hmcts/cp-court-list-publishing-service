@@ -50,7 +50,8 @@ public class ProgressionQueryService {
             String startDate,
             String endDate,
             boolean restricted,
-            String cjscppuid) {
+            String cjscppuid,
+            boolean includeApplications) {
         if (baseUrl == null || baseUrl.isBlank()) {
             throw new IllegalStateException("common-platform-query-api.base-url is not configured");
         }
@@ -66,7 +67,8 @@ public class ProgressionQueryService {
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate)
                 .queryParam("endDate", endDate)
-                .queryParam("restricted", restricted);
+                .queryParam("restricted", restricted)
+                .queryParam("includeApplications", includeApplications);
         if (PRISON.equals(listId.name())) {
             // Prison list: no listId query param, use prison Accept
         } else {

@@ -53,9 +53,10 @@ public class CourtListDataService {
             String startDate,
             String endDate,
             boolean restricted,
-            String currentUserId) {
+            String currentUserId,
+            boolean includeApplications) {
         String json = progressionQueryService.getCourtListPayload(
-                listId, courtCentreId, courtRoomId, startDate, endDate, restricted, currentUserId);
+                listId, courtCentreId, courtRoomId, startDate, endDate, restricted, currentUserId, includeApplications);
         return json != null ? json : "{}";
     }
 
@@ -64,9 +65,10 @@ public class CourtListDataService {
             String courtCentreId,
             String startDate,
             String endDate,
-            String cjscppuid) {
+            String cjscppuid,
+            boolean includeApplications) {
         boolean restricted = cjscppuid != null && !cjscppuid.trim().isEmpty();
-        String json = getCourtListData(listId, courtCentreId, null, startDate, endDate, restricted, cjscppuid);
+        String json = getCourtListData(listId, courtCentreId, null, startDate, endDate, restricted, cjscppuid, includeApplications);
 
         try {
             log.info("TODO: remove this --- CaTH publish Original Payload from CPP is: {}", json);

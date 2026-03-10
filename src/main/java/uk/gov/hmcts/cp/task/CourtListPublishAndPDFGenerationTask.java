@@ -61,16 +61,18 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         UUID courtListId = jobData != null ? extractCourtListId(jobData) : null;
         String userId = extractUserId(jobData);
 
-        // Fetch court list payload once for both CaTH and PDF processing (userId from CJSCPPUID header)
         CourtListPayload payload = null;
+        CourtListType listId = null;
+        String courtCentreId = null;
+        LocalDate publishDate = null;
         if (jobData != null) {
-            CourtListType listId = extractCourtListType(jobData);
-            String courtCentreId = extractCourtCentreId(jobData);
-            LocalDate publishDate = extractPublishDate(jobData);
+            listId = extractCourtListType(jobData);
+            courtCentreId = extractCourtCentreId(jobData);
+            publishDate = extractPublishDate(jobData);
             if (listId != null && courtCentreId != null && publishDate != null) {
                 try {
                     payload = courtListQueryService.getCourtListPayload(
-                            listId, courtCentreId, publishDate.toString(), publishDate.toString(), userId);
+                            listId, courtCentreId, publishDate.toString(), publishDate.toString(), userId, false);
                 } catch (Exception e) {
                     logger.error("Error fetching court list payload", e);
                 }
@@ -87,8 +89,18 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             logger.error("Error updating court list publish status to PUBLISH_SUCCESSFUL", e);
         }
 
+        CourtListPayload pdfPayload = null;
+        if (listId != null && courtCentreId != null && publishDate != null) {
+            try {
+                pdfPayload = courtListQueryService.getCourtListPayload(
+                        listId, courtCentreId, publishDate.toString(), publishDate.toString(), userId, false);
+            } catch (Exception e) {
+                logger.error("Error fetching court list payload for PDF generation", e);
+            }
+        }
+
         try {
-            UUID fileId = generateAndUploadPdf(executionInfo, payload);
+            UUID fileId = generateAndUploadPdf(executionInfo, pdfPayload);
             if (fileId != null && courtListId != null) {
                 updateFileIdAndLastUpdated(courtListId, fileId);
             }
