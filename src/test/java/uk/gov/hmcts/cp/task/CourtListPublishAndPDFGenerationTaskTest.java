@@ -301,10 +301,10 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // When
         ExecutionInfo result = task.execute(executionInfo);
 
-        // Then
+        // Then - getCourtListPayload is called twice: once for CaTH, once for PDF generation
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService).getCourtListPayload(
+        verify(courtListQueryService, times(2)).getCourtListPayload(
                 CourtListType.ONLINE_PUBLIC,
                 courtCentreId.toString(),
                 publishDateStr,
@@ -410,10 +410,10 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // When
         ExecutionInfo result = task.execute(executionInfo);
 
-        // Then
+        // Then - getCourtListPayload called twice (CaTH and PDF paths), both throw
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean());
+        verify(courtListQueryService, times(2)).getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean());
         verify(cathService, never()).sendCourtListToCaTH(any(), any(), any(LocalDate.class), any(), any());
         verify(repository).getByCourtListId(courtListId);
     }
@@ -441,7 +441,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then - task completes; publish error saved to publish_error_message, publish status FAILED; updateStatusToPublishSuccessful not called
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean());
+        verify(courtListQueryService, times(2)).getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean());
         verify(courtListQueryService).buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC);
         verify(cathService).sendCourtListToCaTH(eq(courtListDocument), eq(CourtListType.ONLINE_PUBLIC), eq(publishDate), any(), any());
         assertThat(entity.getPublishErrorMessage()).contains("CaTH service error", "RuntimeException");
@@ -525,8 +525,8 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // When
         task.execute(executionInfo);
 
-        // Then - getCourtListPayload called once with publishDate from jobData
-        verify(courtListQueryService).getCourtListPayload(
+        // Then - getCourtListPayload called twice with publishDate from jobData (CaTH and PDF)
+        verify(courtListQueryService, times(2)).getCourtListPayload(
                 CourtListType.ONLINE_PUBLIC,
                 courtCentreId.toString(),
                 expectedDate,
@@ -560,10 +560,10 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // When
         ExecutionInfo result = task.execute(executionInfo);
 
-        // Then - getCourtListPayload called once; same payload used for PDF
+        // Then - getCourtListPayload called twice: once for CaTH, once for PDF
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService).getCourtListPayload(
+        verify(courtListQueryService, times(2)).getCourtListPayload(
                 CourtListType.ONLINE_PUBLIC,
                 courtCentreId.toString(),
                 publishDate,
@@ -588,10 +588,10 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // When
         ExecutionInfo result = task.execute(executionInfo);
 
-        // Then - getCourtListPayload called once; PDF not generated
+        // Then - getCourtListPayload called twice (CaTH and PDF paths); PDF not generated because payload is null
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean());
+        verify(courtListQueryService, times(2)).getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean());
         verify(pdfHelper, never()).generateAndUploadPdf(any(), any(), any());
     }
 
@@ -615,7 +615,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then - task completes even if PDF generation fails
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService).getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean());
+        verify(courtListQueryService, times(2)).getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean());
         verify(pdfHelper).generateAndUploadPdf(payload, courtListId, CourtListType.ONLINE_PUBLIC);
         // Verify error message is saved to fileErrorMessage and file status is FAILED
         assertThat(entity.getFileErrorMessage()).contains("PDF generation error");
