@@ -127,9 +127,15 @@ dependencies {
 
     implementation 'com.google.guava:guava:33.3.1-jre'
 
-    // Azure Blob Storage
-    implementation 'com.azure:azure-storage-blob:12.25.1'
-    implementation 'com.azure:azure-identity:1.14.0'
+    // Azure Blob Storage – exclude Netty HTTP client (conflicts with Spring Boot 4's Netty 4.2.x)
+    // and use the JDK HttpClient backend instead (JDK 21)
+    implementation('com.azure:azure-storage-blob:12.33.2') {
+        exclude group: 'com.azure', module: 'azure-core-http-netty'
+    }
+    implementation('com.azure:azure-identity:1.18.2') {
+        exclude group: 'com.azure', module: 'azure-core-http-netty'
+    }
+    implementation 'com.azure:azure-core-http-jdk-httpclient:1.0.4'
     // Keep only if you actually use JWT primitives yourself (not via Spring Security)
     implementation 'io.jsonwebtoken:jjwt:0.13.0'
 
