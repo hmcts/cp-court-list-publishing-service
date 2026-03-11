@@ -1,8 +1,8 @@
 services:
   azurite:
-    image: mcr.microsoft.com/azure-storage/azurite:3.33.0
+    image: mcr.microsoft.com/azure-storage/azurite:3.34.0
     container_name: CP_CLP_azurite
-    command: azurite-blob --blobHost 0.0.0.0
+    command: azurite-blob --blobHost 0.0.0.0 --skipApiVersionCheck
     ports:
       - "10000:10000"
 
