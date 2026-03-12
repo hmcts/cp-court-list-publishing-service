@@ -16,9 +16,9 @@
   "response": {
     "status": 200,
     "headers": {
-      "Content-Type": "application/json"
+      "Content-Type": "text/plain"
     },
-    "bodyFileName": "court-list-payload-ushers-magistrate.json"
+    "bodyFileName": "court-list-word-dataurl.txt"
   },
   "priority": 2
 }

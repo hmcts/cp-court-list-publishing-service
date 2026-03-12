@@ -10,6 +10,7 @@ import uk.gov.hmcts.cp.openapi.model.PublishCourtListRequest;
 import uk.gov.hmcts.cp.openapi.model.PublishCourtListResponse;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
+import uk.gov.hmcts.cp.services.courtlistdownload.CourtListFileResult;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
 import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService.SjpPublishResult;
@@ -42,8 +43,6 @@ public class CourtListPublishController implements CourtListPublishApi {
 
     private static final Logger LOG = LoggerFactory.getLogger(CourtListPublishController.class);
 
-    private static final String PDF_FILENAME = "CourtList.pdf";
-    private static final String CONTENT_DISPOSITION_VALUE = "attachment; filename=\"" + PDF_FILENAME + "\"";
 
     private final CourtListPublishStatusService service;
     private final CourtListTaskTriggerService courtListTaskTriggerService;
@@ -123,17 +122,17 @@ public class CourtListPublishController implements CourtListPublishApi {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endDate must be on or after startDate");
         }
         try {
-            byte[] pdf = courtListDownloadService.generateCourtListPdf(
-                request.getCourtListType(),
-                request.getCourtCentreId().toString(),
-                request.getStartDate(),
-                request.getEndDate());
+            CourtListFileResult result = courtListDownloadService.generateCourtListDownload(
+                    request.getCourtListType(),
+                    request.getCourtCentreId().toString(),
+                    request.getStartDate(),
+                    request.getEndDate());
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.set(HttpHeaders.CONTENT_DISPOSITION, CONTENT_DISPOSITION_VALUE);
-            return ResponseEntity.ok().headers(headers).body(new ByteArrayResource(pdf));
+            headers.setContentType(MediaType.parseMediaType(result.contentType()));
+            headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.filename() + "\"");
+            return ResponseEntity.ok().headers(headers).body(new ByteArrayResource(result.content()));
         } catch (CourtListDownloadException e) {
-            LOG.warn("Public court list download error: {}", e.getMessage());
+            LOG.warn("Court list download error: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, e.getMessage());
         }
     }

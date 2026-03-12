@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
+import uk.gov.hmcts.cp.services.courtlistdownload.CourtListFileResult;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -120,5 +121,41 @@ class CourtListDownloadServiceTest {
         verify(courtListDataService).getCourtListPayloadForDownload(
                 eq(CourtListType.BENCH), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE));
         verify(documentGeneratorClient).generatePdf(any(), eq("BenchCourtList"));
+    }
+
+    @Test
+    void generateCourtListDownloadReturnsPdfResultWhenPublic() throws IOException {
+        Map<String, Object> payload = Map.of(KEY_LIST_TYPE, "public", "courtCentreName", "Test Court");
+        when(courtListDataService.getCourtListPayloadForDownload(
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE))).thenReturn(payload);
+        when(documentGeneratorClient.generatePdf(any(), eq(TEMPLATE_PUBLIC_COURT_LIST))).thenReturn(PDF_BYTES);
+
+        CourtListFileResult result = service.generateCourtListDownload(
+                CourtListType.PUBLIC, COURT_CENTRE_ID, START_DATE, END_DATE);
+
+        assertThat(result.content()).isEqualTo(PDF_BYTES);
+        assertThat(result.contentType()).isEqualTo("application/pdf");
+        assertThat(result.filename()).isEqualTo("CourtList.pdf");
+    }
+
+    @Test
+    void generateCourtListDownloadReturnsWordResultWhenUshersMagistrate() {
+        byte[] wordBytes = new byte[]{1, 2, 3, 4};
+        CourtListFileResult wordResult = new CourtListFileResult(
+                wordBytes,
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "CourtList.docx");
+        when(courtListDataService.getCourtListFileForDownload(
+                eq(CourtListType.USHERS_MAGISTRATE), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE)))
+                .thenReturn(wordResult);
+
+        CourtListFileResult result = service.generateCourtListDownload(
+                CourtListType.USHERS_MAGISTRATE, COURT_CENTRE_ID, START_DATE, END_DATE);
+
+        assertThat(result.content()).isEqualTo(wordBytes);
+        assertThat(result.contentType()).isEqualTo("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        assertThat(result.filename()).isEqualTo("CourtList.docx");
+        verify(courtListDataService).getCourtListFileForDownload(
+                eq(CourtListType.USHERS_MAGISTRATE), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE));
     }
 }

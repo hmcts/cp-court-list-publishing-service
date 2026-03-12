@@ -15,7 +15,9 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.time.LocalDate;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class CourtListDownloadService {
@@ -27,6 +29,12 @@ public class CourtListDownloadService {
     private static final String TEMPLATE_USHERS_CROWN_COURT_LIST = "UshersCrownCourtList";
     private static final String TEMPLATE_USHERS_MAGISTRATE_COURT_LIST = "UshersMagistrateCourtList";
     private static final String KEY_TEMPLATE_NAME = "templateName";
+    private static final String CONTENT_TYPE_PDF = "application/pdf";
+    private static final String PDF_FILENAME = "CourtList.pdf";
+
+    private static final Set<CourtListType> WORD_DOWNLOAD_TYPES = EnumSet.of(
+            CourtListType.USHERS_CROWN,
+            CourtListType.USHERS_MAGISTRATE);
 
     private static final Map<CourtListType, String> DEFAULT_TEMPLATE_BY_TYPE = new EnumMap<>(CourtListType.class);
 
@@ -50,6 +58,22 @@ public class CourtListDownloadService {
 
     public byte[] generatePublicCourtListPdf(final String courtCentreId, final LocalDate startDate, final LocalDate endDate) {
         return generateCourtListPdf(CourtListType.PUBLIC, courtCentreId, startDate, endDate);
+    }
+
+    public CourtListFileResult generateCourtListDownload(final CourtListType courtListType,
+                                                         final String courtCentreId,
+                                                         final LocalDate startDate,
+                                                         final LocalDate endDate) {
+        if (WORD_DOWNLOAD_TYPES.contains(courtListType)) {
+            LOG.info("Fetching court list Word document for type={}, courtCentreId={}", courtListType, sanitizeForLog(courtCentreId));
+            CourtListFileResult result = courtListDataService.getCourtListFileForDownload(
+                    courtListType, courtCentreId, startDate, endDate);
+            LOG.info("Court list Word document fetched for type={}, courtCentreId={}, size={} bytes",
+                    courtListType, sanitizeForLog(courtCentreId), result.content().length);
+            return result;
+        }
+        byte[] pdf = generateCourtListPdf(courtListType, courtCentreId, startDate, endDate);
+        return new CourtListFileResult(pdf, CONTENT_TYPE_PDF, PDF_FILENAME);
     }
 
     public byte[] generateCourtListPdf(final CourtListType courtListType,

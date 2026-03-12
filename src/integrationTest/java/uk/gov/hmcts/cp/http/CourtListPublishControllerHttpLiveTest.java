@@ -287,13 +287,13 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     @Test
-    void postDownloadCourtListReturnsPdfWhenUshersCrownAndStubbed() throws Exception {
-        postDownloadCourtListReturnsPdfForType(CourtListType.USHERS_CROWN);
+    void postDownloadCourtListReturnsWordWhenUshersCrownAndStubbed() throws Exception {
+        postDownloadCourtListReturnsWordForType(CourtListType.USHERS_CROWN);
     }
 
     @Test
-    void postDownloadCourtListReturnsPdfWhenUshersMagistrateAndStubbed() throws Exception {
-        postDownloadCourtListReturnsPdfForType(CourtListType.USHERS_MAGISTRATE);
+    void postDownloadCourtListReturnsWordWhenUshersMagistrateAndStubbed() throws Exception {
+        postDownloadCourtListReturnsWordForType(CourtListType.USHERS_MAGISTRATE);
     }
 
     @Test
@@ -330,6 +330,36 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_PDF);
         assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
                 .contains("attachment", "CourtList.pdf");
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().length).isGreaterThan(0);
+    }
+
+    private void postDownloadCourtListReturnsWordForType(CourtListType courtListType) throws Exception {
+        String requestJson = """
+            {
+                "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",
+                "startDate": "2026-02-27",
+                "endDate": "2026-02-27",
+                "courtListType": "%s"
+            }
+            """.formatted(courtListType.name());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(DOWNLOAD_CONTENT_TYPE));
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
+        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+
+        ResponseEntity<byte[]> response = http.exchange(
+                DOWNLOAD_ENDPOINT,
+                HttpMethod.POST,
+                entity,
+                byte[].class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getContentType()).isNotNull();
+        assertThat(response.getHeaders().getContentType().toString())
+                .isEqualTo("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
+                .contains("attachment", "CourtList.docx");
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().length).isGreaterThan(0);
     }
