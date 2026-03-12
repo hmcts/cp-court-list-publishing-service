@@ -61,6 +61,13 @@ public class Hearing {
     @JsonProperty("courtApplication")
     private CourtApplication courtApplication;
 
+    /**
+     * Subject of the application when provided on the hearing (parent of courtApplication).
+     * When present, this party is added to the application's parties with subject=true for CaTH.
+     */
+    @JsonProperty("subject")
+    private CourtApplicationParty subject;
+
     @JsonProperty("panel")
     private String panel;
 }

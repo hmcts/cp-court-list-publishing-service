@@ -72,10 +72,15 @@ public abstract class BaseCourtListTransformationService {
     }
 
     /**
-     * Extracts the subject party id from the court application. Subject is a single party; returns null if absent or id is blank.
+     * Extracts the subject party id from the court application or the hearing (parent).
+     * Subject can be on courtApplication or on the hearing; returns null if absent or id is blank.
      */
-    protected final String getSubjectPartyId(CourtApplication courtApplication) {
+    protected final String getSubjectPartyId(Hearing hearing) {
+        CourtApplication courtApplication = hearing != null ? hearing.getCourtApplication() : null;
         CourtApplicationParty subject = courtApplication != null ? courtApplication.getSubject() : null;
+        if (subject == null && hearing != null) {
+            subject = hearing.getSubject();
+        }
         if (subject == null) {
             return null;
         }
@@ -93,22 +98,24 @@ public abstract class BaseCourtListTransformationService {
      * Transforms hearing court application into Application list and subject party id.
      */
     protected final ApplicationTransformResult transformApplications(Hearing hearing) {
-        String subjectPartyId = getSubjectPartyId(hearing.getCourtApplication());
+        String subjectPartyId = getSubjectPartyId(hearing);
         CourtApplication courtApplication = hearing.getCourtApplication();
 
         if (courtApplication == null || !isNonBlank(hearing.getCourtApplicationId())) {
             return new ApplicationTransformResult(Collections.emptyList(), subjectPartyId);
         }
 
-        List<Party> parties = buildApplicationParties(courtApplication, subjectPartyId);
+        List<Party> parties = buildApplicationParties(courtApplication, subjectPartyId, hearing);
         List<Application> applications = buildApplications(hearing, courtApplication, parties);
         return new ApplicationTransformResult(applications, subjectPartyId);
     }
 
     /**
      * Builds the list of parties for the court application (applicant, respondents, subject).
+     * Subject is taken from courtApplication if present, otherwise from the hearing (parent) so that
+     * progression payloads with subject on the parent are mapped with the subject in application parties and subject=true.
      */
-    protected final List<Party> buildApplicationParties(CourtApplication courtApplication, String subjectPartyId) {
+    protected final List<Party> buildApplicationParties(CourtApplication courtApplication, String subjectPartyId, Hearing hearing) {
         List<Party> parties = new ArrayList<>();
         if (courtApplication.getApplicant() != null) {
             Party p = buildApplicationParty(courtApplication.getApplicant(), "APPLICANT", subjectPartyId);
@@ -120,8 +127,12 @@ public abstract class BaseCourtListTransformationService {
                 if (p != null) parties.add(p);
             }
         }
-        if (courtApplication.getSubject() != null) {
-            Party p = buildApplicationParty(courtApplication.getSubject(), "SUBJECT", subjectPartyId);
+        CourtApplicationParty subjectParty = courtApplication.getSubject();
+        if (subjectParty == null && hearing != null) {
+            subjectParty = hearing.getSubject();
+        }
+        if (subjectParty != null) {
+            Party p = buildApplicationParty(subjectParty, "SUBJECT", subjectPartyId);
             if (p != null) parties.add(p);
         }
         return parties;

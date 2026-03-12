@@ -376,6 +376,51 @@ class OnlinePublicCourtListTransformationServiceTest {
     }
 
     @Test
+    void transform_shouldAddSubjectFromParentHearingToApplicationPartiesWithIsSubjectTrue() {
+        // Given - application on hearing with no subject on courtApplication; subject is on parent (hearing)
+        Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
+                .getTimeslots().getFirst().getHearings().getFirst();
+        CourtApplicationParty parentSubject = CourtApplicationParty.builder()
+                .id("subject-from-parent-id")
+                .firstName("John")
+                .surname("Smith")
+                .build();
+        hearing.setCourtApplicationId("PUBLIC-APP-REF-99");
+        hearing.setCourtApplication(CourtApplication.builder()
+                .applicant(CourtApplicationParty.builder()
+                        .name("Applicant Name")
+                        .dateOfBirth("1 Jan 1990")
+                        .build())
+                .respondents(List.of(
+                        CourtApplicationParty.builder()
+                                .name("Respondent One")
+                                .build()
+                ))
+                .build());
+        hearing.setSubject(parentSubject);
+
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then - application has applicant, respondent, and subject (from parent); subject party has isSubject=true
+        HearingSchema hearingSchema = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
+                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst();
+        assertThat(hearingSchema.getCaseList()).isEmpty();
+        List<Application> applications = hearingSchema.getApplication();
+        assertThat(applications).hasSize(1);
+        Application app = applications.getFirst();
+        assertThat(app.getParty()).hasSize(3); // applicant + respondent + subject from parent
+        Party subjectParty = app.getParty().stream()
+                .filter(p -> "SUBJECT".equals(p.getPartyRole()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(subjectParty.getSubject()).isTrue();
+        assertThat(subjectParty.getIndividualDetails()).isNotNull();
+        assertThat(subjectParty.getIndividualDetails().getIndividualForenames()).isEqualTo("John");
+        assertThat(subjectParty.getIndividualDetails().getIndividualSurname()).isEqualTo("Smith");
+    }
+
+    @Test
     void transform_shouldIncludeApplicationsWhenHearingHasCourtApplication() throws Exception {
         // Given - hearing with courtApplicationId and courtApplication (applicant + respondents)
         Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()

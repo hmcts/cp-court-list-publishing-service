@@ -384,6 +384,91 @@ class StandardCourtListTransformationServiceTest {
     }
 
     @Test
+    void transform_shouldAddSubjectFromParentHearingToApplicationPartiesWithIsSubjectTrue() {
+        // Given - application on hearing with no subject on courtApplication; subject is on parent (hearing)
+        Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
+                .getTimeslots().getFirst().getHearings().getFirst();
+        String subjectId = "subject-from-parent-id";
+        CourtApplicationParty parentSubject = CourtApplicationParty.builder()
+                .id(subjectId)
+                .firstName("John")
+                .surname("Smith")
+                .dateOfBirth("26 Nov 1977")
+                .build();
+        hearing.setCourtApplicationId("APP-REF-12345");
+        hearing.setCourtApplication(CourtApplication.builder()
+                .applicant(CourtApplicationParty.builder()
+                        .name("Applicant Name")
+                        .dateOfBirth("1 Jan 1990")
+                        .build())
+                .respondents(List.of(
+                        CourtApplicationParty.builder()
+                                .name("Respondent One")
+                                .dateOfBirth("15 Sept 1985")
+                                .build()
+                ))
+                .build());
+        hearing.setSubject(parentSubject);
+
+        // When
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then - application has applicant, respondent, and subject (from parent); subject party has isSubject=true
+        HearingSchema hearingSchema = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
+                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst();
+        List<Application> applications = hearingSchema.getApplication();
+        assertThat(applications).hasSize(1);
+        Application app = applications.getFirst();
+        assertThat(app.getParty()).hasSize(3); // applicant + respondent + subject from parent
+        Party applicantParty = app.getParty().get(0);
+        Party respondentParty = app.getParty().get(1);
+        Party subjectParty = app.getParty().get(2);
+        assertThat(applicantParty.getPartyRole()).isEqualTo("APPLICANT");
+        assertThat(respondentParty.getPartyRole()).isEqualTo("RESPONDENT");
+        assertThat(subjectParty.getPartyRole()).isEqualTo("SUBJECT");
+        assertThat(subjectParty.getSubject()).isTrue();
+        assertThat(subjectParty.getIndividualDetails()).isNotNull();
+        assertThat(subjectParty.getIndividualDetails().getIndividualForenames()).isEqualTo("John");
+        assertThat(subjectParty.getIndividualDetails().getIndividualSurname()).isEqualTo("Smith");
+    }
+
+    @Test
+    void transform_shouldPreferCourtApplicationSubjectWhenBothHearingAndApplicationHaveSubject() {
+        // Given - both hearing and courtApplication have a subject; courtApplication.subject takes precedence
+        Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
+                .getTimeslots().getFirst().getHearings().getFirst();
+        CourtApplicationParty appSubject = CourtApplicationParty.builder()
+                .id("subject-on-application")
+                .firstName("App")
+                .surname("Subject")
+                .build();
+        hearing.setCourtApplicationId("APP-REF-12345");
+        hearing.setCourtApplication(CourtApplication.builder()
+                .applicant(CourtApplicationParty.builder().name("Applicant").build())
+                .subject(appSubject)
+                .build());
+        hearing.setSubject(CourtApplicationParty.builder()
+                .id("subject-on-hearing")
+                .firstName("Parent")
+                .surname("Subject")
+                .build());
+
+        CourtListDocument document = transformationService.transform(payload);
+
+        // Then - application has one subject party from courtApplication (App Subject), with isSubject=true
+        Application app = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
+                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst().getApplication().getFirst();
+        assertThat(app.getParty()).hasSize(2); // applicant + subject (from courtApplication)
+        Party subjectParty = app.getParty().stream()
+                .filter(p -> "SUBJECT".equals(p.getPartyRole()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(subjectParty.getSubject()).isTrue();
+        assertThat(subjectParty.getIndividualDetails().getIndividualSurname()).isEqualTo("Subject");
+        assertThat(subjectParty.getIndividualDetails().getIndividualForenames()).isEqualTo("App");
+    }
+
+    @Test
     void transform_shouldHandleBirminghamPayloadWithCaseOnlyAndApplicationOnlyHearings() throws Exception {
         // Given - Birmingham payload: first hearing has defendants (case only), second has court application (application only)
         payload = loadPayloadFromStubData("stubdata/court-list-payload-birmingham-standard.json");
