@@ -84,31 +84,31 @@ class CourtListQueryServiceTest {
     @Test
     void getCourtListPayload_shouldReturnPayloadFromCourtListDataService() {
         // Given - CourtListDataService returns payload (already enriched with reference data)
-        when(courtListDataService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid"))
+        when(courtListDataService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid", false))
                 .thenReturn(payload);
 
         // When
         CourtListPayload result = courtListQueryService.getCourtListPayload(
-                CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid");
+                CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid", false);
 
         // Then
         assertThat(result).isEqualTo(payload);
-        verify(courtListDataService).getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid");
+        verify(courtListDataService).getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", "cjscppuid", false);
     }
 
     @Test
     void getCourtListPayload_shouldReturnPayloadWhenNoCjscppuid() {
         // Given
-        when(courtListDataService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", null))
+        when(courtListDataService.getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", null, false))
                 .thenReturn(payload);
 
         // When
         CourtListPayload result = courtListQueryService.getCourtListPayload(
-                CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", null);
+                CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", null, false);
 
         // Then
         assertThat(result).isEqualTo(payload);
-        verify(courtListDataService).getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", null);
+        verify(courtListDataService).getCourtListPayload(CourtListType.STANDARD, "courtId", "2026-01-05", "2026-01-12", null, false);
     }
 
 }

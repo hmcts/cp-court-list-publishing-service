@@ -18,6 +18,12 @@ public class CourtListPayload {
     
     @JsonProperty("courtCentreName")
     private String courtCentreName;
+
+    /**
+     * Court centre UUID (e.g. from progression/listing response).
+     */
+    @JsonProperty("courtCentreId")
+    private String courtCentreId;
     
     @JsonProperty("courtCentreDefaultStartTime")
     private String courtCentreDefaultStartTime;

@@ -39,7 +39,8 @@ class CourtListDataServiceTest {
                 eq("2024-01-15"),
                 eq("2024-01-15"),
                 eq(false),
-                eq("request-user-id")))
+                eq("request-user-id"),
+                eq(false)))
                 .thenReturn(progressionJson);
 
         String result = courtListDataService.getCourtListData(
@@ -49,7 +50,8 @@ class CourtListDataServiceTest {
                 "2024-01-15",
                 "2024-01-15",
                 false,
-                "request-user-id");
+                "request-user-id",
+                false);
 
         assertThat(result).isEqualTo(progressionJson);
         verify(progressionQueryService).getCourtListPayload(
@@ -59,12 +61,13 @@ class CourtListDataServiceTest {
                 eq("2024-01-15"),
                 eq("2024-01-15"),
                 eq(false),
-                eq("request-user-id"));
+                eq("request-user-id"),
+                eq(false));
     }
 
     @Test
-    void getCourtListDataReturnsEmptyObjectWhenProgressionReturnsNull() {
-        when(progressionQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean(), any()))
+    void getCourtListData_returnsEmptyObjectWhenProgressionReturnsNull() {
+        when(progressionQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean(), any(), anyBoolean()))
                 .thenReturn(null);
 
         String result = courtListDataService.getCourtListData(
@@ -74,7 +77,8 @@ class CourtListDataServiceTest {
                 "2024-01-15",
                 "2024-01-15",
                 false,
-                "user");
+                "user",
+                false);
 
         assertThat(result).isEqualTo("{}");
     }
@@ -88,11 +92,12 @@ class CourtListDataServiceTest {
                 eq("2026-01-05"),
                 eq("2026-01-12"),
                 eq(true),
-                eq("user-id")))
+                eq("user-id"),
+                eq(false)))
                 .thenReturn("{\"listType\":\"standard\",\"courtCentreName\":\"Test Court\",\"ouCode\":\"B01LY\",\"courtId\":\"f8254db1-1683-483e-afb3-b87fde5a0a26\"}");
 
         CourtListPayload result = courtListDataService.getCourtListPayload(
-                CourtListType.STANDARD, "courtCentre1", "2026-01-05", "2026-01-12", "user-id");
+                CourtListType.STANDARD, "courtCentre1", "2026-01-05", "2026-01-12", "user-id", false);
 
         assertThat(result).isNotNull();
         assertThat(result.getListType()).isEqualTo("standard");
@@ -110,23 +115,24 @@ class CourtListDataServiceTest {
                 eq("2026-01-05"),
                 eq("2026-01-12"),
                 eq(false),
-                isNull()))
+                isNull(),
+                eq(false)))
                 .thenReturn("{\"listType\":\"public\",\"courtCentreName\":\"A Court\"}");
 
         CourtListPayload result = courtListDataService.getCourtListPayload(
-                CourtListType.PUBLIC, "courtCentre1", "2026-01-05", "2026-01-12", null);
+                CourtListType.PUBLIC, "courtCentre1", "2026-01-05", "2026-01-12", null, false);
 
         assertThat(result).isNotNull();
         assertThat(result.getCourtCentreName()).isEqualTo("A Court");
     }
 
     @Test
-    void getCourtListPayloadThrowsWhenProgressionReturnsInvalidJson() {
-        when(progressionQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean(), any()))
+    void getCourtListPayload_throws_whenProgressionReturnsInvalidJson() {
+        when(progressionQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean(), any(), anyBoolean()))
                 .thenReturn("not valid json {{{");
 
         assertThatThrownBy(() -> courtListDataService.getCourtListPayload(
-                CourtListType.STANDARD, "courtCentre1", "2026-01-05", "2026-01-12", null))
+                CourtListType.STANDARD, "courtCentre1", "2026-01-05", "2026-01-12", null, false))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to parse court list payload");
     }
