@@ -72,7 +72,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             if (listId != null && courtCentreId != null && publishDate != null) {
                 try {
                     payload = courtListQueryService.getCourtListPayload(
-                            listId, courtCentreId, publishDate.toString(), publishDate.toString(), userId, false);
+                            listId, courtCentreId, publishDate.toString(), publishDate.toString(), userId, true);
                 } catch (Exception e) {
                     logger.error("Error fetching court list payload", e);
                 }
