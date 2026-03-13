@@ -34,6 +34,13 @@ cath:
 taskmanager:
   schema:
     enabled: true
+
+# Cleanup job: delete old court list blobs and status records
+cleanup:
+  enabled: ${CLEANUP_ENABLED:true}
+  cron: "${CLEANUP_CRON:0 0 2 * * ?}"
+  retention-days: ${CLEANUP_RETENTION_DAYS:30}
+
 # Temporarily commented out due to SpringDoc compatibility issues with Spring Boot 4.0.0-M3
 # springdoc:
 #   packagesToScan: uk.gov.hmcts.cp.controllers
