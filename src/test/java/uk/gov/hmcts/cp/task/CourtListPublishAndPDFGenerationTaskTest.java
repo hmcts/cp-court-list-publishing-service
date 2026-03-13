@@ -288,12 +288,12 @@ class CourtListPublishAndPDFGenerationTaskTest {
         CourtListPayload payload = new CourtListPayload();
         CourtListDocument courtListDocument = CourtListDocument.builder().build();
         when(courtListQueryService.getCourtListPayload(
-                CourtListType.ONLINE_PUBLIC,
-                courtCentreId.toString(),
-                publishDateStr,
-                publishDateStr,
-                TEST_USER_ID,
-                false
+                eq(CourtListType.ONLINE_PUBLIC),
+                eq(courtCentreId.toString()),
+                eq(publishDateStr),
+                eq(publishDateStr),
+                eq(TEST_USER_ID),
+                anyBoolean()
         )).thenReturn(payload);
         when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC))
                 .thenReturn(courtListDocument);
@@ -304,7 +304,16 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then - getCourtListPayload is called twice: once for CaTH, once for PDF generation
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService, times(2)).getCourtListPayload(
+        verify(courtListQueryService, times(1)).getCourtListPayload(
+                CourtListType.ONLINE_PUBLIC,
+                courtCentreId.toString(),
+                publishDateStr,
+                publishDateStr,
+                TEST_USER_ID,
+                true
+        );
+
+        verify(courtListQueryService, times(1)).getCourtListPayload(
                 CourtListType.ONLINE_PUBLIC,
                 courtCentreId.toString(),
                 publishDateStr,
@@ -312,6 +321,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 TEST_USER_ID,
                 false
         );
+
         verify(courtListQueryService).buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC);
         verify(cathService).sendCourtListToCaTH(eq(courtListDocument), eq(CourtListType.ONLINE_PUBLIC), eq(publishDate), any(), any());
         verify(repository).getByCourtListId(courtListId);
@@ -504,7 +514,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
 
     @Test
     void execute_shouldUsePublishDateForPayloadFetch() {
-        // Given
+        // Given - task calls getCourtListPayload twice (CaTH with true, PDF with false); stub both with anyBoolean()
         String expectedDate = LocalDate.now().toString();
         JsonObject jobData = createJobDataWithCourtListId(courtListId);
         when(executionInfo.getJobData()).thenReturn(jobData);
@@ -512,12 +522,12 @@ class CourtListPublishAndPDFGenerationTaskTest {
 
         CourtListPayload payload = new CourtListPayload();
         when(courtListQueryService.getCourtListPayload(
-                CourtListType.ONLINE_PUBLIC,
-                courtCentreId.toString(),
-                expectedDate,
-                expectedDate,
-                TEST_USER_ID,
-                false
+                eq(CourtListType.ONLINE_PUBLIC),
+                eq(courtCentreId.toString()),
+                eq(expectedDate),
+                eq(expectedDate),
+                eq(TEST_USER_ID),
+                anyBoolean()
         )).thenReturn(payload);
         when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC))
                 .thenReturn(CourtListDocument.builder().build());
@@ -527,18 +537,18 @@ class CourtListPublishAndPDFGenerationTaskTest {
 
         // Then - getCourtListPayload called twice with publishDate from jobData (CaTH and PDF)
         verify(courtListQueryService, times(2)).getCourtListPayload(
-                CourtListType.ONLINE_PUBLIC,
-                courtCentreId.toString(),
-                expectedDate,
-                expectedDate,
-                TEST_USER_ID,
-                false
+                eq(CourtListType.ONLINE_PUBLIC),
+                eq(courtCentreId.toString()),
+                eq(expectedDate),
+                eq(expectedDate),
+                eq(TEST_USER_ID),
+                anyBoolean()
         );
     }
 
     @Test
     void execute_shouldGeneratePdf_whenPdfHelperIsAvailable() {
-        // Given - payload is fetched once and passed to both CaTH path and PDF
+        // Given - payload is fetched twice (CaTH with isWelsh=true, PDF with isWelsh=false); stub both invocations
         String publishDate = LocalDate.now().toString();
         JsonObject jobData = createJobDataWithCourtListId(courtListId);
         when(executionInfo.getJobData()).thenReturn(jobData);
@@ -546,12 +556,12 @@ class CourtListPublishAndPDFGenerationTaskTest {
 
         CourtListPayload payload = new CourtListPayload();
         when(courtListQueryService.getCourtListPayload(
-                CourtListType.ONLINE_PUBLIC,
-                courtCentreId.toString(),
-                publishDate,
-                publishDate,
-                TEST_USER_ID,
-                false
+                eq(CourtListType.ONLINE_PUBLIC),
+                eq(courtCentreId.toString()),
+                eq(publishDate),
+                eq(publishDate),
+                eq(TEST_USER_ID),
+                anyBoolean()
         )).thenReturn(payload);
         when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC))
                 .thenReturn(CourtListDocument.builder().build());
@@ -563,7 +573,16 @@ class CourtListPublishAndPDFGenerationTaskTest {
         // Then - getCourtListPayload called twice: once for CaTH, once for PDF
         assertThat(result).isNotNull();
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-        verify(courtListQueryService, times(2)).getCourtListPayload(
+        verify(courtListQueryService, times(1)).getCourtListPayload(
+                CourtListType.ONLINE_PUBLIC,
+                courtCentreId.toString(),
+                publishDate,
+                publishDate,
+                TEST_USER_ID,
+                true
+        );
+
+        verify(courtListQueryService, times(1)).getCourtListPayload(
                 CourtListType.ONLINE_PUBLIC,
                 courtCentreId.toString(),
                 publishDate,
@@ -571,6 +590,7 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 TEST_USER_ID,
                 false
         );
+
         verify(pdfHelper).generateAndUploadPdf(payload, courtListId, CourtListType.ONLINE_PUBLIC);
     }
 
