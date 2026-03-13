@@ -29,7 +29,7 @@ public class PdfGenerationService {
 
     private static final Map<CourtListType, TemplateInfo> TEMPLATE_BY_COURT_LIST_TYPE = ImmutableMap.<CourtListType, TemplateInfo>builder()
             .put(CourtListType.ONLINE_PUBLIC, new TemplateInfo("ONLINE_PUBLIC", "OnlinePublicCourtList", "OnlinePublicCourtListEnglishWelsh"))
-            .put(CourtListType.STANDARD, new TemplateInfo("STANDARD", "BenchAndStandardCourtList", null))
+            .put(CourtListType.STANDARD, new TemplateInfo("STANDARD", "BenchAndStandardCourtList", "BenchAndStandardCourtList"))
             .build();
 
     /** SJP (Single Justice Procedure) – template name when list type is SJP (by name, for API compatibility). */

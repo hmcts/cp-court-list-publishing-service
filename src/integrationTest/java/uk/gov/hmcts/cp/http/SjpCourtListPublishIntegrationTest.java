@@ -18,15 +18,15 @@ import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 
 /**
  * Integration tests for the SJP (Single Justice Procedure) court list publish endpoint.
- * Verifies the PubHub-style flow: POST /api/court-list-publish/publishCourtList with listPayload,
+ * Verifies the PubHub-style flow: POST /api/court-list-publish/sjp/publishCourtList with listPayload (API spec v0.1.21),
  * transform to CaTH format, and publish to DTS APIM (stubbed by WireMock).
  */
 public class SjpCourtListPublishIntegrationTest extends AbstractTest {
 
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
-    private static final String SJP_PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publishCourtList";
+    private static final String SJP_PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/sjp/publishCourtList";
     private static final MediaType SJP_CONTENT_TYPE =
-            new MediaType("application", "vnd.courtlistpublishing-service.publishcourtlist.post+json");
+            new MediaType("application", "vnd.courtlistpublishing-service.sjp.post+json");
 
     private final RestTemplate http = new RestTemplate();
     private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();

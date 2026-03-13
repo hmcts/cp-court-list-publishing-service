@@ -51,13 +51,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /api/court-list-publish/publishCourtList:
+  /api/court-list-publish/sjp/publishCourtList:
     post:
       summary: Publish SJP court list to CaTH
       description: |
         Triggers publishing of an SJP (Single Justice Procedure) court list to Courts and Tribunals Hearings (CaTH).
         Equivalent to the flow in PubHub: consume SJP list type, transform to CaTH format, and POST to Azure APIM.
-        Use listType to specify either the SJP Pending cases public list (SJP_PUBLISH_LIST) or the SJP Press transparency list (SJP_PRESS_LIST).
+        Use listType (SjpListType) to specify either SJP_PUBLISH_LIST or SJP_PRESS_LIST. Request may include language, requestType, listPayload (with readyCases).
       operationId: publishSjpCourtList
       tags:
         - court-list-publish
@@ -67,7 +67,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/PublishCourtListRequest"
-          application/vnd.courtlistpublishing-service.publishcourtlist.post+json:
+          application/vnd.courtlistpublishing-service.sjp.post+json:
             schema:
               $ref: "#/components/schemas/PublishCourtListRequest"
       responses:
@@ -77,7 +77,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PublishCourtListResponse"
-            application/vnd.courtlistpublishing-service.publishcourtlist.post+json:
+            application/vnd.courtlistpublishing-service.sjp.post+json:
               schema:
                 $ref: "#/components/schemas/PublishCourtListResponse"
         '400':

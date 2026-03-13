@@ -18,16 +18,16 @@ import org.springframework.http.HttpStatus;
 import jakarta.validation.Valid;
 
 /**
- * Exposes POST /api/court-list-publish/publishCourtList for publishing SJP court lists to CaTH.
- * Request parameter listType: SJP_PUBLISH_LIST or SJP_PRESS_LIST.
+ * Exposes POST /api/court-list-publish/sjp/publishCourtList for publishing SJP court lists to CaTH (API spec v0.1.21).
+ * listType (SjpListType): SJP_PUBLISH_LIST or SJP_PRESS_LIST.
  */
 @RestController
 @RequestMapping("/api/court-list-publish")
 public class SjpCourtListPublishController {
 
     private static final Logger LOG = LoggerFactory.getLogger(SjpCourtListPublishController.class);
-    private static final MediaType VND_PUBLISHCOURTLIST_JSON =
-            new MediaType("application", "vnd.courtlistpublishing-service.publishcourtlist.post+json");
+    private static final MediaType VND_SJP_POST_JSON =
+            new MediaType("application", "vnd.courtlistpublishing-service.sjp.post+json");
 
     private final SjpCourtListPublishService sjpCourtListPublishService;
 
@@ -36,9 +36,9 @@ public class SjpCourtListPublishController {
     }
 
     @PostMapping(
-            value = "/publishCourtList",
-            consumes = {MediaType.APPLICATION_JSON_VALUE, "application/vnd.courtlistpublishing-service.publishcourtlist.post+json"},
-            produces = {MediaType.APPLICATION_JSON_VALUE, "application/vnd.courtlistpublishing-service.publishcourtlist.post+json"}
+            value = "/sjp/publishCourtList",
+            consumes = {MediaType.APPLICATION_JSON_VALUE, "application/vnd.courtlistpublishing-service.sjp.post+json"},
+            produces = {MediaType.APPLICATION_JSON_VALUE, "application/vnd.courtlistpublishing-service.sjp.post+json"}
     )
     public ResponseEntity<PublishSjpCourtListResponse> publishCourtList(
             @RequestBody @Valid PublishSjpCourtListRequest request) {
@@ -58,7 +58,7 @@ public class SjpCourtListPublishController {
         LOG.debug("Publishing SJP court list, listType={}", listType);
         PublishSjpCourtListResponse response = sjpCourtListPublishService.publishSjpCourtList(request);
         return ResponseEntity.ok()
-                .contentType(VND_PUBLISHCOURTLIST_JSON)
+                .contentType(VND_SJP_POST_JSON)
                 .body(response);
     }
 }

@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class SjpCourtListPublishControllerTest {
 
-    private static final String PUBLISH_COURTLIST_URL = "/api/court-list-publish/publishCourtList";
+    private static final String PUBLISH_COURTLIST_URL = "/api/court-list-publish/sjp/publishCourtList";
 
     private MockMvc mockMvc;
 
