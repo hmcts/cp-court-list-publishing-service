@@ -1,0 +1,5 @@
+# SJP court list publishing to CaTH (same CourtListPublisher as other lists)
+# Set to false to disable SJP publish to CaTH (e.g. in envs where SJP is not used)
+cath:
+  sjp:
+    publishing-enabled: ${CATH_SJP_PUBLISHING_ENABLED:true}

@@ -20,6 +20,8 @@ import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
+import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
+import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService.SjpPublishResult;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -57,6 +59,9 @@ class CourtListPublishControllerTest {
     @Mock
     private CourtListDownloadService courtListDownloadService;
 
+    @Mock
+    private SjpCourtListPublishService sjpCourtListPublishService;
+
     @InjectMocks
     private CourtListPublishController controller;
 
@@ -65,6 +70,7 @@ class CourtListPublishControllerTest {
 
     private static final String PUBLISH_URL = "/api/court-list-publish/publish";
     private static final String BASE_URL = "/api/court-list-publish";
+    private static final String SJP_PUBLISH_URL = "/api/court-list-publish/sjp/publishCourtList";
 
     @BeforeEach
     void setUp() {
@@ -210,6 +216,32 @@ class CourtListPublishControllerTest {
                 .andExpect(jsonPath("$.length()").value(0));
 
         verify(service).findPublishStatus(null, courtCentreId, publishDate, null);
+    }
+
+    @Test
+    void publishSjpCourtList_returns200_withAcceptedStatus() throws Exception {
+        when(sjpCourtListPublishService.publishSjpCourtList(
+                eq(SjpCourtListPublishService.SJP_PUBLISH_LIST),
+                any(),
+                any(),
+                any()))
+                .thenReturn(SjpPublishResult.accepted(SjpCourtListPublishService.SJP_PUBLISH_LIST, "SJP court list published to CaTH"));
+
+        mockMvc.perform(post(SJP_PUBLISH_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"listType\":\"SJP_PUBLISH_LIST\",\"listPayload\":{\"generatedDateAndTime\":\"2024-01-01T12:00:00Z\",\"readyCases\":[{\"caseUrn\":\"SJP-001\"}]}}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"))
+                .andExpect(jsonPath("$.listType").value("SJP_PUBLISH_LIST"))
+                .andExpect(jsonPath("$.message").value("SJP court list published to CaTH"));
+    }
+
+    @Test
+    void publishSjpCourtList_returns400_whenListTypeInvalid() throws Exception {
+        mockMvc.perform(post(SJP_PUBLISH_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"listType\":\"INVALID\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     private CourtListPublishRequest createValidRequest() {
