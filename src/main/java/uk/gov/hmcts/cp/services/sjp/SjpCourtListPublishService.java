@@ -3,7 +3,6 @@ package uk.gov.hmcts.cp.services.sjp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.domain.DtsMeta;
@@ -39,9 +38,6 @@ public class SjpCourtListPublishService {
     private final CourtListPublisher courtListPublisher;
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
 
-    @Value("${cath.sjp.publishing-enabled:true}")
-    private boolean cathSjpPublishingEnabled;
-
     public SjpCourtListPublishService(
             SjpToCathPayloadTransformer transformer,
             CourtListPublisher courtListPublisher) {
@@ -50,7 +46,7 @@ public class SjpCourtListPublishService {
     }
 
     /**
-     * Publish SJP court list to CaTH when listPayload is provided and publishing is enabled.
+     * Publish SJP court list to CaTH when listPayload is provided (typically triggered by scheduler).
      *
      * @param listType    SJP_PUBLISH_LIST or SJP_PRESS_LIST
      * @param language    optional (default ENGLISH)
@@ -78,11 +74,6 @@ public class SjpCourtListPublishService {
 
         if (payload.getReadyCases() == null || payload.getReadyCases().isEmpty()) {
             return SjpPublishResult.accepted(listType, "listPayload has no readyCases; nothing to publish");
-        }
-
-        if (!cathSjpPublishingEnabled) {
-            LOG.warn("CaTH SJP publishing is disabled; list not sent to CaTH");
-            return SjpPublishResult.accepted(listType, "SJP court list publish request accepted (CaTH SJP disabled)");
         }
 
         try {
