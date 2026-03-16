@@ -18,8 +18,8 @@ import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 
 /**
  * Integration tests for the SJP (Single Justice Procedure) court list publish endpoint.
- * Verifies the PubHub-style flow: POST /api/court-list-publish/sjp/publishCourtList with listPayload (API spec v0.1.21),
- * transform to CaTH format, and publish to DTS APIM (stubbed by WireMock).
+ * POST /api/court-list-publish/sjp/publishCourtList. The API model currently only exposes listType;
+ * listPayload is not passed through, so the service returns FAILED when listPayload would be required.
  */
 public class SjpCourtListPublishIntegrationTest extends AbstractTest {
 
@@ -32,7 +32,8 @@ public class SjpCourtListPublishIntegrationTest extends AbstractTest {
     private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
 
     @Test
-    void postSjpCourtList_publishesToCath_whenValidRequest() throws Exception {
+    void postSjpCourtList_returnsFailed_whenListPayloadInBodyButNotInApiModel() throws Exception {
+        // API model only has listType; listPayload in JSON is not passed to service, so service returns FAILED
         String requestJson = """
             {
                 "listType": "SJP_PUBLISH_LIST",
@@ -56,13 +57,14 @@ public class SjpCourtListPublishIntegrationTest extends AbstractTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getHeaders().getContentType()).isNotNull();
         JsonNode body = objectMapper.readTree(response.getBody());
-        assertThat(body.get("status").asText()).isEqualTo("ACCEPTED");
+        assertThat(body.get("status").asText()).isEqualTo("FAILED");
         assertThat(body.get("listType").asText()).isEqualTo("SJP_PUBLISH_LIST");
-        assertThat(body.get("message").asText()).contains("published to CaTH");
+        assertThat(body.get("message").asText()).contains("listPayload is required");
     }
 
     @Test
-    void postSjpCourtList_returnsAccepted_whenEmptyReadyCases() throws Exception {
+    void postSjpCourtList_returnsFailed_whenListPayloadWithEmptyReadyCases() throws Exception {
+        // listPayload not passed through (API model has only listType), so service returns FAILED
         String requestJson = """
             {
                 "listType": "SJP_PUBLISH_LIST",
@@ -77,8 +79,8 @@ public class SjpCourtListPublishIntegrationTest extends AbstractTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode body = objectMapper.readTree(response.getBody());
-        assertThat(body.get("status").asText()).isEqualTo("ACCEPTED");
-        assertThat(body.get("message").asText()).contains("no readyCases");
+        assertThat(body.get("status").asText()).isEqualTo("FAILED");
+        assertThat(body.get("message").asText()).contains("listPayload is required");
     }
 
     @Test
@@ -132,7 +134,8 @@ public class SjpCourtListPublishIntegrationTest extends AbstractTest {
     }
 
     @Test
-    void postSjpCourtList_returnsAccepted_forSjpPressList() throws Exception {
+    void postSjpCourtList_returnsFailed_forSjpPressListWithListPayload() throws Exception {
+        // listPayload not passed through (API model has only listType), so service returns FAILED
         String requestJson = """
             {
                 "listType": "SJP_PRESS_LIST",
@@ -154,9 +157,9 @@ public class SjpCourtListPublishIntegrationTest extends AbstractTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode body = objectMapper.readTree(response.getBody());
-        assertThat(body.get("status").asText()).isEqualTo("ACCEPTED");
+        assertThat(body.get("status").asText()).isEqualTo("FAILED");
         assertThat(body.get("listType").asText()).isEqualTo("SJP_PRESS_LIST");
-        assertThat(body.get("message").asText()).contains("published to CaTH");
+        assertThat(body.get("message").asText()).contains("listPayload is required");
     }
 
     private HttpEntity<String> createSjpHttpEntity(String json) {

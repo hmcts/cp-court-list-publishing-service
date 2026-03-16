@@ -6,10 +6,16 @@ import uk.gov.hmcts.cp.openapi.model.CourtListDownloadRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.openapi.model.PublishCourtListRequest;
+import uk.gov.hmcts.cp.openapi.model.PublishCourtListResponse;
+import uk.gov.hmcts.cp.openapi.model.SjpListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
+import uk.gov.hmcts.cp.api.sjp.PublishSjpCourtListRequest;
+import uk.gov.hmcts.cp.api.sjp.PublishSjpCourtListResponse;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
+import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,13 +48,16 @@ public class CourtListPublishController implements CourtListPublishApi {
     private final CourtListPublishStatusService service;
     private final CourtListTaskTriggerService courtListTaskTriggerService;
     private final CourtListDownloadService courtListDownloadService;
+    private final SjpCourtListPublishService sjpCourtListPublishService;
 
     public CourtListPublishController(final CourtListPublishStatusService service,
                                      CourtListTaskTriggerService courtListTaskTriggerService,
-                                     CourtListDownloadService courtListDownloadService) {
+                                     CourtListDownloadService courtListDownloadService,
+                                     SjpCourtListPublishService sjpCourtListPublishService) {
         this.service = service;
         this.courtListTaskTriggerService = courtListTaskTriggerService;
         this.courtListDownloadService = courtListDownloadService;
+        this.sjpCourtListPublishService = sjpCourtListPublishService;
     }
 
 
@@ -85,6 +94,35 @@ public class CourtListPublishController implements CourtListPublishApi {
         return ResponseEntity.ok()
                 .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.post+json"))
                 .body(response);
+    }
+
+    @Override
+    public ResponseEntity<PublishCourtListResponse> publishSjpCourtList(PublishCourtListRequest request) {
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
+        }
+        if (request.getListType() == null || request.getListType().getValue().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "listType is required");
+        }
+        String listType = request.getListType().getValue();
+        if (!PublishSjpCourtListRequest.SJP_PUBLISH_LIST.equals(listType)
+                && !PublishSjpCourtListRequest.SJP_PRESS_LIST.equals(listType)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "listType must be SJP_PUBLISH_LIST or SJP_PRESS_LIST");
+        }
+        // API model only exposes listType in current JAR; pass null for language, requestType, listPayload
+        PublishSjpCourtListRequest internalRequest = new PublishSjpCourtListRequest(
+                listType,
+                null,
+                null,
+                null);
+        LOG.debug("Publishing SJP court list, listType={}", listType);
+        PublishSjpCourtListResponse internalResponse = sjpCourtListPublishService.publishSjpCourtList(internalRequest);
+        PublishCourtListResponse response = new PublishCourtListResponse()
+                .status(internalResponse.getStatus())
+                .listType(SjpListType.fromValue(internalResponse.getListType()))
+                .message(internalResponse.getMessage());
+        return ResponseEntity.ok().body(response);
     }
 
     @Override

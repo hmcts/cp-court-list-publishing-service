@@ -3,7 +3,6 @@ package uk.gov.hmcts.cp.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,6 +11,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import uk.gov.hmcts.cp.api.sjp.PublishSjpCourtListRequest;
+import uk.gov.hmcts.cp.api.sjp.PublishSjpCourtListResponse;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
@@ -20,6 +21,7 @@ import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
+import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -31,7 +33,6 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -57,19 +58,21 @@ class CourtListPublishControllerTest {
     @Mock
     private CourtListDownloadService courtListDownloadService;
 
+    @Mock
+    private SjpCourtListPublishService sjpCourtListPublishService;
+
     @InjectMocks
     private CourtListPublishController controller;
 
-
-    private ObjectMapper objectMapper;
+    private ObjectMapper realObjectMapper;
 
     private static final String PUBLISH_URL = "/api/court-list-publish/publish";
-    private static final String BASE_URL = "/api/court-list-publish";
+    private static final String SJP_PUBLISH_URL = "/api/court-list-publish/sjp/publishCourtList";
 
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
-        objectMapper = ObjectMapperConfig.getObjectMapper();
+        realObjectMapper = ObjectMapperConfig.getObjectMapper();
     }
 
     @Test
@@ -94,7 +97,7 @@ class CourtListPublishControllerTest {
         mockMvc.perform(post(PUBLISH_URL)
                         .header("CJSCPPUID", "test-user-id")
                         .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(realObjectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(CONTENT_TYPE_APPLICATION_VND_POST))
                 .andExpect(jsonPath("$.courtListId").exists())
@@ -125,7 +128,7 @@ class CourtListPublishControllerTest {
         // When & Then - no CJSCPPUID header
         mockMvc.perform(post(PUBLISH_URL)
                         .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(realObjectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -210,6 +213,58 @@ class CourtListPublishControllerTest {
                 .andExpect(jsonPath("$.length()").value(0));
 
         verify(service).findPublishStatus(null, courtCentreId, publishDate, null);
+    }
+
+    // --- SJP publish endpoint (same controller, path from API spec) ---
+
+    @Test
+    void publishSjpCourtList_returns200_withSjpPublishList() throws Exception {
+        when(sjpCourtListPublishService.publishSjpCourtList(any(PublishSjpCourtListRequest.class)))
+                .thenReturn(PublishSjpCourtListResponse.builder()
+                        .status("ACCEPTED")
+                        .listType(PublishSjpCourtListRequest.SJP_PUBLISH_LIST)
+                        .message("SJP court list publish request accepted")
+                        .build());
+
+        mockMvc.perform(post(SJP_PUBLISH_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"listType\":\"SJP_PUBLISH_LIST\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"))
+                .andExpect(jsonPath("$.listType").value("SJP_PUBLISH_LIST"))
+                .andExpect(jsonPath("$.message").value("SJP court list publish request accepted"));
+    }
+
+    @Test
+    void publishSjpCourtList_returns200_withSjpPressList() throws Exception {
+        when(sjpCourtListPublishService.publishSjpCourtList(any(PublishSjpCourtListRequest.class)))
+                .thenReturn(PublishSjpCourtListResponse.builder()
+                        .status("ACCEPTED")
+                        .listType(PublishSjpCourtListRequest.SJP_PRESS_LIST)
+                        .message("SJP court list publish request accepted")
+                        .build());
+
+        mockMvc.perform(post(SJP_PUBLISH_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"listType\":\"SJP_PRESS_LIST\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.listType").value("SJP_PRESS_LIST"));
+    }
+
+    @Test
+    void publishSjpCourtList_returns400_whenListTypeMissing() throws Exception {
+        mockMvc.perform(post(SJP_PUBLISH_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void publishSjpCourtList_returns400_whenListTypeInvalid() throws Exception {
+        mockMvc.perform(post(SJP_PUBLISH_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"listType\":\"INVALID\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     private CourtListPublishRequest createValidRequest() {
