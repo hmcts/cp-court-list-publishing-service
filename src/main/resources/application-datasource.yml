@@ -38,4 +38,5 @@ flyway:
     - classpath:db/migration/postgresql
     - classpath:db/migration
   baseline-on-migrate: true
+  out-of-order: true
 
