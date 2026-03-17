@@ -18,7 +18,7 @@ import org.springframework.util.StringUtils;
 
 @Slf4j
 @Configuration
-@org.springframework.context.annotation.Profile("!integration")
+@org.springframework.context.annotation.Profile("!integration & !retention-purge-test")
 public class AzureConfig {
     public static final String AZURE_CLIENT_ID = "AZURE_CLIENT_ID";
     public static final String AZURE_TENANT_ID = "AZURE_TENANT_ID";

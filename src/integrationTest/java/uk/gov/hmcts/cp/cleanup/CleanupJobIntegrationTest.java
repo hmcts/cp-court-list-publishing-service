@@ -3,6 +3,9 @@ package uk.gov.hmcts.cp.cleanup;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.common.StorageSharedKeyCredential;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,12 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.util.AntPathMatcher;
-import org.springframework.util.PathMatcher;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -36,23 +39,44 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 /**
- * Integration test for RetentionPurgeJob / DataRetentionService: records older than the retention
- * period are purged from both court_list_publish_status and the Azure blob store.
+ * Integration test for DataRetentionService (triggered via schedule-job API): records older than the
+ * retention period are purged from both court_list_publish_status and the Azure blob store.
  */
 @SpringBootTest(
-    classes = {Application.class, RetentionPurgeJobIntegrationTest.TestConfig.class},
+    classes = Application.class,
     webEnvironment = SpringBootTest.WebEnvironment.NONE
 )
-@ActiveProfiles("integration")
+@ActiveProfiles("retention-purge-test")
 @Testcontainers
+@Import(CleanupJobIntegrationTest.AzuriteTestConfig.class)
 @TestPropertySource(properties = {
     "cleanup.enabled=true",
-    "azure.storage.enabled=true",
-    "cleanup.retention-days=7"
+    "azure.storage.enabled=true"
 })
-class RetentionPurgeJobIntegrationTest {
+class CleanupJobIntegrationTest {
 
-    /** Retention in test is 7 days (@TestPropertySource); records older than this are purged. */
+    /** Provides BlobContainerClient for this test; use profile retention-purge-test so AzureIntegrationConfig (integration) is not loaded and we avoid duplicate bean. */
+    @TestConfiguration
+    @Profile("retention-purge-test")
+    static class AzuriteTestConfig {
+        @Bean
+        BlobContainerClient blobContainerClient() {
+            String endpoint = "http://localhost:" + AZURITE.getMappedPort(AZURITE_BLOB_PORT) + "/" + AZURITE_ACCOUNT_NAME;
+            StorageSharedKeyCredential credential = new StorageSharedKeyCredential(AZURITE_ACCOUNT_NAME, AZURITE_ACCOUNT_KEY);
+            BlobServiceClient serviceClient = new BlobServiceClientBuilder()
+                    .endpoint(endpoint)
+                    .credential(credential)
+                    .buildClient();
+            BlobContainerClient containerClient = serviceClient.getBlobContainerClient(CONTAINER_NAME);
+            if (!containerClient.exists()) {
+                containerClient.create();
+            }
+            return containerClient;
+        }
+    }
+
+    /** Test uses 7-day retention (passed to service); records older than this are purged. */
+    private static final int RETENTION_DAYS_IN_TEST = 7;
     private static final int DAYS_BEYOND_RETENTION = 10;
     private static final String PDF_EXTENSION = ".pdf";
 
@@ -62,15 +86,6 @@ class RetentionPurgeJobIntegrationTest {
     private static final String AZURITE_ACCOUNT_KEY =
         "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
     private static final String CONTAINER_NAME = "courtpublisher-blob-container";
-
-    /** Required by JWTFilter when full Application context is loaded. */
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        PathMatcher pathMatcher() {
-            return new AntPathMatcher();
-        }
-    }
 
     @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
@@ -97,7 +112,7 @@ class RetentionPurgeJobIntegrationTest {
         registry.add("azure.storage.account.name", () -> AZURITE_ACCOUNT_NAME);
         registry.add("azure.storage.account-key", () -> AZURITE_ACCOUNT_KEY);
         registry.add("azure.storage.container-name", () -> CONTAINER_NAME);
-        registry.add("azure.storage.blob-endpoint", RetentionPurgeJobIntegrationTest::azuriteBlobEndpoint);
+        registry.add("azure.storage.blob-endpoint", CleanupJobIntegrationTest::azuriteBlobEndpoint);
     }
 
     private static String azuriteBlobEndpoint() {
@@ -108,7 +123,7 @@ class RetentionPurgeJobIntegrationTest {
     private CourtListStatusRepository repository;
 
     @Autowired
-    private DataRetentionService dataRetentionService;
+    private CleanupJobService cleanupJobService;
 
     @Autowired
     private BlobContainerClient blobContainerClient;
@@ -139,7 +154,7 @@ class RetentionPurgeJobIntegrationTest {
         assertBlobExists(fileId1);
         assertBlobExists(fileId2);
 
-        dataRetentionService.cleanupOldData();
+        cleanupJobService.cleanupOldData(RETENTION_DAYS_IN_TEST, null);
 
         assertRecordDeleted(courtListId1);
         assertRecordDeleted(courtListId2);
@@ -159,7 +174,7 @@ class RetentionPurgeJobIntegrationTest {
         uploadBlob(oldFileId);
         uploadBlob(recentFileId);
 
-        dataRetentionService.cleanupOldData();
+        cleanupJobService.cleanupOldData(RETENTION_DAYS_IN_TEST, null);
 
         assertRecordDeleted(oldCourtListId);
         assertBlobDeleted(oldFileId);
@@ -174,7 +189,7 @@ class RetentionPurgeJobIntegrationTest {
         repository.save(createEntity(courtListId, fileId, Instant.now().minus(DAYS_BEYOND_RETENTION, ChronoUnit.DAYS)));
         // Blob not uploaded
 
-        dataRetentionService.cleanupOldData();
+        cleanupJobService.cleanupOldData(RETENTION_DAYS_IN_TEST, null);
 
         assertRecordExists(courtListId);
     }

@@ -70,7 +70,7 @@ services:
       COMMON_PLATFORM_QUERY_API_BASE_URL: "http://wiremock:8080"
       CATH_BASE_URL: "http://wiremock:8080"
       CATH_PUBLISHING_ENABLED: "true"
-      # Disable retention-purge feature in integration so app starts (no RetentionPurgeProperties/Quartz)
+      # Disable retention-purge feature in integration so app starts (cleanup.enabled=false)
       CLEANUP_ENABLED: "false"
     depends_on:
       db:

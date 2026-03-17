@@ -51,6 +51,7 @@ public class JWTFilter extends OncePerRequestFilter {
 
             final AuthDetails requestScopedToken = jwtProvider.getObject(); // current request instance
             requestScopedToken.setUserName(extractedToken.getUserName());
+            requestScopedToken.setUserId(extractedToken.getUserId());
             requestScopedToken.setScope(extractedToken.getScope());
         } catch (InvalidJWTException e) {
             log.atError().log(e.getMessage());

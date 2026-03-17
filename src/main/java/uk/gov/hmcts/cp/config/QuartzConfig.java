@@ -11,31 +11,35 @@ import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
-import uk.gov.hmcts.cp.cleanup.RetentionPurgeJob;
-import uk.gov.hmcts.cp.cleanup.RetentionPurgeProperties;
+import uk.gov.hmcts.cp.cleanup.CleanupJob;
+import uk.gov.hmcts.cp.cleanup.CleanupProperties;
 
 @Configuration
 @ConditionalOnProperty(name = "cleanup.enabled", havingValue = "true", matchIfMissing = true)
 public class QuartzConfig {
 
-    private final Scheduler scheduler;
-    private final RetentionPurgeProperties props;
+    private static final String JOB_NAME = "retentionCleanupJob";
+    private static final String TRIGGER_NAME = "retentionCleanupTrigger";
 
-    public QuartzConfig(Scheduler scheduler, RetentionPurgeProperties props) {
+    private final Scheduler scheduler;
+    private final CleanupProperties props;
+
+    public QuartzConfig(Scheduler scheduler, CleanupProperties props) {
         this.scheduler = scheduler;
         this.props = props;
     }
 
     @PostConstruct
-    public void scheduleRetentionPurgeJob() throws SchedulerException {
-        JobDetail jobDetail = JobBuilder.newJob(RetentionPurgeJob.class)
-                .withIdentity("retentionPurgeJob")
-                .storeDurably()
+    public void scheduleRetentionCleanupJob() throws SchedulerException {
+        JobDetail jobDetail = JobBuilder.newJob(CleanupJob.class)
+                .withIdentity(JOB_NAME)
+                .usingJobData("retentionDays", props.getRetentionDays())
+                .storeDurably(false)
                 .build();
 
         Trigger trigger = TriggerBuilder.newTrigger()
+                .withIdentity(TRIGGER_NAME)
                 .forJob(jobDetail)
-                .withIdentity("retentionPurgeTrigger")
                 .withSchedule(CronScheduleBuilder.cronSchedule(props.getCron()))
                 .build();
 

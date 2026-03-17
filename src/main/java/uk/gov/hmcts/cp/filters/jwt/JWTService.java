@@ -33,9 +33,13 @@ public class JWTService {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
-            final String userName = claims.getSubject();
+            final String subject = claims.getSubject();
             final String scope = claims.get(SCOPE).toString();
-            return new AuthDetails(userName, scope);
+            return AuthDetails.builder()
+                    .userName(subject)
+                    .userId(subject)
+                    .scope(scope)
+                    .build();
         } catch (SignatureException ex) {
             log.atError().log("Invalid signature/claims", ex);
             throw new InvalidJWTException("Invalid signature:" + ex.getMessage());

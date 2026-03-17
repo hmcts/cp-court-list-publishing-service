@@ -2,6 +2,13 @@ spring:
   application:
     name: cp-court-list-publishing-service
 
+  # Quartz: use JDBC job store when running multiple instances so only one instance runs each
+  # job at trigger time (avoids duplicate cleanup runs and contention/deadlock risk).
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always
+
   # Disable SpringDoc auto-configuration
   autoconfigure:
     exclude: org.springdoc.core.configuration.SpringDocKotlinConfiguration
@@ -35,12 +42,9 @@ taskmanager:
   schema:
     enabled: true
 
-# Cleanup job: delete old court list blobs and status records
+# Cleanup: job is triggered via POST /schedule-job (system user only). Retention is from API request (default 90 days).
 cleanup:
   enabled: ${CLEANUP_ENABLED:true}
-  cron: "${CLEANUP_CRON:0 0 2 * * ?}"
-  retention-days: ${CLEANUP_RETENTION_DAYS:30}
-
 # Temporarily commented out due to SpringDoc compatibility issues with Spring Boot 4.0.0-M3
 # springdoc:
 #   packagesToScan: uk.gov.hmcts.cp.controllers
