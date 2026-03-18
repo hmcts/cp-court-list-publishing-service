@@ -18,7 +18,9 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +29,8 @@ public class CaTHService {
 
     record CathHeaderInfo(String cathCourtListType, String sensitivity){}
 
+    private static final String BLOB_TIMESTAMP_FORMAT = "yyyyMMdd'T'HHmmss'Z'";
+    private static final String CATH_PAYLOAD_BLOB_PREFIX = "cath-payloads";
 
     private static final Map<CourtListType, CathHeaderInfo> COURT_LIST_MAPPINGS = ImmutableMap.of(
             CourtListType.ONLINE_PUBLIC, new CathHeaderInfo("MAGISTRATES_PUBLIC_LIST", "PUBLIC"),
@@ -34,6 +38,8 @@ public class CaTHService {
 
     @Autowired
     private final CourtListPublisher caTHPublisher;
+
+    private final Optional<AzureBlobService> azureBlobService;
 
     private static final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
 
@@ -69,13 +75,41 @@ public class CaTHService {
                     .displayTo(getDisplayTo(publishDate))
                     .build();
 
-            final Integer res = caTHPublisher.publish(objectMapper.writeValueAsString(courtListDocument), dtsMeta);
+            final String payload = objectMapper.writeValueAsString(courtListDocument);
+
+            uploadPayloadToBlob(payload, courtListType, courtIdFromRefData, publishDate, now);
+
+            final Integer res = caTHPublisher.publish(payload, dtsMeta);
 
             log.info("Successfully sent court list document to CaTH. Response status: {}", res);
         } catch (Exception e) {
             log.error("Error sending court list document to CaTH endpoint: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to send court list document to CaTH: " + e.getMessage(), e);
         }
+    }
+
+    private void uploadPayloadToBlob(String payload, CourtListType courtListType,
+                                     String courtId, LocalDate publishDate, Instant timestamp) {
+        azureBlobService.ifPresentOrElse(
+            blobService -> {
+                try {
+                    String blobName = buildBlobName(courtListType, courtId, publishDate, timestamp);
+                    blobService.uploadJson(payload, blobName);
+                } catch (Exception e) {
+                    log.error("Failed to upload CaTH payload to blob storage, continuing with publish", e);
+                }
+            },
+            () -> log.debug("Azure Blob Service not available, skipping payload upload")
+        );
+    }
+
+    static String buildBlobName(CourtListType courtListType, String courtId,
+                                LocalDate publishDate, Instant timestamp) {
+        String formattedTimestamp = DateTimeFormatter.ofPattern(BLOB_TIMESTAMP_FORMAT)
+            .withZone(ZoneOffset.UTC)
+            .format(timestamp);
+        return String.format("%s/%s/%s/%s_%s.json",
+            CATH_PAYLOAD_BLOB_PREFIX, courtListType, courtId, publishDate, formattedTimestamp);
     }
 
     static @NotNull String getDisplayTo(final LocalDate publishDate) {
