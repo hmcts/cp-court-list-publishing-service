@@ -97,7 +97,6 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-aspectj'
-    implementation 'org.springframework.boot:spring-boot-starter-quartz'
 
     // Task Manager Service
     implementation "uk.gov.hmcts.cp:task-manager-service:${jobManagerVersion}"

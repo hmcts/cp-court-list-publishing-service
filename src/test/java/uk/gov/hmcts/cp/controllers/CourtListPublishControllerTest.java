@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import uk.gov.hmcts.cp.cleanup.CleanupJobService;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
@@ -56,6 +57,9 @@ class CourtListPublishControllerTest {
 
     @Mock
     private CourtListDownloadService courtListDownloadService;
+
+    @Mock
+    private CleanupJobService cleanupJobService;
 
     @InjectMocks
     private CourtListPublishController controller;

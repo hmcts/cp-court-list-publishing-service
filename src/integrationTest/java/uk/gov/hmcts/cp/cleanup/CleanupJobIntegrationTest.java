@@ -39,7 +39,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 /**
- * Integration test for DataRetentionService (triggered via schedule-job API): records older than the
+ * Integration test for CleanupJobService (used by GET /publish-status-cleanup): records older than the
  * retention period are purged from both court_list_publish_status and the Azure blob store.
  */
 @SpringBootTest(

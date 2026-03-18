@@ -1,11 +1,14 @@
 package uk.gov.hmcts.cp.controllers;
 
+import org.springframework.beans.factory.annotation.Value;
 import uk.gov.hmcts.cp.config.AppConstant;
+import uk.gov.hmcts.cp.cleanup.CleanupJobService;
 import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
 import uk.gov.hmcts.cp.openapi.model.CourtListDownloadRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.openapi.model.PublishStatusCleanupResponse;
 import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
@@ -38,17 +41,24 @@ public class CourtListPublishController implements CourtListPublishApi {
 
     private static final String PDF_FILENAME = "CourtList.pdf";
     private static final String CONTENT_DISPOSITION_VALUE = "attachment; filename=\"" + PDF_FILENAME + "\"";
+    private static final String PUBLISH_STATUS_CLEANUP_MEDIA_TYPE = "application/vnd.courtlistpublishing-service.publish-status-cleanup.get+json";
 
     private final CourtListPublishStatusService service;
     private final CourtListTaskTriggerService courtListTaskTriggerService;
     private final CourtListDownloadService courtListDownloadService;
+    private final CleanupJobService cleanupJobService;
+
+    @Value("${cleanup.publish-status-cleanup-days:90}")
+    private int publishStatusCleanupDays;
 
     public CourtListPublishController(final CourtListPublishStatusService service,
                                      CourtListTaskTriggerService courtListTaskTriggerService,
-                                     CourtListDownloadService courtListDownloadService) {
+                                     CourtListDownloadService courtListDownloadService,
+                                     CleanupJobService cleanupJobService) {
         this.service = service;
         this.courtListTaskTriggerService = courtListTaskTriggerService;
         this.courtListDownloadService = courtListDownloadService;
+        this.cleanupJobService = cleanupJobService;
     }
 
 
@@ -140,6 +150,21 @@ public class CourtListPublishController implements CourtListPublishApi {
         return ResponseEntity.ok()
                 .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
                 .body(responses);
+    }
+
+    @Override
+    public ResponseEntity<PublishStatusCleanupResponse> publishStatusCleanup() {
+        try {
+            cleanupJobService.cleanupOldData(publishStatusCleanupDays);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(PUBLISH_STATUS_CLEANUP_MEDIA_TYPE))
+                    .body(PublishStatusCleanupResponse.builder().success(true).build());
+        } catch (Exception e) {
+            LOG.error("Publish status cleanup failed", e);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(PUBLISH_STATUS_CLEANUP_MEDIA_TYPE))
+                    .body(PublishStatusCleanupResponse.builder().success(false).build());
+        }
     }
 
     private static String getCjscppuidFromRequest() {
