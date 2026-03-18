@@ -44,8 +44,6 @@ public class PublishingService {
      * @throws RuntimeException if the response status is not 2xx
      */
     public Integer sendData(final String payload, final DtsMeta metadata) {
-        log.info("TODO: remove this --- CaTH publish request payload: {}", payload);
-        log.info("TODO: remove this --- CaTH publish request metadata: {}", metadata);
 
         String url = applicationParameters.getAzureLocalDtsApimUrl();
         HttpHeaders headers = buildHeaders(
@@ -65,7 +63,6 @@ public class PublishingService {
 
             int status = response.getStatusCode().value();
             String responseBody = response.getBody() != null ? response.getBody() : "";
-            log.info("TODO: remove this --- CaTH publish response status: {}, body: {}", status, responseBody);
             log.info(APIM_LOGGER, url, status);
 
             if (status < 200 || status >= 300) {
@@ -75,7 +72,6 @@ public class PublishingService {
         } catch (HttpClientErrorException | HttpServerErrorException e) {
             int status = e.getStatusCode().value();
             String responseBody = e.getResponseBodyAsString();
-            log.info("TODO: remove this --- CaTH publish response status: {}, body: {}", status, responseBody);
             log.info(APIM_LOGGER, url, status);
             throw new RuntimeException("CaTH publish failed with HTTP status " + status + ": " + responseBody);
         }
