@@ -1,19 +1,21 @@
 <configuration>
     <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <providers>
-                <mdc/>
-                <timestamp>
-                    <fieldName>timestamp</fieldName>
-                    <pattern>yyyy-MM-dd' 'HH:mm:ss.SSS</pattern>
-                </timestamp>
-                <loggerName/>
-                <threadName/>
-                <logLevel/>
-                <message/>
-                <stackTrace/>
-            </providers>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <shortenedLoggerNameLength>0</shortenedLoggerNameLength>
+            <customFields>
+                {"app":"cp-court-list-publishing-service","service":"cp-court-list-publishing-service"}
+            </customFields>
         </encoder>
     </appender>
-    <root level="DEBUG"><appender-ref ref="JSON"/></root>
+
+    <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="JSON"/>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="ASYNC_JSON"/>
+    </root>
 </configuration>

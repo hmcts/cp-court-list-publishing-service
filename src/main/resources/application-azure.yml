@@ -4,8 +4,23 @@ azure:
     instrumentation-key: ${rpe.AppInsightsInstrumentationKey:00000000-0000-0000-0000-000000000000}
   storage:
     enabled: ${AZURE_STORAGE_ENABLED:false}
-    container-name: schedulelistinginput
-    account-name: ${AZURE_STORAGE_ACCOUNT_NAME}
+    container-name: ${AZURE_STORAGE_CONTAINER_NAME:courtpublisher-blob-container}
+    account-name: ${AZURE_STORAGE_ACCOUNT_NAME:}
+    account-key: ${AZURE_STORAGE_ACCOUNT_KEY:}
   client-id: ${AZURE_CLIENT_ID}
   tenant-id: ${AZURE_TENANT_ID}
+  local:
+    dts:
+      # Set AZURE_LOCAL_DTS_APIMURL in deployment (internal APIM URL must not be defaulted in-repo)
+      apimUrl: ${AZURE_LOCAL_DTS_APIMURL:}
+      clientId: ${AZURE_LOCAL_DTS_CLIENTID:}
+      tenantId: ${AZURE_LOCAL_DTS_TENANTID:}
+      # Standard Azure Resource Manager scope (public); allowlisted for secrets scanner
+      scope: ${AZURE_LOCAL_DTS_SCOPE:https://management.azure.com/.default} # gitleaks:allow
+  remote:
+    dts:
+      clientId: ${AZURE_REMOTE_DTS_CLIENTID:}
+      tenantId: ${AZURE_REMOTE_DTS_TENANTID:}
+      appRegistration:
+        id: ${AZURE_REMOTE_DTS_APPREGISTRATION_ID:}
 

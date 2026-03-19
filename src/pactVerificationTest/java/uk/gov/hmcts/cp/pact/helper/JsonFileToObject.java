@@ -1,9 +1,9 @@
 package uk.gov.hmcts.cp.pact.helper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 
 import java.io.File;
 import java.util.Objects;
@@ -11,8 +11,7 @@ import java.util.Objects;
 public class JsonFileToObject {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonFileToObject.class);
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
+    private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
 
     public static <T> T readJsonFromResources(final String fileName, final Class<T> clazz) throws Exception {
         final File file;

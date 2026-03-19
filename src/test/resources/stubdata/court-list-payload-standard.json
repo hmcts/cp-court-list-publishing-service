@@ -1,0 +1,3490 @@
+{
+  "listType": "standard",
+  "courtCentreName": "Croydon Crown Court",
+  "courtCentreDefaultStartTime": "10:00:00",
+  "courtCentreAddress1": "The Law Courts",
+  "courtCentreAddress2": "Altyre Road",
+  "welshCourtCentreName": "Llys Y Goron Croydon",
+  "welshCourtCentreAddress1": " ",
+  "welshCourtCentreAddress2": "   CR9 5AB",
+  "hearingDates": [
+    {
+      "hearingDate": "2026-02-17",
+      "hearingDateWelsh": "17 Chwefror 2026",
+      "courtRooms": [
+        {
+          "courtRoomName": "Courtroom 01",
+          "welshCourtRoomName": "Courtroom 01",
+          "judiciaryNames": "Mr Banks-Dunnell JP, His Honour Judge Byrne, His Honour Judge Cooke, District Judge (MC) Daber, Mr Flowers JP, His Honour Judge Hopmeier, His Honour Judge North, His Honour Judge Ward",
+          "welshJudiciaryNames": "Mr  Banks-Dunnell YH,   Byrne,   Cooke,   Daber, Mr  Flowers YH,   Hopmeier,   North,   Ward",
+          "timeslots": [
+            {
+              "hearings": [
+                {
+                  "id": "97170d02-8099-4b45-ab33-4a167af84cbd",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "38GD6504026",
+                  "caseId": "943fa07c-d35f-4c1c-a2d7-a2638ba5110c",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "3eebde5d-f238-486a-b181-046b3dd9be93",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Alysson",
+                      "surname": "Cummings",
+                      "welshSurname": "Cummings",
+                      "dateOfBirth": "21 Feb 1981",
+                      "age": "44",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Schinnertown",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "48fdbe30-6191-42ad-bded-0f70fb2a283e",
+                          "offenceCode": "OFFCODE112",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "bcab7366-5945-4f6a-861d-09f327e3256d",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "64GD5444126",
+                  "caseId": "5a27583e-6015-4533-931e-d6e21e68f5d3",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "3408c6d0-fb06-47c9-b2c5-71e30a5d99a7",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Edwina",
+                      "surname": "Robel",
+                      "welshSurname": "Robel",
+                      "dateOfBirth": "21 Nov 1999",
+                      "age": "26",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "New Lula",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "588dc1b2-5888-4b0e-b994-f75f0ccbb04b",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "8abe8477-6795-4a1d-8027-58da05122c6d",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "39GD9365726",
+                  "caseId": "fcd38584-70b5-4831-b89e-b37ca29863a7",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "a1b98744-533e-4da8-a120-9cc540d7df39",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Evalyn",
+                      "surname": "McDermott",
+                      "welshSurname": "McDermott",
+                      "dateOfBirth": "23 Apr 1996",
+                      "age": "29",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "North Krystina",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "52077ee6-b68e-4131-a7b2-8a6b678caec6",
+                          "offenceCode": "OFFCODE111",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "894500b6-c1e4-4e23-b281-fe0058212ced",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "53GD5202426",
+                  "caseId": "e837ecc0-2c8c-4691-be89-3ae58a14ea1c",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "d3b13e6d-7b9a-4380-b76d-2e6caf853250",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Lavinia",
+                      "surname": "Cummerata",
+                      "welshSurname": "Cummerata",
+                      "dateOfBirth": "8 Jul 1986",
+                      "age": "39",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "East Mafalda",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "bc52657b-3840-4757-a31d-28f15b74b680",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "ad6ba09f-d2cd-42c8-af2c-59570a159691",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "76GD5649126",
+                  "caseId": "b4561672-1a3f-4725-8e68-2f72790b1ae5",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "2f89da46-ea52-413e-a1e2-0bd7071d6d68",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Louie",
+                      "surname": "Durgan",
+                      "welshSurname": "Durgan",
+                      "dateOfBirth": "17 Aug 1992",
+                      "age": "33",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Mannside",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "047723d9-0876-4bf2-a433-25fb3eec5959",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "842eda09-52a2-4131-b328-8a3df12e6223",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "67GD9674126",
+                  "caseId": "2fe00a60-f933-4258-82c2-ca30f4316936",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "138be724-6ee9-4099-9c9e-3003ed968924",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Emelie",
+                      "surname": "Jakubowski",
+                      "welshSurname": "Jakubowski",
+                      "dateOfBirth": "13 Feb 1997",
+                      "age": "29",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Funkton",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "6302c545-ed9f-4a15-a304-299a3f92620e",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "ed6325a0-33a2-4985-83a8-bd2ff087ce0c",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "73GD1159026",
+                  "caseId": "d8185820-c131-4830-9155-6fe97eeb7e34",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "5d6216fb-b50b-418a-8386-2a01002689ff",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Mazie",
+                      "surname": "Mante",
+                      "welshSurname": "Mante",
+                      "dateOfBirth": "7 Oct 1997",
+                      "age": "28",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "West Tad",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "c05185b5-5412-41c5-b086-d2fafdc0d58c",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "66841af4-316e-4cc2-b383-0189eadcb887",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "86GD9743326",
+                  "caseId": "06100a80-ae49-406e-98ac-8d8bc145faaa",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "6ebc09a1-83e1-48e9-aa2a-dd6d49bd9268",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Halie",
+                      "surname": "Ortiz",
+                      "welshSurname": "Ortiz",
+                      "dateOfBirth": "7 Sept 1986",
+                      "age": "39",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Port Nels",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "cad73ca1-9a6d-4bdb-b1f1-fbfdc9506ee4",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "9fcc01bf-a169-48e4-9a5a-836ab352a7ea",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "72GD1781026",
+                  "caseId": "3d704a8d-9b9e-49e9-bfd4-88910529e076",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "4a9d9625-e86c-44a5-9c34-3dffed37257a",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Olga",
+                      "surname": "Gislason",
+                      "welshSurname": "Gislason",
+                      "dateOfBirth": "20 May 1989",
+                      "age": "36",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Harryborough",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "35740650-d7b8-4a3f-b345-7b43590a5568",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "7a598830-150b-4111-8139-ef9e52bb2729",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "76GD4467626",
+                  "caseId": "568e9c33-e6b9-4e86-8e37-78acbd696788",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "00893b60-5556-43d4-9410-28b22887d89a",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Maegan",
+                      "surname": "Collier",
+                      "welshSurname": "Collier",
+                      "dateOfBirth": "18 Apr 1983",
+                      "age": "42",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "North Marianehaven",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "6c3e8ef9-5e6a-4629-9ea3-ff8ad33ca5f1",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "fcc9bce3-6711-4a96-88f1-dd75e49bcfc3",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "51GD7968026",
+                  "caseId": "5e93e489-cd8b-42e9-bf3e-22d368e570b6",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "2370fe36-837f-4f2d-ad95-06d5fbe1c1d7",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Ally",
+                      "surname": "Sawayn",
+                      "welshSurname": "Sawayn",
+                      "dateOfBirth": "11 Oct 1997",
+                      "age": "28",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Baumbachville",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "aaa9e151-c336-4872-8465-f71ab6346053",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "bb1c56de-1838-4b87-b51d-c5960cace09e",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "50GD1892426",
+                  "caseId": "44728226-e8a6-4ace-9114-783acf27141e",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "8ab5bf11-a0a2-4f8a-a79e-896128b608a1",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Jarod",
+                      "surname": "Hoppe",
+                      "welshSurname": "Hoppe",
+                      "dateOfBirth": "22 Dec 1986",
+                      "age": "39",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Archfort",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "16755a7c-f2cc-4fe1-8d44-d047c8d5fedf",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "2715806c-b780-494f-8611-e7b970fa590a",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "45GD7904826",
+                  "caseId": "a2b7066e-645d-4c0f-a970-832d6d9738ac",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "95f15070-c526-4082-b1b6-d0f97457210a",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Laila",
+                      "surname": "Gerlach",
+                      "welshSurname": "Gerlach",
+                      "dateOfBirth": "30 Jun 1987",
+                      "age": "38",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Janborough",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "6f0081cc-57fb-41a2-95ca-3f4614abfda1",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "887d63a6-8d35-40fc-bfd6-fbda59ce06bf",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "27GD7735826",
+                  "caseId": "952f84c2-d8eb-4d0e-9ea8-65171c69447f",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "4198be9a-11a4-4cfb-b5e9-a1c24c9c586f",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Deonte",
+                      "surname": "Wiegand",
+                      "welshSurname": "Wiegand",
+                      "dateOfBirth": "18 Jul 1983",
+                      "age": "42",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "McClureland",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "24b9e6ea-e188-448f-a5fc-467dcc08e768",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "44ed689f-6083-44ab-8184-cf7755eec68d",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "28GD5222226",
+                  "caseId": "5d11db18-34b2-4f28-9557-192e4460f04b",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "03da4eaf-22b2-4d58-b26b-a1615ba23a9f",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Gunnar",
+                      "surname": "Hills",
+                      "welshSurname": "Hills",
+                      "dateOfBirth": "28 Jun 1989",
+                      "age": "36",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Dominiquemouth",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "4c4ab2bb-0143-47d5-9a8c-0e2e55ed803f",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "2108afcd-9572-462d-becf-5fe9588891ef",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "76GD5649126",
+                  "caseId": "b4561672-1a3f-4725-8e68-2f72790b1ae5",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "2f89da46-ea52-413e-a1e2-0bd7071d6d68",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Louie",
+                      "surname": "Durgan",
+                      "welshSurname": "Durgan",
+                      "dateOfBirth": "17 Aug 1992",
+                      "age": "33",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Mannside",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "047723d9-0876-4bf2-a433-25fb3eec5959",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "b5d79ed1-49e4-4c26-90b8-ca4a574cf0ed",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "85GD2338626",
+                  "caseId": "33ba3783-88ac-45a1-affc-135e8d447b6b",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "821030c2-25ac-4cab-9ee1-ec3030cd120f",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Horace",
+                      "surname": "Davis",
+                      "welshSurname": "Davis",
+                      "dateOfBirth": "25 Feb 1983",
+                      "age": "42",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Kohlerbury",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "fb5af35b-5701-43eb-867d-3d2984ca7ff2",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "eea5b5da-cd09-49c1-bfc7-1caa9efd7be3",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "53GD5202426",
+                  "caseId": "e837ecc0-2c8c-4691-be89-3ae58a14ea1c",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "d3b13e6d-7b9a-4380-b76d-2e6caf853250",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Lavinia",
+                      "surname": "Cummerata",
+                      "welshSurname": "Cummerata",
+                      "dateOfBirth": "8 Jul 1986",
+                      "age": "39",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "East Mafalda",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "bc52657b-3840-4757-a31d-28f15b74b680",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "2a075783-747e-45b0-b3be-089409e68b26",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "45GD7904826",
+                  "caseId": "a2b7066e-645d-4c0f-a970-832d6d9738ac",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "95f15070-c526-4082-b1b6-d0f97457210a",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Laila",
+                      "surname": "Gerlach",
+                      "welshSurname": "Gerlach",
+                      "dateOfBirth": "30 Jun 1987",
+                      "age": "38",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Janborough",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "6f0081cc-57fb-41a2-95ca-3f4614abfda1",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "8a76143f-8fd6-47bd-ade0-71896a48d950",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "40GD3565726",
+                  "caseId": "feeae83e-7d65-4912-964c-761654723f32",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "48b9c072-5e48-4c5e-a85a-734f2e2f5f6f",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Henriette",
+                      "surname": "Heaney",
+                      "welshSurname": "Heaney",
+                      "dateOfBirth": "1 Nov 1998",
+                      "age": "27",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "East Katherynburgh",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "a13bd11c-2585-4fd6-a67b-95521ca92758",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "9165e8ff-8e9f-4f68-a2da-5ff3a4749c36",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "88GD6710426",
+                  "caseId": "cded0097-6216-458b-a23e-4ec202663804",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "28c35af6-d91f-4701-ad52-6447eb63d8f2",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Dax",
+                      "surname": "Parker",
+                      "welshSurname": "Parker",
+                      "dateOfBirth": "10 Nov 1998",
+                      "age": "27",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "East Wilber",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "9f5fca45-645a-4273-9c3f-ab3e2543f10a",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "4e400144-299a-4510-80ba-af9363a58bb7",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "42GD4777626",
+                  "caseId": "17a4a233-51c5-4256-978f-3f1a3c4429ee",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "410efd05-1e0d-4cd1-acc1-ba2245725f6a",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Rebeka",
+                      "surname": "Kassulke",
+                      "welshSurname": "Kassulke",
+                      "dateOfBirth": "26 Jul 2001",
+                      "age": "24",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Hershelview",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "22a44e0d-d79e-4a9f-a90e-aa524ea3365d",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "dca64748-f84c-4c0d-a55c-f772101ae620",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "29GD6969226",
+                  "caseId": "c511ca1b-9836-4ca8-a386-73fec01a9a1a",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "d0255383-ca5d-4afb-9340-9ef5db8c498a",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Andy",
+                      "surname": "Bruen",
+                      "welshSurname": "Bruen",
+                      "dateOfBirth": "3 Sept 2000",
+                      "age": "25",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "East Oceaneborough",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "77246852-94b4-4ab7-b077-28cfd7f1ccdf",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "c39e1fb9-9365-4c8c-8533-e3d48d5c5548",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "72GD1781026",
+                  "caseId": "3d704a8d-9b9e-49e9-bfd4-88910529e076",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "4a9d9625-e86c-44a5-9c34-3dffed37257a",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Olga",
+                      "surname": "Gislason",
+                      "welshSurname": "Gislason",
+                      "dateOfBirth": "20 May 1989",
+                      "age": "36",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Harryborough",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "35740650-d7b8-4a3f-b345-7b43590a5568",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "45269cb9-2410-440c-99f3-79a4291813bd",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "22GD7089726",
+                  "caseId": "a2245534-1d51-4687-a929-3c7d412811c7",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "2e13052d-d18f-43fe-b725-1f1cef4c4347",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Imelda",
+                      "surname": "Nader",
+                      "welshSurname": "Nader",
+                      "dateOfBirth": "6 Dec 1988",
+                      "age": "37",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "East Lafayette",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "fee5ffd3-9aee-4111-8044-e6cd8733e483",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "3f56c4ef-4f21-40ca-9ffc-04b222a47ca1",
+                  "sequence": 1,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "22GD4573226",
+                  "caseId": "5d29c70c-73d6-41a5-9000-8d02fd0d40e2",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "a009d729-e9de-4ec8-9a9f-3d8796dc95e2",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Lorenza",
+                      "surname": "Paucek",
+                      "welshSurname": "Paucek",
+                      "dateOfBirth": "10 Sept 2000",
+                      "age": "25",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "West Kaylee",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "0aaac4be-f3f2-4e36-ab50-3654225112ae",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "50188528-0042-4fa4-9ebd-f4d521783cc3",
+                  "sequence": 2,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "74GD5198726",
+                  "caseId": "71d49aa8-8aae-4d55-9e3a-3612d18753e5",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "6e470dbd-a32f-498f-a79c-078bb49bfae2",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Gerda",
+                      "surname": "Marks",
+                      "welshSurname": "Marks",
+                      "dateOfBirth": "8 Nov 2001",
+                      "age": "24",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Lake Annabelleport",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "aad477a8-4f98-4ad1-9fd9-7b5d2ac58ce7",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "7edbceed-e248-46dc-9488-ec92ba9c06df",
+                  "sequence": 3,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "22GD4573226",
+                  "caseId": "5d29c70c-73d6-41a5-9000-8d02fd0d40e2",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "a009d729-e9de-4ec8-9a9f-3d8796dc95e2",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Lorenza",
+                      "surname": "Paucek",
+                      "welshSurname": "Paucek",
+                      "dateOfBirth": "10 Sept 2000",
+                      "age": "25",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "West Kaylee",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "0aaac4be-f3f2-4e36-ab50-3654225112ae",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "0bb92f22-5da5-4cbe-af7e-42bdbc3fe2e8",
+                  "sequence": 4,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "35GD4475026",
+                  "caseId": "249ae8da-c4d7-4b3a-8475-97bff7c0c8d6",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "03a6b495-b4af-48db-920d-8596095e606b",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Jasmin",
+                      "surname": "Kirlin",
+                      "welshSurname": "Kirlin",
+                      "dateOfBirth": "8 Oct 1982",
+                      "age": "43",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Windlerton",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "b1f29bd7-5ddf-48cb-b411-dbd38c80d817",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "0df4486f-5ce5-43a0-8ac0-689a2e825524",
+                  "sequence": 5,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "14GD1020826",
+                  "caseId": "f77a4e17-07e0-4f18-94be-bfdc14667e2f",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "77a2abe7-d3db-4b94-9cfc-c7b0f6b564d7",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Kiera",
+                      "surname": "Smitham",
+                      "welshSurname": "Smitham",
+                      "dateOfBirth": "29 Dec 1992",
+                      "age": "33",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Thadshire",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "c0cd5c2e-6fb7-4993-9ef1-0f84713ca661",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "1ac661c0-be02-4247-80da-514725e4ceee",
+                  "sequence": 6,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "99GD6475326",
+                  "caseId": "62d770aa-0ab7-4866-a35f-352fb0b0a592",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "a3ebe842-1f06-487a-8660-cfc044e0008b",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Maxine",
+                      "surname": "Gutmann",
+                      "welshSurname": "Gutmann",
+                      "dateOfBirth": "13 May 1989",
+                      "age": "36",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Port Theodore",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "1206fecb-4fd2-44e7-b16c-afaa0bbc555f",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "2b4335e1-68ca-4b85-8543-21d57c2fdce2",
+                  "sequence": 7,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "97GD3647426",
+                  "caseId": "bda5d1e7-29d9-4fad-9e74-c0cdd29165ed",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "5565d7a9-85f9-419e-ab04-103b22caea2c",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Brendon",
+                      "surname": "Donnelly",
+                      "welshSurname": "Donnelly",
+                      "dateOfBirth": "28 Dec 1982",
+                      "age": "43",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Lake Laron",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "15dc656c-26b2-4195-ad90-6d6d5a6b6a34",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "35869fa3-9721-4921-acc0-2ba05105d653",
+                  "sequence": 8,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "72GD7603226",
+                  "caseId": "5606193b-673a-4613-8024-bedabf57058f",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "7040f9a1-7e49-40f5-be0a-8c4ef44ef5fa",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Marisol",
+                      "surname": "Buckridge",
+                      "welshSurname": "Buckridge",
+                      "dateOfBirth": "25 Jan 1989",
+                      "age": "37",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Larsonborough",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "c3143a64-46ee-4df9-a62d-ed9d1f011049",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "3c3427e8-8db8-4426-9d79-2dc557a64eb3",
+                  "sequence": 9,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "75GD1927426",
+                  "caseId": "41b53449-b9e6-4814-9cf0-fb7a9c61336a",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "08bd774c-1412-4e00-9e6c-9fd0de2fb874",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Gaston",
+                      "surname": "Schimmel",
+                      "welshSurname": "Schimmel",
+                      "dateOfBirth": "24 Oct 1995",
+                      "age": "30",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Lake Tabitha",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "c2bb5c78-697c-48c0-92f9-d47b17938597",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "48aeb38c-23dd-43d4-98b2-c198284741b1",
+                  "sequence": 10,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "58GD8976626",
+                  "caseId": "47cc81dd-1c43-4637-84b3-5d56e3b304fc",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "ff64a13d-afe5-4b6e-b3d8-46d46537cdb5",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Dillan",
+                      "surname": "Muller",
+                      "welshSurname": "Muller",
+                      "dateOfBirth": "5 Oct 1982",
+                      "age": "43",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Kesslerberg",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "3bdd0e6b-1cee-4487-af0f-18290673be84",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "51596272-b0bb-4a0a-a95a-310f81ac4825",
+                  "sequence": 11,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "23GD5708926",
+                  "caseId": "2882a1d0-b917-4d67-8ae4-4e6c1e2cc327",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "670ee7bd-0ea8-4263-a6f8-ea1f87336100",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Ian",
+                      "surname": "Hansen",
+                      "welshSurname": "Hansen",
+                      "dateOfBirth": "31 Aug 1991",
+                      "age": "34",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Port Denamouth",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "b18ca29e-3ba5-4a09-8fe9-c0cdead56574",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "5a0aee76-e3bc-4430-9f7d-0de1f6eb73aa",
+                  "sequence": 12,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "71GD7404926",
+                  "caseId": "4518c419-bfe2-4539-89d4-88c1c20424c9",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "4ee9edd2-e72a-4438-af5a-d943f685882e",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Lauriane",
+                      "surname": "Mertz",
+                      "welshSurname": "Mertz",
+                      "dateOfBirth": "25 Jul 1985",
+                      "age": "40",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Rainafort",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "3b903878-c72f-4ed2-8ba9-c6dbf73a3e74",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "6ac8eb80-eab7-4dfb-b63a-b853620e10c5",
+                  "sequence": 13,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "97GD3647426",
+                  "caseId": "bda5d1e7-29d9-4fad-9e74-c0cdd29165ed",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "5565d7a9-85f9-419e-ab04-103b22caea2c",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Brendon",
+                      "surname": "Donnelly",
+                      "welshSurname": "Donnelly",
+                      "dateOfBirth": "28 Dec 1982",
+                      "age": "43",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Lake Laron",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "15dc656c-26b2-4195-ad90-6d6d5a6b6a34",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "7532a9c2-bcfa-46d3-a1bd-fc285a64fc74",
+                  "sequence": 14,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "49GD8000926",
+                  "caseId": "9ad2c97e-901c-475e-befe-3561c45ecc84",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "9e727752-3793-4d9f-b943-592e02439657",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Talon",
+                      "surname": "Abshire",
+                      "welshSurname": "Abshire",
+                      "dateOfBirth": "15 Jul 1989",
+                      "age": "36",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Dawsonbury",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "5a0a4460-ff45-4f3d-97ff-92080252c701",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "7bc6e32a-7abe-42fe-81ca-b4c2636efa56",
+                  "sequence": 15,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "24GD3070626",
+                  "caseId": "a082cacf-3d04-4a92-8f5f-0a0d9f0e49b3",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "dc83816d-96e4-4c2c-92a6-551d56188d5b",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Omer",
+                      "surname": "Bartoletti",
+                      "welshSurname": "Bartoletti",
+                      "dateOfBirth": "26 Sept 1998",
+                      "age": "27",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Langoshfurt",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "c41f1b55-5121-46c5-a87a-02545f01835a",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "8859e351-c360-40f3-8a4c-f75915b9b589",
+                  "sequence": 16,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "70GD2286526",
+                  "caseId": "9df13299-9039-400d-8dbc-4f11c5038e05",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "63105d5a-bc95-49c4-9f18-541da2045b3f",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Beth",
+                      "surname": "Padberg",
+                      "welshSurname": "Padberg",
+                      "dateOfBirth": "10 Jul 1980",
+                      "age": "45",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Markshaven",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "090eba84-711a-4b63-b7b7-f999a3fe890b",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "900b4405-42d4-4a1b-abec-eec9b0384020",
+                  "sequence": 17,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "54GD6667026",
+                  "caseId": "a4d70bd8-807f-460f-b1fe-550afca535c5",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "7a4d514e-074e-4470-a5cf-8f5f3bba197a",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Mason",
+                      "surname": "Weissnat",
+                      "welshSurname": "Weissnat",
+                      "dateOfBirth": "29 Oct 1986",
+                      "age": "39",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "South Zechariahmouth",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "18cdeac0-b454-45ed-b137-f379e91c2ad3",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "93ffb9df-2c90-47c1-8da1-fffd9772f6ac",
+                  "sequence": 18,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "20GD4844126",
+                  "caseId": "261d0e73-33fc-49e2-9950-6b2def3287bc",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "72254e50-2983-4c74-8e41-babb6cba739a",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Clarabelle",
+                      "surname": "Casper",
+                      "welshSurname": "Casper",
+                      "dateOfBirth": "14 Jun 1983",
+                      "age": "42",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "North Candidaville",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "86fd8631-5f42-4cef-a300-7a453947d4d5",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "9946e2ca-011b-4d9c-8a6b-67dcdb428d72",
+                  "sequence": 19,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "54GD6667026",
+                  "caseId": "a4d70bd8-807f-460f-b1fe-550afca535c5",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "7a4d514e-074e-4470-a5cf-8f5f3bba197a",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Mason",
+                      "surname": "Weissnat",
+                      "welshSurname": "Weissnat",
+                      "dateOfBirth": "29 Oct 1986",
+                      "age": "39",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "South Zechariahmouth",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "18cdeac0-b454-45ed-b137-f379e91c2ad3",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "a767419f-16f0-4f64-bb20-0ed140412f12",
+                  "sequence": 20,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "17GD9790226",
+                  "caseId": "40ae1470-33d0-48e3-9bc4-31763a097b70",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "6a909186-aaf5-4db1-a9f1-71ee2d37eccb",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Abigayle",
+                      "surname": "Daugherty",
+                      "welshSurname": "Daugherty",
+                      "dateOfBirth": "11 Oct 1987",
+                      "age": "38",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "East Gonzalo",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "7f72c1cc-bec2-4675-bab7-d9c5e1cde569",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "ab848748-22e3-4fb9-9689-b3b8e9bf4b1c",
+                  "sequence": 21,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "91GD1164826",
+                  "caseId": "b54bb8e2-b024-4c85-93e4-c15ad50b3758",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "83febd6f-f55b-4c4a-8b71-e35ec6a491aa",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Jordon",
+                      "surname": "Rosenbaum",
+                      "welshSurname": "Rosenbaum",
+                      "dateOfBirth": "16 Apr 1996",
+                      "age": "29",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "East Vladimirchester",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "645c09e4-14cc-4388-bf5f-2789985a8d4c",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "bad3d133-08b5-4442-971c-3cdabb1d72db",
+                  "sequence": 22,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "58GD8976626",
+                  "caseId": "47cc81dd-1c43-4637-84b3-5d56e3b304fc",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "ff64a13d-afe5-4b6e-b3d8-46d46537cdb5",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Dillan",
+                      "surname": "Muller",
+                      "welshSurname": "Muller",
+                      "dateOfBirth": "5 Oct 1982",
+                      "age": "43",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Kesslerberg",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "3bdd0e6b-1cee-4487-af0f-18290673be84",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "c967407d-1f4d-4c9c-aabc-d05e0ec1ef49",
+                  "sequence": 23,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "36GD3379626",
+                  "caseId": "6004483b-d44f-4fb2-abf2-2a80022fe404",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "28324876-61ff-42f1-b35a-977d7b58aa18",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Benjamin",
+                      "surname": "Bogan",
+                      "welshSurname": "Bogan",
+                      "dateOfBirth": "7 Mar 1989",
+                      "age": "36",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Hobartport",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "20424e0b-ef92-4938-94ff-f20a3e9f5fee",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "d61f4316-56e7-41ae-925c-0349c79d870e",
+                  "sequence": 24,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "69GD3697126",
+                  "caseId": "ba76fdf0-02fe-42e0-bdad-e8a7f4251fe5",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "7b224f27-4a97-4075-aedf-9b262ddb32ad",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Dimitri",
+                      "surname": "Koelpin",
+                      "welshSurname": "Koelpin",
+                      "dateOfBirth": "6 Jan 1982",
+                      "age": "44",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "New Catharineport",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "f1e7c74b-de7a-49c4-8f27-8b7f215cbb87",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "d81e8284-dcbb-46bb-9ac0-db2cb5cde880",
+                  "sequence": 25,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "40GD1889126",
+                  "caseId": "a14e3766-4166-4366-a19d-b321d372c113",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "145bf0d4-1cdf-44de-8e0c-e47b20603a62",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Johanna",
+                      "surname": "Barrows",
+                      "welshSurname": "Barrows",
+                      "dateOfBirth": "27 Sept 1980",
+                      "age": "45",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Port Lillianchester",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "e021bf1f-dfa0-48a4-9b77-fa2f047adbaf",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "de8fbdf7-f542-4359-954b-ca63fdc8c188",
+                  "sequence": 26,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "40GD1889126",
+                  "caseId": "a14e3766-4166-4366-a19d-b321d372c113",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "145bf0d4-1cdf-44de-8e0c-e47b20603a62",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Johanna",
+                      "surname": "Barrows",
+                      "welshSurname": "Barrows",
+                      "dateOfBirth": "27 Sept 1980",
+                      "age": "45",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Port Lillianchester",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "e021bf1f-dfa0-48a4-9b77-fa2f047adbaf",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "e879b885-4a20-4568-b370-ec0e4b4deac0",
+                  "sequence": 27,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "87GD7885226",
+                  "caseId": "d559af15-7afe-453d-b786-a10de156e045",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "6d8b1971-9aca-4409-8363-510eabb68bef",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Tiara",
+                      "surname": "Turner",
+                      "welshSurname": "Turner",
+                      "dateOfBirth": "26 Jun 1986",
+                      "age": "39",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Watsicashire",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "05ec8fdb-e49e-4272-b310-cb61596fe92c",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "ee527fb6-4ac7-46bc-8d1f-6601da55d7ff",
+                  "sequence": 28,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "20GD4844126",
+                  "caseId": "261d0e73-33fc-49e2-9950-6b2def3287bc",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "72254e50-2983-4c74-8e41-babb6cba739a",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Clarabelle",
+                      "surname": "Casper",
+                      "welshSurname": "Casper",
+                      "dateOfBirth": "14 Jun 1983",
+                      "age": "42",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "North Candidaville",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "86fd8631-5f42-4cef-a300-7a453947d4d5",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "efd65277-4cc2-42d0-a8e2-8709745672f5",
+                  "sequence": 29,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "91GD2340926",
+                  "caseId": "204159d3-90e9-49b2-81d1-90f3ff148d8d",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "4f5d5d77-0a28-4f5b-9fcf-224ee14af2ec",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Liza",
+                      "surname": "Paucek",
+                      "welshSurname": "Paucek",
+                      "dateOfBirth": "4 Jun 1983",
+                      "age": "42",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Connton",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "b3384bdb-d396-4f1b-ba72-d9a5b7562db0",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "f1fa06fa-10ac-4f81-a6d7-93678c87bacb",
+                  "sequence": 30,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "12GD9898226",
+                  "caseId": "d38b30ec-e71c-47a4-92a0-a96ce379daaa",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "abe159b2-3751-46e3-b9a0-768f1cee7c30",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Kayla",
+                      "surname": "Zieme",
+                      "welshSurname": "Zieme",
+                      "dateOfBirth": "19 Sept 1985",
+                      "age": "40",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Port Dewittburgh",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "af5efa32-3c48-41b3-8101-990c25d5dab5",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "fadb5812-87ba-461d-94fd-c92122e485c2",
+                  "sequence": 31,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "81GD3892026",
+                  "caseId": "43686ece-950d-4d06-8f71-19c3fac957b6",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "c58d4350-a4bd-4614-8275-f143c34cc3f8",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Abelardo",
+                      "surname": "Shields",
+                      "welshSurname": "Shields",
+                      "dateOfBirth": "4 Aug 1987",
+                      "age": "38",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Ryanfort",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "e0da7619-6d95-4424-ad28-7d6e1a36eafa",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "fb4799d7-d672-4544-89cc-2abf60c82144",
+                  "sequence": 32,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "70GD2286526",
+                  "caseId": "9df13299-9039-400d-8dbc-4f11c5038e05",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "63105d5a-bc95-49c4-9f18-541da2045b3f",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Beth",
+                      "surname": "Padberg",
+                      "welshSurname": "Padberg",
+                      "dateOfBirth": "10 Jul 1980",
+                      "age": "45",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Markshaven",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "090eba84-711a-4b63-b7b7-f999a3fe890b",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                },
+                {
+                  "id": "feae01c0-50d2-4c55-917b-1b642aeff5e4",
+                  "sequence": 33,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "First hearing",
+                  "welshHearingType": "Gwrandawiad Cyntaf",
+                  "caseNumber": "44GD5465726",
+                  "caseId": "878bde49-70e1-454b-82a4-65d60794a446",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "cbe2f137-b6f2-42bc-845f-917f4150979d",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Dixie",
+                      "surname": "Miller",
+                      "welshSurname": "Miller",
+                      "dateOfBirth": "18 Aug 1990",
+                      "age": "35",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Port Edgardofurt",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "ecc5f9c3-c6ab-4d1a-9bce-57dc79c77bab",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": ""
+                }
+              ]
+            },
+            {
+              "hearings": [
+                {
+                  "id": "ed850877-2ecc-4907-8592-6452bab570ad",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "17:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "22GD7089726",
+                  "caseId": "a2245534-1d51-4687-a929-3c7d412811c7",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "2e13052d-d18f-43fe-b725-1f1cef4c4347",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Imelda",
+                      "surname": "Nader",
+                      "welshSurname": "Nader",
+                      "dateOfBirth": "6 Dec 1988",
+                      "age": "37",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "East Lafayette",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "fee5ffd3-9aee-4111-8044-e6cd8733e483",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "1bc0fe9e-637d-44e6-b445-bf4b9ec6c72e",
+                  "sequence": 1,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "17:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "12GD9898226",
+                  "caseId": "d38b30ec-e71c-47a4-92a0-a96ce379daaa",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "abe159b2-3751-46e3-b9a0-768f1cee7c30",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Kayla",
+                      "surname": "Zieme",
+                      "welshSurname": "Zieme",
+                      "dateOfBirth": "19 Sept 1985",
+                      "age": "40",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Port Dewittburgh",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "af5efa32-3c48-41b3-8101-990c25d5dab5",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                }
+              ]
+            },
+            {
+              "hearings": [
+                {
+                  "id": "1076fa54-c94d-4981-8f0c-4bf158869f88",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "18:15",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "73GD1159026",
+                  "caseId": "d8185820-c131-4830-9155-6fe97eeb7e34",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "5d6216fb-b50b-418a-8386-2a01002689ff",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Mazie",
+                      "surname": "Mante",
+                      "welshSurname": "Mante",
+                      "dateOfBirth": "7 Oct 1997",
+                      "age": "28",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "West Tad",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "c05185b5-5412-41c5-b086-d2fafdc0d58c",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "f608d7ba-4b61-4874-b0a0-28315884c0db",
+                  "sequence": 1,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "18:15",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "49GD8000926",
+                  "caseId": "9ad2c97e-901c-475e-befe-3561c45ecc84",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "9e727752-3793-4d9f-b943-592e02439657",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Talon",
+                      "surname": "Abshire",
+                      "welshSurname": "Abshire",
+                      "dateOfBirth": "15 Jul 1989",
+                      "age": "36",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Dawsonbury",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "5a0a4460-ff45-4f3d-97ff-92080252c701",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                }
+              ]
+            },
+            {
+              "hearings": [
+                {
+                  "id": "846457a7-c2dc-4832-841a-57d60c54826b",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "18:35",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "88GD6710426",
+                  "caseId": "cded0097-6216-458b-a23e-4ec202663804",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "28c35af6-d91f-4701-ad52-6447eb63d8f2",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Dax",
+                      "surname": "Parker",
+                      "welshSurname": "Parker",
+                      "dateOfBirth": "10 Nov 1998",
+                      "age": "27",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "East Wilber",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "9f5fca45-645a-4273-9c3f-ab3e2543f10a",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "e31c368b-0fc6-456d-a9ce-abb6318f6f39",
+                  "sequence": 1,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "18:35",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "44GD5465726",
+                  "caseId": "878bde49-70e1-454b-82a4-65d60794a446",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "cbe2f137-b6f2-42bc-845f-917f4150979d",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Dixie",
+                      "surname": "Miller",
+                      "welshSurname": "Miller",
+                      "dateOfBirth": "18 Aug 1990",
+                      "age": "35",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Port Edgardofurt",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "ecc5f9c3-c6ab-4d1a-9bce-57dc79c77bab",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "courtRoomName": "Courtroom 02",
+          "welshCourtRoomName": "Courtroom 02",
+          "judiciaryNames": "",
+          "welshJudiciaryNames": "",
+          "timeslots": [
+            {
+              "hearings": [
+                {
+                  "id": "ddf6f737-0603-4014-9e04-e3c9e83dbeef",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "11:12",
+                  "hearingType": "Sentence",
+                  "welshHearingType": "Dedfryd",
+                  "caseNumber": "26GD9136326",
+                  "caseId": "cc54a743-800f-4e14-9828-4b78b5b4c15d",
+                  "prosecutorType": "TVL",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "afe7a65d-a7d2-4363-92fe-963497f47c6f",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Deion",
+                      "surname": "Aufderhar",
+                      "welshSurname": "Aufderhar",
+                      "dateOfBirth": "24 Jul 1996",
+                      "age": "29",
+                      "nationality": "British",
+                      "address": {
+                        "address1": "L87AnYdLiY"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "62685774-3c00-401c-9deb-bc956056b419",
+                          "offenceTitle": "Fail / refuse give assistance to person executing Communications Act search warrant",
+                          "welshOffenceTitle": "Fail / refuse give assistance to person executing Communications Act search warrant",
+                          "offenceWording": "Some offence wording"
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-01-28"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "courtRoomName": "Courtroom 06",
+          "welshCourtRoomName": "Courtroom 06",
+          "judiciaryNames": "District Judge (MC) Daber, Mr Flowers JP",
+          "welshJudiciaryNames": "  Daber, Mr  Flowers YH",
+          "timeslots": [
+            {
+              "hearings": [
+                {
+                  "id": "d40d04d1-55a9-4709-8e87-5040cfe89180",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "99GD6475326",
+                  "caseId": "62d770aa-0ab7-4866-a35f-352fb0b0a592",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "a3ebe842-1f06-487a-8660-cfc044e0008b",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Maxine",
+                      "surname": "Gutmann",
+                      "welshSurname": "Gutmann",
+                      "dateOfBirth": "13 May 1989",
+                      "age": "36",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Port Theodore",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "1206fecb-4fd2-44e7-b16c-afaa0bbc555f",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "132b6296-4f76-4f98-a2a3-f82d27b5ea49",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "35GD4475026",
+                  "caseId": "249ae8da-c4d7-4b3a-8475-97bff7c0c8d6",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "03a6b495-b4af-48db-920d-8596095e606b",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Jasmin",
+                      "surname": "Kirlin",
+                      "welshSurname": "Kirlin",
+                      "dateOfBirth": "8 Oct 1982",
+                      "age": "43",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Windlerton",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "b1f29bd7-5ddf-48cb-b411-dbd38c80d817",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "10be294b-6a79-4718-87a4-c435b673c3fa",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "64GD5444126",
+                  "caseId": "5a27583e-6015-4533-931e-d6e21e68f5d3",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "3408c6d0-fb06-47c9-b2c5-71e30a5d99a7",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Edwina",
+                      "surname": "Robel",
+                      "welshSurname": "Robel",
+                      "dateOfBirth": "21 Nov 1999",
+                      "age": "26",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "New Lula",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "588dc1b2-5888-4b0e-b994-f75f0ccbb04b",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "448bf3aa-f41f-47ef-b5c4-6ac7d06bbd81",
+                  "sequence": 0,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "42GD4777626",
+                  "caseId": "17a4a233-51c5-4256-978f-3f1a3c4429ee",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "410efd05-1e0d-4cd1-acc1-ba2245725f6a",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Rebeka",
+                      "surname": "Kassulke",
+                      "welshSurname": "Kassulke",
+                      "dateOfBirth": "26 Jul 2001",
+                      "age": "24",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Hershelview",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "22a44e0d-d79e-4a9f-a90e-aa524ea3365d",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "courtRoomName": "Courtroom 07",
+          "welshCourtRoomName": "Courtroom 07",
+          "judiciaryNames": "His Honour Judge Cooke, His Honour Judge Hopmeier",
+          "welshJudiciaryNames": "  Cooke,   Hopmeier",
+          "timeslots": [
+            {
+              "hearings": [
+                {
+                  "id": "bc997892-a702-48a5-a190-5054950331af",
+                  "sequence": 1,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "18:30",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "14GD1020826",
+                  "caseId": "f77a4e17-07e0-4f18-94be-bfdc14667e2f",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "77a2abe7-d3db-4b94-9cfc-c7b0f6b564d7",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Kiera",
+                      "surname": "Smitham",
+                      "welshSurname": "Smitham",
+                      "dateOfBirth": "29 Dec 1992",
+                      "age": "33",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Thadshire",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "c0cd5c2e-6fb7-4993-9ef1-0f84713ca661",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "af81c6a4-22c5-4e30-bed7-bda187805e20",
+                  "sequence": 2,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "18:30",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "76GD4467626",
+                  "caseId": "568e9c33-e6b9-4e86-8e37-78acbd696788",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "00893b60-5556-43d4-9410-28b22887d89a",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Maegan",
+                      "surname": "Collier",
+                      "welshSurname": "Collier",
+                      "dateOfBirth": "18 Apr 1983",
+                      "age": "42",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "North Marianehaven",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "6c3e8ef9-5e6a-4629-9ea3-ff8ad33ca5f1",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                }
+              ]
+            },
+            {
+              "hearings": [
+                {
+                  "id": "091f27c8-3423-4c21-b6a9-542dd546ed08",
+                  "sequence": 1,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "18:45",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "85GD2338626",
+                  "caseId": "33ba3783-88ac-45a1-affc-135e8d447b6b",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "821030c2-25ac-4cab-9ee1-ec3030cd120f",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Horace",
+                      "surname": "Davis",
+                      "welshSurname": "Davis",
+                      "dateOfBirth": "25 Feb 1983",
+                      "age": "42",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Kohlerbury",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "fb5af35b-5701-43eb-867d-3d2984ca7ff2",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "fafcf988-4d27-4b6b-97bb-54b9367a4475",
+                  "sequence": 2,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "18:45",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "39GD9365726",
+                  "caseId": "fcd38584-70b5-4831-b89e-b37ca29863a7",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "a1b98744-533e-4da8-a120-9cc540d7df39",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Evalyn",
+                      "surname": "McDermott",
+                      "welshSurname": "McDermott",
+                      "dateOfBirth": "23 Apr 1996",
+                      "age": "29",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "North Krystina",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "52077ee6-b68e-4131-a7b2-8a6b678caec6",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "75992e9c-9a91-4b30-91b8-014c3a844349",
+                  "sequence": 3,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "18:45",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "38GD6504026",
+                  "caseId": "943fa07c-d35f-4c1c-a2d7-a2638ba5110c",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "3eebde5d-f238-486a-b181-046b3dd9be93",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Alysson",
+                      "surname": "Cummings",
+                      "welshSurname": "Cummings",
+                      "dateOfBirth": "21 Feb 1981",
+                      "age": "44",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Schinnertown",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "48fdbe30-6191-42ad-bded-0f70fb2a283e",
+                          "offenceCode": "OFFCODE112",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "f6db3cd9-43f1-4215-b1a3-aabe46aff53c",
+                  "sequence": 4,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "18:45",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "75GD1927426",
+                  "caseId": "41b53449-b9e6-4814-9cf0-fb7a9c61336a",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "08bd774c-1412-4e00-9e6c-9fd0de2fb874",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Gaston",
+                      "surname": "Schimmel",
+                      "welshSurname": "Schimmel",
+                      "dateOfBirth": "24 Oct 1995",
+                      "age": "30",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Lake Tabitha",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "c2bb5c78-697c-48c0-92f9-d47b17938597",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "3c4fa49b-b69e-48b7-9a6b-ecd61cbd70a1",
+                  "sequence": 5,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "18:45",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "17GD9790226",
+                  "caseId": "40ae1470-33d0-48e3-9bc4-31763a097b70",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "6a909186-aaf5-4db1-a9f1-71ee2d37eccb",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Abigayle",
+                      "surname": "Daugherty",
+                      "welshSurname": "Daugherty",
+                      "dateOfBirth": "11 Oct 1987",
+                      "age": "38",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "East Gonzalo",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "7f72c1cc-bec2-4675-bab7-d9c5e1cde569",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                },
+                {
+                  "id": "fad8cfd0-381a-4519-b525-0df3e02bfe9b",
+                  "sequence": 6,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "18:45",
+                  "hearingType": "Trial",
+                  "welshHearingType": "Treial",
+                  "caseNumber": "91GD2340926",
+                  "caseId": "204159d3-90e9-49b2-81d1-90f3ff148d8d",
+                  "prosecutorType": "CITYPF",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "4f5d5d77-0a28-4f5b-9fcf-224ee14af2ec",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Liza",
+                      "surname": "Paucek",
+                      "welshSurname": "Paucek",
+                      "dateOfBirth": "4 Jun 1983",
+                      "age": "42",
+                      "nationality": "",
+                      "address": {
+                        "address1": "Address line 1",
+                        "address2": "Address line 2",
+                        "address3": "Address line 3",
+                        "address4": "Address line 4",
+                        "address5": "Connton",
+                        "postcode": "TW14 9XD"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "b3384bdb-d396-4f1b-ba72-d9a5b7562db0",
+                          "offenceTitle": "Use a television set without a licence",
+                          "welshOffenceTitle": "Defnyddio set deledu heb drwydded",
+                          "offenceWording": "From 18 January 2026, used a television receiver without a licence."
+                        }
+                      ]
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-17"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "courtRoomName": "Courtroom 12 (Leonardo Hotel)",
+          "welshCourtRoomName": "Courtroom 12 (Leonardo Hotel)",
+          "judiciaryNames": "District Judge (MC) Daber, Mr Flowers JP",
+          "welshJudiciaryNames": "  Daber, Mr  Flowers YH",
+          "timeslots": []
+        }
+      ]
+    }
+  ],
+  "templateName": "BenchAndStandardCourtList",
+  "ouCode": "C01CY00",
+  "courtId": "07e45c88-9e5d-3e44-b664-d5345bb13be2",
+  "courtIdNumeric": "418",
+  "oucodeL1Code": "C",
+  "oucodeL1Name": "Crown Courts",
+  "oucodeL3Name": "Croydon Crown Court",
+  "oucodeL3WelshName": "Llys Y Goron Croydon",
+  "address1": "The Law Courts",
+  "address2": "Altyre Road",
+  "address3": "Croydon",
+  "postcode": "CR9 5AB",
+  "defaultStartTime": "10:00:00",
+  "defaultDurationHrs": "07:00:00",
+  "courtLocationCode": "0418"
+}

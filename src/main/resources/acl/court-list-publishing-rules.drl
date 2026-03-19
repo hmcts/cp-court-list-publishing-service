@@ -1,24 +1,34 @@
 import uk.gov.moj.cpp.authz.drools.Outcome;
 import uk.gov.moj.cpp.authz.drools.Action;
+import uk.gov.hmcts.cp.acl.SecurityGroupConstants;
 
 global uk.gov.moj.cpp.authz.http.providers.UserAndGroupProvider userAndGroupProvider;
 
-rule "Allow – files"
-when
-  $o: Outcome()
-  $a: Action(name == "courtlistpublishing-service.files")
-  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, "Legal Advisers","District Judge","System Users"))
-then
-  $o.setSuccess(true);
-end
-
-rule "Allow – court-list-publish"
+rule "Allow – court-list-publish and download"
 when
   $o: Outcome()
   $a: Action(name == "courtlistpublishing-service.publish.post" ||
-             name == "courtlistpublishing-service.publish.get")
-  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, "Legal Advisers","District Judge","System Users"))
+             name == "courtlistpublishing-service.publish.get" ||
+             name == "courtlistpublishing-service.files.download" ||
+             name == "courtlistpublishing-service.download.post")
+  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, SecurityGroupConstants.getPublishingRoles()))
 then
   $o.setSuccess(true);
 end
 
+rule "Allow – test-auth (public access)"
+when
+  $o: Outcome()
+  $a: Action(name == "courtlistpublishing-service.test-auth.post")
+then
+  $o.setSuccess(true);
+end
+
+rule "Allow – public-court-list"
+when
+  $o: Outcome()
+  $a: Action(name == "courtlistpublishing-service.public-court-list.get")
+  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, SecurityGroupConstants.getPublishingRoles()))
+then
+  $o.setSuccess(true);
+end

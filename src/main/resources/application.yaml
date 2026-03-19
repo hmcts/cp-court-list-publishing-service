@@ -18,6 +18,23 @@ spring:
     virtual:
       enabled: ${VIRTUAL_THREADS:false}
 
+courtlistpublishing:
+  system-user-id: ${COURTLISTPUBLISHING_SYSTEM_USER_ID:}
+
+common-platform-query-api:
+  base-url: ${CP_CLP_BASE_URL:http://localhost:8080}
+  ssl:
+    verify: ${COMMON_PLATFORM_QUERY_API_SSL_VERIFY:false}
+
+# CaTH endpoint configuration
+cath:
+  # Non-production default avoids internal hostnames in repo; set CATH_BASE_URL in each environment
+  base-url: ${CATH_BASE_URL:http://localhost:8080}
+  endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
+  publishing-enabled: ${CATH_PUBLISHING_ENABLED:false}
+taskmanager:
+  schema:
+    enabled: true
 # Temporarily commented out due to SpringDoc compatibility issues with Spring Boot 4.0.0-M3
 # springdoc:
 #   packagesToScan: uk.gov.hmcts.cp.controllers

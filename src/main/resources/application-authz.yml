@@ -7,7 +7,7 @@ authz:
     action-header: "CPP-ACTION"
     accept-header: "application/vnd.usersgroups.get-logged-in-user-permissions+json"
     drools-classpath-pattern: "classpath:/acl/**/*.drl"
-    reload-on-each-request: true
+    reload-on-each-request: false
     action-required: false
     deny-when-no-rules: true
     group-aliases:

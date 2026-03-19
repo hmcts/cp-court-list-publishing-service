@@ -1,16 +1,18 @@
 package uk.gov.hmcts.cp.services;
 
-import uk.gov.hmcts.cp.domain.CourtListPublishStatusEntity;
+import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
-import uk.gov.hmcts.cp.openapi.model.PublishStatus;
-import uk.gov.hmcts.cp.repositories.CourtListPublishStatusRepository;
+import uk.gov.hmcts.cp.openapi.model.Status;
+import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,18 +31,19 @@ public class CourtListPublishStatusService {
     private static final Logger LOG = LoggerFactory.getLogger(CourtListPublishStatusService.class);
     private static final String ERROR_COURT_LIST_ID_REQUIRED = "Court list ID is required";
     private static final String ERROR_COURT_CENTRE_ID_REQUIRED = "Court centre ID is required";
-    private static final String ERROR_PUBLISH_STATUS_REQUIRED = "Publish status is required";
+    private static final String ERROR_PUBLISH_STATUS_REQUIRED = "Status is required";
     private static final String ERROR_COURT_LIST_TYPE_REQUIRED = "Court list type is required";
     private static final String ERROR_ENTITY_NOT_FOUND = "Court list publish status not found";
+    private static final String ERROR_START_END_DATE_MISMATCH = "Start date and end date must be the same";
 
-    private final CourtListPublishStatusRepository repository;
+    private final CourtListStatusRepository repository;
 
     @Transactional
     public CourtListPublishResponse getByCourtListId(final UUID courtListId) {
         validateCourtListId(courtListId);
         LOG.atDebug().log("Fetching court list publish status for ID: {}", courtListId);
 
-        CourtListPublishStatusEntity entity = repository.getByCourtListId(courtListId);
+        CourtListStatusEntity entity = repository.getByCourtListId(courtListId);
         if (entity == null) {
             LOG.atWarn().log("Court list publish status not found for ID: {}", courtListId);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ERROR_ENTITY_NOT_FOUND);
@@ -50,39 +53,90 @@ public class CourtListPublishStatusService {
 
     @Transactional
     public CourtListPublishResponse createOrUpdate(
-            final UUID courtListId,
             final UUID courtCentreId,
-            final PublishStatus publishStatus,
-            final CourtListType courtListType) {
-        validateCourtListId(courtListId);
+            final CourtListType courtListType,
+            final LocalDate startDate,
+            final LocalDate endDate) {
         validateCourtCentreId(courtCentreId);
-        validatePublishStatus(publishStatus);
         validateCourtListType(courtListType);
+        validateStartAndEndDate(startDate, endDate);
 
-        LOG.atDebug().log("Creating or updating court list publish status for ID: {}", courtListId);
-        CourtListPublishStatusEntity entity = repository.getByCourtListId(courtListId);
+        final LocalDate publishDate = startDate; // Use startDate as publishDate since they must be equal
 
-        if (entity != null) {
-            LOG.atDebug().log("Updating existing court list publish status for ID: {}", courtListId);
-            updateEntity(entity, courtCentreId, publishStatus, courtListType);
+        LOG.atDebug().log("Creating or updating court list publish status for court centre ID: {}, type: {}, date: {}",
+                courtCentreId, courtListType, publishDate);
+
+        // Search for existing entity by courtCentreId, publishDate, and courtListType
+        Optional<CourtListStatusEntity> existingEntityOpt = repository.findByCourtCentreIdAndPublishDateAndCourtListType(
+                courtCentreId, publishDate, courtListType);
+
+        CourtListStatusEntity entity;
+        if (existingEntityOpt.isPresent()) {
+            entity = existingEntityOpt.get();
+            LOG.atDebug().log("Found existing court list publish status with ID: {}, updating with status REQUESTED", entity.getCourtListId());
+            updateExistingEntity(entity);
         } else {
-            LOG.atDebug().log("Creating new court list publish status for ID: {}", courtListId);
-            entity = createNewEntity(courtListId, courtCentreId, publishStatus, courtListType);
+            LOG.atDebug().log("No existing court list publish status found, creating new one");
+            final UUID courtListId = UUID.randomUUID();
+            entity = createNewEntity(courtListId, courtCentreId, courtListType, publishDate);
         }
 
-        CourtListPublishStatusEntity savedEntity = repository.save(entity);
+        CourtListStatusEntity savedEntity = repository.save(entity);
         return toResponse(savedEntity);
     }
 
     @Transactional
-    public List<CourtListPublishResponse> findByCourtCentreId(final UUID courtCentreId) {
+    public List<CourtListPublishResponse> findPublishStatus(
+            final UUID courtListId,
+            final UUID courtCentreId,
+            final LocalDate publishDate,
+            final CourtListType courtListType) {
+        // Validate that either courtListId is provided, or both courtCentreId and publishDate are provided
+        if (courtListId != null) {
+            // Query by courtListId
+            validateCourtListId(courtListId);
+            LOG.atDebug().log("Fetching court list publish status by court list ID: {}", courtListId);
+            CourtListStatusEntity entity = repository.getByCourtListId(courtListId);
+            if (entity == null) {
+                LOG.atDebug().log("Court list publish status not found for court list ID: {}, returning empty collection", courtListId);
+                return List.of();
+            }
+            return List.of(toResponse(entity));
+        }
+
+        // Query by courtCentreId and publishDate (with optional courtListType)
         validateCourtCentreId(courtCentreId);
-        LOG.atDebug().log("Fetching court list publish statuses for court centre ID: {} (limited to 10 records)", courtCentreId);
-        return repository.findByCourtCentreId(courtCentreId).stream()
-                .limit(10)
+        if (publishDate == null) {
+            LOG.atWarn().log("No publish date provided");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Either courtListId must be provided, or both courtCentreId and publishDate must be provided");
+        }
+
+        LOG.atDebug().log("Fetching court list publish statuses for court centre ID: {}, publish date: {}, type: {}",
+                courtCentreId, publishDate, courtListType);
+
+        List<CourtListStatusEntity> entities;
+        if (courtListType != null) {
+            // Filter by courtListType if provided
+            Optional<CourtListStatusEntity> entityOpt = repository.findByCourtCentreIdAndPublishDateAndCourtListType(
+                    courtCentreId, publishDate, courtListType);
+            entities = entityOpt.map(List::of).orElse(List.of());
+        } else {
+            // Get all for courtCentreId and publishDate
+            entities = repository.findByCourtCentreIdAndPublishDate(courtCentreId, publishDate);
+        }
+
+        if (entities.isEmpty()) {
+            LOG.atDebug().log("Court list publish statuses not found for court centre ID: {}, publish date: {}, type: {}, returning empty collection",
+                    courtCentreId, publishDate, courtListType);
+            return List.of();
+        }
+
+        return entities.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
+
 
     @Transactional
     public List<CourtListPublishResponse> findAll() {
@@ -108,7 +162,7 @@ public class CourtListPublishStatusService {
         }
     }
 
-    private void validatePublishStatus(final PublishStatus publishStatus) {
+    private void validatePublishStatus(final Status publishStatus) {
         if (publishStatus == null) {
             LOG.atWarn().log("No publish status provided");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ERROR_PUBLISH_STATUS_REQUIRED);
@@ -122,35 +176,48 @@ public class CourtListPublishStatusService {
         }
     }
 
+    private void validateStartAndEndDate(final LocalDate startDate, final LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            LOG.atWarn().log("Start date or end date is null");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Start date and end date are required");
+        }
+        if (!startDate.equals(endDate)) {
+            LOG.atWarn().log("Start date {} does not match end date {}", startDate, endDate);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ERROR_START_END_DATE_MISMATCH);
+        }
+    }
+
     // Entity helper methods
 
-    private void updateEntity(
-            final CourtListPublishStatusEntity entity,
-            final UUID courtCentreId,
-            final PublishStatus publishStatus,
-            final CourtListType courtListType) {
-        entity.setCourtCentreId(courtCentreId);
-        entity.setPublishStatus(publishStatus);
-        entity.setCourtListType(courtListType);
+    private void updateExistingEntity(final CourtListStatusEntity entity) {
+        entity.setPublishStatus(Status.REQUESTED);
+        entity.setFileStatus(Status.REQUESTED);
+        entity.setFileUrl(null);
+        entity.setFileId(null);
+        entity.setFileErrorMessage(null);
+        entity.setPublishErrorMessage(null);
         entity.setLastUpdated(Instant.now());
     }
 
-    private CourtListPublishStatusEntity createNewEntity(
+    private CourtListStatusEntity createNewEntity(
             final UUID courtListId,
             final UUID courtCentreId,
-            final PublishStatus publishStatus,
-            final CourtListType courtListType) {
-        return new CourtListPublishStatusEntity(
+            final CourtListType courtListType,
+            final LocalDate publishDate) {
+        CourtListStatusEntity entity = new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
-                publishStatus,
+                Status.REQUESTED, // Initial publish status
+                Status.REQUESTED, // Default file status for new entities
                 courtListType,
                 Instant.now()
         );
+        entity.setPublishDate(publishDate);
+        return entity;
     }
 
     // Mapper method to convert entity to response
-    private CourtListPublishResponse toResponse(final CourtListPublishStatusEntity entity) {
+    private CourtListPublishResponse toResponse(final CourtListStatusEntity entity) {
         OffsetDateTime lastUpdated = entity.getLastUpdated() != null
                 ? entity.getLastUpdated().atOffset(ZoneOffset.UTC)
                 : null;
@@ -160,18 +227,21 @@ public class CourtListPublishStatusService {
             throw new IllegalStateException("Court list type is required and cannot be null");
         }
 
-        // Convert String publishStatus to PublishStatus enum
-        PublishStatus publishStatusEnum = entity.getPublishStatus();
+        // Convert String publishStatus to Status enum
+        Status publishStatusEnum = entity.getPublishStatus();
+        Status fileStatusEnum = entity.getFileStatus();
         
         return new CourtListPublishResponse(
                 entity.getCourtListId(),
                 entity.getCourtCentreId(),
                 publishStatusEnum,
+                fileStatusEnum,
                 entity.getCourtListType(),
                 lastUpdated,
-                entity.getCourtListFileId(),
-                entity.getFileName(),
-                entity.getErrorMessage(),
+                entity.getFileUrl(),
+                entity.getFileId(),
+                entity.getPublishErrorMessage(),
+                entity.getFileErrorMessage(),
                 entity.getPublishDate()
         );
     }

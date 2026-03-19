@@ -1,52 +1,46 @@
 package uk.gov.hmcts.cp.services;
 
-import uk.gov.hmcts.cp.openapi.model.FileInfo;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
-import com.azure.storage.blob.models.BlobItem;
+import com.azure.storage.blob.models.BlobHttpHeaders;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @ConditionalOnProperty(name = "azure.storage.enabled", havingValue = "true", matchIfMissing = false)
 public class AzureBlobService {
 
     private final BlobContainerClient blobContainerClient;
 
-
-    /**
-     * List files in folder
-     */
-    public List<FileInfo> listFiles(String folder) {
-        List<FileInfo> files = new ArrayList<>();
-        String prefix = folder.isEmpty() ? "" : folder + "/";
-
-        for (BlobItem item : blobContainerClient.listBlobsByHierarchy(prefix)) {
-            if (!item.isPrefix()) {
-                BlobClient blobClient = blobContainerClient.getBlobClient(item.getName());
-
-                final URI url = blobClient.getBlobUrl() == null ? null: URI.create(blobClient.getBlobUrl());
-                files.add(new FileInfo(
-                        extractFileName(item.getName()),
-                        item.getName(), url ,
-                        item.getProperties().getContentLength()
-                ));
-            }
+    public void uploadJson(String payload, String blobName) {
+        String safeBlobName = sanitizeForLog(blobName);
+        log.info("Uploading JSON payload to blob: {}", safeBlobName);
+        try {
+            byte[] bytes = payload.getBytes(StandardCharsets.UTF_8);
+            BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
+            BlobHttpHeaders headers = new BlobHttpHeaders().setContentType("application/json");
+            blobClient.upload(new ByteArrayInputStream(bytes), bytes.length, true);
+            blobClient.setHttpHeaders(headers);
+            log.info("Successfully uploaded JSON payload to blob: {}", safeBlobName);
+        } catch (Exception e) {
+            log.error("Error uploading JSON payload to blob: {}", safeBlobName, e);
+            throw new RuntimeException(
+                "Azure storage error while uploading JSON payload: " + blobName + ". " + e.getMessage(), e);
         }
-
-        return files;
     }
 
-
-    private String extractFileName(String fullPath) {
-        int lastSlash = fullPath.lastIndexOf('/');
-        return lastSlash >= 0 ? fullPath.substring(lastSlash + 1) : fullPath;
+    private static String sanitizeForLog(String value) {
+        if (value == null) {
+            return "<null>";
+        }
+        // Remove CR/LF to prevent log injection / log forging
+        return value.replace('\r', ' ').replace('\n', ' ');
     }
 }
