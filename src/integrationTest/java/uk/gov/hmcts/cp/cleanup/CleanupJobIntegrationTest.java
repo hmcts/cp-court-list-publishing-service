@@ -46,7 +46,7 @@ import java.util.UUID;
     classes = Application.class,
     webEnvironment = SpringBootTest.WebEnvironment.NONE
 )
-@ActiveProfiles("retention-purge-test")
+@ActiveProfiles("cleanup-test")
 @Testcontainers
 @Import(CleanupJobIntegrationTest.AzuriteTestConfig.class)
 @TestPropertySource(properties = {
@@ -55,9 +55,9 @@ import java.util.UUID;
 })
 class CleanupJobIntegrationTest {
 
-    /** Provides BlobContainerClient for this test; use profile retention-purge-test so AzureIntegrationConfig (integration) is not loaded and we avoid duplicate bean. */
+    /** Provides BlobContainerClient for this test; use profile cleanup-test so AzureConfig is not loaded and we avoid duplicate bean. */
     @TestConfiguration
-    @Profile("retention-purge-test")
+    @Profile("cleanup-test")
     static class AzuriteTestConfig {
         @Bean
         BlobContainerClient blobContainerClient() {
