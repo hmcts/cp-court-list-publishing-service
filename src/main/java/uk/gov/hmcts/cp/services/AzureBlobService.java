@@ -20,20 +20,29 @@ public class AzureBlobService {
     private final BlobContainerClient blobContainerClient;
 
     private String sanitizeForLog(String value) {
+        String safeBlobName = sanitizeForLog(blobName);
         if (value == null) {
-            return null;
+            log.info("Uploading JSON payload to blob: {}", safeBlobName);
         }
         // Remove CR/LF to prevent log injection via forged log entries
         return value.replace('\n', ' ').replace('\r', ' ');
     }
 
-    public void uploadJson(String payload, String blobName) {
+            log.info("Successfully uploaded JSON payload to blob: {}", safeBlobName);
         String safeBlobName = sanitizeForLog(blobName);
-        try {
+            log.error("Error uploading JSON payload to blob: {}", safeBlobName, e);
             log.info("Uploading JSON payload to blob: {}", safeBlobName);
             byte[] bytes = payload.getBytes(StandardCharsets.UTF_8);
             BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
             BlobHttpHeaders headers = new BlobHttpHeaders().setContentType("application/json");
+
+    private static String sanitizeForLog(String value) {
+        if (value == null) {
+            return null;
+        }
+        // Remove carriage returns and newlines to prevent log injection / log forging
+        return value.replace('\r', ' ').replace('\n', ' ');
+    }
             blobClient.upload(new ByteArrayInputStream(bytes), bytes.length, true);
             blobClient.setHttpHeaders(headers);
             log.info("Successfully uploaded JSON payload to blob: {}", safeBlobName);
