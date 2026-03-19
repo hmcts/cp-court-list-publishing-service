@@ -13,7 +13,5 @@ import lombok.ToString;
 @ToString
 public class AuthDetails {
     private String userName;
-    /** User identifier (e.g. JWT subject) for system-user checks. */
-    private String userId;
     private String scope;
 }
