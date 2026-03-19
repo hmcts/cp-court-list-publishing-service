@@ -79,7 +79,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             }
         }
 
-        boolean cathSucceeded = tryPublishToCaTH(executionInfo, payload, courtListId);
+        boolean cathSucceeded = tryPublishToCaTH(executionInfo, payload);
 
         try {
             if (courtListId != null && cathSucceeded) {
@@ -120,7 +120,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
      * Attempts to publish the court list to CaTH when enabled.
      * @return true if CaTH publish completed successfully; false if disabled or an error occurred.
      */
-    private boolean tryPublishToCaTH(ExecutionInfo executionInfo, CourtListPayload payload, UUID courtListId) {
+    private boolean tryPublishToCaTH(ExecutionInfo executionInfo, CourtListPayload payload) {
         if (!cathPublishingEnabled) {
             logger.debug("CaTH publishing is disabled (CATH_PUBLISHING_ENABLED=false), skipping CaTH send");
             return false;
@@ -130,6 +130,8 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             return true;
         } catch (Exception e) {
             logger.error("Error querying or sending court list to CaTH", e);
+            JsonObject jobData = executionInfo.getJobData();
+            UUID courtListId = jobData != null ? extractCourtListId(jobData) : null;
             if (courtListId != null) {
                 updateErrorMessage(courtListId, e, ErrorContext.PUBLISH);
             }
@@ -146,6 +148,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         if (jobData == null) {
             return;
         }
+        UUID courtListId = extractCourtListId(jobData);
         CourtListType listId = extractCourtListType(jobData);
         LocalDate publishDate = extractPublishDate(jobData);
         if (listId == null) {
@@ -156,7 +159,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             var courtListDocument = courtListQueryService.buildCourtListDocumentFromPayload(payload, listId);
             logger.info("Sending transformed court list document to CaTH endpoint");
             cathService.sendCourtListToCaTH(courtListDocument, listId, publishDate,
-                    payload.getCourtIdNumeric(), payload.getIsWelsh());
+                    payload.getCourtIdNumeric(), payload.getIsWelsh(), courtListId);
             logger.info("Successfully sent court list document to CaTH endpoint");
         } catch (Exception e) {
             logger.error("Error building document or sending court list to CaTH", e);
