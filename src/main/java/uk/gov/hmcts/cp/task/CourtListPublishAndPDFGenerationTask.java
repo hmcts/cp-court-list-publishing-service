@@ -126,7 +126,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             return false;
         }
         try {
-            queryAndSendCourtListToCaTH(executionInfo, payload);
+            queryAndSendCourtListToCaTH(executionInfo, payload, courtListId);
             return true;
         } catch (Exception e) {
             logger.error("Error querying or sending court list to CaTH", e);
@@ -137,7 +137,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
     }
 
-    private void queryAndSendCourtListToCaTH(ExecutionInfo executionInfo, CourtListPayload payload) {
+    private void queryAndSendCourtListToCaTH(ExecutionInfo executionInfo, CourtListPayload payload, UUID courtListId) {
         if (payload == null) {
             logger.warn("Payload is null, cannot send court list to CaTH");
             return;
@@ -156,7 +156,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             var courtListDocument = courtListQueryService.buildCourtListDocumentFromPayload(payload, listId);
             logger.info("Sending transformed court list document to CaTH endpoint");
             cathService.sendCourtListToCaTH(courtListDocument, listId, publishDate,
-                    payload.getCourtIdNumeric(), payload.getIsWelsh());
+                    payload.getCourtIdNumeric(), payload.getIsWelsh(), courtListId);
             logger.info("Successfully sent court list document to CaTH endpoint");
         } catch (Exception e) {
             logger.error("Error building document or sending court list to CaTH", e);
