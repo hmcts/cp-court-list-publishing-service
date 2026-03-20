@@ -2,25 +2,24 @@ package uk.gov.hmcts.cp.services;
 
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
-import com.azure.storage.blob.models.BlobItem;
-import com.azure.storage.blob.models.BlobItemProperties;
+import com.azure.storage.blob.models.BlobHttpHeaders;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import reactor.core.publisher.Mono;
 
-import java.util.Arrays;
-import java.util.List;
+import java.io.InputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import uk.gov.hmcts.cp.openapi.model.FileInfo;
 
 @ExtendWith(MockitoExtension.class)
 class AzureBlobServiceTest {
@@ -32,119 +31,87 @@ class AzureBlobServiceTest {
     private AzureBlobService azureBlobService;
 
     @Test
-    void listFiles_shouldReturnEmptyList_whenNoFilesExist() {
-        // Given
-        String folder = "documents";
-        String prefix = "documents/";
-
-        when(blobContainerClient.listBlobsByHierarchy(prefix)).thenReturn(
-                new MockPagedIterable<>(List.of())
-        );
-
-        // When
-        List<FileInfo> result = azureBlobService.listFiles(folder);
-
-        // Then
-        assertThat(result).isEmpty();
-        verify(blobContainerClient).listBlobsByHierarchy(prefix);
-    }
-
-    @Test
-    void listFiles_shouldReturnFileList_whenFilesExist() {
-        // Given
-        String folder = "documents";
-        String prefix = "documents/";
-
-        BlobItem blobItem1 = createMockBlobItem("documents/file1.pdf", false, 1024L);
-        BlobItem blobItem2 = createMockBlobItem("documents/file2.docx", false, 2048L);
-
-        BlobClient mockBlobClient1 = mock(BlobClient.class);
-        BlobClient mockBlobClient2 = mock(BlobClient.class);
-
-        when(blobContainerClient.listBlobsByHierarchy(prefix)).thenReturn(
-                new MockPagedIterable<>(Arrays.asList(blobItem1, blobItem2))
-        );
-        when(blobContainerClient.getBlobClient("documents/file1.pdf")).thenReturn(mockBlobClient1);
-        when(blobContainerClient.getBlobClient("documents/file2.docx")).thenReturn(mockBlobClient2);
-        when(mockBlobClient1.getBlobUrl()).thenReturn("https://storage.example.com/file1.pdf");
-        when(mockBlobClient2.getBlobUrl()).thenReturn("https://storage.example.com/file2.docx");
-
-        // When
-        List<FileInfo> result = azureBlobService.listFiles(folder);
-
-        // Then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).getName()).isEqualTo("file1.pdf");
-        assertThat(result.get(0).getPath()).isEqualTo("documents/file1.pdf");
-        assertThat(result.get(0).getUrl().toString()).isEqualTo("https://storage.example.com/file1.pdf");
-        assertThat(result.get(0).getSize()).isEqualTo(1024L);
-        assertThat(result.get(1).getName()).isEqualTo("file2.docx");
-        assertThat(result.get(1).getPath()).isEqualTo("documents/file2.docx");
-        assertThat(result.get(1).getSize()).isEqualTo(2048L);
-    }
-
-    @Test
-    void listFiles_shouldUseEmptyPrefix_whenFolderIsEmpty() {
-        // Given
-        String folder = "";
-        String prefix = "";
-
-        BlobItem blobItem = createMockBlobItem("rootfile.txt", false, 256L);
+    void uploadJson_shouldUploadWithCorrectBlobNameAndContentType() {
+        String payload = "{\"key\":\"value\"}";
+        String blobName = "cath-payloads/ONLINE_PUBLIC/325/2024-01-15_20240115T103000Z.json";
         BlobClient mockBlobClient = mock(BlobClient.class);
 
-        when(blobContainerClient.listBlobsByHierarchy(prefix)).thenReturn(
-                new MockPagedIterable<>(List.of(blobItem))
-        );
-        when(blobContainerClient.getBlobClient("rootfile.txt")).thenReturn(mockBlobClient);
-        when(mockBlobClient.getBlobUrl()).thenReturn("https://storage.example.com/rootfile.txt");
+        when(blobContainerClient.getBlobClient(blobName)).thenReturn(mockBlobClient);
 
-        // When
-        List<FileInfo> result = azureBlobService.listFiles(folder);
+        azureBlobService.uploadJson(payload, blobName);
 
-        // Then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getName()).isEqualTo("rootfile.txt");
-        assertThat(result.get(0).getPath()).isEqualTo("rootfile.txt");
+        verify(mockBlobClient).upload(any(InputStream.class), eq((long) payload.getBytes().length), eq(true));
+        ArgumentCaptor<BlobHttpHeaders> headersCaptor = ArgumentCaptor.forClass(BlobHttpHeaders.class);
+        verify(mockBlobClient).setHttpHeaders(headersCaptor.capture());
+        assertThat(headersCaptor.getValue().getContentType()).isEqualTo("application/json");
     }
 
+    @Test
+    void uploadJson_shouldRequestCorrectBlobName() {
+        String blobName = "cath-payloads/STANDARD/100/2024-06-20_20240620T144530Z.json";
+        BlobClient mockBlobClient = mock(BlobClient.class);
 
-    private BlobItem createMockBlobItem(String name, boolean isPrefix, long size) {
-        BlobItem blobItem = mock(BlobItem.class);
-        BlobItemProperties properties = mock(BlobItemProperties.class);
+        when(blobContainerClient.getBlobClient(blobName)).thenReturn(mockBlobClient);
 
-        when(blobItem.getName()).thenReturn(name);
-        when(blobItem.isPrefix()).thenReturn(isPrefix);
-        when(blobItem.getProperties()).thenReturn(properties);
-        when(properties.getContentLength()).thenReturn(size);
+        azureBlobService.uploadJson("{}", blobName);
 
-        return blobItem;
+        verify(blobContainerClient).getBlobClient(blobName);
     }
 
-    private static class MockPagedIterable<T> extends com.azure.core.http.rest.PagedIterable<T> {
-        private final List<T> items;
+    @Test
+    void uploadJson_shouldUploadCorrectByteLength() {
+        String payload = "{\"courtList\":\"data with unicode: \u00e9\u00e0\u00fc\"}";
+        String blobName = "cath-payloads/test.json";
+        BlobClient mockBlobClient = mock(BlobClient.class);
 
-        public MockPagedIterable(List<T> items) {
-            super(new com.azure.core.http.rest.PagedFlux<>(() ->
-                    Mono.just(new com.azure.core.http.rest.PagedResponseBase<>(
-                            null,  // HttpRequest
-                            200,   // statusCode
-                            null,  // HttpHeaders
-                            items, // items
-                            null,  // continuationToken
-                            null   // deserializedHeaders
-                    ))
-            ));
-            this.items = items;
-        }
-        @Override
-        public java.util.stream.Stream<T> stream() {
-            return items.stream();
-        }
+        when(blobContainerClient.getBlobClient(blobName)).thenReturn(mockBlobClient);
 
-        @Override
-        public java.util.Iterator<T> iterator() {
-            return items.iterator();
-        }
+        azureBlobService.uploadJson(payload, blobName);
 
+        long expectedLength = payload.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+        verify(mockBlobClient).upload(any(InputStream.class), eq(expectedLength), eq(true));
+    }
+
+    @Test
+    void uploadJson_shouldThrowWhenUploadFails() {
+        String blobName = "cath-payloads/test.json";
+        BlobClient mockBlobClient = mock(BlobClient.class);
+
+        when(blobContainerClient.getBlobClient(blobName)).thenReturn(mockBlobClient);
+        doThrow(new RuntimeException("Upload failed"))
+            .when(mockBlobClient).upload(any(InputStream.class), any(Long.class), eq(true));
+
+        assertThatThrownBy(() -> azureBlobService.uploadJson("{}", blobName))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("Azure storage error")
+            .hasMessageContaining(blobName);
+    }
+
+    @Test
+    void uploadJson_shouldThrowWhenSetHeadersFails() {
+        String blobName = "cath-payloads/test.json";
+        BlobClient mockBlobClient = mock(BlobClient.class);
+
+        when(blobContainerClient.getBlobClient(blobName)).thenReturn(mockBlobClient);
+        doThrow(new RuntimeException("Headers failed"))
+            .when(mockBlobClient).setHttpHeaders(any(BlobHttpHeaders.class));
+
+        assertThatThrownBy(() -> azureBlobService.uploadJson("{}", blobName))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessageContaining("Azure storage error")
+            .hasMessageContaining(blobName);
+    }
+
+    @Test
+    void uploadJson_shouldOverwriteExistingBlob() {
+        String blobName = "cath-payloads/test.json";
+        BlobClient mockBlobClient = mock(BlobClient.class);
+
+        when(blobContainerClient.getBlobClient(blobName)).thenReturn(mockBlobClient);
+
+        azureBlobService.uploadJson("{}", blobName);
+
+        // third argument (overwrite) should be true
+        verify(mockBlobClient).upload(any(InputStream.class), any(Long.class), eq(true));
     }
 }

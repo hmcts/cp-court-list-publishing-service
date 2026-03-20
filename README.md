@@ -70,10 +70,12 @@ This project uses a two-file approach for environment variable management with `
 - Gradle property: `./gradlew integration -Pserver.port=8080`
 - System property: `./gradlew integration -Dserver.port=8080`
 
-**Azure Environment Variable:** To use azure blob, you should define following parameters on your env variables.
-- Azure Storage Enable: `export AZURE_STORAGE_ENABLED=true `
-- Account Name: `export AZURE_STORAGE_ACCOUNT_NAME= ... `
-- Account Key: `export AZURE_STORAGE_ACCOUNT_KEY= ... `
+**Azure Environment Variable:** To use Azure blob storage (upload only; no SAS URLs), set:
+- Azure Storage Enable: `export AZURE_STORAGE_ENABLED=true`
+- Account Name: `export AZURE_STORAGE_ACCOUNT_NAME=...`
+- For local/integration (Azurite): `docker/docker-compose.integration.yml` defaults to Microsoft’s **public** Azurite key (`devstoreaccount1`); see **`docker/README.md`** for why that is safe to commit and why secret scanners may still flag it (we use `# gitleaks:allow` on that line). Override `AZURE_STORAGE_ACCOUNT_KEY` only for a real storage account.
+- **Docker must be running** before `gradle composeBuild` / `integration`. The build runs `checkDockerDaemon` first so you get a short Gradle error instead of a vague compose failure. If you see `.../docker/desktop/docker.sock`: start **Docker Desktop**. If you use the Linux **docker.io** engine instead, run `unset DOCKER_HOST` and/or `export DOCKER_HOST=unix:///var/run/docker.sock` (or `docker context use default`).
+- **Publishing Hub / APIM**: set `AZURE_LOCAL_DTS_APIMURL` (and other `AZURE_LOCAL_DTS_*` / `AZURE_REMOTE_DTS_*` as needed) in each environment; defaults in `application-azure.yml` no longer embed internal hostnames.
 
 **Database information:** you can use postico to reach DB
 - Database : `courtlistpublishing`

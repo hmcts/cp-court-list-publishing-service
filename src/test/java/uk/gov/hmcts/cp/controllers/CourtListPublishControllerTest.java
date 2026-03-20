@@ -3,6 +3,8 @@ package uk.gov.hmcts.cp.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.cp.config.CourtListPublishingSystemUserConfig;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -10,14 +12,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import uk.gov.hmcts.cp.domain.CourtListPublishStatusEntity;
+import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
-import uk.gov.hmcts.cp.openapi.model.PublishStatus;
+import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
+import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
+import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
@@ -26,6 +31,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -45,8 +51,15 @@ class CourtListPublishControllerTest {
     @Mock
     private CourtListPublishStatusService service;
 
+    @Mock
+    private CourtListTaskTriggerService courtListTaskTriggerService;
+
+    @Mock
+    private CourtListDownloadService courtListDownloadService;
+
     @InjectMocks
     private CourtListPublishController controller;
+
 
     private ObjectMapper objectMapper;
 
@@ -56,7 +69,7 @@ class CourtListPublishControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
-        objectMapper = new ObjectMapper();
+        objectMapper = ObjectMapperConfig.getObjectMapper();
     }
 
     @Test
@@ -64,22 +77,22 @@ class CourtListPublishControllerTest {
         // Given
         CourtListPublishRequest request = createValidRequest();
         UUID expectedCourtListId = UUID.randomUUID();
-        CourtListPublishStatusEntity expectedEntity = createEntity(
+        CourtListStatusEntity expectedEntity = createEntity(
                 expectedCourtListId,
                 request.getCourtCentreId(),
-                PublishStatus.COURT_LIST_REQUESTED,
                 request.getCourtListType()
         );
 
         when(service.createOrUpdate(
                 any(UUID.class),
-                any(UUID.class),
-                any(PublishStatus.class),
-                any(CourtListType.class)
+                any(CourtListType.class),
+                any(LocalDate.class),
+                any(LocalDate.class)
         )).thenReturn(toResponse(expectedEntity));
 
         // When & Then
         mockMvc.perform(post(PUBLISH_URL)
+                        .header("CJSCPPUID", "test-user-id")
                         .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -87,16 +100,33 @@ class CourtListPublishControllerTest {
                 .andExpect(jsonPath("$.courtListId").exists())
                 .andExpect(jsonPath("$.courtCentreId").value(request.getCourtCentreId().toString()))
                 .andExpect(jsonPath("$.publishStatus").exists())
-                .andExpect(jsonPath("$.publishStatus").value(PublishStatus.COURT_LIST_REQUESTED.toString()))
+                .andExpect(jsonPath("$.publishStatus").value(Status.REQUESTED.toString()))
                 .andExpect(jsonPath("$.courtListType").value(request.getCourtListType().toString()))
                 .andExpect(jsonPath("$.lastUpdated").exists());
 
         verify(service).createOrUpdate(
-                any(UUID.class),
                 eq(request.getCourtCentreId()),
-                eq(PublishStatus.COURT_LIST_REQUESTED),
-                eq(request.getCourtListType())
+                eq(request.getCourtListType()),
+                eq(request.getStartDate()),
+                eq(request.getEndDate())
         );
+        verify(courtListTaskTriggerService).triggerCourtListTask(any(), eq("test-user-id"));
+    }
+
+    @Test
+    void createCourtList_shouldReturnBadRequest_whenCjscppuidHeaderMissing() throws Exception {
+        // Given
+        CourtListPublishRequest request = new CourtListPublishRequest()
+                .courtCentreId(UUID.randomUUID())
+                .courtListType(CourtListType.STANDARD)
+                .startDate(LocalDate.now())
+                .endDate(LocalDate.now().plusDays(7));
+
+        // When & Then - no CJSCPPUID header
+        mockMvc.perform(post(PUBLISH_URL)
+                        .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -135,20 +165,23 @@ class CourtListPublishControllerTest {
     }
 
     @Test
-    void findCourtListPublishByCourtCenterId_shouldReturnList_whenEntitiesExist() throws Exception {
+    void findCourtListPublishStatus_shouldReturnList_whenQueryingByCourtCentreIdAndPublishDate() throws Exception {
         // Given
         UUID courtCentreId = UUID.randomUUID();
-        CourtListPublishStatusEntity entity1 = createEntity(UUID.randomUUID(), courtCentreId, PublishStatus.COURT_LIST_REQUESTED, CourtListType.STANDARD);
-        CourtListPublishStatusEntity entity2 = createEntity(UUID.randomUUID(), courtCentreId, PublishStatus.COURT_LIST_PRODUCED, CourtListType.PUBLIC);
+        LocalDate publishDate = LocalDate.now();
+        CourtListStatusEntity entity1 = createEntity(UUID.randomUUID(), courtCentreId, CourtListType.STANDARD);
+        CourtListStatusEntity entity2 = createEntity(UUID.randomUUID(), courtCentreId, CourtListType.PUBLIC);
         List<CourtListPublishResponse> responses = List.of(
                 toResponse(entity1),
                 toResponse(entity2)
         );
 
-        when(service.findByCourtCentreId(courtCentreId)).thenReturn(responses);
+        when(service.findPublishStatus(null, courtCentreId, publishDate, null)).thenReturn(responses);
 
         // When & Then
-        mockMvc.perform(get(BASE_URL + "/court-centre/" + courtCentreId))
+        mockMvc.perform(get("/api/court-list-publish/publish-status")
+                        .param("courtCentreId", courtCentreId.toString())
+                        .param("publishDate", publishDate.toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(CONTENT_TYPE_APPLICATION_VND_GET))
                 .andExpect(jsonPath("$").isArray())
@@ -156,60 +189,70 @@ class CourtListPublishControllerTest {
                 .andExpect(jsonPath("$[0].courtCentreId").value(courtCentreId.toString()))
                 .andExpect(jsonPath("$[1].courtCentreId").value(courtCentreId.toString()));
 
-        verify(service).findByCourtCentreId(courtCentreId);
+        verify(service).findPublishStatus(null, courtCentreId, publishDate, null);
     }
 
     @Test
-    void findCourtListPublishByCourtCenterId_shouldReturnEmptyList_whenNoEntitiesExist() throws Exception {
+    void findCourtListPublishStatus_shouldReturnEmptyList_whenNoEntitiesExist() throws Exception {
         // Given
         UUID courtCentreId = UUID.randomUUID();
-        when(service.findByCourtCentreId(courtCentreId)).thenReturn(Collections.emptyList());
+        LocalDate publishDate = LocalDate.now();
+        when(service.findPublishStatus(null, courtCentreId, publishDate, null))
+                .thenReturn(Collections.emptyList());
 
         // When & Then
-        mockMvc.perform(get(BASE_URL + "/court-centre/" + courtCentreId))
+        mockMvc.perform(get("/api/court-list-publish/publish-status")
+                        .param("courtCentreId", courtCentreId.toString())
+                        .param("publishDate", publishDate.toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(CONTENT_TYPE_APPLICATION_VND_GET))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(0));
 
-        verify(service).findByCourtCentreId(courtCentreId);
+        verify(service).findPublishStatus(null, courtCentreId, publishDate, null);
     }
 
     private CourtListPublishRequest createValidRequest() {
         return new CourtListPublishRequest(
-                UUID.randomUUID(),
+                UUID.randomUUID(),  // courtCentreId
+                LocalDate.now(),    // startDate
+                LocalDate.now(),    // endDate
                 CourtListType.STANDARD
         );
     }
 
-    private CourtListPublishStatusEntity createEntity(UUID courtListId, UUID courtCentreId, 
-                                                      PublishStatus publishStatus, CourtListType courtListType) {
-        return new CourtListPublishStatusEntity(
+    private CourtListStatusEntity createEntity(UUID courtListId, UUID courtCentreId,
+                                               CourtListType courtListType) {
+        return new CourtListStatusEntity(
                 courtListId,
                 courtCentreId,
-                publishStatus,
+                Status.REQUESTED,
+                Status.REQUESTED,
                 courtListType,
                 Instant.now()
         );
     }
 
-    private CourtListPublishResponse toResponse(CourtListPublishStatusEntity entity) {
+    private CourtListPublishResponse toResponse(CourtListStatusEntity entity) {
         OffsetDateTime lastUpdated = entity.getLastUpdated() != null
                 ? entity.getLastUpdated().atOffset(ZoneOffset.UTC)
                 : null;
 
-        // Convert String publishStatus to PublishStatus enum
-        PublishStatus publishStatusEnum = entity.getPublishStatus();
+        // Convert String publishStatus to Status enum
+        Status publishStatusEnum = entity.getPublishStatus();
+        Status fileStatusEnum = entity.getFileStatus();
 
         return new CourtListPublishResponse(
                 entity.getCourtListId(),
                 entity.getCourtCentreId(),
                 publishStatusEnum,
+                fileStatusEnum,
                 entity.getCourtListType(),
                 lastUpdated,
-                entity.getCourtListFileId(),
-                entity.getFileName(),
-                entity.getErrorMessage(),
+                entity.getFileUrl(),
+                entity.getFileId(),
+                entity.getPublishErrorMessage(),
+                entity.getFileErrorMessage(),
                 entity.getPublishDate()
         );
     }

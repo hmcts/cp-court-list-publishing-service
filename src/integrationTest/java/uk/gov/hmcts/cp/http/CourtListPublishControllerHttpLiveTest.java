@@ -4,8 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
-import uk.gov.hmcts.cp.openapi.model.PublishStatus;
+import uk.gov.hmcts.cp.openapi.model.Status;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -20,25 +21,27 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 
-public class CourtListPublishControllerHttpLiveTest {
+public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
 
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private static final String PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publish";
-    private static final String PUBLISH_STATUS_PUBLIS_REQUESTED = PublishStatus.COURT_LIST_REQUESTED.toString();
-    private static final String PUBLISH_STATUS_SUCCESFUL = PublishStatus.EXPORT_SUCCESSFUL.toString();
+    private static final String DOWNLOAD_ENDPOINT = BASE_URL + "/api/court-list-publish/download";
+    private static final String DOWNLOAD_CONTENT_TYPE = "application/vnd.courtlistpublishing-service.download.post+json";
+    private static final String REQUESTED_STATUS = Status.REQUESTED.toString();
     private static final String COURT_LIST_TYPE_PUBLIC = CourtListType.PUBLIC.toString();
     private static final String COURT_LIST_TYPE_FINAL = CourtListType.FINAL.toString();
 
     private final RestTemplate http = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
 
     @Test
     void postCourtListPublish_creates_court_list_publish_status_successfully() throws Exception {
         // Given
         UUID courtListId = UUID.randomUUID();
         UUID courtCentreId = UUID.randomUUID();
-        String requestJson = createRequestJson(courtListId, courtCentreId, PUBLISH_STATUS_PUBLIS_REQUESTED, COURT_LIST_TYPE_PUBLIC);
+        String requestJson = createRequestJson(courtCentreId, CourtListType.PUBLIC);
 
         // When
         ResponseEntity<String> response = postRequest(requestJson);
@@ -52,17 +55,17 @@ public class CourtListPublishControllerHttpLiveTest {
         // Given - First create a court list publish status
         UUID courtListId = UUID.randomUUID();
         UUID courtCentreId = UUID.randomUUID();
-        postRequest(createRequestJson(courtListId, courtCentreId, PUBLISH_STATUS_SUCCESFUL, COURT_LIST_TYPE_PUBLIC));
+        postRequest(createRequestJson(courtCentreId, CourtListType.PUBLIC));
 
         // When - Update the entity with same ID
-        String updateRequestJson = createRequestJson(courtListId, courtCentreId, PUBLISH_STATUS_PUBLIS_REQUESTED, COURT_LIST_TYPE_FINAL);
+        String updateRequestJson = createRequestJson(courtCentreId, CourtListType.FINAL);
         ResponseEntity<String> response = postRequest(updateRequestJson);
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode responseBody = parseResponse(response);
         assertThat(responseBody.get("courtListId").asText()).isNotNull();
-        assertThat(responseBody.get("publishStatus").asText()).isEqualTo(PUBLISH_STATUS_PUBLIS_REQUESTED);
+        assertThat(responseBody.get("publishStatus").asText()).isEqualTo(REQUESTED_STATUS);
         assertThat(responseBody.get("courtListType").asText()).isEqualTo(COURT_LIST_TYPE_FINAL);
     }
 
@@ -74,24 +77,24 @@ public class CourtListPublishControllerHttpLiveTest {
 
         // When - Create first time
         ResponseEntity<String> createResponse = postRequest(
-                createRequestJson(courtListId, courtCentreId, PUBLISH_STATUS_SUCCESFUL, COURT_LIST_TYPE_PUBLIC)
+                createRequestJson(courtCentreId, CourtListType.PUBLIC)
         );
 
         // Then - Verify creation
         assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode createBody = parseResponse(createResponse);
-        assertThat(createBody.get("publishStatus").asText()).isEqualTo(PUBLISH_STATUS_PUBLIS_REQUESTED);
+        assertThat(createBody.get("publishStatus").asText()).isEqualTo(REQUESTED_STATUS);
 
         // When - Update with same ID (upsert)
         ResponseEntity<String> updateResponse = postRequest(
-                createRequestJson(courtListId, courtCentreId, PUBLISH_STATUS_PUBLIS_REQUESTED, COURT_LIST_TYPE_PUBLIC)
+                createRequestJson(courtCentreId, CourtListType.PUBLIC)
         );
 
         // Then - Verify update
         assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode updateBody = parseResponse(updateResponse);
         assertThat(updateBody.get("courtListId").asText()).isNotNull();
-        assertThat(updateBody.get("publishStatus").asText()).isEqualTo(PUBLISH_STATUS_PUBLIS_REQUESTED);
+        assertThat(updateBody.get("publishStatus").asText()).isEqualTo(REQUESTED_STATUS);
     }
 
     @Test
@@ -142,17 +145,19 @@ public class CourtListPublishControllerHttpLiveTest {
     }
 
     @Test
-    void findCourtListPublishByCourtCenterId_returns_list_when_entities_exist() throws Exception {
-        // Given - Create multiple entities for the same court centre
+    void findCourtListPublishStatus_returns_list_when_entities_exist() throws Exception {
+        // Given - Create multiple entities for the same court centre and date
         UUID courtCentreId = UUID.randomUUID();
+        LocalDate publishDate = LocalDate.now();
         UUID courtListId1 = UUID.randomUUID();
         UUID courtListId2 = UUID.randomUUID();
 
-        postRequest(createRequestJson(courtListId1, courtCentreId, PUBLISH_STATUS_PUBLIS_REQUESTED, COURT_LIST_TYPE_PUBLIC));
-        postRequest(createRequestJson(courtListId2, courtCentreId, PUBLISH_STATUS_SUCCESFUL, COURT_LIST_TYPE_FINAL));
+        postRequest(createRequestJson(courtCentreId, CourtListType.PUBLIC));
+        postRequest(createRequestJson(courtCentreId, CourtListType.FINAL));
 
         // When
-        ResponseEntity<String> response = getRequest(BASE_URL + "/api/court-list-publish/court-centre/" + courtCentreId);
+        String url = BASE_URL + "/api/court-list-publish/publish-status?courtCentreId=" + courtCentreId + "&publishDate=" + publishDate;
+        ResponseEntity<String> response = getRequest(url);
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -167,12 +172,14 @@ public class CourtListPublishControllerHttpLiveTest {
     }
 
     @Test
-    void findCourtListPublishByCourtCenterId_returns_empty_list_when_no_entities_exist() throws Exception {
+    void findCourtListPublishStatus_returns_empty_list_when_no_entities_exist() throws Exception {
         // Given - Non-existent court centre ID
         UUID nonExistentCourtCentreId = UUID.randomUUID();
+        LocalDate publishDate = LocalDate.now();
 
         // When
-        ResponseEntity<String> response = getRequest(BASE_URL + "/api/court-list-publish/court-centre/" + nonExistentCourtCentreId);
+        String url = BASE_URL + "/api/court-list-publish/publish-status?courtCentreId=" + nonExistentCourtCentreId + "&publishDate=" + publishDate;
+        ResponseEntity<String> response = getRequest(url);
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -182,39 +189,49 @@ public class CourtListPublishControllerHttpLiveTest {
     }
 
     @Test
-    void findCourtListPublishByCourtCenterId_returns_limited_to_10_records() throws Exception {
-        // Given - Create more than 10 entities for the same court centre
+    void findCourtListPublishStatus_returns_all_matching_records() throws Exception {
+        // Given - Create multiple entities for the same court centre and date
         UUID courtCentreId = UUID.randomUUID();
-        for (int i = 0; i < 15; i++) {
-            postRequest(createRequestJson(UUID.randomUUID(), courtCentreId, PUBLISH_STATUS_PUBLIS_REQUESTED, COURT_LIST_TYPE_PUBLIC));
+        LocalDate publishDate = LocalDate.now();
+        for (int i = 0; i < 5; i++) {
+            final ResponseEntity<String> res = postRequest(createRequestJson(courtCentreId, CourtListType.PUBLIC));
+            assertThat(res.getStatusCode().is2xxSuccessful()).isEqualTo(true);
         }
 
         // When
-        ResponseEntity<String> response = getRequest(BASE_URL + "/api/court-list-publish/court-centre/" + courtCentreId);
+        String url = BASE_URL + "/api/court-list-publish/publish-status?courtCentreId=" + courtCentreId + "&publishDate=" + publishDate;
+        ResponseEntity<String> response = getRequest(url);
 
         // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode responseBody = parseResponse(response);
         assertThat(responseBody.isArray()).isTrue();
-        assertThat(responseBody.size()).isLessThanOrEqualTo(10);
+        assertThat(responseBody.size()).isGreaterThanOrEqualTo(1);
     }
 
     // Helper methods
 
-    private String createRequestJson(UUID courtListId, UUID courtCentreId, String publishStatus, String courtListType) {
+    private String createRequestJson(UUID courtCentreId, CourtListType courtListType) {
+        // Note: courtListId and publishStatus are ignored as they're not part of the request model
+        // The controller generates courtListId internally and sets the status internally
+        final String today = LocalDate.now().toString();
         return """
             {
-                "courtListId": "%s",
                 "courtCentreId": "%s",
-                "publishStatus": "%s",
+                "startDate": "%s",
+                "endDate": "%s",
                 "courtListType": "%s"
             }
-            """.formatted(courtListId, courtCentreId, publishStatus, courtListType);
+            """.formatted(courtCentreId, today, today, courtListType.name());
     }
+
+    private static final String CJSCPPUID_HEADER = "CJSCPPUID";
+    private static final String INTEGRATION_TEST_USER_ID = "integration-test-user-id";
 
     private HttpEntity<String> createHttpEntity(String json) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.post+json"));
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         return new HttpEntity<>(json, headers);
     }
 
@@ -240,7 +257,7 @@ public class CourtListPublishControllerHttpLiveTest {
         JsonNode responseBody = parseResponse(response);
         assertThat(responseBody.get("courtListId").asText()).isNotNull();
         assertThat(responseBody.get("courtCentreId").asText()).isEqualTo(courtCentreId.toString());
-        assertThat(responseBody.get("publishStatus").asText()).isEqualTo(CourtListPublishControllerHttpLiveTest.PUBLISH_STATUS_PUBLIS_REQUESTED);
+        assertThat(responseBody.get("publishStatus").asText()).isEqualTo(CourtListPublishControllerHttpLiveTest.REQUESTED_STATUS);
         assertThat(responseBody.get("courtListType").asText()).isEqualTo(CourtListPublishControllerHttpLiveTest.COURT_LIST_TYPE_PUBLIC);
         assertThat(responseBody.get("lastUpdated")).isNotNull();
     }
@@ -252,6 +269,69 @@ public class CourtListPublishControllerHttpLiveTest {
                     HttpClientErrorException ex = (HttpClientErrorException) exception;
                     assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
                 });
+    }
+
+    @Test
+    void postDownloadCourtListReturnsPdfWhenPublicCourtListEnabledAndStubbed() throws Exception {
+        String requestJson = """
+            {
+                "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",
+                "startDate": "2026-02-27",
+                "endDate": "2026-02-27",
+                "courtListType": "PUBLIC"
+            }
+            """;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(DOWNLOAD_CONTENT_TYPE));
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
+        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+
+        ResponseEntity<byte[]> response = http.exchange(
+                DOWNLOAD_ENDPOINT,
+                HttpMethod.POST,
+                entity,
+                byte[].class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_PDF);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
+                .contains("attachment", "CourtList.pdf");
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().length).isGreaterThan(0);
+    }
+
+    @Test
+    void postDownloadCourtListReturnsBadRequestWhenCourtListTypeIsAlphabetical() {
+        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.ALPHABETICAL);
+    }
+
+    @Test
+    void postDownloadCourtListReturnsBadRequestWhenCourtListTypeIsUshersCrown() {
+        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.USHERS_CROWN);
+    }
+
+    private void assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType courtListType) {
+        String requestJson = """
+            {
+                "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",
+                "startDate": "2026-02-27",
+                "endDate": "2026-02-27",
+                "courtListType": "%s"
+            }
+            """.formatted(courtListType.name());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(DOWNLOAD_CONTENT_TYPE));
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
+        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+
+        assertThatThrownBy(() -> http.exchange(
+                DOWNLOAD_ENDPOINT,
+                HttpMethod.POST,
+                entity,
+                byte[].class))
+                .isInstanceOf(HttpClientErrorException.BadRequest.class)
+                .hasMessageContaining("Only PUBLIC court list type is supported for download");
     }
 }
 

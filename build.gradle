@@ -98,6 +98,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 
+    // Task Manager Service
+    implementation "uk.gov.hmcts.cp:task-manager-service:${jobManagerVersion}"
+
     // --- Observability / Actuator / OTEL / Prometheus ---
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
@@ -111,16 +114,28 @@ dependencies {
     // --- Data / DB ---
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.postgresql:postgresql'
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
 
     implementation 'io.rest-assured:rest-assured:5.5.6'
     implementation 'org.hibernate.validator:hibernate-validator:9.0.1.Final'
     implementation 'org.apache.commons:commons-text:1.14.0'
+    
+    // JSON Schema Validation (same as cp-framework-libraries context)
+    implementation "com.github.erosb:everit-json-schema:${everitJsonSchemaVersion}"
 
-    // Azure Blob Storage
-    implementation 'com.azure:azure-storage-blob:12.25.1'
-    implementation 'com.azure:azure-identity:1.14.0'
+    implementation 'com.google.guava:guava:33.3.1-jre'
+
+    // Azure Blob Storage – exclude Netty HTTP client (conflicts with Spring Boot 4's Netty 4.2.x)
+    // and use the JDK HttpClient backend instead (JDK 21)
+    implementation('com.azure:azure-storage-blob:12.33.2') {
+        exclude group: 'com.azure', module: 'azure-core-http-netty'
+    }
+    implementation('com.azure:azure-identity:1.18.2') {
+        exclude group: 'com.azure', module: 'azure-core-http-netty'
+    }
+    implementation 'com.azure:azure-core-http-jdk-httpclient:1.0.4'
     // Keep only if you actually use JWT primitives yourself (not via Spring Security)
     implementation 'io.jsonwebtoken:jjwt:0.13.0'
 
@@ -143,7 +158,6 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     testImplementation 'io.micrometer:micrometer-tracing-test'
-    testImplementation 'com.h2database:h2'
     testImplementation "org.springframework.boot:spring-boot-starter-webmvc-test"
     testImplementation "org.springframework.boot:spring-boot-starter-data-jpa-test"
 
@@ -151,6 +165,12 @@ dependencies {
     testImplementation 'au.com.dius.pact.provider:spring6:4.6.17'
     pactVerificationTestImplementation 'au.com.dius.pact.provider:junit5:4.6.17'
     pactVerificationTestImplementation 'au.com.dius.pact.provider:spring6:4.6.17'
+
+    // Testcontainers (BOM)
+    testImplementation platform("org.testcontainers:testcontainers-bom:${testcontainersBomVersion}")
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    implementation "org.testcontainers:testcontainers"
 
     // integrationTestImplementation dependencies are need as they aren't always propagate as expected,
     // especially with platform BOMs, test runtime dependencies, or custom tasks. Explicit dependencies eliminate that risk.
@@ -161,6 +181,7 @@ dependencies {
         exclude group: 'junit', module: 'junit'
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
+    integrationTestImplementation 'org.wiremock:wiremock-standalone:3.9.1'
     integrationTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     integrationTestCompileOnly "org.projectlombok:lombok:${lombokVersion}"
     integrationTestAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
@@ -262,7 +283,7 @@ tasks.named('composeBuild') { dependsOn tasks.named('bootJar') }
 
 dockerCompose {
     useComposeFiles = ['docker/docker-compose.integration.yml']
-    startedServices = ['app', 'db']
+    startedServices = ['app', 'db', 'wiremock', 'azurite']
 
     buildBeforeUp = true
     waitForTcpPorts = true
@@ -337,9 +358,10 @@ tasks.register('integration', Test) {
     useJUnitPlatform()
 
     dependsOn tasks.composeUp
-    finalizedBy tasks.composeDown
+    //finalizedBy tasks.composeDown
 
     systemProperty 'app.baseUrl', "http://localhost:${serverPort}/courtlistpublishing-service"
+    systemProperty 'wiremock.baseUrl', 'http://localhost:8089'
 
     jvmArgs = ['-Xshare:off']
     testLogging {

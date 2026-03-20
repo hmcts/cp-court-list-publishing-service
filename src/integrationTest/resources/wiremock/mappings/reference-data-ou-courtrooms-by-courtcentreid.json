@@ -1,0 +1,24 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/referencedata-query-api/query/api/rest/referencedata/courtrooms",
+    "queryParameters": {
+      "courtCentreId": {
+        "matches": ".*"
+      }
+    },
+    "headers": {
+      "Accept": {
+        "equalTo": "application/vnd.referencedata.ou-courtrooms+json"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/vnd.referencedata.ou-courtrooms+json"
+    },
+    "bodyFileName": "referencedata-ou-courtrooms-by-courtcentreid.json"
+  },
+  "priority": 1
+}

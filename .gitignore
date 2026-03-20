@@ -1,4 +1,7 @@
 gradle
+/gradlew
+/gradlew.bat
+!gradle/wrapper/gradle-wrapper.properties
 bin/*
 !bin/run-in-docker.sh
 .gradle

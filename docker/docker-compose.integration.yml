@@ -1,4 +1,11 @@
 services:
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.34.0
+    container_name: CP_CLP_azurite
+    command: azurite-blob --blobHost 0.0.0.0 --skipApiVersionCheck
+    ports:
+      - "10000:10000"
+
   db:
     image: postgres:16-alpine
     container_name: CP_CLP_CP_CDK_DB_it
@@ -13,6 +20,21 @@ services:
       interval: 5s
       timeout: 3s
       retries: 30
+
+  wiremock:
+    image: wiremock/wiremock:3.9.1
+    container_name: CP_CLP_wiremock
+    ports:
+      - "8089:8080"
+    volumes:
+      - ../src/integrationTest/resources/wiremock/mappings:/home/wiremock/mappings
+      - ../src/integrationTest/resources/wiremock/__files:/home/wiremock/__files
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/__admin/health || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
 
   app:
     container_name: CP_CLP_app_it
@@ -30,15 +52,37 @@ services:
       CP_CLP_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
       SPRING_PROFILES_ACTIVE: integration
-      AZURE_STORAGE_ENABLED: false
+      AZURE_STORAGE_ENABLED: "true"
+      AZURE_STORAGE_CONTAINER_NAME: courtpublisher-blob-container
+      AZURE_STORAGE_ACCOUNT_NAME: "devstoreaccount1"
+      # ------------------------------------------------------------------
+      # Azurite default account key (Microsoft-published, not confidential).
+      # Documented for all devs: https://github.com/Azure/Azurite#default-storage-account
+      # Scanners match it as “generic API key” by entropy; safe to commit — see docker/README.md
+      # Override AZURE_STORAGE_ACCOUNT_KEY for a real Azure storage account.
+      # ------------------------------------------------------------------
+      AZURE_STORAGE_ACCOUNT_KEY: ${AZURE_STORAGE_ACCOUNT_KEY:-Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==} # gitleaks:allow
+      AZURE_STORAGE_BLOB_ENDPOINT: "http://azurite:10000/devstoreaccount1"
+      AZURE_CLIENT_ID: "integration-test-client"
+      AZURE_TENANT_ID: "integration-test-tenant"
       MANAGEMENT_HEALTH_JMS_ENABLED: "false"
       MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "false"
       CP_CLP_AUTHZ_ENABLED: "false"
       CP_CLP_HTTP_AUDIT_ENABLED: "false"
       CP_CLP_AUDIT_ENABLED: "false"
+      # System user id required for reference data + document generator calls
+      COURTLISTPUBLISHING_SYSTEM_USER_ID: "11111111-1111-1111-1111-111111111111"
+      # WireMock service running in Docker container
+      COMMON_PLATFORM_QUERY_API_BASE_URL: "http://wiremock:8080"
+      CATH_BASE_URL: "http://wiremock:8080"
+      CATH_PUBLISHING_ENABLED: "true"
     depends_on:
       db:
         condition: service_healthy
+      wiremock:
+        condition: service_started
+      azurite:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:${SERVER_PORT:-8082}/courtlistpublishing-service/actuator/health || exit 1"]
       interval: 10s

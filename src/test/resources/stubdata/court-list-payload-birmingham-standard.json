@@ -1,0 +1,113 @@
+{
+  "listType": "standard",
+  "courtCentreName": "Birmingham Magistrates' Court",
+  "courtCentreDefaultStartTime": "10:00:00",
+  "courtCentreAddress1": "Victoria Law Courts Corporation Street",
+  "courtCentreAddress2": "Birmingham   B4 6QA",
+  "welshCourtCentreName": "Llys Ynadon Birmingham",
+  "welshCourtCentreAddress1": " ",
+  "welshCourtCentreAddress2": "   B4 6QA",
+  "hearingDates": [
+    {
+      "hearingDate": "2026-03-10",
+      "hearingDateWelsh": "10 Mawrth 2026",
+      "courtRooms": [
+        {
+          "courtRoomName": "Courtroom 01",
+          "welshCourtRoomName": "Courtroom 01",
+          "judiciaryNames": "",
+          "welshJudiciaryNames": "",
+          "timeslots": [
+            {
+              "hearings": [
+                {
+                  "id": "056c4869-17c7-492f-bba3-34142c9f33da",
+                  "sequence": 1,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Sentence",
+                  "welshHearingType": "Dedfryd",
+                  "caseNumber": "59GD5191026",
+                  "caseId": "c803ac8e-a5ad-437e-b8ec-7fc65a5dc295",
+                  "prosecutorType": "TVL",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "id": "23fefa8b-b27e-46b7-947f-d0d879bfb2ce",
+                      "organisationName": "",
+                      "welshOrganisationName": "",
+                      "firstName": "Sebastian",
+                      "surname": "Crona",
+                      "welshSurname": "Crona",
+                      "dateOfBirth": "21 Aug 1974",
+                      "age": "51",
+                      "nationality": "British",
+                      "address": {
+                        "address1": "Q5yrESdvvq"
+                      },
+                      "reportingRestrictions": [],
+                      "offences": [
+                        {
+                          "id": "5b605eb1-4e90-4982-85c5-4af3bb2e1e64",
+                          "adjournedDate": "2026-02-25",
+                          "adjournedHearingType": "To attend or a warrant to issue",
+                          "offenceCode": "CA03014",
+                          "offenceTitle": "Fail / refuse give assistance to person executing Communications Act search warrant",
+                          "offenceWording": "Some offence wording",
+                          "listingNumber": 2,
+                          "offenceLegislation": "Section 18 - attempt    wounding with intent Legislation"
+                        }
+                      ],
+                      "gender": "NOT_SPECIFIED"
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-25",
+                  "panel": "ADULT"
+                },
+                {
+                  "id": "056c4869-17c7-492f-bba3-34142c9f33da",
+                  "sequence": 1,
+                  "reportingRestrictionReason": "",
+                  "welshReportingRestrictionReason": "",
+                  "startTime": "10:00",
+                  "hearingType": "Sentence",
+                  "welshHearingType": "Dedfryd",
+                  "caseNumber": "59GD5191026",
+                  "prosecutorType": "",
+                  "hearingPublicListNote": "",
+                  "defendants": [
+                    {
+                      "defenceOrganization": "-",
+                      "offences": []
+                    }
+                  ],
+                  "adjournedHearingDate": "2026-02-25",
+                  "panel": "ADULT",
+                  "courtApplicationId": "8f095196-b2be-4241-ad22-53e7c7f65260",
+                  "applicationOffences": [],
+                  "courtApplication": {
+                    "applicationType": "Application within civil proceedings",
+                    "applicant": {
+                      "name": "TV Licensing",
+                      "address": {},
+                      "reportingRestrictions": [],
+                      "offences": []
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "templateName": "BenchAndStandardCourtList",
+  "ljaCode": "2922",
+  "ljaName": "Birmingham and Solihull Magistrates' Court",
+  "ouCode": "B20BL00",
+  "courtId": "fb423eb7-3f90-31ba-8ba1-984ff832ba53",
+  "courtIdNumeric": "39",
+  "isWelsh": false
+}

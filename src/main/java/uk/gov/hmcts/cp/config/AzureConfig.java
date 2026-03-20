@@ -18,7 +18,7 @@ import org.springframework.util.StringUtils;
 
 @Slf4j
 @Configuration
-@ConditionalOnProperty(name = "azure.storage.enabled", havingValue = "true", matchIfMissing = false)
+@org.springframework.context.annotation.Profile("!integration")
 public class AzureConfig {
     public static final String AZURE_CLIENT_ID = "AZURE_CLIENT_ID";
     public static final String AZURE_TENANT_ID = "AZURE_TENANT_ID";
@@ -26,23 +26,19 @@ public class AzureConfig {
     @Value("${azure.storage.container-name}")
     private String containerName;
 
-    @Value( "${azure.client.id}")
+    @Value("${azure.client.id:}")
     private String clientId;
 
-    @Value("${azure.tenant.id}")
+    @Value("${azure.tenant.id:}")
     private String tenantId;
 
     @Value("${azure.storage.account.name}")
     private String storageAccountName;
 
-
     @Bean
     public BlobContainerClient blobContainerClient() {
-        // Validate required Azure configuration when storage is enabled
         validateAzureConfiguration();
-        
         BlobServiceClient serviceClient = createBlobServiceClient();
-
         BlobContainerClient containerClient = serviceClient.getBlobContainerClient(containerName);
 
         // Try to create container if it doesn't exist, but don't fail if we lack permissions
