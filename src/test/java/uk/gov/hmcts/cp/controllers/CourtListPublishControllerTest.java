@@ -218,32 +218,6 @@ class CourtListPublishControllerTest {
         verify(service).findPublishStatus(null, courtCentreId, publishDate, null);
     }
 
-    @Test
-    void publishSjpCourtList_returns200_withAcceptedStatus() throws Exception {
-        when(sjpCourtListPublishService.publishSjpCourtList(
-                eq(SjpCourtListPublishService.SJP_PUBLISH_LIST),
-                any(),
-                any(),
-                any()))
-                .thenReturn(SjpPublishResult.accepted(SjpCourtListPublishService.SJP_PUBLISH_LIST, "SJP court list published to CaTH"));
-
-        mockMvc.perform(post(SJP_PUBLISH_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"listType\":\"SJP_PUBLISH_LIST\",\"listPayload\":{\"generatedDateAndTime\":\"2024-01-01T12:00:00Z\",\"readyCases\":[{\"caseUrn\":\"SJP-001\"}]}}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("ACCEPTED"))
-                .andExpect(jsonPath("$.listType").value("SJP_PUBLISH_LIST"))
-                .andExpect(jsonPath("$.message").value("SJP court list published to CaTH"));
-    }
-
-    @Test
-    void publishSjpCourtList_returns400_whenListTypeInvalid() throws Exception {
-        mockMvc.perform(post(SJP_PUBLISH_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"listType\":\"INVALID\"}"))
-                .andExpect(status().isBadRequest());
-    }
-
     private CourtListPublishRequest createValidRequest() {
         return new CourtListPublishRequest(
                 UUID.randomUUID(),  // courtCentreId

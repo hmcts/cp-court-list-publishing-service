@@ -128,7 +128,7 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
                 java.time.LocalDate date = java.time.LocalDate.parse(dob.trim(), java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale.UK));
                 return date.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE);
             } catch (Exception e2) {
-                log.warn("Failed to parse date of birth: {}", dob, e);
+                log.warn("Failed to parse date of birth", e);
                 return null;
             }
         }
@@ -141,7 +141,7 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
         try {
             return Integer.parseInt(age.trim());
         } catch (NumberFormatException e) {
-            log.warn("Failed to parse age: {}", age, e);
+            log.warn("Failed to parse age", e);
             return null;
         }
     }

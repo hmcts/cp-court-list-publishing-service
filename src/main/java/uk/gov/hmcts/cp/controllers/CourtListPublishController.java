@@ -8,8 +8,6 @@ import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.PublishCourtListRequest;
 import uk.gov.hmcts.cp.openapi.model.PublishCourtListResponse;
-import uk.gov.hmcts.cp.openapi.model.SjpListType;
-import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
@@ -97,35 +95,6 @@ public class CourtListPublishController implements CourtListPublishApi {
     }
 
     @Override
-    public ResponseEntity<PublishCourtListResponse> publishSjpCourtList(PublishCourtListRequest request) {
-        if (request == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
-        }
-        if (request.getListType() == null || request.getListType().getValue().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "listType is required");
-        }
-        String listType = request.getListType().getValue();
-        if (!SjpCourtListPublishService.SJP_PUBLISH_LIST.equals(listType)
-                && !SjpCourtListPublishService.SJP_PRESS_LIST.equals(listType)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "listType must be SJP_PUBLISH_LIST or SJP_PRESS_LIST");
-        }
-        // API model 0.1.21 may only expose listType; pass null for optional fields when getters not present
-        String language = null;
-        String requestType = null;
-        Object listPayload = null;
-
-        SjpPublishResult result = sjpCourtListPublishService.publishSjpCourtList(
-                listType, language, requestType, listPayload);
-
-        PublishCourtListResponse response = new PublishCourtListResponse()
-                .status(result.getStatus())
-                .listType(SjpListType.fromValue(result.getListType()))
-                .message(result.getMessage());
-        return ResponseEntity.ok().body(response);
-    }
-
-    @Override
     public ResponseEntity<Resource> downloadCourtList(@RequestBody CourtListDownloadRequest request) {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
@@ -162,6 +131,31 @@ public class CourtListPublishController implements CourtListPublishApi {
             LOG.warn("Public court list download error: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, e.getMessage());
         }
+    }
+
+    @Override
+    public ResponseEntity<PublishCourtListResponse> publishSjpCourtList(
+            @RequestBody final PublishCourtListRequest request) {
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
+        }
+        if (request.getListType() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "listType is required");
+        }
+
+        LOG.atInfo().log("SJP court list publish request for listType: {}", request.getListType());
+
+        SjpPublishResult result = sjpCourtListPublishService.publishSjpCourtList(
+                request.getListType().getValue(),
+                null,
+                null,
+                null);
+
+        PublishCourtListResponse response = new PublishCourtListResponse(
+                result.getStatus(),
+                request.getListType(),
+                result.getMessage());
+        return ResponseEntity.ok(response);
     }
 
     @SuppressWarnings("unused") // Method is used by Spring's request mapping

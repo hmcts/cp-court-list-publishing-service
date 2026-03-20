@@ -14,6 +14,7 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -40,6 +41,8 @@ class CaTHServiceTest {
 
     private CourtListDocument courtListDocument;
 
+    private static final UUID COURT_LIST_ID = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
+
     @BeforeEach
     void setUp() {
         cathService = new CaTHService(cathPublisher, Optional.of(azureBlobService));
@@ -53,7 +56,7 @@ class CaTHServiceTest {
 
         // When
         LocalDate publishDate = LocalDate.of(2024, 1, 15);
-        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, publishDate, null, null);
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, publishDate, null, null, COURT_LIST_ID);
 
         // Then - Verify CaTHPublisher was called
         ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
@@ -83,7 +86,7 @@ class CaTHServiceTest {
         when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
 
         // When
-        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), "325", null);
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), "325", null, COURT_LIST_ID);
 
         // Then - DtsMeta uses courtId from payload
         ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
@@ -97,7 +100,7 @@ class CaTHServiceTest {
         when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
 
         // When
-        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), null, true);
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), null, true, COURT_LIST_ID);
 
         // Then - DtsMeta has language WELSH
         ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
@@ -111,7 +114,7 @@ class CaTHServiceTest {
         when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
 
         // When
-        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), null, false);
+        cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), null, false, COURT_LIST_ID);
 
         // Then - DtsMeta has language ENGLISH
         ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
@@ -126,7 +129,7 @@ class CaTHServiceTest {
                 .thenThrow(new RuntimeException("Publishing failed"));
 
         // When & Then
-        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), null, null))
+        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), null, null, COURT_LIST_ID))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to send court list document to CaTH");
     }
@@ -138,7 +141,7 @@ class CaTHServiceTest {
                 .thenThrow(new RuntimeException("Unexpected error"));
 
         // When & Then
-        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), null, null))
+        assertThatThrownBy(() -> cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC, LocalDate.of(2024, 1, 15), null, null, COURT_LIST_ID))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to send court list document to CaTH");
     }
@@ -150,7 +153,7 @@ class CaTHServiceTest {
 
         // When
         cathService.sendCourtListToCaTH(courtListDocument, CourtListType.STANDARD,
-            LocalDate.of(2024, 1, 15), "100", null);
+            LocalDate.of(2024, 1, 15), "100", null, COURT_LIST_ID);
 
         // Then
         ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
@@ -163,7 +166,7 @@ class CaTHServiceTest {
     void sendCourtListToCaTH_shouldThrowException_whenCourtListTypeNotSupported() {
         // When & Then
         assertThatThrownBy(() -> cathService.sendCourtListToCaTH(
-                courtListDocument, CourtListType.PUBLIC, LocalDate.of(2024, 1, 15), null, null))
+                courtListDocument, CourtListType.PUBLIC, LocalDate.of(2024, 1, 15), null, null, COURT_LIST_ID))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("Failed to send court list document to CaTH")
             .hasCauseInstanceOf(IllegalStateException.class);
@@ -176,7 +179,7 @@ class CaTHServiceTest {
 
         // When
         cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC,
-            LocalDate.of(2024, 1, 15), "  ", null);
+            LocalDate.of(2024, 1, 15), "  ", null, COURT_LIST_ID);
 
         // Then
         ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
@@ -191,7 +194,7 @@ class CaTHServiceTest {
 
         // When
         cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC,
-            LocalDate.of(2024, 1, 15), "325", null);
+            LocalDate.of(2024, 1, 15), "325", null, COURT_LIST_ID);
 
         // Then - blob upload called before publish (order verified)
         InOrder inOrder = inOrder(azureBlobService, cathPublisher);
@@ -206,7 +209,7 @@ class CaTHServiceTest {
 
         // When
         cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC,
-            LocalDate.of(2024, 1, 15), "325", null);
+            LocalDate.of(2024, 1, 15), "325", null, COURT_LIST_ID);
 
         // Then - same payload sent to both blob and publisher
         ArgumentCaptor<String> blobPayloadCaptor = ArgumentCaptor.forClass(String.class);
@@ -223,14 +226,13 @@ class CaTHServiceTest {
 
         // When
         cathService.sendCourtListToCaTH(courtListDocument, CourtListType.STANDARD,
-            LocalDate.of(2024, 6, 20), "450", false);
+            LocalDate.of(2024, 6, 20), "450", false, COURT_LIST_ID);
 
         // Then
         ArgumentCaptor<String> blobNameCaptor = ArgumentCaptor.forClass(String.class);
         verify(azureBlobService).uploadJson(anyString(), blobNameCaptor.capture());
         String blobName = blobNameCaptor.getValue();
-        assertThat(blobName).startsWith("cath-payloads/STANDARD/450/2024-06-20_");
-        assertThat(blobName).endsWith(".json");
+        assertThat(blobName).isEqualTo(COURT_LIST_ID + "-cath.json");
     }
 
     @Test
@@ -242,7 +244,7 @@ class CaTHServiceTest {
 
         // When
         cathService.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC,
-            LocalDate.of(2024, 1, 15), null, null);
+            LocalDate.of(2024, 1, 15), null, null, COURT_LIST_ID);
 
         // Then - publish still called despite blob failure
         verify(cathPublisher).publish(anyString(), any(DtsMeta.class));
@@ -256,7 +258,7 @@ class CaTHServiceTest {
 
         // When
         serviceWithoutBlob.sendCourtListToCaTH(courtListDocument, CourtListType.ONLINE_PUBLIC,
-            LocalDate.of(2024, 1, 15), null, null);
+            LocalDate.of(2024, 1, 15), null, null, COURT_LIST_ID);
 
         // Then - publish called, blob service never invoked
         verify(azureBlobService, never()).uploadJson(anyString(), anyString());
@@ -264,33 +266,11 @@ class CaTHServiceTest {
     }
 
     @Test
-    void buildBlobName_shouldCreateCorrectPathForOnlinePublic() {
-        Instant timestamp = Instant.parse("2024-01-15T10:30:00Z");
-        String blobName = CaTHService.buildBlobName(
-            CourtListType.ONLINE_PUBLIC, "325", LocalDate.of(2024, 1, 15), timestamp);
+    void buildBlobName_shouldCreateCorrectNameFromCourtListId() {
+        UUID id = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
+        String blobName = CaTHService.buildBlobName(id);
 
-        assertThat(blobName).isEqualTo(
-            "cath-payloads/ONLINE_PUBLIC/325/2024-01-15_20240115T103000Z.json");
-    }
-
-    @Test
-    void buildBlobName_shouldCreateCorrectPathForStandard() {
-        Instant timestamp = Instant.parse("2024-06-20T14:45:30Z");
-        String blobName = CaTHService.buildBlobName(
-            CourtListType.STANDARD, "100", LocalDate.of(2024, 6, 20), timestamp);
-
-        assertThat(blobName).isEqualTo(
-            "cath-payloads/STANDARD/100/2024-06-20_20240620T144530Z.json");
-    }
-
-    @Test
-    void buildBlobName_shouldUseDefaultCourtIdWhenZero() {
-        Instant timestamp = Instant.parse("2024-01-15T10:30:00Z");
-        String blobName = CaTHService.buildBlobName(
-            CourtListType.ONLINE_PUBLIC, "0", LocalDate.of(2024, 1, 15), timestamp);
-
-        assertThat(blobName).isEqualTo(
-            "cath-payloads/ONLINE_PUBLIC/0/2024-01-15_20240115T103000Z.json");
+        assertThat(blobName).isEqualTo("a1b2c3d4-e5f6-7890-abcd-ef1234567890-cath.json");
     }
 
     @Test

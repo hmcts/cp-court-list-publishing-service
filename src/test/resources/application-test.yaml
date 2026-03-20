@@ -42,7 +42,7 @@ courtlistpublishing:
 
 # CaTH endpoint configuration for unit tests
 cath:
-  base-url: ${CATH_BASE_URL:https://spnl-apim-int-gw.cpp.nonlive}
+  base-url: ${CATH_BASE_URL:http://localhost:8080}
   endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
   publishing-enabled: ${CATH_PUBLISHING_ENABLED:true}
 

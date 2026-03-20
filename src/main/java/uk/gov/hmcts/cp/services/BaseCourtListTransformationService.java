@@ -304,7 +304,9 @@ public abstract class BaseCourtListTransformationService {
             java.time.LocalDateTime dateTime = localDate.atTime(hour, minute, second);
             return dateTime.atOffset(ZoneOffset.UTC).format(ISO_DATE_TIME_FORMATTER);
         } catch (Exception e) {
-            log.warn("Failed to convert date/time to ISO format: date={}, time={}", date, time, e);
+            String safeDateForLog = date == null ? null : date.replace("\n", "").replace("\r", "");
+            String safeTimeForLog = time == null ? null : time.replace("\n", "").replace("\r", "");
+            log.warn("Failed to convert date/time to ISO format: date={}, time={}", safeDateForLog, safeTimeForLog, e);
             return null;
         }
     }
