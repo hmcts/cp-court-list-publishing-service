@@ -28,6 +28,8 @@ import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
+import uk.gov.hmcts.cp.services.CaTHService;
+import uk.gov.hmcts.cp.services.CourtListPublisherBlobClientService;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +39,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 /**
- * Integration test for CleanupJobService (used by GET /publish-status-cleanup): records older than the
+ * Integration test for CleanupJobService : records older than the
  * retention period are purged from both court_list_publish_status and the Azure blob store.
  */
 @SpringBootTest(
@@ -66,7 +68,6 @@ class CleanupJobIntegrationTest {
     /** Test uses 7-day retention (passed to service); records older than this are purged. */
     private static final int RETENTION_DAYS_IN_TEST = 7;
     private static final int DAYS_BEYOND_RETENTION = 10;
-    private static final String PDF_EXTENSION = ".pdf";
 
     private static final String AZURITE_IMAGE = "mcr.microsoft.com/azure-storage/azurite:3.34.0";
     private static final int AZURITE_BLOB_PORT = 10000;
@@ -127,62 +128,73 @@ class CleanupJobIntegrationTest {
     @Test
     void cleanupOldData_shouldDeleteRecordsAndBlobs_afterRetentionPeriod() {
         UUID courtListId1 = UUID.randomUUID();
-        UUID fileId1 = UUID.randomUUID();
         UUID courtListId2 = UUID.randomUUID();
-        UUID fileId2 = UUID.randomUUID();
         Instant oldInstant = Instant.now().minus(DAYS_BEYOND_RETENTION, ChronoUnit.DAYS);
 
-        repository.save(createEntity(courtListId1, fileId1, oldInstant));
-        repository.save(createEntity(courtListId2, fileId2, oldInstant));
-        uploadBlob(fileId1);
-        uploadBlob(fileId2);
+        repository.save(createEntity(courtListId1, oldInstant));
+        repository.save(createEntity(courtListId2, oldInstant));
+        uploadPdfAndCathJson(courtListId1);
+        uploadPdfAndCathJson(courtListId2);
 
-        assertRecordExists(courtListId1);
-        assertRecordExists(courtListId2);
-        assertBlobExists(fileId1);
-        assertBlobExists(fileId2);
+        assertRecord(courtListId1);
+        assertRecord(courtListId2);
+        assertBlobs(courtListId1);
+        assertBlobs(courtListId2);
 
-        cleanupJobService.cleanupOldData(RETENTION_DAYS_IN_TEST, null);
+        cleanupJobService.cleanupOldData(RETENTION_DAYS_IN_TEST);
 
         assertRecordDeleted(courtListId1);
         assertRecordDeleted(courtListId2);
-        assertBlobDeleted(fileId1);
-        assertBlobDeleted(fileId2);
+        assertBlobsDeleted(courtListId1);
+        assertBlobsDeleted(courtListId2);
     }
 
     @Test
     void cleanupOldData_shouldNotDeleteRecentRecords_orTheirBlobs() {
         UUID oldCourtListId = UUID.randomUUID();
-        UUID oldFileId = UUID.randomUUID();
         UUID recentCourtListId = UUID.randomUUID();
-        UUID recentFileId = UUID.randomUUID();
 
-        repository.save(createEntity(oldCourtListId, oldFileId, Instant.now().minus(DAYS_BEYOND_RETENTION, ChronoUnit.DAYS)));
-        repository.save(createEntity(recentCourtListId, recentFileId, Instant.now()));
-        uploadBlob(oldFileId);
-        uploadBlob(recentFileId);
+        repository.save(createEntity(oldCourtListId, Instant.now().minus(DAYS_BEYOND_RETENTION, ChronoUnit.DAYS)));
+        repository.save(createEntity(recentCourtListId, Instant.now()));
+        uploadPdfAndCathJson(oldCourtListId);
+        uploadPdfAndCathJson(recentCourtListId);
 
-        cleanupJobService.cleanupOldData(RETENTION_DAYS_IN_TEST, null);
+        cleanupJobService.cleanupOldData(RETENTION_DAYS_IN_TEST);
 
         assertRecordDeleted(oldCourtListId);
-        assertBlobDeleted(oldFileId);
-        assertRecordExists(recentCourtListId);
-        assertBlobExists(recentFileId);
+        assertBlobsDeleted(oldCourtListId);
+        assertRecord(recentCourtListId);
+        assertBlobs(recentCourtListId);
     }
 
     @Test
     void cleanupOldData_shouldNotDeleteRecord_whenBlobDoesNotExist() {
         UUID courtListId = UUID.randomUUID();
-        UUID fileId = UUID.randomUUID();
-        repository.save(createEntity(courtListId, fileId, Instant.now().minus(DAYS_BEYOND_RETENTION, ChronoUnit.DAYS)));
+        repository.save(createEntity(courtListId, Instant.now().minus(DAYS_BEYOND_RETENTION, ChronoUnit.DAYS)));
         // Blob not uploaded
 
-        cleanupJobService.cleanupOldData(RETENTION_DAYS_IN_TEST, null);
+        cleanupJobService.cleanupOldData(RETENTION_DAYS_IN_TEST);
 
-        assertRecordExists(courtListId);
+        assertRecord(courtListId);
     }
 
-    private void assertRecordExists(UUID courtListId) {
+    @Test
+    void cleanupOldData_shouldDeleteRecord_whenOnlyPdfExists_cathJsonNotInStorage() {
+        UUID courtListId = UUID.randomUUID();
+        repository.save(createEntity(courtListId, Instant.now().minus(DAYS_BEYOND_RETENTION, ChronoUnit.DAYS)));
+        byte[] pdfContent = ("pdf-only-" + courtListId).getBytes(StandardCharsets.UTF_8);
+        blobContainerClient.getBlobClient(CourtListPublisherBlobClientService.buildPdfBlobName(courtListId)).upload(
+            new ByteArrayInputStream(pdfContent), pdfContent.length, true
+        );
+
+        cleanupJobService.cleanupOldData(RETENTION_DAYS_IN_TEST);
+
+        assertRecordDeleted(courtListId);
+        assertThat(blobContainerClient.getBlobClient(CourtListPublisherBlobClientService.buildPdfBlobName(courtListId)).exists()).isFalse();
+        assertThat(blobContainerClient.getBlobClient(CaTHService.buildBlobName(courtListId)).exists()).isFalse();
+    }
+
+    private void assertRecord(UUID courtListId) {
         assertThat(repository.findById(courtListId)).isPresent();
     }
 
@@ -190,15 +202,17 @@ class CleanupJobIntegrationTest {
         assertThat(repository.findById(courtListId)).isEmpty();
     }
 
-    private void assertBlobExists(UUID fileId) {
-        assertThat(blobContainerClient.getBlobClient(blobName(fileId)).exists()).isTrue();
+    private void assertBlobs(UUID courtListId) {
+        assertThat(blobContainerClient.getBlobClient(CourtListPublisherBlobClientService.buildPdfBlobName(courtListId)).exists()).isTrue();
+        assertThat(blobContainerClient.getBlobClient(CaTHService.buildBlobName(courtListId)).exists()).isTrue();
     }
 
-    private void assertBlobDeleted(UUID fileId) {
-        assertThat(blobContainerClient.getBlobClient(blobName(fileId)).exists()).isFalse();
+    private void assertBlobsDeleted(UUID courtListId) {
+        assertThat(blobContainerClient.getBlobClient(CourtListPublisherBlobClientService.buildPdfBlobName(courtListId)).exists()).isFalse();
+        assertThat(blobContainerClient.getBlobClient(CaTHService.buildBlobName(courtListId)).exists()).isFalse();
     }
 
-    private static CourtListStatusEntity createEntity(UUID courtListId, UUID fileId, Instant lastUpdated) {
+    private static CourtListStatusEntity createEntity(UUID courtListId, Instant lastUpdated) {
         CourtListStatusEntity entity = new CourtListStatusEntity(
             courtListId,
             UUID.randomUUID(),
@@ -208,18 +222,18 @@ class CleanupJobIntegrationTest {
             lastUpdated
         );
         entity.setPublishDate(LocalDate.now());
-        entity.setFileId(fileId);
+        entity.setFileId(courtListId);
         return entity;
     }
 
-    private static String blobName(UUID fileId) {
-        return fileId + PDF_EXTENSION;
-    }
-
-    private void uploadBlob(UUID fileId) {
-        byte[] content = ("pdf-content-" + fileId).getBytes(StandardCharsets.UTF_8);
-        blobContainerClient.getBlobClient(blobName(fileId)).upload(
-            new ByteArrayInputStream(content), content.length, true
+    private void uploadPdfAndCathJson(UUID courtListId) {
+        byte[] pdfContent = ("pdf-content-" + courtListId).getBytes(StandardCharsets.UTF_8);
+        blobContainerClient.getBlobClient(CourtListPublisherBlobClientService.buildPdfBlobName(courtListId)).upload(
+            new ByteArrayInputStream(pdfContent), pdfContent.length, true
+        );
+        byte[] jsonContent = ("{\"courtListId\":\"" + courtListId + "\"}").getBytes(StandardCharsets.UTF_8);
+        blobContainerClient.getBlobClient(CaTHService.buildBlobName(courtListId)).upload(
+            new ByteArrayInputStream(jsonContent), jsonContent.length, true
         );
     }
 }
