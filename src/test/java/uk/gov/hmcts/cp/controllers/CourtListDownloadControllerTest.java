@@ -13,6 +13,7 @@ import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
+import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
 
 import java.time.LocalDate;
 
@@ -44,12 +45,14 @@ class CourtListDownloadControllerTest {
     @Mock
     private CourtListDownloadService courtListDownloadService;
     @Mock
+    private SjpCourtListPublishService sjpCourtListPublishService;
+    @Mock
     private CleanupJobService cleanupJobService;
 
     @BeforeEach
     void setUp() {
         CourtListPublishController controller = new CourtListPublishController(
-                service, courtListTaskTriggerService, courtListDownloadService, cleanupJobService);
+                service, courtListTaskTriggerService, courtListDownloadService,cleanupJobService, sjpCourtListPublishService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
