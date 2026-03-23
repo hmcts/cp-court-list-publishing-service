@@ -20,18 +20,27 @@ public class AzureBlobService {
     private final BlobContainerClient blobContainerClient;
 
     public void uploadJson(String payload, String blobName) {
+        String safeBlobName = sanitizeForLog(blobName);
+        log.info("Uploading JSON payload to blob: {}", safeBlobName);
         try {
-            log.info("Uploading JSON payload to blob: {}", blobName);
             byte[] bytes = payload.getBytes(StandardCharsets.UTF_8);
             BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
             BlobHttpHeaders headers = new BlobHttpHeaders().setContentType("application/json");
             blobClient.upload(new ByteArrayInputStream(bytes), bytes.length, true);
             blobClient.setHttpHeaders(headers);
-            log.info("Successfully uploaded JSON payload to blob: {}", blobName);
+            log.info("Successfully uploaded JSON payload to blob: {}", safeBlobName);
         } catch (Exception e) {
-            log.error("Error uploading JSON payload to blob: {}", blobName, e);
+            log.error("Error uploading JSON payload to blob: {}", safeBlobName, e);
             throw new RuntimeException(
                 "Azure storage error while uploading JSON payload: " + blobName + ". " + e.getMessage(), e);
         }
+    }
+
+    private static String sanitizeForLog(String value) {
+        if (value == null) {
+            return "<null>";
+        }
+        // Remove CR/LF to prevent log injection / log forging
+        return value.replace('\r', ' ').replace('\n', ' ');
     }
 }

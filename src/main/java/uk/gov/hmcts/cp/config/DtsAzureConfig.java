@@ -5,51 +5,33 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * Application parameters configuration.
- * 
- * <p>This class holds configuration values for the application,
- * including Publishing Hub URLs and Azure configuration.
- * 
- * <p>Configuration values can be set via environment variables:
- * <ul>
- *   <li>azure.local.dts.apimUrl → AZURE_LOCAL_DTS_APIMURL or AZURE_LOCAL_DTS_APIM_URL</li>
- *   <li>azure.local.dts.clientId → AZURE_LOCAL_DTS_CLIENTID or AZURE_LOCAL_DTS_CLIENT_ID</li>
- *   <li>azure.local.dts.tenantId → AZURE_LOCAL_DTS_TENANTID or AZURE_LOCAL_DTS_TENANT_ID</li>
- *   <li>azure.local.dts.scope → AZURE_LOCAL_DTS_SCOPE</li>
- *   <li>azure.remote.dts.clientId → AZURE_REMOTE_DTS_CLIENTID or AZURE_REMOTE_DTS_CLIENT_ID</li>
- *   <li>azure.remote.dts.tenantId → AZURE_REMOTE_DTS_TENANTID or AZURE_REMOTE_DTS_TENANT_ID</li>
- *   <li>azure.remote.dts.appRegistration.id → AZURE_REMOTE_DTS_APPREGISTRATION_ID or AZURE_REMOTE_DTS_APP_REGISTRATION_ID</li>
- * </ul>
- * 
- * <p>Spring Boot automatically converts property names to environment variables:
- * <ul>
- *   <li>Dots (.) become underscores (_)</li>
- *   <li>Case is ignored (uppercase/lowercase both work)</li>
- *   <li>CamelCase can be converted with or without underscores</li>
- * </ul>
+ * Configuration for DTS / Azure API Management and related identifiers used by publishing flows.
+ * <p>
+ * Values are bound from {@code application-azure.yml} and environment variables
+ * (see project documentation for {@code AZURE_LOCAL_DTS_*} and {@code AZURE_REMOTE_DTS_*}).
  */
 @Component
 @Getter
 public class DtsAzureConfig {
 
-    @Value("${azure.local.dts.apimUrl:}")
+    @Value("${azure.local.dts.apimUrl:}") // gitleaks:allow
     private String azureLocalDtsApimUrl;
 
-    @Value("${azure.local.dts.clientId:}")
+    @Value("${azure.local.dts.clientId:}") // gitleaks:allow
     private String azureLocalDtsClientId;
 
-    @Value("${azure.local.dts.tenantId:}")
+    @Value("${azure.local.dts.tenantId:}") // gitleaks:allow
     private String azureLocalDtsTenantId;
 
-    @Value("${azure.local.dts.scope:https://management.azure.com/.default}")
+    @Value("${azure.local.dts.scope:}") // gitleaks:allow
     private String azureLocalDtsScope;
 
-    @Value("${azure.remote.dts.clientId:}")
+    @Value("${azure.remote.dts.clientId:}") // gitleaks:allow
     private String azureRemoteDtsClientId;
 
-    @Value("${azure.remote.dts.tenantId:}")
+    @Value("${azure.remote.dts.tenantId:}") // gitleaks:allow
     private String azureRemoteDtsTenantId;
 
-    @Value("${azure.remote.dts.appRegistration.id:}")
+    @Value("${azure.remote.dts.appRegistration.id:}") // gitleaks:allow
     private String azureRemoteDtsAppRegistrationId;
 }

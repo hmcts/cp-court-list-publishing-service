@@ -413,7 +413,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                 LocalDate date = LocalDate.parse(normalised, DOB_FORMATTER_FULL_MONTH);
                 return date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             } catch (Exception e2) {
-                log.warn("Failed to parse date of birth: {}", dob, e1);
+                log.warn("Failed to parse date of birth ", e1);
                 return null;
             }
         }
@@ -427,7 +427,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         try {
             return Integer.parseInt(age.trim());
         } catch (NumberFormatException e) {
-            log.warn("Failed to parse age: {}", age, e);
+            log.warn("Failed to parse age", e);
             return null;
         }
     }
