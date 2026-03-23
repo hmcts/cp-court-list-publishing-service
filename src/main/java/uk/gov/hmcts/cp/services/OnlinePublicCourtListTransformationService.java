@@ -236,6 +236,15 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
                         .build();
             }
 
+            // Organisation defendants (and org name alongside individuals): mirrors StandardCourtListTransformationService / CaTH schema
+            OrganisationDetails organisationDetails = null;
+            if (isNonBlank(defendant.getOrganisationName())) {
+                organisationDetails = OrganisationDetails.builder()
+                        .organisationName(defendant.getOrganisationName().trim())
+                        .organisationAddress(transformAddressSchemaFromDefendant(defendant.getAddress()))
+                        .build();
+            }
+
             // Offence list per schema (offenceTitle only for public lists)
             List<OffenceSchema> offences = transformOffencesForPublicList(defendant.getOffences(), defendant);
 
@@ -247,6 +256,7 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
                     .partyRole("DEFENDANT")
                     .individualDetails(individualDetails)
                     .offence(offences)
+                    .organisationDetails(organisationDetails)
                     .subject(isSubjectOfApplication)
                     .build());
 
