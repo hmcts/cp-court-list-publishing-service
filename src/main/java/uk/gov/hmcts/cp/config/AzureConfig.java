@@ -11,14 +11,13 @@ import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 
 @Slf4j
 @Configuration
-@org.springframework.context.annotation.Profile("!integration & !cleanup-test")
+@org.springframework.context.annotation.Profile("!integration")
 public class AzureConfig {
     public static final String AZURE_CLIENT_ID = "AZURE_CLIENT_ID";
     public static final String AZURE_TENANT_ID = "AZURE_TENANT_ID";

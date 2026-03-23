@@ -10,9 +10,13 @@ import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.PublishStatusCleanupResponse;
 import uk.gov.hmcts.cp.openapi.model.Status;
+import uk.gov.hmcts.cp.openapi.model.PublishCourtListRequest;
+import uk.gov.hmcts.cp.openapi.model.PublishCourtListResponse;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
+import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
+import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService.SjpPublishResult;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +50,7 @@ public class CourtListPublishController implements CourtListPublishApi {
     private final CourtListPublishStatusService service;
     private final CourtListTaskTriggerService courtListTaskTriggerService;
     private final CourtListDownloadService courtListDownloadService;
+    private final SjpCourtListPublishService sjpCourtListPublishService;
     private final CleanupJobService cleanupJobService;
 
     @Value("${cleanup.publish-status-cleanup-days:90}")
@@ -54,11 +59,13 @@ public class CourtListPublishController implements CourtListPublishApi {
     public CourtListPublishController(final CourtListPublishStatusService service,
                                      CourtListTaskTriggerService courtListTaskTriggerService,
                                      CourtListDownloadService courtListDownloadService,
-                                     CleanupJobService cleanupJobService) {
+                                     CleanupJobService cleanupJobService,
+                                     SjpCourtListPublishService sjpCourtListPublishService) {
         this.service = service;
         this.courtListTaskTriggerService = courtListTaskTriggerService;
         this.courtListDownloadService = courtListDownloadService;
         this.cleanupJobService = cleanupJobService;
+        this.sjpCourtListPublishService = sjpCourtListPublishService;
     }
 
 
@@ -135,6 +142,31 @@ public class CourtListPublishController implements CourtListPublishApi {
             LOG.warn("Public court list download error: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, e.getMessage());
         }
+    }
+
+    @Override
+    public ResponseEntity<PublishCourtListResponse> publishSjpCourtList(
+            @RequestBody final PublishCourtListRequest request) {
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
+        }
+        if (request.getListType() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "listType is required");
+        }
+
+        LOG.atInfo().log("SJP court list publish request for listType: {}", request.getListType());
+
+        SjpPublishResult result = sjpCourtListPublishService.publishSjpCourtList(
+                request.getListType().getValue(),
+                null,
+                null,
+                null);
+
+        PublishCourtListResponse response = new PublishCourtListResponse(
+                result.getStatus(),
+                request.getListType(),
+                result.getMessage());
+        return ResponseEntity.ok(response);
     }
 
     @SuppressWarnings("unused") // Method is used by Spring's request mapping

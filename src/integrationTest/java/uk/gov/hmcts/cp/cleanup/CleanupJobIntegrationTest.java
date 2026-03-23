@@ -3,9 +3,6 @@ package uk.gov.hmcts.cp.cleanup;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.azure.storage.blob.BlobContainerClient;
-import com.azure.storage.blob.BlobServiceClient;
-import com.azure.storage.blob.BlobServiceClientBuilder;
-import com.azure.storage.common.StorageSharedKeyCredential;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,8 +11,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.PathMatcher;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
@@ -46,32 +44,22 @@ import java.util.UUID;
     classes = Application.class,
     webEnvironment = SpringBootTest.WebEnvironment.NONE
 )
-@ActiveProfiles("cleanup-test")
+@ActiveProfiles("integration")
 @Testcontainers
-@Import(CleanupJobIntegrationTest.AzuriteTestConfig.class)
+@Import(CleanupJobIntegrationTest.JwtFilterIntegrationSupportConfig.class)
 @TestPropertySource(properties = {
-    "cleanup.enabled=true",
     "azure.storage.enabled=true"
 })
 class CleanupJobIntegrationTest {
 
-    /** Provides BlobContainerClient for this test; use profile cleanup-test so AzureConfig is not loaded and we avoid duplicate bean. */
+    /**
+     * Supplies {@link PathMatcher} for {@code JWTFilter} in integration context only (no production/JWTConfig change).
+     */
     @TestConfiguration
-    @Profile("cleanup-test")
-    static class AzuriteTestConfig {
+    static class JwtFilterIntegrationSupportConfig {
         @Bean
-        BlobContainerClient blobContainerClient() {
-            String endpoint = "http://localhost:" + AZURITE.getMappedPort(AZURITE_BLOB_PORT) + "/" + AZURITE_ACCOUNT_NAME;
-            StorageSharedKeyCredential credential = new StorageSharedKeyCredential(AZURITE_ACCOUNT_NAME, AZURITE_ACCOUNT_KEY);
-            BlobServiceClient serviceClient = new BlobServiceClientBuilder()
-                    .endpoint(endpoint)
-                    .credential(credential)
-                    .buildClient();
-            BlobContainerClient containerClient = serviceClient.getBlobContainerClient(CONTAINER_NAME);
-            if (!containerClient.exists()) {
-                containerClient.create();
-            }
-            return containerClient;
+        PathMatcher pathMatcher() {
+            return new AntPathMatcher();
         }
     }
 

@@ -18,6 +18,7 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,6 +31,8 @@ public class CaTHService {
     record CathHeaderInfo(String cathCourtListType, String sensitivity){}
 
     private static final String CATH_BLOB_SUFFIX = "-cath.json";
+    private static final String BLOB_TIMESTAMP_FORMAT = "yyyyMMdd'T'HHmmss'Z'";
+    private static final String CATH_PAYLOAD_BLOB_PREFIX = "cath-payloads";
 
     private static final Map<CourtListType, CathHeaderInfo> COURT_LIST_MAPPINGS = ImmutableMap.of(
             CourtListType.ONLINE_PUBLIC, new CathHeaderInfo("MAGISTRATES_PUBLIC_LIST", "PUBLIC"),

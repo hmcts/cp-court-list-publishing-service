@@ -3,7 +3,6 @@ package uk.gov.hmcts.cp.cleanup;
 import com.azure.storage.blob.BlobContainerClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
@@ -22,9 +21,6 @@ public class CleanupJobService {
     private final CourtListStatusRepository repository;
     private final BlobContainerClient blobContainerClient;
 
-    @Value("${cleanup.enabled:true}")
-    private boolean cleanupEnabled;
-
     public CleanupJobService(CourtListStatusRepository repository,
                              @Autowired(required = false) BlobContainerClient blobContainerClient) {
         this.repository = repository;
@@ -36,10 +32,6 @@ public class CleanupJobService {
     }
 
     public void cleanupOldData(int retentionDays, String cronExpression) {
-        if (!cleanupEnabled) {
-            log.debug("Cleanup disabled, skipping");
-            return;
-        }
         if (blobContainerClient == null) {
             log.warn("Cleanup skipped: BlobContainerClient not available");
             return;

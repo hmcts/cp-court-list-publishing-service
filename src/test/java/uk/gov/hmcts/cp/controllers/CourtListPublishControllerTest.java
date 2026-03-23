@@ -20,6 +20,8 @@ import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
+import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
+import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService.SjpPublishResult;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -57,6 +59,9 @@ class CourtListPublishControllerTest {
     @Mock
     private CourtListDownloadService courtListDownloadService;
 
+    @Mock
+    private SjpCourtListPublishService sjpCourtListPublishService;
+
     @InjectMocks
     private CourtListPublishController controller;
 
@@ -65,6 +70,7 @@ class CourtListPublishControllerTest {
 
     private static final String PUBLISH_URL = "/api/court-list-publish/publish";
     private static final String BASE_URL = "/api/court-list-publish";
+    private static final String SJP_PUBLISH_URL = "/api/court-list-publish/sjp/publishCourtList";
 
     @BeforeEach
     void setUp() {
