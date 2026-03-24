@@ -76,6 +76,8 @@ services:
       COMMON_PLATFORM_QUERY_API_BASE_URL: "http://wiremock:8080"
       CATH_BASE_URL: "http://wiremock:8080"
       CATH_PUBLISHING_ENABLED: "true"
+      # Align cleanup retention with CleanupJobIntegrationTest (default in app is 90 days)
+      PUBLISH_STATUS_CLEANUP_DAYS: "7"
     depends_on:
       db:
         condition: service_healthy
