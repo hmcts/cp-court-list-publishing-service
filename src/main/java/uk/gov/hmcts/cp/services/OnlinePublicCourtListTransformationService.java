@@ -1,11 +1,11 @@
 package uk.gov.hmcts.cp.services;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.models.*;
 import uk.gov.hmcts.cp.models.transformed.schema.*;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,15 +22,29 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
     }
 
     @Override
-    protected AddressSchema buildVenueAddressFromPayload(CourtListPayload payload) {
-        List<String> lines = new ArrayList<>();
-        if (isNonBlank(payload.getAddress1())) lines.add(payload.getAddress1().trim());
-        if (isNonBlank(payload.getAddress2())) lines.add(payload.getAddress2().trim());
-        if (isNonBlank(payload.getAddress3())) lines.add(payload.getAddress3().trim());
-        if (isNonBlank(payload.getAddress4())) lines.add(payload.getAddress4().trim());
-        if (isNonBlank(payload.getAddress5())) lines.add(payload.getAddress5().trim());
+    protected AddressSchema buildVenueAddressFromPayload(final CourtListPayload payload) {
+        final List<String> lines = new ArrayList<>();
+        if (isNonBlank(payload.getAddress1())) {
+            lines.add(payload.getAddress1().trim());
+        }
 
-        String postcode = payload.getPostcode() != null ? payload.getPostcode().trim() : "";
+        if (isNonBlank(payload.getAddress2())) {
+            lines.add(payload.getAddress2().trim());
+        }
+
+        if (isNonBlank(payload.getAddress3())) {
+            lines.add(payload.getAddress3().trim());
+        }
+
+        if (isNonBlank(payload.getAddress4())) {
+            lines.add(payload.getAddress4().trim());
+        }
+
+        if (isNonBlank(payload.getAddress5())) {
+            lines.add(payload.getAddress5().trim());
+        }
+
+        final String postcode = payload.getPostcode() != null ? payload.getPostcode().trim() : "";
         return AddressSchema.builder()
                 .line(lines.isEmpty() ? new ArrayList<>() : lines)
                 .postCode(postcode)
@@ -151,12 +165,27 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
             return null;
         }
         List<String> lines = new ArrayList<>();
-        if (isNonBlank(address.getAddress1())) lines.add(address.getAddress1().trim());
-        if (isNonBlank(address.getAddress2())) lines.add(address.getAddress2().trim());
-        if (isNonBlank(address.getAddress3())) lines.add(address.getAddress3().trim());
-        if (isNonBlank(address.getAddress4())) lines.add(address.getAddress4().trim());
-        if (isNonBlank(address.getAddress5())) lines.add(address.getAddress5().trim());
-        String postcode = address.getPostcode() != null ? address.getPostcode().trim() : null;
+        if (isNonBlank(address.getAddress1())) {
+            lines.add(address.getAddress1().trim());
+        }
+
+        if (isNonBlank(address.getAddress2())) {
+            lines.add(address.getAddress2().trim());
+        }
+
+        if (isNonBlank(address.getAddress3())) {
+            lines.add(address.getAddress3().trim());
+        }
+
+        if (isNonBlank(address.getAddress4())) {
+            lines.add(address.getAddress4().trim());
+        }
+
+        if (isNonBlank(address.getAddress5())) {
+            lines.add(address.getAddress5().trim());
+        }
+
+        final String postcode = address.getPostcode() != null ? address.getPostcode().trim() : null;
         return AddressSchema.builder()
                 .line(lines.isEmpty() ? new ArrayList<>() : lines)
                 .postCode(postcode)
