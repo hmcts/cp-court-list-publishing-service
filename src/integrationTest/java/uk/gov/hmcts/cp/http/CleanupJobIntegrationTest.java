@@ -44,11 +44,18 @@ public class CleanupJobIntegrationTest extends CourtListIntegrationTestBase {
 
     private static final int DAYS_BEYOND_RETENTION = 10;
 
+    /**
+     * Blob endpoint on the host (Azurite published port). Differs from in-container {@code AZURE_STORAGE_BLOB_ENDPOINT} in docker-compose.
+     */
     private static final String AZURITE_ENDPOINT = "http://localhost:10000/devstoreaccount1";
-    private static final String AZURITE_ACCOUNT = "devstoreaccount1";
+
+    /** Account / key / container from {@code docker/integration-azurite-storage.env} (same as Compose {@code env_file}), or OS env override. */
+    private static final String AZURITE_ACCOUNT =
+            IntegrationAzuriteStorageSupport.requireNonBlank("AZURE_STORAGE_ACCOUNT_NAME", "Azurite account name");
     private static final String AZURITE_KEY =
-            "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
-    private static final String BLOB_CONTAINER_NAME = "courtpublisher-blob-container";
+            IntegrationAzuriteStorageSupport.requireNonBlank("AZURE_STORAGE_ACCOUNT_KEY", "Azurite account key");
+    private static final String BLOB_CONTAINER_NAME =
+            IntegrationAzuriteStorageSupport.requireNonBlank("AZURE_STORAGE_CONTAINER_NAME", "Blob container name");
 
     private static final BlobContainerClient BLOB_CONTAINER = createBlobContainer();
 

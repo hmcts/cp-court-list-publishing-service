@@ -1,6 +1,6 @@
 spring:
-  # Do not set spring.profiles.active here — invalid in profile-specific files (application-integration.yaml).
-  # Activate integration via @ActiveProfiles, SPRING_PROFILES_ACTIVE, or main application.yaml.
+  profiles:
+    active: integration
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.jms.JmsAutoConfiguration
