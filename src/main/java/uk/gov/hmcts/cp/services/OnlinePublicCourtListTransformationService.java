@@ -286,7 +286,7 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
             parties.add(Party.builder()
                     .partyRole("DEFENDANT")
                     .individualDetails(individualDetails)
-                    .offence(offences)
+                    .offence(isEmpty(offences)? null : offences)
                     .organisationDetails(organisationDetails)
                     .subject(isSubjectOfApplication)
                     .build());
@@ -338,7 +338,7 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
      */
     private List<OffenceSchema> transformOffencesForPublicList(final List<uk.gov.hmcts.cp.models.Offence> offences, final Defendant defendant) {
         if (offences == null || offences.isEmpty()) {
-            return null;
+            return Collections.emptyList();
         }
         List<String> offenceReportingDetails = null;
         Boolean offenceReportingRestriction = null;
