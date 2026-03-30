@@ -276,7 +276,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
      * Normalises a date string for schema fields that require ISO 8601 date-time (e.g. pleaDate, convictionDate, adjournedDate).
      * If the value is date-only (YYYY-MM-DD), appends T00:00:00.000Z; otherwise returns the value unchanged (or null).
      */
-    private static String toIsoDateTimeOrNull(String dateStr) {
+    public static final String toIsoDateTimeOrNull(String dateStr) {
         if (dateStr == null || dateStr.isBlank()) {
             return null;
         }
