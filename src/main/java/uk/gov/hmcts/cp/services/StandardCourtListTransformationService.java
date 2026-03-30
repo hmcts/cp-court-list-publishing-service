@@ -167,7 +167,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
             CaseSchema caseSchema = CaseSchema.builder()
                     .caseUrn(hearing.getCaseNumber())
                     .reportingRestriction(hasReportingRestriction)
-                    .reportingRestrictionDetails(reportingRestrictionDetails)
+                    .reportingRestrictionDetails(CollectionUtils.isEmpty(reportingRestrictionDetails)?null: reportingRestrictionDetails)
                     .caseSequenceIndicator(null) // Not available in source data
                     .party(parties)
                     .build();
@@ -183,7 +183,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
      */
     private List<String> getReportingRestrictionDetails(Defendant defendant) {
         if (defendant.getReportingRestrictions() == null || defendant.getReportingRestrictions().isEmpty()) {
-            return null;
+            return Collections.emptyList();
         }
         List<String> labels = defendant.getReportingRestrictions().stream()
                 .map(ReportingRestriction::getLabel)
