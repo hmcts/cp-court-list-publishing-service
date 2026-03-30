@@ -67,7 +67,7 @@ public class CaTHService {
                     .type("LIST")
                     .listType(cathListInfo.cathCourtListType())
                     .courtId(courtIdFromRefData)
-                    .contentDate(now.toString())
+                    .contentDate(publishDate.toString())
                     .language(language)
                     .sensitivity(cathListInfo.sensitivity())
                     .displayFrom(now.toString())
