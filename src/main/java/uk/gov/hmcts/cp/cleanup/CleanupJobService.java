@@ -22,7 +22,7 @@ public class CleanupJobService {
     private final BlobContainerClient blobContainerClient;
 
     public CleanupJobService(CourtListStatusRepository repository,
-                             @Autowired(required = false) BlobContainerClient blobContainerClient) {
+                             @Autowired(required = true) BlobContainerClient blobContainerClient) {
         this.repository = repository;
         this.blobContainerClient = blobContainerClient;
     }
