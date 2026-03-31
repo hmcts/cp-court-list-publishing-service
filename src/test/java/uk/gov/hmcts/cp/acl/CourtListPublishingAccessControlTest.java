@@ -88,7 +88,7 @@ class CourtListPublishingAccessControlTest {
     void publishPost_shouldAllowAuthorisedUser() {
         Action action = new Action(PUBLISH_POST, Map.of());
         given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action,
-                SecurityGroupConstants.getPublishingRoles())).willReturn(true);
+                LISTING_OFFICERS)).willReturn(true);
 
         Outcome outcome = evaluateRule(action);
 
@@ -214,24 +214,34 @@ class CourtListPublishingAccessControlTest {
         assertThat(outcome.isSuccess()).isFalse();
     }
 
-    // --- verify each publishing role individually grants access ---
+    // --- verify publish.post is restricted to listing officers ---
+
+    @Test
+    void publishPost_shouldAllowListingOfficers() {
+        Action action = new Action(PUBLISH_POST, Map.of());
+        given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action,
+                LISTING_OFFICERS)).willReturn(true);
+
+        Outcome outcome = evaluateRule(action);
+
+        assertThat(outcome.isSuccess()).isTrue();
+    }
 
     @ParameterizedTest
     @ValueSource(strings = {
-            LISTING_OFFICERS, COURT_CLERKS, LEGAL_ADVISERS, CROWN_COURT_ADMIN,
+            COURT_CLERKS, LEGAL_ADVISERS, CROWN_COURT_ADMIN,
             COURT_ADMINISTRATORS, YOUTH_OFFENDING_SERVICE_ADMIN, CPS, PROBATION_ADMIN,
             VICTIMS_WITNESS_CARE_ADMIN, POLICE_ADMIN, COURT_ASSOCIATE,
             NON_CPS_PROSECUTORS, DISTRICT_JUDGE, SYSTEM_USERS
     })
-    void publishPost_shouldAllowEachAuthorisedGroup(String group) {
+    void publishPost_shouldDenyNonListingOfficerGroups(String group) {
         Action action = new Action(PUBLISH_POST, Map.of());
-        given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action,
-                SecurityGroupConstants.getPublishingRoles())).willReturn(true);
+        given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action, LISTING_OFFICERS)).willReturn(false);
 
         Outcome outcome = evaluateRule(action);
 
         assertThat(outcome.isSuccess())
-                .as("Group '%s' should be allowed to publish", group)
-                .isTrue();
+                .as("Group '%s' should not be allowed to publish", group)
+                .isFalse();
     }
 }
