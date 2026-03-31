@@ -1,6 +1,7 @@
 import uk.gov.moj.cpp.authz.drools.Outcome;
 import uk.gov.moj.cpp.authz.drools.Action;
 import uk.gov.hmcts.cp.acl.SecurityGroupConstants;
+import uk.gov.hmcts.cp.acl.PermissionConstants;
 
 global uk.gov.moj.cpp.authz.http.providers.UserAndGroupProvider userAndGroupProvider;
 
@@ -8,7 +9,7 @@ rule "Allow – court-list-publish post (publish-court-list only)"
 when
   $o: Outcome()
   $a: Action(name == "courtlistpublishing-service.publish.post")
-  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, SecurityGroupConstants.PUBLISH_COURT_LIST))
+  eval(userAndGroupProvider.hasPermission($a, PermissionConstants.accessToPublishCourtListPermissions()))
 then
   $o.setSuccess(true);
 end
