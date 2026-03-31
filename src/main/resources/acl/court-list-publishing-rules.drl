@@ -4,11 +4,11 @@ import uk.gov.hmcts.cp.acl.SecurityGroupConstants;
 
 global uk.gov.moj.cpp.authz.http.providers.UserAndGroupProvider userAndGroupProvider;
 
-rule "Allow – court-list-publish post (listing officers only)"
+rule "Allow – court-list-publish post (publish-court-list only)"
 when
   $o: Outcome()
   $a: Action(name == "courtlistpublishing-service.publish.post")
-  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, SecurityGroupConstants.LISTING_OFFICERS))
+  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, SecurityGroupConstants.PUBLISH_COURT_LIST))
 then
   $o.setSuccess(true);
 end

@@ -9,9 +9,9 @@ import static uk.gov.hmcts.cp.acl.SecurityGroupConstants.CPS;
 import static uk.gov.hmcts.cp.acl.SecurityGroupConstants.CROWN_COURT_ADMIN;
 import static uk.gov.hmcts.cp.acl.SecurityGroupConstants.DISTRICT_JUDGE;
 import static uk.gov.hmcts.cp.acl.SecurityGroupConstants.LEGAL_ADVISERS;
-import static uk.gov.hmcts.cp.acl.SecurityGroupConstants.LISTING_OFFICERS;
 import static uk.gov.hmcts.cp.acl.SecurityGroupConstants.NON_CPS_PROSECUTORS;
 import static uk.gov.hmcts.cp.acl.SecurityGroupConstants.POLICE_ADMIN;
+import static uk.gov.hmcts.cp.acl.SecurityGroupConstants.PUBLISH_COURT_LIST;
 import static uk.gov.hmcts.cp.acl.SecurityGroupConstants.PROBATION_ADMIN;
 import static uk.gov.hmcts.cp.acl.SecurityGroupConstants.SYSTEM_USERS;
 import static uk.gov.hmcts.cp.acl.SecurityGroupConstants.VICTIMS_WITNESS_CARE_ADMIN;
@@ -88,7 +88,7 @@ class CourtListPublishingAccessControlTest {
     void publishPost_shouldAllowAuthorisedUser() {
         Action action = new Action(PUBLISH_POST, Map.of());
         given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action,
-                LISTING_OFFICERS)).willReturn(true);
+                PUBLISH_COURT_LIST)).willReturn(true);
 
         Outcome outcome = evaluateRule(action);
 
@@ -217,10 +217,10 @@ class CourtListPublishingAccessControlTest {
     // --- verify publish.post is restricted to listing officers ---
 
     @Test
-    void publishPost_shouldAllowListingOfficers() {
+    void publishPost_shouldAllowPublishCourtListGroup() {
         Action action = new Action(PUBLISH_POST, Map.of());
         given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action,
-                LISTING_OFFICERS)).willReturn(true);
+                PUBLISH_COURT_LIST)).willReturn(true);
 
         Outcome outcome = evaluateRule(action);
 
@@ -236,7 +236,7 @@ class CourtListPublishingAccessControlTest {
     })
     void publishPost_shouldDenyNonListingOfficerGroups(String group) {
         Action action = new Action(PUBLISH_POST, Map.of());
-        given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action, LISTING_OFFICERS)).willReturn(false);
+        given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action, PUBLISH_COURT_LIST)).willReturn(false);
 
         Outcome outcome = evaluateRule(action);
 
