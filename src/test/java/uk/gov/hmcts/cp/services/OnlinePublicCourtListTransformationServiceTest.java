@@ -318,7 +318,7 @@ class OnlinePublicCourtListTransformationServiceTest {
 
         Party defendantParty = caseObj.getParty().getFirst();
         assertThat(defendantParty.getPartyRole()).isEqualTo("DEFENDANT");
-        assertThat(defendantParty.getSubject()).isFalse();
+        assertThat(defendantParty.getSubject()).isTrue();
     }
 
     @Test
@@ -451,7 +451,7 @@ class OnlinePublicCourtListTransformationServiceTest {
                 .filter(p -> "SUBJECT".equals(p.getPartyRole()))
                 .findFirst()
                 .orElseThrow();
-        assertThat(subjectParty.getSubject()).isFalse();
+        assertThat(subjectParty.getSubject()).isTrue();
         assertThat(subjectParty.getIndividualDetails()).isNotNull();
         assertThat(subjectParty.getIndividualDetails().getIndividualForenames()).isEqualTo("");
         assertThat(subjectParty.getIndividualDetails().getIndividualSurname()).isEqualTo("Defendant");

@@ -119,12 +119,16 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
         }
         List<OffenceSchema> offences = transformApplicationPartyOffencesForPublicList(
                 courtParty.getOffences(), courtParty.getReportingRestrictions());
+        boolean isSubjectOfApplication = isNonBlank(courtParty.getId())
+                && subjectPartyId != null
+                && subjectPartyId.equals(courtParty.getId().trim());
+
         return Party.builder()
                 .partyRole(partyRole)
                 .individualDetails(individualDetails)
                 .offence(isEmpty(offences) ? null: offences)
                 .organisationDetails(organisationDetails)
-                .subject(false)
+                .subject(isSubjectOfApplication)
                 .build();
     }
 
@@ -275,12 +279,16 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
             // Offence list per schema (offenceTitle only for public lists)
             final List<OffenceSchema> offences = transformOffencesForPublicList(defendant.getOffences(), defendant);
 
+            final boolean isSubjectOfApplication = isNonBlank(defendant.getId())
+                    && subjectPartyId != null
+                    && subjectPartyId.equals(defendant.getId().trim());
+
             parties.add(Party.builder()
                     .partyRole("DEFENDANT")
                     .individualDetails(individualDetails)
                     .offence(isEmpty(offences)? null : offences)
                     .organisationDetails(organisationDetails)
-                    .subject(false)
+                    .subject(isSubjectOfApplication)
                     .build());
 
             final Party prosecutorParty = createProsecutorParty(hearing.getProsecutorType());
