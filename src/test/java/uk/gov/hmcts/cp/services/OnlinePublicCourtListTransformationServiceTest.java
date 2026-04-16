@@ -453,8 +453,8 @@ class OnlinePublicCourtListTransformationServiceTest {
                 .orElseThrow();
         assertThat(subjectParty.getSubject()).isFalse();
         assertThat(subjectParty.getIndividualDetails()).isNotNull();
-        assertThat(subjectParty.getIndividualDetails().getIndividualForenames()).isEqualTo("John");
-        assertThat(subjectParty.getIndividualDetails().getIndividualSurname()).isEqualTo("Smith");
+        assertThat(subjectParty.getIndividualDetails().getIndividualForenames()).isEqualTo("");
+        assertThat(subjectParty.getIndividualDetails().getIndividualSurname()).isEqualTo("Defendant");
     }
 
     @Test
@@ -491,10 +491,10 @@ class OnlinePublicCourtListTransformationServiceTest {
         assertThat(app.getReportingRestriction()).isFalse();
         assertThat(app.getParty()).hasSize(2); // applicant + one respondent
         assertThat(app.getParty().getFirst().getPartyRole()).isEqualTo("APPLICANT");
-        assertThat(app.getParty().getFirst().getIndividualDetails().getIndividualSurname()).isEqualTo("Applicant Name");
+        assertThat(app.getParty().getFirst().getIndividualDetails().getIndividualSurname()).isEqualTo("Defendant");
         assertThat(app.getParty().getFirst().getIndividualDetails().getDateOfBirth()).isEqualTo("1990-01-01"); // public list: no DOB
         assertThat(app.getParty().get(1).getPartyRole()).isEqualTo("RESPONDENT");
-        assertThat(app.getParty().get(1).getIndividualDetails().getIndividualSurname()).isEqualTo("Respondent One");
+        assertThat(app.getParty().get(1).getIndividualDetails().getIndividualSurname()).isEqualTo("Defendant");
     }
 
     private CourtListPayload loadPayloadFromStubData(String resourcePath) throws Exception {

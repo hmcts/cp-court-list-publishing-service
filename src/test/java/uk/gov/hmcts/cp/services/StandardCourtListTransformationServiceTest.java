@@ -386,10 +386,10 @@ class StandardCourtListTransformationServiceTest {
         assertThat(app.getReportingRestriction()).isFalse();
         assertThat(app.getParty()).hasSize(2); // applicant + one respondent
         assertThat(app.getParty().getFirst().getPartyRole()).isEqualTo("APPLICANT");
-        assertThat(app.getParty().getFirst().getIndividualDetails().getIndividualSurname()).isEqualTo("Applicant Name");
+        assertThat(app.getParty().getFirst().getIndividualDetails().getIndividualSurname()).isEqualTo("Defendant");
         assertThat(app.getParty().getFirst().getIndividualDetails().getDateOfBirth()).isEqualTo("1990-01-01");
         assertThat(app.getParty().get(1).getPartyRole()).isEqualTo("RESPONDENT");
-        assertThat(app.getParty().get(1).getIndividualDetails().getIndividualSurname()).isEqualTo("Respondent One");
+        assertThat(app.getParty().get(1).getIndividualDetails().getIndividualSurname()).isEqualTo("Defendant");
         assertThat(app.getParty().get(1).getIndividualDetails().getDateOfBirth()).isEqualTo("1985-09-15");
     }
 
@@ -439,8 +439,8 @@ class StandardCourtListTransformationServiceTest {
         assertThat(subjectParty.getPartyRole()).isEqualTo("SUBJECT");
         assertThat(subjectParty.getSubject()).isFalse();
         assertThat(subjectParty.getIndividualDetails()).isNotNull();
-        assertThat(subjectParty.getIndividualDetails().getIndividualForenames()).isEqualTo("John");
-        assertThat(subjectParty.getIndividualDetails().getIndividualSurname()).isEqualTo("Smith");
+        assertThat(subjectParty.getIndividualDetails().getIndividualForenames()).isEqualTo("");
+        assertThat(subjectParty.getIndividualDetails().getIndividualSurname()).isEqualTo("Defendant");
     }
 
     @Test
@@ -476,8 +476,8 @@ class StandardCourtListTransformationServiceTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(subjectParty.getSubject()).isFalse();
-        assertThat(subjectParty.getIndividualDetails().getIndividualSurname()).isEqualTo("Subject");
-        assertThat(subjectParty.getIndividualDetails().getIndividualForenames()).isEqualTo("App");
+        assertThat(subjectParty.getIndividualDetails().getIndividualSurname()).isEqualTo("Defendant");
+        assertThat(subjectParty.getIndividualDetails().getIndividualForenames()).isEqualTo("");
     }
 
     @Test
@@ -548,7 +548,7 @@ class StandardCourtListTransformationServiceTest {
         assertThat(app.getApplicationType()).isEqualTo("Application within civil proceedings");
         assertThat(app.getParty()).hasSize(1);
         assertThat(app.getParty().getFirst().getPartyRole()).isEqualTo("APPLICANT");
-        assertThat(app.getParty().getFirst().getIndividualDetails().getIndividualSurname()).isEqualTo("TV Licensing");
+        assertThat(app.getParty().getFirst().getIndividualDetails().getIndividualSurname()).isEqualTo("Defendant");
     }
 
     /**
