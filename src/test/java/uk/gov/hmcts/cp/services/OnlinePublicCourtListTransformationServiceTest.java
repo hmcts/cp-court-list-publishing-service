@@ -416,6 +416,7 @@ class OnlinePublicCourtListTransformationServiceTest {
         // Given - application on hearing with no subject on courtApplication; subject is on parent (hearing)
         Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
                 .getTimeslots().getFirst().getHearings().getFirst();
+        hearing.setDefendants(Collections.emptyList());
         CourtApplicationParty parentSubject = CourtApplicationParty.builder()
                 .id("subject-from-parent-id")
                 .firstName("John")
@@ -461,6 +462,7 @@ class OnlinePublicCourtListTransformationServiceTest {
         // Given - hearing with courtApplicationId and courtApplication (applicant + respondents)
         Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
                 .getTimeslots().getFirst().getHearings().getFirst();
+        hearing.setDefendants(Collections.emptyList());
         hearing.setCourtApplicationId("PUBLIC-APP-REF-99");
         hearing.setCourtApplication(CourtApplication.builder()
                 .applicant(CourtApplicationParty.builder()

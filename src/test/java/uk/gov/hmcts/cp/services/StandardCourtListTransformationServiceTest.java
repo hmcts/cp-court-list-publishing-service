@@ -355,6 +355,7 @@ class StandardCourtListTransformationServiceTest {
         // Given - hearing with courtApplicationId and courtApplication (applicant + respondents)
         Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
                 .getTimeslots().getFirst().getHearings().getFirst();
+        hearing.setDefendants(Collections.emptyList());
         hearing.setCourtApplicationId("APP-REF-12345");
         hearing.setCourtApplication(CourtApplication.builder()
                 .applicant(CourtApplicationParty.builder()
@@ -397,6 +398,7 @@ class StandardCourtListTransformationServiceTest {
         // Given - application on hearing with no subject on courtApplication; subject is on parent (hearing)
         Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
                 .getTimeslots().getFirst().getHearings().getFirst();
+        hearing.setDefendants(Collections.emptyList());
         String subjectId = "subject-from-parent-id";
         CourtApplicationParty parentSubject = CourtApplicationParty.builder()
                 .id(subjectId)
@@ -446,6 +448,7 @@ class StandardCourtListTransformationServiceTest {
         // Given - both hearing and courtApplication have a subject; courtApplication.subject takes precedence
         Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
                 .getTimeslots().getFirst().getHearings().getFirst();
+        hearing.setDefendants(Collections.emptyList());
         CourtApplicationParty appSubject = CourtApplicationParty.builder()
                 .id("subject-on-application")
                 .firstName("App")
@@ -481,6 +484,9 @@ class StandardCourtListTransformationServiceTest {
     void transform_shouldHandleBirminghamPayloadWithCaseOnlyAndApplicationOnlyHearings() throws Exception {
         // Given - Birmingham payload: first hearing has defendants (case only), second has court application (application only)
         payload = loadPayloadFromStubData("stubdata/court-list-payload-birmingham-standard.json");
+        // Clear defendants from second hearing so it is application-only
+        payload.getHearingDates().getFirst().getCourtRooms().getFirst()
+                .getTimeslots().getFirst().getHearings().get(1).setDefendants(Collections.emptyList());
 
         // When
         CourtListDocument document = transformationService.transform(payload);
