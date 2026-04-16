@@ -78,7 +78,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
                 .caseList(cases)
                 .panel(hearing.getPanel())
                 .channel(Collections.emptyList())
-                .application(cases.isEmpty() ? applications : Collections.emptyList())
+                .application(appResult.applications())
                 .build();
     }
 

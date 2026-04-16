@@ -82,7 +82,7 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
                 .hearingType(hearing.getHearingType())
                 .caseList(cases)
                 .channel(channels)
-                .application(cases.isEmpty() ? applications : Collections.emptyList())
+                .application(applicationTransformResult.applications())
                 .build();
     }
 
