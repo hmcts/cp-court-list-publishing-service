@@ -176,7 +176,7 @@ class StandardCourtListTransformationServiceTest {
 
         Party defendantParty = caseObj.getParty().getFirst();
         assertThat(defendantParty.getPartyRole()).isEqualTo("DEFENDANT");
-        assertThat(defendantParty.getSubject()).isTrue();
+        assertThat(defendantParty.getSubject()).isFalse();
     }
 
     @Test
@@ -437,7 +437,7 @@ class StandardCourtListTransformationServiceTest {
         assertThat(applicantParty.getPartyRole()).isEqualTo("APPLICANT");
         assertThat(respondentParty.getPartyRole()).isEqualTo("RESPONDENT");
         assertThat(subjectParty.getPartyRole()).isEqualTo("SUBJECT");
-        assertThat(subjectParty.getSubject()).isTrue();
+        assertThat(subjectParty.getSubject()).isFalse();
         assertThat(subjectParty.getIndividualDetails()).isNotNull();
         assertThat(subjectParty.getIndividualDetails().getIndividualForenames()).isEqualTo("John");
         assertThat(subjectParty.getIndividualDetails().getIndividualSurname()).isEqualTo("Smith");
@@ -475,7 +475,7 @@ class StandardCourtListTransformationServiceTest {
                 .filter(p -> "SUBJECT".equals(p.getPartyRole()))
                 .findFirst()
                 .orElseThrow();
-        assertThat(subjectParty.getSubject()).isTrue();
+        assertThat(subjectParty.getSubject()).isFalse();
         assertThat(subjectParty.getIndividualDetails().getIndividualSurname()).isEqualTo("Subject");
         assertThat(subjectParty.getIndividualDetails().getIndividualForenames()).isEqualTo("App");
     }
