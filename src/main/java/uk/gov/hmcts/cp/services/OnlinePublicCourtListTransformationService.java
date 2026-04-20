@@ -194,27 +194,13 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
 
     @Override
     protected List<Application> buildApplications(Hearing hearing, CourtApplication courtApplication, List<Party> parties) {
-        boolean hasReportingRestriction = hasApplicationPartyReportingRestriction(courtApplication);
         Application application = Application.builder()
                 .applicationReference(hearing.getCaseNumber())
                 .applicationType(courtApplication.getApplicationType())
                 .applicationParticulars(courtApplication.getApplicationParticulars())
-                .reportingRestriction(hasReportingRestriction)
                 .party(parties.isEmpty() ? null : parties)
                 .build();
         return Collections.singletonList(application);
-    }
-
-    private boolean hasApplicationPartyReportingRestriction(CourtApplication courtApplication) {
-        if (courtApplication == null) {
-            return false;
-        }
-        CourtApplicationParty applicant = courtApplication.getApplicant();
-        if (applicant == null || applicant.getReportingRestrictions() == null || applicant.getReportingRestrictions().isEmpty()) {
-            return false;
-        }
-        return applicant.getReportingRestrictions().stream()
-                .anyMatch(r -> r != null && isNonBlank(r.getLabel()));
     }
 
     private List<CaseSchema> transformCases(Hearing hearing, String subjectPartyId) {
