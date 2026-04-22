@@ -99,9 +99,9 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
         if (isNonBlank(courtParty.getFirstName()) || isNonBlank(courtParty.getSurname()) || isNonBlank(courtParty.getName())) {
             String surname = isNonBlank(courtParty.getSurname()) ? courtParty.getSurname() : courtParty.getName();
             individualDetails = IndividualDetails.builder()
-                    .individualForenames("")
+                    .individualForenames(courtParty.getFirstName())
                     .individualMiddleName(null)
-                    .individualSurname("Defendant")
+                    .individualSurname(surname)
                     .dateOfBirth(convertDateOfBirthToIso(courtParty.getDateOfBirth()))
                     .age(convertAge(courtParty.getAge()))
                     .address(transformAddressSchemaFromDefendant(courtParty.getAddress()))
