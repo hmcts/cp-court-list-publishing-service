@@ -494,6 +494,26 @@ class OnlinePublicCourtListTransformationServiceTest {
         assertThat(app.getParty().get(1).getIndividualDetails().getIndividualSurname()).isEqualTo("Respondent One");
     }
 
+    @Test
+    void transform_shouldStripSurroundingWhitespaceFromApplicationParticularsViaCaTHStringUtils() {
+        Hearing hearing = payload.getHearingDates().getFirst().getCourtRooms().getFirst()
+                .getTimeslots().getFirst().getHearings().getFirst();
+        hearing.setCourtApplicationId("PUBLIC-APP-REF-99");
+        hearing.setCourtApplication(CourtApplication.builder()
+                .applicationParticulars("\n Some application particulars\n ")
+                .applicant(CourtApplicationParty.builder()
+                        .name("Applicant Name")
+                        .build())
+                .build());
+
+        CourtListDocument document = transformationService.transform(payload);
+
+        Application app = document.getCourtLists().getFirst().getCourtHouse().getCourtRoom().getFirst()
+                .getSession().getFirst().getSittings().getFirst().getHearing().getFirst()
+                .getApplication().getFirst();
+        assertThat(app.getApplicationParticulars()).isEqualTo("Some application particulars");
+    }
+
     private CourtListPayload loadPayloadFromStubData(String resourcePath) throws Exception {
         ClassPathResource resource = new ClassPathResource(resourcePath);
         String json = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
