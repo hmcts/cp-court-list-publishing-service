@@ -19,7 +19,7 @@ when
   $o: Outcome()
   $a: Action(name == "courtlistpublishing-service.publish.get" ||
              name == "courtlistpublishing-service.files.download" ||
-             name == "courtlistpublishing-service.download.post")
+             name == "courtlistpublishing-service.download.get")
   eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, SecurityGroupConstants.getPublishingRoles()))
 then
   $o.setSuccess(true);
