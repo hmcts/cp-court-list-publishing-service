@@ -4,14 +4,14 @@
     "urlPathPattern": "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render",
     "bodyPatterns": [
       {
-        "matchesJsonPath": "$.[?(@.conversionFormat == 'pdf')]"
+        "matchesJsonPath": "$.[?(@.conversionFormat == 'docx')]"
       }
     ]
   },
   "response": {
     "status": 200,
-    "headers": {"Content-Type": "application/pdf"},
-    "bodyFileName": "minimal-pdf.pdf"
+    "headers": {"Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+    "bodyFileName": "minimal-docx.docx"
   },
   "priority": 1
 }

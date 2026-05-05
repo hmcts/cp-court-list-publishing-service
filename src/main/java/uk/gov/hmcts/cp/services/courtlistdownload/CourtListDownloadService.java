@@ -30,7 +30,10 @@ public class CourtListDownloadService {
     private static final String TEMPLATE_USHERS_MAGISTRATE_COURT_LIST = "UshersMagistrateCourtList";
     private static final String KEY_TEMPLATE_NAME = "templateName";
     private static final String CONTENT_TYPE_PDF = "application/pdf";
+    private static final String CONTENT_TYPE_WORD =
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     private static final String PDF_FILENAME = "CourtList.pdf";
+    private static final String WORD_FILENAME = "CourtList.docx";
 
     private static final Set<CourtListType> WORD_DOWNLOAD_TYPES = EnumSet.of(
             CourtListType.USHERS_CROWN,
@@ -56,35 +59,16 @@ public class CourtListDownloadService {
         this.documentGeneratorClient = documentGeneratorClient;
     }
 
-    public byte[] generatePublicCourtListPdf(final String courtCentreId, final LocalDate startDate, final LocalDate endDate) {
-        return generateCourtListPdf(CourtListType.PUBLIC, courtCentreId, startDate, endDate);
-    }
-
     public CourtListFileResult generateCourtListDownload(final CourtListType courtListType,
                                                          final String courtCentreId,
                                                          final LocalDate startDate,
-                                                         final LocalDate endDate) {
-        if (WORD_DOWNLOAD_TYPES.contains(courtListType)) {
-            LOG.info("Fetching court list Word document for type={}, courtCentreId={}", courtListType, sanitizeForLog(courtCentreId));
-            CourtListFileResult result = courtListDataService.getCourtListFileForDownload(
-                    courtListType, courtCentreId, startDate, endDate);
-            LOG.info("Court list Word document fetched for type={}, courtCentreId={}, size={} bytes",
-                    courtListType, sanitizeForLog(courtCentreId), result.content().length);
-            return result;
-        }
-        byte[] pdf = generateCourtListPdf(courtListType, courtCentreId, startDate, endDate);
-        return new CourtListFileResult(pdf, CONTENT_TYPE_PDF, PDF_FILENAME);
-    }
-
-    public byte[] generateCourtListPdf(final CourtListType courtListType,
-                                       final String courtCentreId,
-                                       final LocalDate startDate,
-                                       final LocalDate endDate) {
-        LOG.info("Generating court list PDF for type={}, courtCentreId={}, startDate={}, endDate={}",
+                                                         final LocalDate endDate,
+                                                         final String cjscppuid) {
+        LOG.info("Generating court list document for type={}, courtCentreId={}, startDate={}, endDate={}",
                 courtListType, sanitizeForLog(courtCentreId), startDate, endDate);
 
         Map<String, Object> payload = courtListDataService.getCourtListPayloadForDownload(
-                courtListType, courtCentreId, startDate, endDate);
+                courtListType, courtCentreId, startDate, endDate, cjscppuid);
         if (payload == null || payload.isEmpty()) {
             throw new CourtListDownloadException("Court list data API returned empty payload");
         }
@@ -95,16 +79,22 @@ public class CourtListDownloadService {
                 : defaultTemplate;
 
         JsonObject payloadJson = mapToJsonObject(payload);
-        byte[] pdf;
+        boolean wantsWord = WORD_DOWNLOAD_TYPES.contains(courtListType);
+        byte[] content;
         try {
-            pdf = documentGeneratorClient.generatePdf(payloadJson, templateName);
+            content = wantsWord
+                    ? documentGeneratorClient.generateWord(payloadJson, templateName)
+                    : documentGeneratorClient.generatePdf(payloadJson, templateName);
         } catch (IOException e) {
             throw new CourtListDownloadException(e.getMessage(), e);
         }
 
-        LOG.info("Court list PDF generated for type={}, courtCentreId={}, size={} bytes",
-                courtListType, sanitizeForLog(courtCentreId), pdf.length);
-        return pdf;
+        LOG.info("Court list document generated for type={}, courtCentreId={}, size={} bytes",
+                courtListType, sanitizeForLog(courtCentreId), content.length);
+
+        return wantsWord
+                ? new CourtListFileResult(content, CONTENT_TYPE_WORD, WORD_FILENAME)
+                : new CourtListFileResult(content, CONTENT_TYPE_PDF, PDF_FILENAME);
     }
 
     private static JsonObject mapToJsonObject(final Map<String, Object> map) {

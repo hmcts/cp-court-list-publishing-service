@@ -39,6 +39,7 @@ public class DocumentGeneratorClient {
     private static final String KEY_TEMPLATE_PAYLOAD = "templatePayload";
     private static final String KEY_CONVERSION_FORMAT = "conversionFormat";
     private static final String DOCUMENT_CONVERSION_FORMAT_PDF = "pdf";
+    private static final String DOCUMENT_CONVERSION_FORMAT_DOCX = "docx";
     private static final String RENDER_MEDIA_TYPE = "application/vnd.systemdocgenerator.render+json";
 
     private final RestTemplate restTemplate;
@@ -48,8 +49,16 @@ public class DocumentGeneratorClient {
     private String commonPlatformQueryApiBaseUrl;
 
     public byte[] generatePdf(final JsonObject templatePayload, final String templateName) throws IOException {
+        return render(templatePayload, templateName, DOCUMENT_CONVERSION_FORMAT_PDF);
+    }
+
+    public byte[] generateWord(final JsonObject templatePayload, final String templateName) throws IOException {
+        return render(templatePayload, templateName, DOCUMENT_CONVERSION_FORMAT_DOCX);
+    }
+
+    private byte[] render(final JsonObject templatePayload, final String templateName, final String conversionFormat) throws IOException {
         try {
-            ResponseEntity<byte[]> response = callRender(restTemplate, templatePayload, templateName);
+            ResponseEntity<byte[]> response = callRender(restTemplate, templatePayload, templateName, conversionFormat);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && response.getBody().length > 0) {
                 return response.getBody();
             }
@@ -59,7 +68,7 @@ public class DocumentGeneratorClient {
                             templateName, response.getStatusCode())
             );
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            LOG.error("HTTP error generating PDF with template: {}", templateName, e);
+            LOG.error("HTTP error generating {} with template: {}", conversionFormat, templateName, e);
             throw new ResponseStatusException(
                     HttpStatus.valueOf(e.getStatusCode().value()),
                     format("Failed to generate document with identifier %s: %s",
@@ -67,18 +76,18 @@ public class DocumentGeneratorClient {
                     e
             );
         } catch (RestClientException e) {
-            LOG.error("Rest client error generating PDF with template: {}", templateName, e);
+            LOG.error("Rest client error generating {} with template: {}", conversionFormat, templateName, e);
             throw new IOException(format("Failed to generate document with identifier %s: %s",
                     templateName, e.getMessage()), e);
         }
     }
 
     private ResponseEntity<byte[]> callRender(final RestTemplate restTemplate, final JsonObject templatePayload,
-                                                final String templateName) {
+                                                final String templateName, final String conversionFormat) {
         JsonObject payload = Json.createObjectBuilder()
                 .add("templateName", templateName)
                 .add(KEY_TEMPLATE_PAYLOAD, templatePayload != null ? templatePayload : Json.createObjectBuilder().build())
-                .add(KEY_CONVERSION_FORMAT, DOCUMENT_CONVERSION_FORMAT_PDF)
+                .add(KEY_CONVERSION_FORMAT, conversionFormat)
                 .build();
 
         URI uri = UriComponentsBuilder

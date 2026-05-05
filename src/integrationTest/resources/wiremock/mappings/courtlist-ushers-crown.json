@@ -16,9 +16,9 @@
   "response": {
     "status": 200,
     "headers": {
-      "Content-Type": "text/plain"
+      "Content-Type": "application/json"
     },
-    "bodyFileName": "court-list-word-dataurl.txt"
+    "bodyFileName": "court-list-payload-ushers-crown.json"
   },
   "priority": 2
 }

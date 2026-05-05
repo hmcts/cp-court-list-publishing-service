@@ -28,7 +28,6 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private static final String PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publish";
     private static final String DOWNLOAD_ENDPOINT = BASE_URL + "/api/court-list-publish/download";
-    private static final String DOWNLOAD_CONTENT_TYPE = "application/vnd.courtlistpublishing-service.download.post+json";
     private static final String REQUESTED_STATUS = Status.REQUESTED.toString();
     private static final String COURT_LIST_TYPE_PUBLIC = CourtListType.PUBLIC.toString();
     private static final String COURT_LIST_TYPE_FINAL = CourtListType.FINAL.toString();
@@ -272,57 +271,56 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     @Test
-    void postDownloadCourtListReturnsPdfWhenPublicAndStubbed() throws Exception {
-        postDownloadCourtListReturnsPdfForType(CourtListType.PUBLIC);
+    void getDownloadCourtListReturnsPdfWhenPublicAndStubbed() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.PUBLIC);
     }
 
     @Test
-    void postDownloadCourtListReturnsPdfWhenBenchAndStubbed() throws Exception {
-        postDownloadCourtListReturnsPdfForType(CourtListType.BENCH);
+    void getDownloadCourtListReturnsPdfWhenBenchAndStubbed() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.BENCH);
     }
 
     @Test
-    void postDownloadCourtListReturnsPdfWhenAlphabeticalAndStubbed() throws Exception {
-        postDownloadCourtListReturnsPdfForType(CourtListType.ALPHABETICAL);
+    void getDownloadCourtListReturnsPdfWhenAlphabeticalAndStubbed() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.ALPHABETICAL);
     }
 
     @Test
-    void postDownloadCourtListReturnsWordWhenUshersCrownAndStubbed() throws Exception {
-        postDownloadCourtListReturnsWordForType(CourtListType.USHERS_CROWN);
+    void getDownloadCourtListReturnsWordWhenUshersCrownAndStubbed() throws Exception {
+        getDownloadCourtListReturnsWordForType(CourtListType.USHERS_CROWN);
     }
 
     @Test
-    void postDownloadCourtListReturnsWordWhenUshersMagistrateAndStubbed() throws Exception {
-        postDownloadCourtListReturnsWordForType(CourtListType.USHERS_MAGISTRATE);
+    void getDownloadCourtListReturnsWordWhenUshersMagistrateAndStubbed() throws Exception {
+        getDownloadCourtListReturnsWordForType(CourtListType.USHERS_MAGISTRATE);
     }
 
     @Test
-    void postDownloadCourtListReturnsBadRequestWhenCourtListTypeIsStandard() {
+    void getDownloadCourtListReturnsBadRequestWhenCourtListTypeIsStandard() {
         assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.STANDARD);
     }
 
     @Test
-    void postDownloadCourtListReturnsBadRequestWhenCourtListTypeIsJudge() {
+    void getDownloadCourtListReturnsBadRequestWhenCourtListTypeIsJudge() {
         assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.JUDGE);
     }
 
-    private void postDownloadCourtListReturnsPdfForType(CourtListType courtListType) throws Exception {
-        String requestJson = """
-            {
-                "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",
-                "startDate": "2026-02-27",
-                "endDate": "2026-02-27",
-                "courtListType": "%s"
-            }
-            """.formatted(courtListType.name());
+    private String buildDownloadUrl(CourtListType courtListType) {
+        return DOWNLOAD_ENDPOINT
+                + "?courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26"
+                + "&startDate=2026-02-27"
+                + "&endDate=2026-02-27"
+                + "&courtListType=" + courtListType.name();
+    }
+
+    private void getDownloadCourtListReturnsPdfForType(CourtListType courtListType) throws Exception {
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(DOWNLOAD_CONTENT_TYPE));
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
-        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         ResponseEntity<byte[]> response = http.exchange(
-                DOWNLOAD_ENDPOINT,
-                HttpMethod.POST,
+                buildDownloadUrl(courtListType),
+                HttpMethod.GET,
                 entity,
                 byte[].class);
 
@@ -334,23 +332,14 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         assertThat(response.getBody().length).isGreaterThan(0);
     }
 
-    private void postDownloadCourtListReturnsWordForType(CourtListType courtListType) throws Exception {
-        String requestJson = """
-            {
-                "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",
-                "startDate": "2026-02-27",
-                "endDate": "2026-02-27",
-                "courtListType": "%s"
-            }
-            """.formatted(courtListType.name());
+    private void getDownloadCourtListReturnsWordForType(CourtListType courtListType) throws Exception {
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(DOWNLOAD_CONTENT_TYPE));
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
-        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         ResponseEntity<byte[]> response = http.exchange(
-                DOWNLOAD_ENDPOINT,
-                HttpMethod.POST,
+                buildDownloadUrl(courtListType),
+                HttpMethod.GET,
                 entity,
                 byte[].class);
 
@@ -365,23 +354,13 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     private void assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType courtListType) {
-        String requestJson = """
-            {
-                "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",
-                "startDate": "2026-02-27",
-                "endDate": "2026-02-27",
-                "courtListType": "%s"
-            }
-            """.formatted(courtListType.name());
-
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(DOWNLOAD_CONTENT_TYPE));
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
-        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         assertThatThrownBy(() -> http.exchange(
-                DOWNLOAD_ENDPOINT,
-                HttpMethod.POST,
+                buildDownloadUrl(courtListType),
+                HttpMethod.GET,
                 entity,
                 byte[].class))
                 .isInstanceOf(HttpClientErrorException.BadRequest.class)

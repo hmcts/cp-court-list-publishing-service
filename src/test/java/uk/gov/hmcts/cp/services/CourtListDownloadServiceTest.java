@@ -29,8 +29,13 @@ class CourtListDownloadServiceTest {
     private static final LocalDate START_DATE = LocalDate.of(2026, 2, 27);
     private static final LocalDate END_DATE = LocalDate.of(2026, 2, 27);
     private static final byte[] PDF_BYTES = new byte[]{1, 2, 3};
+    private static final byte[] WORD_BYTES = new byte[]{1, 2, 3, 4};
     private static final String TEMPLATE_PUBLIC_COURT_LIST = "PublicCourtList";
+    private static final String TEMPLATE_USHERS_CROWN_COURT_LIST = "UshersCrownCourtList";
+    private static final String TEMPLATE_USHERS_MAGISTRATE_COURT_LIST = "UshersMagistrateCourtList";
     private static final String KEY_LIST_TYPE = "listType";
+    private static final String CJSCPPUID = "a085e359-6069-4694-8820-7810e7dfe762";
+    private static final String WORD_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
     @Mock
     private DocumentGeneratorClient documentGeneratorClient;
@@ -46,116 +51,117 @@ class CourtListDownloadServiceTest {
     }
 
     @Test
-    void generatePublicCourtListPdfReturnsPdfWhenCourtListDataSucceedsAndDocGenReturnsPdf() throws IOException {
+    void generateCourtListDownloadReturnsPdfWhenPublic() throws IOException {
         Map<String, Object> payload = Map.of(
                 "templateName", TEMPLATE_PUBLIC_COURT_LIST,
                 KEY_LIST_TYPE, "public",
                 "courtCentreName", "Test Court");
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE))).thenReturn(payload);
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
         when(documentGeneratorClient.generatePdf(any(), eq(TEMPLATE_PUBLIC_COURT_LIST))).thenReturn(PDF_BYTES);
 
-        byte[] result = service.generatePublicCourtListPdf(COURT_CENTRE_ID, START_DATE, END_DATE);
+        CourtListFileResult result = service.generateCourtListDownload(
+                CourtListType.PUBLIC, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID);
 
-        assertThat(result).isEqualTo(PDF_BYTES);
-        verify(courtListDataService).getCourtListPayloadForDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE));
+        assertThat(result.content()).isEqualTo(PDF_BYTES);
+        assertThat(result.contentType()).isEqualTo("application/pdf");
+        assertThat(result.filename()).isEqualTo("CourtList.pdf");
         verify(documentGeneratorClient).generatePdf(any(), eq(TEMPLATE_PUBLIC_COURT_LIST));
     }
 
     @Test
-    void generatePublicCourtListPdfUsesDefaultTemplateWhenPayloadHasNoTemplateName() throws IOException {
+    void generateCourtListDownloadUsesDefaultTemplateWhenPayloadHasNoTemplateName() throws IOException {
         Map<String, Object> payload = Map.of(KEY_LIST_TYPE, "public");
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE))).thenReturn(payload);
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
         when(documentGeneratorClient.generatePdf(any(), eq(TEMPLATE_PUBLIC_COURT_LIST))).thenReturn(PDF_BYTES);
 
-        byte[] result = service.generatePublicCourtListPdf(COURT_CENTRE_ID, START_DATE, END_DATE);
+        CourtListFileResult result = service.generateCourtListDownload(
+                CourtListType.PUBLIC, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID);
 
-        assertThat(result).isEqualTo(PDF_BYTES);
+        assertThat(result.content()).isEqualTo(PDF_BYTES);
         verify(documentGeneratorClient).generatePdf(any(), eq(TEMPLATE_PUBLIC_COURT_LIST));
     }
 
     @Test
-    void generatePublicCourtListPdfThrowsWhenDocumentGeneratorClientThrows() throws IOException {
+    void generateCourtListDownloadThrowsWhenDocumentGeneratorClientThrows() throws IOException {
         Map<String, Object> payload = Map.of("templateName", TEMPLATE_PUBLIC_COURT_LIST);
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE))).thenReturn(payload);
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
         when(documentGeneratorClient.generatePdf(any(), any())).thenThrow(new IOException("Document generator failed"));
 
-        assertThatThrownBy(() -> service.generatePublicCourtListPdf(COURT_CENTRE_ID, START_DATE, END_DATE))
+        assertThatThrownBy(() -> service.generateCourtListDownload(
+                CourtListType.PUBLIC, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("Document generator failed");
     }
 
     @Test
-    void generatePublicCourtListPdfThrowsWhenCourtListDataReturnsEmpty() {
+    void generateCourtListDownloadThrowsWhenCourtListDataReturnsEmpty() {
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE))).thenReturn(Map.of());
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(Map.of());
 
-        assertThatThrownBy(() -> service.generatePublicCourtListPdf(COURT_CENTRE_ID, START_DATE, END_DATE))
+        assertThatThrownBy(() -> service.generateCourtListDownload(
+                CourtListType.PUBLIC, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("empty");
     }
 
     @Test
-    void generatePublicCourtListPdfThrowsWhenCourtListDataReturnsNull() {
+    void generateCourtListDownloadThrowsWhenCourtListDataReturnsNull() {
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE))).thenReturn(null);
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(null);
 
-        assertThatThrownBy(() -> service.generatePublicCourtListPdf(COURT_CENTRE_ID, START_DATE, END_DATE))
+        assertThatThrownBy(() -> service.generateCourtListDownload(
+                CourtListType.PUBLIC, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("empty");
     }
 
     @Test
-    void generateCourtListPdfUsesBenchTemplateWhenCourtListTypeIsBench() throws IOException {
+    void generateCourtListDownloadUsesBenchTemplateWhenCourtListTypeIsBench() throws IOException {
         Map<String, Object> payload = Map.of(KEY_LIST_TYPE, "bench", "courtCentreName", "Test Court");
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.BENCH), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE))).thenReturn(payload);
+                eq(CourtListType.BENCH), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
         when(documentGeneratorClient.generatePdf(any(), eq("BenchCourtList"))).thenReturn(PDF_BYTES);
 
-        byte[] result = service.generateCourtListPdf(CourtListType.BENCH, COURT_CENTRE_ID, START_DATE, END_DATE);
+        CourtListFileResult result = service.generateCourtListDownload(
+                CourtListType.BENCH, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID);
 
-        assertThat(result).isEqualTo(PDF_BYTES);
-        verify(courtListDataService).getCourtListPayloadForDownload(
-                eq(CourtListType.BENCH), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE));
+        assertThat(result.content()).isEqualTo(PDF_BYTES);
+        assertThat(result.contentType()).isEqualTo("application/pdf");
         verify(documentGeneratorClient).generatePdf(any(), eq("BenchCourtList"));
     }
 
     @Test
-    void generateCourtListDownloadReturnsPdfResultWhenPublic() throws IOException {
-        Map<String, Object> payload = Map.of(KEY_LIST_TYPE, "public", "courtCentreName", "Test Court");
+    void generateCourtListDownloadReturnsWordWhenUshersCrown() throws IOException {
+        Map<String, Object> payload = Map.of(KEY_LIST_TYPE, "ushers_crown", "courtCentreName", "Test Court");
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE))).thenReturn(payload);
-        when(documentGeneratorClient.generatePdf(any(), eq(TEMPLATE_PUBLIC_COURT_LIST))).thenReturn(PDF_BYTES);
+                eq(CourtListType.USHERS_CROWN), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
+        when(documentGeneratorClient.generateWord(any(), eq(TEMPLATE_USHERS_CROWN_COURT_LIST))).thenReturn(WORD_BYTES);
 
         CourtListFileResult result = service.generateCourtListDownload(
-                CourtListType.PUBLIC, COURT_CENTRE_ID, START_DATE, END_DATE);
+                CourtListType.USHERS_CROWN, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID);
 
-        assertThat(result.content()).isEqualTo(PDF_BYTES);
-        assertThat(result.contentType()).isEqualTo("application/pdf");
-        assertThat(result.filename()).isEqualTo("CourtList.pdf");
+        assertThat(result.content()).isEqualTo(WORD_BYTES);
+        assertThat(result.contentType()).isEqualTo(WORD_CONTENT_TYPE);
+        assertThat(result.filename()).isEqualTo("CourtList.docx");
+        verify(documentGeneratorClient).generateWord(any(), eq(TEMPLATE_USHERS_CROWN_COURT_LIST));
     }
 
     @Test
-    void generateCourtListDownloadReturnsWordResultWhenUshersMagistrate() {
-        byte[] wordBytes = new byte[]{1, 2, 3, 4};
-        CourtListFileResult wordResult = new CourtListFileResult(
-                wordBytes,
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "CourtList.docx");
-        when(courtListDataService.getCourtListFileForDownload(
-                eq(CourtListType.USHERS_MAGISTRATE), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE)))
-                .thenReturn(wordResult);
+    void generateCourtListDownloadReturnsWordWhenUshersMagistrate() throws IOException {
+        Map<String, Object> payload = Map.of(KEY_LIST_TYPE, "ushers_magistrate", "courtCentreName", "Test Court");
+        when(courtListDataService.getCourtListPayloadForDownload(
+                eq(CourtListType.USHERS_MAGISTRATE), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
+        when(documentGeneratorClient.generateWord(any(), eq(TEMPLATE_USHERS_MAGISTRATE_COURT_LIST))).thenReturn(WORD_BYTES);
 
         CourtListFileResult result = service.generateCourtListDownload(
-                CourtListType.USHERS_MAGISTRATE, COURT_CENTRE_ID, START_DATE, END_DATE);
+                CourtListType.USHERS_MAGISTRATE, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID);
 
-        assertThat(result.content()).isEqualTo(wordBytes);
-        assertThat(result.contentType()).isEqualTo("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        assertThat(result.content()).isEqualTo(WORD_BYTES);
+        assertThat(result.contentType()).isEqualTo(WORD_CONTENT_TYPE);
         assertThat(result.filename()).isEqualTo("CourtList.docx");
-        verify(courtListDataService).getCourtListFileForDownload(
-                eq(CourtListType.USHERS_MAGISTRATE), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE));
+        verify(documentGeneratorClient).generateWord(any(), eq(TEMPLATE_USHERS_MAGISTRATE_COURT_LIST));
     }
 }
