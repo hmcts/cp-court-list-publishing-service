@@ -36,8 +36,8 @@ public class CourtListDataService {
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
     private static final String LIST_ID_PUBLIC = "PUBLIC";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
-    private static final String COURT_LIST_DATA_PATH = "courtlist";
-    private static final String ACCEPT_COURTLIST_SEARCH = "application/vnd.courtlist.search.court.list+json";
+    private static final String COURT_LIST_DATA_PATH = "/listing-service/query/api/rest/listing/courtlistpayload";
+    private static final String ACCEPT_COURTLIST_SEARCH = "application/vnd.listing.search.court.list.payload+json";
     private static final Set<CourtListType> DOWNLOAD_TYPES_COURTLIST_API = EnumSet.of(
             CourtListType.PUBLIC,
             CourtListType.BENCH,
@@ -101,7 +101,7 @@ public class CourtListDataService {
         if (courtListDataBaseUrl.isBlank()) {
             throw new CourtListDownloadException("Court list data is not configured");
         }
-        String url = UriComponentsBuilder.fromUriString(courtListDataBaseUrl + "/" + COURT_LIST_DATA_PATH)
+        String url = UriComponentsBuilder.fromUriString(courtListDataBaseUrl).path(COURT_LIST_DATA_PATH)
                 .queryParam("listId", listId)
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate.format(DATE_FORMAT))
@@ -142,7 +142,7 @@ public class CourtListDataService {
         if (courtListDataBaseUrl.isBlank()) {
             throw new CourtListDownloadException("Court list data is not configured");
         }
-        String url = UriComponentsBuilder.fromUriString(courtListDataBaseUrl + "/" + COURT_LIST_DATA_PATH)
+        String url = UriComponentsBuilder.fromUriString(courtListDataBaseUrl).path(COURT_LIST_DATA_PATH)
                 .queryParam("listId", courtListType.name())
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate.format(DATE_FORMAT))
