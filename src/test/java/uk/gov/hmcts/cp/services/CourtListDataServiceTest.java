@@ -138,17 +138,8 @@ class CourtListDataServiceTest {
     }
 
     @Test
-    void getCourtListPayloadFromCourtListApiThrowsWhenNotConfigured() {
-        assertThatThrownBy(() -> courtListDataService.getCourtListPayloadFromCourtListApi(
-                "BENCH", "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
-                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id"))
-                .isInstanceOf(CourtListDownloadException.class)
-                .hasMessageContaining("Court list data is not configured");
-    }
-
-    @Test
-    void getCourtListPayloadForDownloadThrowsWhenUnsupportedType() {
-        assertThatThrownBy(() -> courtListDataService.getCourtListPayloadForDownload(
+    void getCourtListDocumentForDownloadThrowsWhenUnsupportedType() {
+        assertThatThrownBy(() -> courtListDataService.getCourtListDocumentForDownload(
                 CourtListType.STANDARD, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
                 LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id"))
                 .isInstanceOf(CourtListDownloadException.class)

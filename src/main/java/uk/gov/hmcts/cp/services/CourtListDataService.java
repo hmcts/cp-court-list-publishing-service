@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -19,12 +18,12 @@ import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
+import uk.gov.hmcts.cp.services.courtlistdownload.CourtListFileResult;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -33,8 +32,14 @@ public class CourtListDataService {
 
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
-    private static final String COURT_LIST_DATA_PATH = "/listing-service/query/api/rest/listing/courtlistpayload";
-    private static final String ACCEPT_COURTLIST_SEARCH = "application/vnd.listing.search.court.list.payload+json";
+    private static final String COURT_LIST_PATH = "/listing-service/query/api/rest/listing/courtlist";
+    private static final String ACCEPT_COURTLIST = "application/vnd.listing.search.court.list+json";
+    private static final String CONTENT_TYPE_PDF = "application/pdf";
+    private static final String CONTENT_TYPE_WORD =
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    private static final String PDF_FILENAME = "CourtList.pdf";
+    private static final String WORD_FILENAME = "CourtList.docx";
+
     private static final Set<CourtListType> DOWNLOAD_TYPES_COURTLIST_API = EnumSet.of(
             CourtListType.PUBLIC,
             CourtListType.BENCH,
@@ -88,14 +93,24 @@ public class CourtListDataService {
         }
     }
 
-    public Map<String, Object> getCourtListPayloadFromCourtListApi(
-            String listId, String courtCentreId, String courtRoomId,
+    /**
+     * Calls listing's /courtlist endpoint which returns the rendered document directly (PDF for
+     * PUBLIC/BENCH/ALPHABETICAL/JUDGE, Word for USHERS_CROWN/USHERS_MAGISTRATE). Listing dispatches
+     * the right assembler per type, so this works for every supported listId. The response Content-Type
+     * tells us PDF vs Word; we pick the filename accordingly.
+     */
+    public CourtListFileResult getCourtListDocumentForDownload(
+            CourtListType courtListType, String courtCentreId, String courtRoomId,
             LocalDate startDate, LocalDate endDate, String cjscppuid) {
+        if (!DOWNLOAD_TYPES_COURTLIST_API.contains(courtListType)) {
+            throw new CourtListDownloadException("Unsupported court list type for download: " + courtListType);
+        }
         if (courtListDataBaseUrl.isBlank()) {
             throw new CourtListDownloadException("Court list data is not configured");
         }
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(courtListDataBaseUrl).path(COURT_LIST_DATA_PATH)
-                .queryParam("listId", listId)
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(courtListDataBaseUrl).path(COURT_LIST_PATH)
+                .queryParam("listId", courtListType.name())
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate.format(DATE_FORMAT))
                 .queryParam("endDate", endDate.format(DATE_FORMAT))
@@ -106,29 +121,27 @@ public class CourtListDataService {
         String url = builder.build().toUriString();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Collections.singletonList(
-                MediaType.parseMediaType(ACCEPT_COURTLIST_SEARCH)));
+        headers.setAccept(Collections.singletonList(MediaType.parseMediaType(ACCEPT_COURTLIST)));
         if (cjscppuid != null && !cjscppuid.isBlank()) {
             headers.set(AppConstant.CJSCPPUID, cjscppuid);
         }
 
         try {
-            ResponseEntity<Map<String, Object>> response = publicCourtListRestTemplate.exchange(
-                    url, HttpMethod.GET, new HttpEntity<>(headers),
-                    new ParameterizedTypeReference<Map<String, Object>>() {});
-            return response.getBody();
+            ResponseEntity<byte[]> response = publicCourtListRestTemplate.exchange(
+                    url, HttpMethod.GET, new HttpEntity<>(headers), byte[].class);
+            byte[] body = response.getBody();
+            if (body == null || body.length == 0) {
+                throw new CourtListDownloadException("Court list API returned empty response");
+            }
+            MediaType contentType = response.getHeaders().getContentType();
+            boolean isWord = contentType != null
+                    && contentType.toString().toLowerCase().contains("wordprocessingml");
+            return isWord
+                    ? new CourtListFileResult(body, CONTENT_TYPE_WORD, WORD_FILENAME)
+                    : new CourtListFileResult(body, CONTENT_TYPE_PDF, PDF_FILENAME);
         } catch (RestClientException e) {
-            log.error("Court list API call failed for listId={}, courtCentreId={}", listId, courtCentreId, e);
+            log.error("Court list API call failed for listId={}, courtCentreId={}", courtListType, courtCentreId, e);
             throw new CourtListDownloadException("Failed to fetch court list: " + e.getMessage(), e);
         }
-    }
-
-    public Map<String, Object> getCourtListPayloadForDownload(
-            CourtListType courtListType, String courtCentreId, String courtRoomId,
-            LocalDate startDate, LocalDate endDate, String cjscppuid) {
-        if (!DOWNLOAD_TYPES_COURTLIST_API.contains(courtListType)) {
-            throw new CourtListDownloadException("Unsupported court list type for download: " + courtListType);
-        }
-        return getCourtListPayloadFromCourtListApi(courtListType.name(), courtCentreId, courtRoomId, startDate, endDate, cjscppuid);
     }
 }
