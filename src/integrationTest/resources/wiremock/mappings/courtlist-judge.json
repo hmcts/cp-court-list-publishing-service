@@ -4,7 +4,7 @@
     "urlPathPattern": "/listing-service/query/api/rest/listing/courtlist",
     "queryParameters": {
       "listId": {
-        "equalTo": "USHERS_MAGISTRATE"
+        "equalTo": "JUDGE"
       }
     },
     "headers": {
@@ -19,10 +19,10 @@
   "response": {
     "status": 200,
     "headers": {
-      "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "Content-Disposition": "attachment; filename=\"UshersList.docx\""
+      "Content-Type": "application/pdf",
+      "Content-Disposition": "attachment; filename=\"CourtList.pdf\""
     },
-    "bodyFileName": "minimal-docx.docx"
+    "bodyFileName": "minimal-pdf.pdf"
   },
   "priority": 2
 }

@@ -156,6 +156,7 @@ public class CleanupJobIntegrationTest extends CourtListIntegrationTestBase {
     private void invokePublishStatusCleanup() {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(List.of(CLEANUP_ACCEPT));
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         ResponseEntity<String> response =
                 client.exchange(CLEANUP_ENDPOINT, HttpMethod.GET, new HttpEntity<>(headers), String.class);
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();

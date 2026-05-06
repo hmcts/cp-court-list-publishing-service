@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPathPattern": "/courtlist.*",
+    "urlPathPattern": "/listing-service/query/api/rest/listing/courtlist",
     "queryParameters": {
       "listId": {
         "equalTo": "USHERS_CROWN"
@@ -9,16 +9,20 @@
     },
     "headers": {
       "Accept": {
-        "equalTo": "application/vnd.courtlist.search.court.list+json"
+        "equalTo": "application/vnd.listing.search.court.list+json"
+      },
+      "CJSCPPUID": {
+        "matches": ".+"
       }
     }
   },
   "response": {
     "status": 200,
     "headers": {
-      "Content-Type": "text/plain"
+      "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "Content-Disposition": "attachment; filename=\"UshersList.docx\""
     },
-    "bodyFileName": "court-list-word-dataurl.txt"
+    "bodyFileName": "minimal-docx.docx"
   },
   "priority": 2
 }

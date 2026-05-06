@@ -26,7 +26,7 @@ class CourtListPublishingAccessControlTest {
     private static final String PUBLISH_POST = "courtlistpublishing-service.publish.post";
     private static final String PUBLISH_GET = "courtlistpublishing-service.publish.get";
     private static final String FILES_DOWNLOAD = "courtlistpublishing-service.files.download";
-    private static final String DOWNLOAD_POST = "courtlistpublishing-service.download.post";
+    private static final String DOWNLOAD_GET = "courtlistpublishing-service.download.get";
     private static final String TEST_AUTH_POST = "courtlistpublishing-service.test-auth.post";
     private static final String PUBLIC_COURT_LIST_GET = "courtlistpublishing-service.public-court-list.get";
     private static final String PUBLISH_STATUS_CLEANUP_GET = "courtlistpublishing-service.publish-status-cleanup.get";
@@ -124,11 +124,11 @@ class CourtListPublishingAccessControlTest {
         assertThat(outcome.isSuccess()).isFalse();
     }
 
-    // --- download.post ---
+    // --- download.get ---
 
     @Test
-    void downloadPost_shouldAllowAuthorisedUser() {
-        Action action = new Action(DOWNLOAD_POST, Map.of());
+    void downloadGet_shouldAllowAuthorisedUser() {
+        Action action = new Action(DOWNLOAD_GET, Map.of());
         given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action,
                 SecurityGroupConstants.getPublishingRoles())).willReturn(true);
 
@@ -138,8 +138,8 @@ class CourtListPublishingAccessControlTest {
     }
 
     @Test
-    void downloadPost_shouldDenyUnauthorisedUser() {
-        Action action = new Action(DOWNLOAD_POST, Map.of());
+    void downloadGet_shouldDenyUnauthorisedUser() {
+        Action action = new Action(DOWNLOAD_GET, Map.of());
 
         Outcome outcome = evaluateRule(action);
 

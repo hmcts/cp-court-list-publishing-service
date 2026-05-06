@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import uk.gov.hmcts.cp.cleanup.CleanupJobService;
 import uk.gov.hmcts.cp.config.AppConstant;
 import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
-import uk.gov.hmcts.cp.openapi.model.CourtListDownloadRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
@@ -110,36 +109,45 @@ public class CourtListPublishController implements CourtListPublishApi {
     }
 
     @Override
-    public ResponseEntity<Resource> downloadCourtList(@RequestBody CourtListDownloadRequest request) {
-        if (request == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
-        }
-        if (request.getCourtCentreId() == null || request.getCourtCentreId().toString().isBlank()) {
+    public ResponseEntity<Resource> downloadCourtList(
+            String accept,
+            UUID courtCentreId,
+            LocalDate startDate,
+            LocalDate endDate,
+            CourtListType courtListType,
+            UUID courtRoomId) {
+        if (courtCentreId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "courtCentreId is required");
         }
-        if (request.getStartDate() == null) {
+        if (startDate == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "startDate is required (format: yyyy-MM-dd)");
         }
-        if (request.getEndDate() == null) {
+        if (endDate == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endDate is required (format: yyyy-MM-dd)");
         }
-        if (request.getCourtListType() == null) {
+        if (courtListType == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "courtListType is required");
         }
-        if (!isSupportedCourtListTypeForDownload(request.getCourtListType())) {
+        if (!isSupportedCourtListTypeForDownload(courtListType)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Download supported for PUBLIC, BENCH, ALPHABETICAL, USHERS_CROWN, USHERS_MAGISTRATE only. Got: "
-                    + request.getCourtListType());
+                "Download supported for PUBLIC, BENCH, ALPHABETICAL, JUDGE, USHERS_CROWN, USHERS_MAGISTRATE only. Got: "
+                    + courtListType);
         }
-        if (request.getEndDate().isBefore(request.getStartDate())) {
+        if (endDate.isBefore(startDate)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endDate must be on or after startDate");
+        }
+        String cjscppuid = getCjscppuidFromRequest();
+        if (cjscppuid == null || cjscppuid.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CJSCPPUID header is required");
         }
         try {
             CourtListFileResult result = courtListDownloadService.generateCourtListDownload(
-                    request.getCourtListType(),
-                    request.getCourtCentreId().toString(),
-                    request.getStartDate(),
-                    request.getEndDate());
+                    courtListType,
+                    courtCentreId.toString(),
+                    courtRoomId != null ? courtRoomId.toString() : null,
+                    startDate,
+                    endDate,
+                    cjscppuid);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType(result.contentType()));
             headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.filename() + "\"");
@@ -194,6 +202,7 @@ public class CourtListPublishController implements CourtListPublishApi {
             CourtListType.PUBLIC,
             CourtListType.BENCH,
             CourtListType.ALPHABETICAL,
+            CourtListType.JUDGE,
             CourtListType.USHERS_CROWN,
             CourtListType.USHERS_MAGISTRATE);
 

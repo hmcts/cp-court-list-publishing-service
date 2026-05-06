@@ -21,9 +21,10 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -35,7 +36,9 @@ class CourtListDownloadControllerTest {
     private static final String START_DATE = "2026-02-27";
     private static final String END_DATE = "2026-02-27";
     private static final String DOWNLOAD_URL = "/api/court-list-publish/download";
-    private static final String DOWNLOAD_CONTENT_TYPE = "application/vnd.courtlistpublishing-service.download.post+json";
+    private static final String CJSCPPUID_HEADER = "CJSCPPUID";
+    private static final String CJSCPPUID_VALUE = "a085e359-6069-4694-8820-7810e7dfe762";
+    private static final String DOWNLOAD_ACCEPT = "application/vnd.courtlistpublishing-service.download.get+json";
     private static final byte[] PDF_BYTES = "PDF content".getBytes();
     private static final byte[] WORD_BYTES = "Word content".getBytes();
     private static final String WORD_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -56,99 +59,168 @@ class CourtListDownloadControllerTest {
     @BeforeEach
     void setUp() {
         CourtListPublishController controller = new CourtListPublishController(
-                service, courtListTaskTriggerService, courtListDownloadService,cleanupJobService, sjpCourtListPublishService);
+                service, courtListTaskTriggerService, courtListDownloadService, cleanupJobService, sjpCourtListPublishService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
-    private static String downloadRequestJson(String courtCentreId, String startDate, String endDate) {
-        return """
-            {
-              "courtCentreId": "%s",
-              "startDate": "%s",
-              "endDate": "%s",
-              "courtListType": "PUBLIC"
-            }
-            """.formatted(courtCentreId, startDate, endDate);
-    }
-
     @Test
-    void downloadCourtListReturnsPdfWhenValidRequestBody() throws Exception {
+    void downloadCourtListReturnsPdfWhenValidQueryParams() throws Exception {
         CourtListFileResult result = new CourtListFileResult(PDF_BYTES, "application/pdf", "CourtList.pdf");
         when(courtListDownloadService.generateCourtListDownload(
                 eq(CourtListType.PUBLIC),
                 eq(COURT_CENTRE_ID),
+                isNull(),
                 any(LocalDate.class),
-                any(LocalDate.class)))
+                any(LocalDate.class),
+                eq(CJSCPPUID_VALUE)))
                 .thenReturn(result);
 
-        mockMvc.perform(post(DOWNLOAD_URL)
-                        .contentType(DOWNLOAD_CONTENT_TYPE)
-                        .content(downloadRequestJson(COURT_CENTRE_ID, START_DATE, END_DATE)))
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE)
+                        .param("courtListType", "PUBLIC"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_PDF))
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"CourtList.pdf\""))
                 .andExpect(content().bytes(PDF_BYTES));
 
         verify(courtListDownloadService).generateCourtListDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), any(LocalDate.class), any(LocalDate.class));
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), isNull(), any(LocalDate.class), any(LocalDate.class), eq(CJSCPPUID_VALUE));
+    }
+
+    @Test
+    void downloadCourtListReturns400WhenCjscppuidHeaderMissing() throws Exception {
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE)
+                        .param("courtListType", "PUBLIC"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void downloadCourtListReturns400WhenCourtCentreIdMissing() throws Exception {
-        mockMvc.perform(post(DOWNLOAD_URL)
-                        .contentType(DOWNLOAD_CONTENT_TYPE)
-                        .content("""
-                            {"startDate": "%s", "endDate": "%s", "courtListType": "PUBLIC"}
-                            """.formatted(START_DATE, END_DATE)))
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE)
+                        .param("courtListType", "PUBLIC"))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void downloadCourtListReturns400WhenStartDateMissing() throws Exception {
-        mockMvc.perform(post(DOWNLOAD_URL)
-                        .contentType(DOWNLOAD_CONTENT_TYPE)
-                        .content("""
-                            {"courtCentreId": "%s", "endDate": "%s", "courtListType": "PUBLIC"}
-                            """.formatted(COURT_CENTRE_ID, END_DATE)))
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("endDate", END_DATE)
+                        .param("courtListType", "PUBLIC"))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void downloadCourtListReturns400WhenEndDateMissing() throws Exception {
-        mockMvc.perform(post(DOWNLOAD_URL)
-                        .contentType(DOWNLOAD_CONTENT_TYPE)
-                        .content("""
-                            {"courtCentreId": "%s", "startDate": "%s", "courtListType": "PUBLIC"}
-                            """.formatted(COURT_CENTRE_ID, START_DATE)))
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", START_DATE)
+                        .param("courtListType", "PUBLIC"))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void downloadCourtListReturns400WhenCourtListTypeMissing() throws Exception {
-        mockMvc.perform(post(DOWNLOAD_URL)
-                        .contentType(DOWNLOAD_CONTENT_TYPE)
-                        .content("""
-                            {"courtCentreId": "%s", "startDate": "%s", "endDate": "%s"}
-                            """.formatted(COURT_CENTRE_ID, START_DATE, END_DATE)))
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    void downloadCourtListReturns400WhenCourtListTypeNotPublic() throws Exception {
-        mockMvc.perform(post(DOWNLOAD_URL)
-                        .contentType(DOWNLOAD_CONTENT_TYPE)
-                        .content("""
-                            {"courtCentreId": "%s", "startDate": "%s", "endDate": "%s", "courtListType": "STANDARD"}
-                            """.formatted(COURT_CENTRE_ID, START_DATE, END_DATE)))
+    void downloadCourtListReturns400WhenCourtListTypeNotSupported() throws Exception {
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE)
+                        .param("courtListType", "STANDARD"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void downloadCourtListReturnsPdfWhenJudge() throws Exception {
+        CourtListFileResult result = new CourtListFileResult(PDF_BYTES, "application/pdf", "CourtList.pdf");
+        when(courtListDownloadService.generateCourtListDownload(
+                eq(CourtListType.JUDGE),
+                eq(COURT_CENTRE_ID),
+                isNull(),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                eq(CJSCPPUID_VALUE)))
+                .thenReturn(result);
+
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE)
+                        .param("courtListType", "JUDGE"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"CourtList.pdf\""))
+                .andExpect(content().bytes(PDF_BYTES));
     }
 
     @Test
     void downloadCourtListReturns400WhenEndDateBeforeStartDate() throws Exception {
-        mockMvc.perform(post(DOWNLOAD_URL)
-                        .contentType(DOWNLOAD_CONTENT_TYPE)
-                        .content(downloadRequestJson(COURT_CENTRE_ID, "2026-02-28", END_DATE)))
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", "2026-02-28")
+                        .param("endDate", END_DATE)
+                        .param("courtListType", "PUBLIC"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void downloadCourtListReturnsWordWhenUshersCrown() throws Exception {
+        CourtListFileResult wordResult = new CourtListFileResult(WORD_BYTES, WORD_CONTENT_TYPE, "CourtList.docx");
+        when(courtListDownloadService.generateCourtListDownload(
+                eq(CourtListType.USHERS_CROWN),
+                eq(COURT_CENTRE_ID),
+                isNull(),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                eq(CJSCPPUID_VALUE)))
+                .thenReturn(wordResult);
+
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE)
+                        .param("courtListType", "USHERS_CROWN"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(WORD_CONTENT_TYPE))
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"CourtList.docx\""))
+                .andExpect(content().bytes(WORD_BYTES));
+
+        verify(courtListDownloadService).generateCourtListDownload(
+                eq(CourtListType.USHERS_CROWN), eq(COURT_CENTRE_ID), isNull(), any(LocalDate.class), any(LocalDate.class), eq(CJSCPPUID_VALUE));
     }
 
     @Test
@@ -157,32 +229,37 @@ class CourtListDownloadControllerTest {
         when(courtListDownloadService.generateCourtListDownload(
                 eq(CourtListType.USHERS_MAGISTRATE),
                 eq(COURT_CENTRE_ID),
+                isNull(),
                 any(LocalDate.class),
-                any(LocalDate.class)))
+                any(LocalDate.class),
+                eq(CJSCPPUID_VALUE)))
                 .thenReturn(wordResult);
 
-        mockMvc.perform(post(DOWNLOAD_URL)
-                        .contentType(DOWNLOAD_CONTENT_TYPE)
-                        .content("""
-                            {"courtCentreId": "%s", "startDate": "%s", "endDate": "%s", "courtListType": "USHERS_MAGISTRATE"}
-                            """.formatted(COURT_CENTRE_ID, START_DATE, END_DATE)))
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE)
+                        .param("courtListType", "USHERS_MAGISTRATE"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(WORD_CONTENT_TYPE))
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"CourtList.docx\""))
                 .andExpect(content().bytes(WORD_BYTES));
-
-        verify(courtListDownloadService).generateCourtListDownload(
-                eq(CourtListType.USHERS_MAGISTRATE), eq(COURT_CENTRE_ID), any(LocalDate.class), any(LocalDate.class));
     }
 
     @Test
     void downloadCourtListReturns502WhenServiceThrows() throws Exception {
-        when(courtListDownloadService.generateCourtListDownload(any(CourtListType.class), any(), any(LocalDate.class), any(LocalDate.class)))
+        when(courtListDownloadService.generateCourtListDownload(any(CourtListType.class), any(), any(), any(LocalDate.class), any(LocalDate.class), any()))
                 .thenThrow(new CourtListDownloadException("Failed to fetch court list"));
 
-        mockMvc.perform(post(DOWNLOAD_URL)
-                        .contentType(DOWNLOAD_CONTENT_TYPE)
-                        .content(downloadRequestJson(COURT_CENTRE_ID, START_DATE, END_DATE)))
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE)
+                        .param("courtListType", "PUBLIC"))
                 .andExpect(status().isBadGateway());
     }
 }
