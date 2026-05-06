@@ -81,7 +81,7 @@ class CourtListDownloadControllerTest {
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
                         .param("endDate", END_DATE)
-                        .param("listId", "PUBLIC"))
+                        .param("courtListType", "PUBLIC"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_PDF))
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"CourtList.pdf\""))
@@ -98,7 +98,7 @@ class CourtListDownloadControllerTest {
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
                         .param("endDate", END_DATE)
-                        .param("listId", "PUBLIC"))
+                        .param("courtListType", "PUBLIC"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -109,7 +109,7 @@ class CourtListDownloadControllerTest {
                         .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
                         .param("startDate", START_DATE)
                         .param("endDate", END_DATE)
-                        .param("listId", "PUBLIC"))
+                        .param("courtListType", "PUBLIC"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -120,7 +120,7 @@ class CourtListDownloadControllerTest {
                         .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("endDate", END_DATE)
-                        .param("listId", "PUBLIC"))
+                        .param("courtListType", "PUBLIC"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -131,7 +131,7 @@ class CourtListDownloadControllerTest {
                         .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
-                        .param("listId", "PUBLIC"))
+                        .param("courtListType", "PUBLIC"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -154,8 +154,33 @@ class CourtListDownloadControllerTest {
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
                         .param("endDate", END_DATE)
-                        .param("listId", "STANDARD"))
+                        .param("courtListType", "STANDARD"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void downloadCourtListReturnsPdfWhenJudge() throws Exception {
+        CourtListFileResult result = new CourtListFileResult(PDF_BYTES, "application/pdf", "CourtList.pdf");
+        when(courtListDownloadService.generateCourtListDownload(
+                eq(CourtListType.JUDGE),
+                eq(COURT_CENTRE_ID),
+                isNull(),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                eq(CJSCPPUID_VALUE)))
+                .thenReturn(result);
+
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE)
+                        .param("courtListType", "JUDGE"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"CourtList.pdf\""))
+                .andExpect(content().bytes(PDF_BYTES));
     }
 
     @Test
@@ -166,7 +191,7 @@ class CourtListDownloadControllerTest {
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", "2026-02-28")
                         .param("endDate", END_DATE)
-                        .param("listId", "PUBLIC"))
+                        .param("courtListType", "PUBLIC"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -188,7 +213,7 @@ class CourtListDownloadControllerTest {
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
                         .param("endDate", END_DATE)
-                        .param("listId", "USHERS_CROWN"))
+                        .param("courtListType", "USHERS_CROWN"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(WORD_CONTENT_TYPE))
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"CourtList.docx\""))
@@ -216,7 +241,7 @@ class CourtListDownloadControllerTest {
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
                         .param("endDate", END_DATE)
-                        .param("listId", "USHERS_MAGISTRATE"))
+                        .param("courtListType", "USHERS_MAGISTRATE"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(WORD_CONTENT_TYPE))
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"CourtList.docx\""))
@@ -234,7 +259,7 @@ class CourtListDownloadControllerTest {
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
                         .param("endDate", END_DATE)
-                        .param("listId", "PUBLIC"))
+                        .param("courtListType", "PUBLIC"))
                 .andExpect(status().isBadGateway());
     }
 }

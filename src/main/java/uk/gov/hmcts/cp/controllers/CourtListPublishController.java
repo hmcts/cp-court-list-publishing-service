@@ -114,7 +114,7 @@ public class CourtListPublishController implements CourtListPublishApi {
             UUID courtCentreId,
             LocalDate startDate,
             LocalDate endDate,
-            CourtListType listId,
+            CourtListType courtListType,
             UUID courtRoomId) {
         if (courtCentreId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "courtCentreId is required");
@@ -125,13 +125,13 @@ public class CourtListPublishController implements CourtListPublishApi {
         if (endDate == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endDate is required (format: yyyy-MM-dd)");
         }
-        if (listId == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "listId is required");
+        if (courtListType == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "courtListType is required");
         }
-        if (!isSupportedCourtListTypeForDownload(listId)) {
+        if (!isSupportedCourtListTypeForDownload(courtListType)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Download supported for PUBLIC, BENCH, ALPHABETICAL, USHERS_CROWN, USHERS_MAGISTRATE only. Got: "
-                    + listId);
+                "Download supported for PUBLIC, BENCH, ALPHABETICAL, JUDGE, USHERS_CROWN, USHERS_MAGISTRATE only. Got: "
+                    + courtListType);
         }
         if (endDate.isBefore(startDate)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endDate must be on or after startDate");
@@ -142,7 +142,7 @@ public class CourtListPublishController implements CourtListPublishApi {
         }
         try {
             CourtListFileResult result = courtListDownloadService.generateCourtListDownload(
-                    listId,
+                    courtListType,
                     courtCentreId.toString(),
                     courtRoomId != null ? courtRoomId.toString() : null,
                     startDate,
@@ -202,6 +202,7 @@ public class CourtListPublishController implements CourtListPublishApi {
             CourtListType.PUBLIC,
             CourtListType.BENCH,
             CourtListType.ALPHABETICAL,
+            CourtListType.JUDGE,
             CourtListType.USHERS_CROWN,
             CourtListType.USHERS_MAGISTRATE);
 

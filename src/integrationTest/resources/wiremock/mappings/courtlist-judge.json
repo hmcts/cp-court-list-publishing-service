@@ -1,0 +1,24 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/listing-service/query/api/rest/listing/courtlistpayload.*",
+    "queryParameters": {
+      "listId": {
+        "equalTo": "JUDGE"
+      }
+    },
+    "headers": {
+      "Accept": {
+        "equalTo": "application/vnd.listing.search.court.list.payload+json"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "bodyFileName": "court-list-payload-judge.json"
+  },
+  "priority": 2
+}

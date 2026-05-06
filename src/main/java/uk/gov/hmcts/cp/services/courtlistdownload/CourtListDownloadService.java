@@ -26,6 +26,7 @@ public class CourtListDownloadService {
     private static final String TEMPLATE_PUBLIC_COURT_LIST = "PublicCourtList";
     private static final String TEMPLATE_BENCH_COURT_LIST = "BenchCourtList";
     private static final String TEMPLATE_ALPHABETICAL_COURT_LIST = "AlphabeticalCourtList";
+    private static final String TEMPLATE_JUDGE_LIST = "JudgeList";
     private static final String TEMPLATE_USHERS_CROWN_COURT_LIST = "UshersCrownCourtList";
     private static final String TEMPLATE_USHERS_MAGISTRATE_COURT_LIST = "UshersMagistrateCourtList";
     private static final String KEY_TEMPLATE_NAME = "templateName";
@@ -45,6 +46,7 @@ public class CourtListDownloadService {
         DEFAULT_TEMPLATE_BY_TYPE.put(CourtListType.PUBLIC, TEMPLATE_PUBLIC_COURT_LIST);
         DEFAULT_TEMPLATE_BY_TYPE.put(CourtListType.BENCH, TEMPLATE_BENCH_COURT_LIST);
         DEFAULT_TEMPLATE_BY_TYPE.put(CourtListType.ALPHABETICAL, TEMPLATE_ALPHABETICAL_COURT_LIST);
+        DEFAULT_TEMPLATE_BY_TYPE.put(CourtListType.JUDGE, TEMPLATE_JUDGE_LIST);
         DEFAULT_TEMPLATE_BY_TYPE.put(CourtListType.USHERS_CROWN, TEMPLATE_USHERS_CROWN_COURT_LIST);
         DEFAULT_TEMPLATE_BY_TYPE.put(CourtListType.USHERS_MAGISTRATE, TEMPLATE_USHERS_MAGISTRATE_COURT_LIST);
     }

@@ -39,6 +39,7 @@ public class CourtListDataService {
             CourtListType.PUBLIC,
             CourtListType.BENCH,
             CourtListType.ALPHABETICAL,
+            CourtListType.JUDGE,
             CourtListType.USHERS_CROWN,
             CourtListType.USHERS_MAGISTRATE);
 

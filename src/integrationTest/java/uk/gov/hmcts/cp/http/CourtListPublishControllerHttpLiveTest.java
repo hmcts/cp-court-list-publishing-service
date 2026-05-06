@@ -288,6 +288,11 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     @Test
+    void getDownloadCourtListReturnsPdfWhenJudgeAndStubbed() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.JUDGE);
+    }
+
+    @Test
     void getDownloadCourtListReturnsWordWhenUshersCrownAndStubbed() throws Exception {
         getDownloadCourtListReturnsWordForType(CourtListType.USHERS_CROWN);
     }
@@ -303,8 +308,8 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     @Test
-    void getDownloadCourtListReturnsBadRequestWhenCourtListTypeIsJudge() {
-        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.JUDGE);
+    void getDownloadCourtListReturnsBadRequestWhenCourtListTypeIsPrison() {
+        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.PRISON);
     }
 
     private String buildDownloadUrl(CourtListType courtListType) {
@@ -312,7 +317,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 + "?courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26"
                 + "&startDate=2026-02-27"
                 + "&endDate=2026-02-27"
-                + "&listId=" + courtListType.name();
+                + "&courtListType=" + courtListType.name();
     }
 
     private void getDownloadCourtListReturnsPdfForType(CourtListType courtListType) throws Exception {
@@ -369,7 +374,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 entity,
                 byte[].class))
                 .isInstanceOf(HttpClientErrorException.BadRequest.class)
-                .hasMessageContaining("Download supported for PUBLIC, BENCH, ALPHABETICAL, USHERS_CROWN, USHERS_MAGISTRATE only");
+                .hasMessageContaining("Download supported for PUBLIC, BENCH, ALPHABETICAL, JUDGE, USHERS_CROWN, USHERS_MAGISTRATE only");
     }
 }
 
