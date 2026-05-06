@@ -312,7 +312,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 + "?courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26"
                 + "&startDate=2026-02-27"
                 + "&endDate=2026-02-27"
-                + "&courtListType=" + courtListType.name();
+                + "&listId=" + courtListType.name();
     }
 
     private void getDownloadCourtListReturnsPdfForType(CourtListType courtListType) throws Exception {
