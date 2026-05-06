@@ -91,7 +91,8 @@ public class PdfGenerationTaskIntegrationTest extends AbstractTest {
     private ResponseEntity<String> getStatusRequest(UUID courtListId) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(java.util.List.of(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json")));
-        
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
+
         // Use courtListId if available, otherwise use courtCentreId and publishDate
         String url = GET_STATUS_ENDPOINT + "?courtListId=" + courtListId;
         

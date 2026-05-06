@@ -61,6 +61,7 @@ public class CourtListDownloadService {
 
     public CourtListFileResult generateCourtListDownload(final CourtListType courtListType,
                                                          final String courtCentreId,
+                                                         final String courtRoomId,
                                                          final LocalDate startDate,
                                                          final LocalDate endDate,
                                                          final String cjscppuid) {
@@ -68,7 +69,7 @@ public class CourtListDownloadService {
                 courtListType, sanitizeForLog(courtCentreId), startDate, endDate);
 
         Map<String, Object> payload = courtListDataService.getCourtListPayloadForDownload(
-                courtListType, courtCentreId, startDate, endDate, cjscppuid);
+                courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid);
         if (payload == null || payload.isEmpty()) {
             throw new CourtListDownloadException("Court list data API returned empty payload");
         }

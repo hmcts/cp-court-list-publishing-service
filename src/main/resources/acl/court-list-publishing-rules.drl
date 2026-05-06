@@ -14,6 +14,15 @@ then
   $o.setSuccess(true);
 end
 
+rule "Allow – sjp publish (System Users only)"
+when
+  $o: Outcome()
+  $a: Action(name == "courtlistpublishing-service.sjp.post")
+  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, SecurityGroupConstants.getSystemUserOnlyRoles()))
+then
+  $o.setSuccess(true);
+end
+
 rule "Allow – court-list-publish and download"
 when
   $o: Outcome()

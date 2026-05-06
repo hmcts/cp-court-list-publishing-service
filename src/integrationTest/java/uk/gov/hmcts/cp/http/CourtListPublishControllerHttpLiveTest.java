@@ -28,6 +28,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private static final String PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publish";
     private static final String DOWNLOAD_ENDPOINT = BASE_URL + "/api/court-list-publish/download";
+    private static final String DOWNLOAD_ACCEPT = "application/vnd.courtlistpublishing-service.download.get+json";
     private static final String REQUESTED_STATUS = Status.REQUESTED.toString();
     private static final String COURT_LIST_TYPE_PUBLIC = CourtListType.PUBLIC.toString();
     private static final String COURT_LIST_TYPE_FINAL = CourtListType.FINAL.toString();
@@ -241,6 +242,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     private ResponseEntity<String> getRequest(String url) {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(java.util.List.of(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json")));
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         return http.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), String.class);
     }
 
@@ -316,6 +318,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     private void getDownloadCourtListReturnsPdfForType(CourtListType courtListType) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
+        headers.setAccept(java.util.List.of(MediaType.parseMediaType(DOWNLOAD_ACCEPT)));
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         ResponseEntity<byte[]> response = http.exchange(
@@ -335,6 +338,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     private void getDownloadCourtListReturnsWordForType(CourtListType courtListType) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
+        headers.setAccept(java.util.List.of(MediaType.parseMediaType(DOWNLOAD_ACCEPT)));
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         ResponseEntity<byte[]> response = http.exchange(
@@ -356,6 +360,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     private void assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType courtListType) {
         HttpHeaders headers = new HttpHeaders();
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
+        headers.setAccept(java.util.List.of(MediaType.parseMediaType(DOWNLOAD_ACCEPT)));
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         assertThatThrownBy(() -> http.exchange(

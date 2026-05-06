@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -57,11 +58,11 @@ class CourtListDownloadServiceTest {
                 KEY_LIST_TYPE, "public",
                 "courtCentreName", "Test Court");
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), isNull(), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
         when(documentGeneratorClient.generatePdf(any(), eq(TEMPLATE_PUBLIC_COURT_LIST))).thenReturn(PDF_BYTES);
 
         CourtListFileResult result = service.generateCourtListDownload(
-                CourtListType.PUBLIC, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID);
+                CourtListType.PUBLIC, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID);
 
         assertThat(result.content()).isEqualTo(PDF_BYTES);
         assertThat(result.contentType()).isEqualTo("application/pdf");
@@ -73,11 +74,11 @@ class CourtListDownloadServiceTest {
     void generateCourtListDownloadUsesDefaultTemplateWhenPayloadHasNoTemplateName() throws IOException {
         Map<String, Object> payload = Map.of(KEY_LIST_TYPE, "public");
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), isNull(), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
         when(documentGeneratorClient.generatePdf(any(), eq(TEMPLATE_PUBLIC_COURT_LIST))).thenReturn(PDF_BYTES);
 
         CourtListFileResult result = service.generateCourtListDownload(
-                CourtListType.PUBLIC, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID);
+                CourtListType.PUBLIC, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID);
 
         assertThat(result.content()).isEqualTo(PDF_BYTES);
         verify(documentGeneratorClient).generatePdf(any(), eq(TEMPLATE_PUBLIC_COURT_LIST));
@@ -87,11 +88,11 @@ class CourtListDownloadServiceTest {
     void generateCourtListDownloadThrowsWhenDocumentGeneratorClientThrows() throws IOException {
         Map<String, Object> payload = Map.of("templateName", TEMPLATE_PUBLIC_COURT_LIST);
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), isNull(), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
         when(documentGeneratorClient.generatePdf(any(), any())).thenThrow(new IOException("Document generator failed"));
 
         assertThatThrownBy(() -> service.generateCourtListDownload(
-                CourtListType.PUBLIC, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID))
+                CourtListType.PUBLIC, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("Document generator failed");
     }
@@ -99,10 +100,10 @@ class CourtListDownloadServiceTest {
     @Test
     void generateCourtListDownloadThrowsWhenCourtListDataReturnsEmpty() {
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(Map.of());
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), isNull(), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(Map.of());
 
         assertThatThrownBy(() -> service.generateCourtListDownload(
-                CourtListType.PUBLIC, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID))
+                CourtListType.PUBLIC, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("empty");
     }
@@ -110,10 +111,10 @@ class CourtListDownloadServiceTest {
     @Test
     void generateCourtListDownloadThrowsWhenCourtListDataReturnsNull() {
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(null);
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), isNull(), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(null);
 
         assertThatThrownBy(() -> service.generateCourtListDownload(
-                CourtListType.PUBLIC, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID))
+                CourtListType.PUBLIC, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("empty");
     }
@@ -122,11 +123,11 @@ class CourtListDownloadServiceTest {
     void generateCourtListDownloadUsesBenchTemplateWhenCourtListTypeIsBench() throws IOException {
         Map<String, Object> payload = Map.of(KEY_LIST_TYPE, "bench", "courtCentreName", "Test Court");
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.BENCH), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
+                eq(CourtListType.BENCH), eq(COURT_CENTRE_ID), isNull(), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
         when(documentGeneratorClient.generatePdf(any(), eq("BenchCourtList"))).thenReturn(PDF_BYTES);
 
         CourtListFileResult result = service.generateCourtListDownload(
-                CourtListType.BENCH, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID);
+                CourtListType.BENCH, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID);
 
         assertThat(result.content()).isEqualTo(PDF_BYTES);
         assertThat(result.contentType()).isEqualTo("application/pdf");
@@ -137,11 +138,11 @@ class CourtListDownloadServiceTest {
     void generateCourtListDownloadReturnsWordWhenUshersCrown() throws IOException {
         Map<String, Object> payload = Map.of(KEY_LIST_TYPE, "ushers_crown", "courtCentreName", "Test Court");
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.USHERS_CROWN), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
+                eq(CourtListType.USHERS_CROWN), eq(COURT_CENTRE_ID), isNull(), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
         when(documentGeneratorClient.generateWord(any(), eq(TEMPLATE_USHERS_CROWN_COURT_LIST))).thenReturn(WORD_BYTES);
 
         CourtListFileResult result = service.generateCourtListDownload(
-                CourtListType.USHERS_CROWN, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID);
+                CourtListType.USHERS_CROWN, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID);
 
         assertThat(result.content()).isEqualTo(WORD_BYTES);
         assertThat(result.contentType()).isEqualTo(WORD_CONTENT_TYPE);
@@ -153,11 +154,11 @@ class CourtListDownloadServiceTest {
     void generateCourtListDownloadReturnsWordWhenUshersMagistrate() throws IOException {
         Map<String, Object> payload = Map.of(KEY_LIST_TYPE, "ushers_magistrate", "courtCentreName", "Test Court");
         when(courtListDataService.getCourtListPayloadForDownload(
-                eq(CourtListType.USHERS_MAGISTRATE), eq(COURT_CENTRE_ID), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
+                eq(CourtListType.USHERS_MAGISTRATE), eq(COURT_CENTRE_ID), isNull(), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID))).thenReturn(payload);
         when(documentGeneratorClient.generateWord(any(), eq(TEMPLATE_USHERS_MAGISTRATE_COURT_LIST))).thenReturn(WORD_BYTES);
 
         CourtListFileResult result = service.generateCourtListDownload(
-                CourtListType.USHERS_MAGISTRATE, COURT_CENTRE_ID, START_DATE, END_DATE, CJSCPPUID);
+                CourtListType.USHERS_MAGISTRATE, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID);
 
         assertThat(result.content()).isEqualTo(WORD_BYTES);
         assertThat(result.contentType()).isEqualTo(WORD_CONTENT_TYPE);

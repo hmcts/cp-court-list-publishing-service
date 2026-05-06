@@ -88,18 +88,21 @@ public class CourtListDataService {
     }
 
     public Map<String, Object> getCourtListPayloadFromCourtListApi(
-            String listId, String courtCentreId, LocalDate startDate, LocalDate endDate, String cjscppuid) {
+            String listId, String courtCentreId, String courtRoomId,
+            LocalDate startDate, LocalDate endDate, String cjscppuid) {
         if (courtListDataBaseUrl.isBlank()) {
             throw new CourtListDownloadException("Court list data is not configured");
         }
-        String url = UriComponentsBuilder.fromUriString(courtListDataBaseUrl).path(COURT_LIST_DATA_PATH)
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(courtListDataBaseUrl).path(COURT_LIST_DATA_PATH)
                 .queryParam("listId", listId)
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate.format(DATE_FORMAT))
                 .queryParam("endDate", endDate.format(DATE_FORMAT))
-                .queryParam("restricted", false)
-                .build()
-                .toUriString();
+                .queryParam("restricted", false);
+        if (courtRoomId != null && !courtRoomId.isBlank()) {
+            builder.queryParam("courtRoomId", courtRoomId);
+        }
+        String url = builder.build().toUriString();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(
@@ -120,10 +123,11 @@ public class CourtListDataService {
     }
 
     public Map<String, Object> getCourtListPayloadForDownload(
-            CourtListType courtListType, String courtCentreId, LocalDate startDate, LocalDate endDate, String cjscppuid) {
+            CourtListType courtListType, String courtCentreId, String courtRoomId,
+            LocalDate startDate, LocalDate endDate, String cjscppuid) {
         if (!DOWNLOAD_TYPES_COURTLIST_API.contains(courtListType)) {
             throw new CourtListDownloadException("Unsupported court list type for download: " + courtListType);
         }
-        return getCourtListPayloadFromCourtListApi(courtListType.name(), courtCentreId, startDate, endDate, cjscppuid);
+        return getCourtListPayloadFromCourtListApi(courtListType.name(), courtCentreId, courtRoomId, startDate, endDate, cjscppuid);
     }
 }

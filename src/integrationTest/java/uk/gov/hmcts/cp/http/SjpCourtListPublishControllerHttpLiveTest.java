@@ -125,7 +125,7 @@ public class SjpCourtListPublishControllerHttpLiveTest extends AbstractTest {
     @Test
     void postSjpCourtList_returns400_whenBodyNull() {
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentType(MediaType.parseMediaType("application/vnd.courtlistpublishing-service.sjp.post+json"));
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
 
         assertThatThrownBy(() -> http.exchange(
@@ -141,7 +141,7 @@ public class SjpCourtListPublishControllerHttpLiveTest extends AbstractTest {
 
     private HttpEntity<String> createSjpHttpEntity(String json) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentType(MediaType.parseMediaType("application/vnd.courtlistpublishing-service.sjp.post+json"));
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         return new HttpEntity<>(json, headers);
     }

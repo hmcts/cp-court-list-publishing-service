@@ -110,11 +110,12 @@ public class CourtListPublishController implements CourtListPublishApi {
 
     @Override
     public ResponseEntity<Resource> downloadCourtList(
-            @RequestParam("courtCentreId") UUID courtCentreId,
-            @RequestParam("startDate") LocalDate startDate,
-            @RequestParam("endDate") LocalDate endDate,
-            @RequestParam("courtListType") CourtListType courtListType,
-            @RequestParam(value = "courtRoomId", required = false) UUID courtRoomId) {
+            String accept,
+            UUID courtCentreId,
+            LocalDate startDate,
+            LocalDate endDate,
+            CourtListType courtListType,
+            UUID courtRoomId) {
         if (courtCentreId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "courtCentreId is required");
         }
@@ -143,6 +144,7 @@ public class CourtListPublishController implements CourtListPublishApi {
             CourtListFileResult result = courtListDownloadService.generateCourtListDownload(
                     courtListType,
                     courtCentreId.toString(),
+                    courtRoomId != null ? courtRoomId.toString() : null,
                     startDate,
                     endDate,
                     cjscppuid);

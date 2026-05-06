@@ -13,10 +13,13 @@ azure:
   storage:
     enabled: false
 
-# Disable authz and audit filters in integration tests
+# Authz filter is enabled in integration tests so the DRL rules and the auth filter's
+# Accept-header action derivation are exercised end-to-end. The identity endpoint
+# (/usersgroups-query-api/.../logged-in-user/permissions) is stubbed in WireMock to
+# return a user that's a member of all roles + has the Publish permission.
 authz:
   http:
-    enabled: false
+    enabled: true
 
 audit:
   http:

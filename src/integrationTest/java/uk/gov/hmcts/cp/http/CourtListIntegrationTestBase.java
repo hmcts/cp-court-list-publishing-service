@@ -87,6 +87,7 @@ abstract class CourtListIntegrationTestBase extends AbstractTest {
     protected ResponseEntity<String> getStatusRequest(UUID courtListId) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(java.util.List.of(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json")));
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         ResponseEntity<String> response = http.exchange(
                 GET_STATUS_ENDPOINT + "?courtListId=" + courtListId,
                 HttpMethod.GET,
@@ -116,6 +117,7 @@ abstract class CourtListIntegrationTestBase extends AbstractTest {
     protected byte[] downloadPdf(UUID courtListId) {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(java.util.List.of(ACCEPT_FILES_DOWNLOAD));
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         ResponseEntity<byte[]> response = http.exchange(
                 DOWNLOAD_ENDPOINT + "/" + courtListId,
                 HttpMethod.GET,

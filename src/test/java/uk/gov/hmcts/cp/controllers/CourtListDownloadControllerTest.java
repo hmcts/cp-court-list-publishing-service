@@ -21,6 +21,7 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -37,6 +38,7 @@ class CourtListDownloadControllerTest {
     private static final String DOWNLOAD_URL = "/api/court-list-publish/download";
     private static final String CJSCPPUID_HEADER = "CJSCPPUID";
     private static final String CJSCPPUID_VALUE = "a085e359-6069-4694-8820-7810e7dfe762";
+    private static final String DOWNLOAD_ACCEPT = "application/vnd.courtlistpublishing-service.download.get+json";
     private static final byte[] PDF_BYTES = "PDF content".getBytes();
     private static final byte[] WORD_BYTES = "Word content".getBytes();
     private static final String WORD_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -67,12 +69,14 @@ class CourtListDownloadControllerTest {
         when(courtListDownloadService.generateCourtListDownload(
                 eq(CourtListType.PUBLIC),
                 eq(COURT_CENTRE_ID),
+                isNull(),
                 any(LocalDate.class),
                 any(LocalDate.class),
                 eq(CJSCPPUID_VALUE)))
                 .thenReturn(result);
 
         mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
                         .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
@@ -84,12 +88,13 @@ class CourtListDownloadControllerTest {
                 .andExpect(content().bytes(PDF_BYTES));
 
         verify(courtListDownloadService).generateCourtListDownload(
-                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), any(LocalDate.class), any(LocalDate.class), eq(CJSCPPUID_VALUE));
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), isNull(), any(LocalDate.class), any(LocalDate.class), eq(CJSCPPUID_VALUE));
     }
 
     @Test
     void downloadCourtListReturns400WhenCjscppuidHeaderMissing() throws Exception {
         mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
                         .param("endDate", END_DATE)
@@ -100,6 +105,7 @@ class CourtListDownloadControllerTest {
     @Test
     void downloadCourtListReturns400WhenCourtCentreIdMissing() throws Exception {
         mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
                         .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
                         .param("startDate", START_DATE)
                         .param("endDate", END_DATE)
@@ -110,6 +116,7 @@ class CourtListDownloadControllerTest {
     @Test
     void downloadCourtListReturns400WhenStartDateMissing() throws Exception {
         mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
                         .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("endDate", END_DATE)
@@ -120,6 +127,7 @@ class CourtListDownloadControllerTest {
     @Test
     void downloadCourtListReturns400WhenEndDateMissing() throws Exception {
         mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
                         .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
@@ -130,6 +138,7 @@ class CourtListDownloadControllerTest {
     @Test
     void downloadCourtListReturns400WhenCourtListTypeMissing() throws Exception {
         mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
                         .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
@@ -140,6 +149,7 @@ class CourtListDownloadControllerTest {
     @Test
     void downloadCourtListReturns400WhenCourtListTypeNotSupported() throws Exception {
         mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
                         .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
@@ -151,6 +161,7 @@ class CourtListDownloadControllerTest {
     @Test
     void downloadCourtListReturns400WhenEndDateBeforeStartDate() throws Exception {
         mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
                         .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", "2026-02-28")
@@ -165,12 +176,14 @@ class CourtListDownloadControllerTest {
         when(courtListDownloadService.generateCourtListDownload(
                 eq(CourtListType.USHERS_CROWN),
                 eq(COURT_CENTRE_ID),
+                isNull(),
                 any(LocalDate.class),
                 any(LocalDate.class),
                 eq(CJSCPPUID_VALUE)))
                 .thenReturn(wordResult);
 
         mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
                         .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
@@ -182,7 +195,7 @@ class CourtListDownloadControllerTest {
                 .andExpect(content().bytes(WORD_BYTES));
 
         verify(courtListDownloadService).generateCourtListDownload(
-                eq(CourtListType.USHERS_CROWN), eq(COURT_CENTRE_ID), any(LocalDate.class), any(LocalDate.class), eq(CJSCPPUID_VALUE));
+                eq(CourtListType.USHERS_CROWN), eq(COURT_CENTRE_ID), isNull(), any(LocalDate.class), any(LocalDate.class), eq(CJSCPPUID_VALUE));
     }
 
     @Test
@@ -191,12 +204,14 @@ class CourtListDownloadControllerTest {
         when(courtListDownloadService.generateCourtListDownload(
                 eq(CourtListType.USHERS_MAGISTRATE),
                 eq(COURT_CENTRE_ID),
+                isNull(),
                 any(LocalDate.class),
                 any(LocalDate.class),
                 eq(CJSCPPUID_VALUE)))
                 .thenReturn(wordResult);
 
         mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
                         .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
@@ -210,10 +225,11 @@ class CourtListDownloadControllerTest {
 
     @Test
     void downloadCourtListReturns502WhenServiceThrows() throws Exception {
-        when(courtListDownloadService.generateCourtListDownload(any(CourtListType.class), any(), any(LocalDate.class), any(LocalDate.class), any()))
+        when(courtListDownloadService.generateCourtListDownload(any(CourtListType.class), any(), any(), any(LocalDate.class), any(LocalDate.class), any()))
                 .thenThrow(new CourtListDownloadException("Failed to fetch court list"));
 
         mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
                         .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
