@@ -84,14 +84,17 @@ class CourtListDataServiceTest {
     }
 
     @Test
-    void getCourtListPayloadReturnsDeserializedPayloadWhenProgressionReturnsValidJson() {
+    void getCourtListPayloadAlwaysCallsProgressionWithRestrictedFalse() {
+        // restricted=true on progression returns the restricted-information variant
+        // (empty when no entries are flagged). The publish/download flow must always
+        // request the default full list (restricted=false), regardless of cjscppuid.
         when(progressionQueryService.getCourtListPayload(
                 eq(CourtListType.STANDARD),
                 eq("courtCentre1"),
                 isNull(),
                 eq("2026-01-05"),
                 eq("2026-01-12"),
-                eq(true),
+                eq(false),
                 eq("user-id"),
                 eq(false)))
                 .thenReturn("{\"listType\":\"standard\",\"courtCentreName\":\"Test Court\",\"ouCode\":\"B01LY\",\"courtId\":\"f8254db1-1683-483e-afb3-b87fde5a0a26\"}");
@@ -104,10 +107,12 @@ class CourtListDataServiceTest {
         assertThat(result.getCourtCentreName()).isEqualTo("Test Court");
         assertThat(result.getOuCode()).isEqualTo("B01LY");
         assertThat(result.getCourtId()).isEqualTo("f8254db1-1683-483e-afb3-b87fde5a0a26");
+        verify(progressionQueryService).getCourtListPayload(
+                any(), any(), any(), any(), any(), eq(false), any(), anyBoolean());
     }
 
     @Test
-    void getCourtListPayloadUsesRestrictedFalseWhenCjscppuidIsNull() {
+    void getCourtListPayloadPassesRestrictedFalseWhenCjscppuidIsNull() {
         when(progressionQueryService.getCourtListPayload(
                 eq(CourtListType.PUBLIC),
                 eq("courtCentre1"),

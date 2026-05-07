@@ -83,8 +83,10 @@ public class CourtListDataService {
             String endDate,
             String cjscppuid,
             boolean includeApplications) {
-        boolean restricted = cjscppuid != null && !cjscppuid.trim().isEmpty();
-        String json = getCourtListData(listId, courtCentreId, null, startDate, endDate, restricted, cjscppuid, includeApplications);
+        // restricted=true asks progression for the restricted-information variant of the list
+        // (which is empty when no entries are flagged for restricted reporting). For the
+        // standard publish/download we want the default full list — restricted=false.
+        String json = getCourtListData(listId, courtCentreId, null, startDate, endDate, false, cjscppuid, includeApplications);
 
         try {
             return OBJECT_MAPPER.readValue(json, CourtListPayload.class);
@@ -115,7 +117,7 @@ public class CourtListDataService {
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate.format(DATE_FORMAT))
                 .queryParam("endDate", endDate.format(DATE_FORMAT))
-                .queryParam("restricted", true);
+                .queryParam("restricted", false);
         if (courtRoomId != null && !courtRoomId.isBlank()) {
             builder.queryParam("courtRoomId", courtRoomId);
         }
