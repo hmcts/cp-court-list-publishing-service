@@ -303,8 +303,8 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     @Test
-    void getDownloadCourtListReturnsBadRequestWhenCourtListTypeIsStandard() {
-        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.STANDARD);
+    void getDownloadCourtListReturnsPdfWhenStandardAndStubbed() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.STANDARD);
     }
 
     @Test
@@ -374,7 +374,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 entity,
                 byte[].class))
                 .isInstanceOf(HttpClientErrorException.BadRequest.class)
-                .hasMessageContaining("Download supported for PUBLIC, BENCH, ALPHABETICAL, JUDGE, USHERS_CROWN, USHERS_MAGISTRATE only");
+                .hasMessageContaining("Download supported for PUBLIC, BENCH, STANDARD, ALPHABETICAL, JUDGE, USHERS_CROWN, USHERS_MAGISTRATE only");
     }
 }
 

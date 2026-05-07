@@ -43,6 +43,7 @@ public class CourtListDataService {
     private static final Set<CourtListType> DOWNLOAD_TYPES_COURTLIST_API = EnumSet.of(
             CourtListType.PUBLIC,
             CourtListType.BENCH,
+            CourtListType.STANDARD,
             CourtListType.ALPHABETICAL,
             CourtListType.JUDGE,
             CourtListType.USHERS_CROWN,
@@ -114,7 +115,7 @@ public class CourtListDataService {
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate.format(DATE_FORMAT))
                 .queryParam("endDate", endDate.format(DATE_FORMAT))
-                .queryParam("restricted", false);
+                .queryParam("restricted", true);
         if (courtRoomId != null && !courtRoomId.isBlank()) {
             builder.queryParam("courtRoomId", courtRoomId);
         }

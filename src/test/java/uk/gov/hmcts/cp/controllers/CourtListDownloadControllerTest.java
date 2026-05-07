@@ -154,8 +154,33 @@ class CourtListDownloadControllerTest {
                         .param("courtCentreId", COURT_CENTRE_ID)
                         .param("startDate", START_DATE)
                         .param("endDate", END_DATE)
-                        .param("courtListType", "STANDARD"))
+                        .param("courtListType", "PRISON"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void downloadCourtListReturnsPdfWhenStandard() throws Exception {
+        CourtListFileResult result = new CourtListFileResult(PDF_BYTES, "application/pdf", "CourtList.pdf");
+        when(courtListDownloadService.generateCourtListDownload(
+                eq(CourtListType.STANDARD),
+                eq(COURT_CENTRE_ID),
+                isNull(),
+                any(LocalDate.class),
+                any(LocalDate.class),
+                eq(CJSCPPUID_VALUE)))
+                .thenReturn(result);
+
+        mockMvc.perform(get(DOWNLOAD_URL)
+                        .header("Accept", DOWNLOAD_ACCEPT)
+                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
+                        .param("courtCentreId", COURT_CENTRE_ID)
+                        .param("startDate", START_DATE)
+                        .param("endDate", END_DATE)
+                        .param("courtListType", "STANDARD"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"CourtList.pdf\""))
+                .andExpect(content().bytes(PDF_BYTES));
     }
 
     @Test

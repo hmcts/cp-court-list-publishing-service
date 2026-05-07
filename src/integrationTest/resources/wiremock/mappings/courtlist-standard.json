@@ -1,0 +1,28 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/listing-service/query/api/rest/listing/courtlist",
+    "queryParameters": {
+      "listId": {
+        "equalTo": "STANDARD"
+      }
+    },
+    "headers": {
+      "Accept": {
+        "equalTo": "application/vnd.listing.search.court.list+json"
+      },
+      "CJSCPPUID": {
+        "matches": ".+"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": "attachment; filename=\"CourtList.pdf\""
+    },
+    "bodyFileName": "minimal-pdf.pdf"
+  },
+  "priority": 2
+}

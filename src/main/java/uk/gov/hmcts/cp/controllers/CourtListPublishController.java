@@ -130,7 +130,7 @@ public class CourtListPublishController implements CourtListPublishApi {
         }
         if (!isSupportedCourtListTypeForDownload(courtListType)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Download supported for PUBLIC, BENCH, ALPHABETICAL, JUDGE, USHERS_CROWN, USHERS_MAGISTRATE only. Got: "
+                "Download supported for PUBLIC, BENCH, STANDARD, ALPHABETICAL, JUDGE, USHERS_CROWN, USHERS_MAGISTRATE only. Got: "
                     + courtListType);
         }
         if (endDate.isBefore(startDate)) {
@@ -201,6 +201,7 @@ public class CourtListPublishController implements CourtListPublishApi {
     private static final Set<CourtListType> SUPPORTED_DOWNLOAD_COURT_LIST_TYPES = EnumSet.of(
             CourtListType.PUBLIC,
             CourtListType.BENCH,
+            CourtListType.STANDARD,
             CourtListType.ALPHABETICAL,
             CourtListType.JUDGE,
             CourtListType.USHERS_CROWN,

@@ -140,7 +140,7 @@ class CourtListDataServiceTest {
     @Test
     void getCourtListDocumentForDownloadThrowsWhenUnsupportedType() {
         assertThatThrownBy(() -> courtListDataService.getCourtListDocumentForDownload(
-                CourtListType.STANDARD, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
+                CourtListType.PRISON, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
                 LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id"))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("Unsupported court list type for download");

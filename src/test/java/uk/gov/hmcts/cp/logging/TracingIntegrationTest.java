@@ -7,16 +7,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import uk.gov.hmcts.cp.controllers.GlobalExceptionHandler;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
+import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import lombok.extern.slf4j.Slf4j;
-import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +29,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.context.WebApplicationContext;
 
 @TestPropertySource(properties = {
         "spring.application.name=cp-court-list-publishing-service",
@@ -44,51 +44,54 @@ import org.springframework.web.context.WebApplicationContext;
 @Slf4j
 class TracingIntegrationTest {
 
-    private final PrintStream originalStdOut = System.out;
-
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private WebApplicationContext wac;
 
     @Value("${spring.application.name}")
     private String springApplicationName;
 
+    private ListAppender<ILoggingEvent> logAppender;
+    private Logger rootLogger;
+
+    @BeforeEach
+    void attachAppender() {
+        rootLogger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+        logAppender = new ListAppender<>();
+        logAppender.start();
+        rootLogger.addAppender(logAppender);
+    }
+
     @AfterEach
-    void tearDown() {
-        System.setOut(originalStdOut);
+    void detachAppender() {
+        if (rootLogger != null && logAppender != null) {
+            rootLogger.detachAppender(logAppender);
+            logAppender.stop();
+        }
         MDC.clear();
     }
 
     @Test
     void incoming_request_should_add_new_tracing() throws Exception {
-        ByteArrayOutputStream captured = captureStdOut();
-
         mockMvc.perform(get("/_trace-probe")
-                        .accept(org.springframework.http.MediaType.APPLICATION_JSON))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("traceId"));
 
-        Map<String, Object> fields = parseLastJsonLine(captured);
-        assertThat(fields.get("traceId")).as("traceId").isNotNull();
-        assertThat(fields.get("spanId")).as("spanId").isNotNull();
+        ILoggingEvent event = lastProbeEvent();
+        Map<String, String> mdc = event.getMDCPropertyMap();
+        assertThat(mdc.get("traceId")).as("traceId").isNotNull();
+        assertThat(mdc.get("spanId")).as("spanId").isNotNull();
 
-        // logger name can be abbreviated by Logback; assert on the stable tail
-        String loggerName = String.valueOf(fieldOf(fields, "logger_name", "logger"));
-        assertThat(loggerName)
+        // logger name is the FQCN; assert on the stable tail
+        assertThat(event.getLoggerName())
                 .as("logger name")
-                .matches("(^|.*\\.)RootController$");  // accepts "RootController", "u.g.h.cp.controllers.RootController", or full FQCN
+                .matches("(^|.*\\.)RootController$");
 
-        assertThat(fieldOf(fields, "message")).isEqualTo("START");
-
-        assertThat(fieldOf(fields, "message")).isEqualTo("START");
+        assertThat(event.getFormattedMessage()).isEqualTo("START");
     }
 
     @Test
     void incoming_request_with_traceId_should_pass_through() throws Exception {
-        ByteArrayOutputStream captured = captureStdOut();
-
         var result = mockMvc.perform(
                 get("/_trace-probe")
                         .header("traceId", "1234-1234")
@@ -96,36 +99,25 @@ class TracingIntegrationTest {
                         .accept(MediaType.APPLICATION_JSON)
         ).andExpect(status().isOk()).andReturn();
 
-        Map<String, Object> fields = parseLastJsonLine(captured);
-        assertThat(fields.get("traceId")).isEqualTo("1234-1234");
-        assertThat(fields.get("spanId")).isEqualTo("567-567");
-        assertThat(fields.get("applicationName")).isEqualTo(springApplicationName);
+        ILoggingEvent event = lastProbeEvent();
+        Map<String, String> mdc = event.getMDCPropertyMap();
+        assertThat(mdc.get("traceId")).isEqualTo("1234-1234");
+        assertThat(mdc.get("spanId")).isEqualTo("567-567");
+        assertThat(mdc.get("applicationName")).isEqualTo(springApplicationName);
 
-        assertThat(result.getResponse().getHeader("traceId")).isEqualTo(fields.get("traceId"));
-        assertThat(result.getResponse().getHeader("spanId")).isEqualTo(fields.get("spanId"));
+        assertThat(result.getResponse().getHeader("traceId")).isEqualTo("1234-1234");
+        assertThat(result.getResponse().getHeader("spanId")).isEqualTo("567-567");
     }
 
-    private static Map<String, Object> parseLastJsonLine(ByteArrayOutputStream buf) throws Exception {
-        String[] lines = buf.toString().split("\\R");
-        for (int i = lines.length - 1; i >= 0; i--) {
-            String line = lines[i].trim();
-            if (!line.isEmpty() && line.startsWith("{") && line.endsWith("}")) {
-                return ObjectMapperConfig.getObjectMapper().readValue(line, new TypeReference<>() {
-                });
+    private ILoggingEvent lastProbeEvent() {
+        List<ILoggingEvent> events = logAppender.list;
+        for (int i = events.size() - 1; i >= 0; i--) {
+            ILoggingEvent e = events.get(i);
+            if ("START".equals(e.getFormattedMessage())
+                    && e.getLoggerName().endsWith("RootController")) {
+                return e;
             }
         }
-        throw new IllegalStateException("No JSON log line found on STDOUT");
+        throw new IllegalStateException("No probe log event found; events=" + events);
     }
-
-    private static Object fieldOf(Map<String, Object> map, String... keys) {
-        for (String k : keys) if (map.containsKey(k)) return map.get(k);
-        return null;
-    }
-
-    private static ByteArrayOutputStream captureStdOut() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(out));
-        return out;
-    }
-
 }
