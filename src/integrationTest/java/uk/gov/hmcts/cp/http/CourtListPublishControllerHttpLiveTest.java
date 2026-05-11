@@ -341,8 +341,13 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 .as("PDF body for %s must start with %%PDF magic", courtListType)
                 .startsWith("%PDF");
 
-        verifyListingPayloadCalled(courtListType);
-        verifyDocumentGeneratorCalled(expectedTemplate(courtListType), "pdf");
+        if (courtListType == CourtListType.ALPHABETICAL || courtListType == CourtListType.JUDGE) {
+            verifyListingCourtListBinaryCalled(courtListType);
+            verifyDocumentGeneratorNotCalled();
+        } else {
+            verifyListingPayloadCalled(courtListType);
+            verifyDocumentGeneratorCalled(expectedTemplate(courtListType), "pdf");
+        }
     }
 
     private void getDownloadCourtListReturnsWordForType(CourtListType courtListType) throws Exception {
@@ -401,6 +406,34 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         assertThat(matches)
                 .as("Listing /courtlistpayload must be called exactly once for %s with restricted=false and includeApplications=false", courtListType)
                 .hasSize(1);
+    }
+
+    private void verifyListingCourtListBinaryCalled(CourtListType courtListType) throws Exception {
+        List<JsonNode> matches = wiremockRequestsMatching(req -> {
+            if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
+                return false;
+            }
+            String url = wiremockRequestUrl(req);
+            return url.contains("/listing-service/query/api/rest/listing/courtlist")
+                    && !url.contains("/courtlistpayload")
+                    && url.contains("listId=" + courtListType.name())
+                    && url.contains("restricted=false");
+        });
+        assertThat(matches)
+                .as("Listing /courtlist binary endpoint must be called exactly once for %s with restricted=false", courtListType)
+                .hasSize(1);
+    }
+
+    private void verifyDocumentGeneratorNotCalled() throws Exception {
+        List<JsonNode> matches = wiremockRequestsMatching(req -> {
+            if (!"POST".equalsIgnoreCase(req.path("method").asText(""))) {
+                return false;
+            }
+            return wiremockRequestUrl(req).contains("/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render");
+        });
+        assertThat(matches)
+                .as("Document generator /render must not be called when listing renders the PDF")
+                .isEmpty();
     }
 
     private void verifyDocumentGeneratorCalled(String templateName, String conversionFormat) throws Exception {

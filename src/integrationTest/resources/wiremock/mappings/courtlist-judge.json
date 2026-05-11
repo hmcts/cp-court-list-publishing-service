@@ -1,24 +1,19 @@
 {
   "request": {
     "method": "GET",
-    "urlPathPattern": "/listing-service/query/api/rest/listing/courtlistpayload",
+    "urlPathPattern": "/listing-service/query/api/rest/listing/courtlist",
     "queryParameters": {
       "listId": {"equalTo": "JUDGE"}
     },
     "headers": {
-      "Accept": {"equalTo": "application/vnd.listing.search.court.list.payload+json"},
+      "Accept": {"equalTo": "application/pdf"},
       "CJSCPPUID": {"matches": ".+"}
     }
   },
   "response": {
     "status": 200,
-    "headers": {"Content-Type": "application/vnd.listing.search.court.list.payload+json"},
-    "jsonBody": {
-      "listType": "judge",
-      "templateName": "JudgeList",
-      "courtCentreName": "Test Court",
-      "hearingDates": []
-    }
+    "headers": {"Content-Type": "application/pdf"},
+    "bodyFileName": "minimal-pdf.pdf"
   },
   "priority": 2
 }

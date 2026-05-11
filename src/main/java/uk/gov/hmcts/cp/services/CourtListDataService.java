@@ -30,6 +30,7 @@ public class CourtListDataService {
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final String COURT_LIST_PAYLOAD_PATH = "/listing-service/query/api/rest/listing/courtlistpayload";
+    private static final String COURT_LIST_PATH = "/listing-service/query/api/rest/listing/courtlist";
     private static final String ACCEPT_COURTLIST_PAYLOAD = "application/vnd.listing.search.court.list.payload+json";
 
     private final RestTemplate publicCourtListRestTemplate;
@@ -79,6 +80,44 @@ public class CourtListDataService {
                 courtListType, courtCentreId, courtRoomId,
                 startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT),
                 false, false, cjscppuid);
+    }
+
+    public byte[] fetchCourtListPdfFromListing(
+            CourtListType courtListType, String courtCentreId, String courtRoomId,
+            LocalDate startDate, LocalDate endDate, String cjscppuid) {
+        if (courtListDataBaseUrl.isBlank()) {
+            throw new CourtListDownloadException("Court list data is not configured");
+        }
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(courtListDataBaseUrl).path(COURT_LIST_PATH)
+                .queryParam("listId", courtListType.name())
+                .queryParam("courtCentreId", courtCentreId)
+                .queryParam("startDate", startDate.format(DATE_FORMAT))
+                .queryParam("endDate", endDate.format(DATE_FORMAT))
+                .queryParam("restricted", false);
+        if (courtRoomId != null && !courtRoomId.isBlank()) {
+            builder.queryParam("courtRoomId", courtRoomId);
+        }
+        String url = builder.build().toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_PDF));
+        if (cjscppuid != null && !cjscppuid.isBlank()) {
+            headers.set(AppConstant.CJSCPPUID, cjscppuid);
+        }
+
+        try {
+            ResponseEntity<byte[]> response = publicCourtListRestTemplate.exchange(
+                    url, HttpMethod.GET, new HttpEntity<>(headers), byte[].class);
+            byte[] body = response.getBody();
+            if (body == null || body.length == 0) {
+                throw new CourtListDownloadException("Court list PDF API returned empty response");
+            }
+            return body;
+        } catch (RestClientException e) {
+            log.error("Court list PDF API call failed for listId={}, courtCentreId={}", courtListType, courtCentreId, e);
+            throw new CourtListDownloadException("Failed to fetch court list PDF: " + e.getMessage(), e);
+        }
     }
 
     private String fetchCourtListPayloadFromListing(

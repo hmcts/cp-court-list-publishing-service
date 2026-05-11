@@ -145,4 +145,51 @@ class CourtListDataServiceTest {
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("Court list data is not configured");
     }
+
+    @Test
+    void fetchCourtListPdfFromListingReturnsPdfBytesAndCallsCourtListEndpointWithRestrictedFalse() {
+        byte[] pdfBytes = "%PDF-1.6 fake".getBytes();
+        when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(pdfBytes, HttpStatus.OK));
+
+        byte[] result = courtListDataService.fetchCourtListPdfFromListing(
+                CourtListType.ALPHABETICAL, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
+                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id");
+
+        assertThat(result).isEqualTo(pdfBytes);
+        verify(publicCourtListRestTemplate).exchange(
+                argThat((String url) -> url.contains("/listing-service/query/api/rest/listing/courtlist")
+                        && !url.contains("/courtlistpayload")
+                        && url.contains("listId=ALPHABETICAL")
+                        && url.contains("courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26")
+                        && url.contains("startDate=2026-02-27")
+                        && url.contains("endDate=2026-02-27")
+                        && url.contains("restricted=false")),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(byte[].class));
+    }
+
+    @Test
+    void fetchCourtListPdfFromListing_throwsWhenListingReturnsEmptyBody() {
+        when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(new byte[0], HttpStatus.OK));
+
+        assertThatThrownBy(() -> courtListDataService.fetchCourtListPdfFromListing(
+                CourtListType.JUDGE, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
+                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id"))
+                .isInstanceOf(CourtListDownloadException.class)
+                .hasMessageContaining("empty response");
+    }
+
+    @Test
+    void fetchCourtListPdfFromListing_throwsWhenBaseUrlNotConfigured() {
+        CourtListDataService serviceWithNoUrl = new CourtListDataService(publicCourtListRestTemplate, "");
+
+        assertThatThrownBy(() -> serviceWithNoUrl.fetchCourtListPdfFromListing(
+                CourtListType.ALPHABETICAL, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
+                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id"))
+                .isInstanceOf(CourtListDownloadException.class)
+                .hasMessageContaining("Court list data is not configured");
+    }
 }

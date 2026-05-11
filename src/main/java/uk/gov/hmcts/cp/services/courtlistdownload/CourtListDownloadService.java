@@ -34,6 +34,10 @@ public class CourtListDownloadService {
             CourtListType.USHERS_CROWN,
             CourtListType.USHERS_MAGISTRATE);
 
+    private static final Set<CourtListType> DELEGATED_TO_LISTING_TYPES = EnumSet.of(
+            CourtListType.ALPHABETICAL,
+            CourtListType.JUDGE);
+
     private static final Map<CourtListType, String> FALLBACK_TEMPLATE_BY_TYPE = new EnumMap<>(CourtListType.class);
 
     static {
@@ -66,10 +70,19 @@ public class CourtListDownloadService {
         if (!SUPPORTED_TYPES.contains(courtListType)) {
             throw new CourtListDownloadException("Unsupported court list type for download: " + courtListType);
         }
-        final boolean wantsWord = WORD_DOWNLOAD_TYPES.contains(courtListType);
 
         LOG.info("Generating court list document for type={}, courtCentreId={}, startDate={}, endDate={}",
                 courtListType, sanitizeForLog(courtCentreId), startDate, endDate);
+
+        if (DELEGATED_TO_LISTING_TYPES.contains(courtListType)) {
+            final byte[] pdf = courtListDataService.fetchCourtListPdfFromListing(
+                    courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid);
+            LOG.info("Court list document fetched from listing for type={}, courtCentreId={}, size={} bytes",
+                    courtListType, sanitizeForLog(courtCentreId), pdf.length);
+            return new CourtListFileResult(pdf, CONTENT_TYPE_PDF, PDF_FILENAME);
+        }
+
+        final boolean wantsWord = WORD_DOWNLOAD_TYPES.contains(courtListType);
 
         final String payloadJson = courtListDataService.getCourtListPayloadForDownload(
                 courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid);
