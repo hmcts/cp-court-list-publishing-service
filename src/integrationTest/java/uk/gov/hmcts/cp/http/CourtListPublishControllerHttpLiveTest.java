@@ -7,6 +7,8 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -307,11 +309,6 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         getDownloadCourtListReturnsPdfForType(CourtListType.STANDARD);
     }
 
-    @Test
-    void getDownloadCourtListReturnsBadRequestWhenCourtListTypeIsPrison() {
-        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.PRISON);
-    }
-
     private String buildDownloadUrl(CourtListType courtListType) {
         return DOWNLOAD_ENDPOINT
                 + "?courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26"
@@ -321,6 +318,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     private void getDownloadCourtListReturnsPdfForType(CourtListType courtListType) throws Exception {
+        AbstractTest.resetWireMock();
         HttpHeaders headers = new HttpHeaders();
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         headers.setAccept(java.util.List.of(MediaType.parseMediaType(DOWNLOAD_ACCEPT)));
@@ -336,11 +334,20 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_PDF);
         assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
                 .contains("attachment", "CourtList.pdf");
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().length).isGreaterThan(0);
+        byte[] body = response.getBody();
+        assertThat(body).as("PDF body for %s must be non-null", courtListType).isNotNull();
+        assertThat(body.length).as("PDF body for %s must be non-empty", courtListType).isGreaterThan(0);
+        // PDF magic header: %PDF
+        assertThat(new String(body, 0, Math.min(4, body.length)))
+                .as("PDF body for %s must start with %%PDF magic", courtListType)
+                .startsWith("%PDF");
+
+        verifyListingPayloadCalled(courtListType);
+        verifyDocumentGeneratorCalled(expectedTemplate(courtListType), "pdf");
     }
 
     private void getDownloadCourtListReturnsWordForType(CourtListType courtListType) throws Exception {
+        AbstractTest.resetWireMock();
         HttpHeaders headers = new HttpHeaders();
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         headers.setAccept(java.util.List.of(MediaType.parseMediaType(DOWNLOAD_ACCEPT)));
@@ -358,23 +365,89 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 .isEqualTo("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
         assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
                 .contains("attachment", "CourtList.docx");
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().length).isGreaterThan(0);
+        byte[] body = response.getBody();
+        assertThat(body).as("DOCX body for %s must be non-null", courtListType).isNotNull();
+        assertThat(body.length).as("DOCX body for %s must be non-empty", courtListType).isGreaterThan(0);
+        // DOCX is a ZIP container — magic header is PK\x03\x04
+        assertThat(body[0]).as("DOCX body for %s must start with byte 'P'", courtListType).isEqualTo((byte) 'P');
+        assertThat(body[1]).as("DOCX body for %s must start with byte 'K'", courtListType).isEqualTo((byte) 'K');
+
+        verifyListingPayloadCalled(courtListType);
+        verifyDocumentGeneratorCalled(expectedTemplate(courtListType), "docx");
     }
 
-    private void assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType courtListType) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
-        headers.setAccept(java.util.List.of(MediaType.parseMediaType(DOWNLOAD_ACCEPT)));
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-        assertThatThrownBy(() -> http.exchange(
-                buildDownloadUrl(courtListType),
-                HttpMethod.GET,
-                entity,
-                byte[].class))
-                .isInstanceOf(HttpClientErrorException.BadRequest.class)
-                .hasMessageContaining("Download supported for PUBLIC, BENCH, STANDARD, ALPHABETICAL, JUDGE, USHERS_CROWN, USHERS_MAGISTRATE only");
+    private static String expectedTemplate(CourtListType type) {
+        switch (type) {
+            case PUBLIC:             return "PublicCourtList";
+            case BENCH:              return "BenchCourtList";
+            case STANDARD:           return "BenchAndStandardCourtList";
+            case ALPHABETICAL:       return "AlphabeticalCourtList";
+            case JUDGE:              return "JudgeList";
+            case USHERS_CROWN:       return "UshersCrownCourtList";
+            case USHERS_MAGISTRATE:  return "UshersMagistrateCourtList";
+            default: throw new IllegalArgumentException("No template mapping for " + type);
+        }
     }
+
+    private void verifyListingPayloadCalled(CourtListType courtListType) throws Exception {
+        List<JsonNode> matches = wiremockRequestsMatching(req -> {
+            if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
+                return false;
+            }
+            String url = wiremockRequestUrl(req);
+            return url.contains("/listing-service/query/api/rest/listing/courtlistpayload")
+                    && url.contains("listId=" + courtListType.name())
+                    && url.contains("restricted=false")
+                    && url.contains("includeApplications=false");
+        });
+        assertThat(matches)
+                .as("Listing /courtlistpayload must be called exactly once for %s with restricted=false and includeApplications=false", courtListType)
+                .hasSize(1);
+    }
+
+    private void verifyDocumentGeneratorCalled(String templateName, String conversionFormat) throws Exception {
+        List<JsonNode> matches = wiremockRequestsMatching(req -> {
+            if (!"POST".equalsIgnoreCase(req.path("method").asText(""))) {
+                return false;
+            }
+            String url = wiremockRequestUrl(req);
+            if (!url.contains("/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render")) {
+                return false;
+            }
+            String body = req.path("body").asText("");
+            return body.contains("\"templateName\":\"" + templateName + "\"")
+                    && body.contains("\"conversionFormat\":\"" + conversionFormat + "\"");
+        });
+        assertThat(matches)
+                .as("Document generator /render must be called exactly once with templateName=%s and conversionFormat=%s",
+                        templateName, conversionFormat)
+                .hasSize(1);
+    }
+
+    private List<JsonNode> wiremockRequestsMatching(java.util.function.Predicate<JsonNode> requestPredicate) throws Exception {
+        ResponseEntity<String> admin = http.getForEntity(AbstractTest.WIREMOCK_ADMIN_REQUESTS, String.class);
+        assertThat(admin.getStatusCode().is2xxSuccessful()).isTrue();
+        JsonNode root = objectMapper.readTree(admin.getBody());
+        JsonNode requests = root.get("requests");
+        if (requests == null) {
+            requests = root.isArray() ? root : objectMapper.createArrayNode();
+        }
+        List<JsonNode> out = new ArrayList<>();
+        for (JsonNode entry : requests) {
+            JsonNode req = entry.has("request") ? entry.get("request") : entry;
+            if (requestPredicate.test(req)) {
+                out.add(req);
+            }
+        }
+        return out;
+    }
+
+    private static String wiremockRequestUrl(JsonNode req) {
+        if (req.has("url")) {
+            return req.get("url").asText("");
+        }
+        return req.path("absoluteUrl").asText("");
+    }
+
 }
 

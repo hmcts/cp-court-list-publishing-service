@@ -1,10 +1,15 @@
 package uk.gov.hmcts.cp.services;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
@@ -14,34 +19,33 @@ import java.time.LocalDate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CourtListDataServiceTest {
 
-    @Mock
-    private ProgressionQueryService progressionQueryService;
+    private static final String LISTING_BASE_URL = "https://internal.example.com";
+    private static final String LISTING_PATH = "/listing-service/query/api/rest/listing/courtlistpayload";
 
-    @InjectMocks
+    @Mock
+    private RestTemplate publicCourtListRestTemplate;
+
     private CourtListDataService courtListDataService;
 
+    @BeforeEach
+    void setUp() {
+        courtListDataService = new CourtListDataService(publicCourtListRestTemplate, LISTING_BASE_URL);
+    }
+
     @Test
-    void getCourtListDataReturnsProgressionPayloadAsIs() {
-        String progressionJson = "{\"listType\":\"standard\",\"courtCentreName\":\"Lavender Hill\",\"ouCode\":\"B01LY00\",\"courtId\":\"f8254db1-1683-483e-afb3-b87fde5a0a26\"}";
-        when(progressionQueryService.getCourtListPayload(
-                eq(CourtListType.STANDARD),
-                eq("f8254db1-1683-483e-afb3-b87fde5a0a26"),
-                isNull(),
-                eq("2024-01-15"),
-                eq("2024-01-15"),
-                eq(false),
-                eq("request-user-id"),
-                eq(false)))
-                .thenReturn(progressionJson);
+    void getCourtListDataReturnsListingPayloadAsIs() {
+        String listingJson = "{\"listType\":\"standard\",\"courtCentreName\":\"Lavender Hill\",\"ouCode\":\"B01LY00\",\"courtId\":\"f8254db1-1683-483e-afb3-b87fde5a0a26\"}";
+        when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(listingJson, HttpStatus.OK));
 
         String result = courtListDataService.getCourtListData(
                 CourtListType.STANDARD,
@@ -53,24 +57,26 @@ class CourtListDataServiceTest {
                 "request-user-id",
                 false);
 
-        assertThat(result).isEqualTo(progressionJson);
-        verify(progressionQueryService).getCourtListPayload(
-                eq(CourtListType.STANDARD),
-                eq("f8254db1-1683-483e-afb3-b87fde5a0a26"),
-                isNull(),
-                eq("2024-01-15"),
-                eq("2024-01-15"),
-                eq(false),
-                eq("request-user-id"),
-                eq(false));
+        assertThat(result).isEqualTo(listingJson);
+        verify(publicCourtListRestTemplate).exchange(
+                argThat((String url) -> url.contains(LISTING_PATH)
+                        && url.contains("listId=STANDARD")
+                        && url.contains("courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26")
+                        && url.contains("startDate=2024-01-15")
+                        && url.contains("endDate=2024-01-15")
+                        && url.contains("restricted=false")
+                        && url.contains("includeApplications=false")),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class));
     }
 
     @Test
-    void getCourtListData_returnsEmptyObjectWhenProgressionReturnsNull() {
-        when(progressionQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean(), any(), anyBoolean()))
-                .thenReturn(null);
+    void getCourtListData_throwsWhenListingReturnsEmptyBody() {
+        when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>((String) null, HttpStatus.OK));
 
-        String result = courtListDataService.getCourtListData(
+        assertThatThrownBy(() -> courtListDataService.getCourtListData(
                 CourtListType.PUBLIC,
                 "f8254db1-1683-483e-afb3-b87fde5a0a26",
                 null,
@@ -78,26 +84,16 @@ class CourtListDataServiceTest {
                 "2024-01-15",
                 false,
                 "user",
-                false);
-
-        assertThat(result).isEqualTo("{}");
+                false))
+                .isInstanceOf(CourtListDownloadException.class)
+                .hasMessageContaining("empty response");
     }
 
     @Test
-    void getCourtListPayloadAlwaysCallsProgressionWithRestrictedFalse() {
-        // restricted=true on progression returns the restricted-information variant
-        // (empty when no entries are flagged). The publish/download flow must always
-        // request the default full list (restricted=false), regardless of cjscppuid.
-        when(progressionQueryService.getCourtListPayload(
-                eq(CourtListType.STANDARD),
-                eq("courtCentre1"),
-                isNull(),
-                eq("2026-01-05"),
-                eq("2026-01-12"),
-                eq(false),
-                eq("user-id"),
-                eq(false)))
-                .thenReturn("{\"listType\":\"standard\",\"courtCentreName\":\"Test Court\",\"ouCode\":\"B01LY\",\"courtId\":\"f8254db1-1683-483e-afb3-b87fde5a0a26\"}");
+    void getCourtListPayloadAlwaysCallsListingWithRestrictedFalse() {
+        String json = "{\"listType\":\"standard\",\"courtCentreName\":\"Test Court\",\"ouCode\":\"B01LY\",\"courtId\":\"f8254db1-1683-483e-afb3-b87fde5a0a26\"}";
+        when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(json, HttpStatus.OK));
 
         CourtListPayload result = courtListDataService.getCourtListPayload(
                 CourtListType.STANDARD, "courtCentre1", "2026-01-05", "2026-01-12", "user-id", false);
@@ -107,34 +103,18 @@ class CourtListDataServiceTest {
         assertThat(result.getCourtCentreName()).isEqualTo("Test Court");
         assertThat(result.getOuCode()).isEqualTo("B01LY");
         assertThat(result.getCourtId()).isEqualTo("f8254db1-1683-483e-afb3-b87fde5a0a26");
-        verify(progressionQueryService).getCourtListPayload(
-                any(), any(), any(), any(), any(), eq(false), any(), anyBoolean());
+        verify(publicCourtListRestTemplate).exchange(
+                argThat((String url) -> url.contains("restricted=false")
+                        && url.contains("includeApplications=false")),
+                eq(HttpMethod.GET),
+                any(HttpEntity.class),
+                eq(String.class));
     }
 
     @Test
-    void getCourtListPayloadPassesRestrictedFalseWhenCjscppuidIsNull() {
-        when(progressionQueryService.getCourtListPayload(
-                eq(CourtListType.PUBLIC),
-                eq("courtCentre1"),
-                isNull(),
-                eq("2026-01-05"),
-                eq("2026-01-12"),
-                eq(false),
-                isNull(),
-                eq(false)))
-                .thenReturn("{\"listType\":\"public\",\"courtCentreName\":\"A Court\"}");
-
-        CourtListPayload result = courtListDataService.getCourtListPayload(
-                CourtListType.PUBLIC, "courtCentre1", "2026-01-05", "2026-01-12", null, false);
-
-        assertThat(result).isNotNull();
-        assertThat(result.getCourtCentreName()).isEqualTo("A Court");
-    }
-
-    @Test
-    void getCourtListPayload_throws_whenProgressionReturnsInvalidJson() {
-        when(progressionQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean(), any(), anyBoolean()))
-                .thenReturn("not valid json {{{");
+    void getCourtListPayload_throws_whenListingReturnsInvalidJson() {
+        when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>("not valid json {{{", HttpStatus.OK));
 
         assertThatThrownBy(() -> courtListDataService.getCourtListPayload(
                 CourtListType.STANDARD, "courtCentre1", "2026-01-05", "2026-01-12", null, false))
@@ -143,12 +123,26 @@ class CourtListDataServiceTest {
     }
 
     @Test
-    void getCourtListDocumentForDownloadThrowsWhenUnsupportedType() {
-        assertThatThrownBy(() -> courtListDataService.getCourtListDocumentForDownload(
-                CourtListType.PRISON, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
-                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id"))
-                .isInstanceOf(CourtListDownloadException.class)
-                .hasMessageContaining("Unsupported court list type for download");
+    void getCourtListPayloadForDownloadCallsListingForSupportedType() {
+        String json = "{\"listType\":\"standard\",\"templateName\":\"BenchAndStandardCourtList\"}";
+        when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(json, HttpStatus.OK));
+
+        String result = courtListDataService.getCourtListPayloadForDownload(
+                CourtListType.STANDARD, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
+                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id");
+
+        assertThat(result).isEqualTo(json);
     }
 
+    @Test
+    void getCourtListPayloadForDownload_throwsWhenBaseUrlNotConfigured() {
+        CourtListDataService serviceWithNoUrl = new CourtListDataService(publicCourtListRestTemplate, "");
+
+        assertThatThrownBy(() -> serviceWithNoUrl.getCourtListPayloadForDownload(
+                CourtListType.STANDARD, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
+                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id"))
+                .isInstanceOf(CourtListDownloadException.class)
+                .hasMessageContaining("Court list data is not configured");
+    }
 }

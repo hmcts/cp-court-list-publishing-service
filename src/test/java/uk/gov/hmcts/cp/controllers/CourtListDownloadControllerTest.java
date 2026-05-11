@@ -147,18 +147,6 @@ class CourtListDownloadControllerTest {
     }
 
     @Test
-    void downloadCourtListReturns400WhenCourtListTypeNotSupported() throws Exception {
-        mockMvc.perform(get(DOWNLOAD_URL)
-                        .header("Accept", DOWNLOAD_ACCEPT)
-                        .header(CJSCPPUID_HEADER, CJSCPPUID_VALUE)
-                        .param("courtCentreId", COURT_CENTRE_ID)
-                        .param("startDate", START_DATE)
-                        .param("endDate", END_DATE)
-                        .param("courtListType", "PRISON"))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     void downloadCourtListReturnsPdfWhenStandard() throws Exception {
         CourtListFileResult result = new CourtListFileResult(PDF_BYTES, "application/pdf", "CourtList.pdf");
         when(courtListDownloadService.generateCourtListDownload(

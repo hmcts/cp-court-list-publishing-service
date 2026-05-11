@@ -34,9 +34,6 @@ import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.EnumSet;
-import java.util.Set;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -128,11 +125,6 @@ public class CourtListPublishController implements CourtListPublishApi {
         if (courtListType == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "courtListType is required");
         }
-        if (!isSupportedCourtListTypeForDownload(courtListType)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Download supported for PUBLIC, BENCH, STANDARD, ALPHABETICAL, JUDGE, USHERS_CROWN, USHERS_MAGISTRATE only. Got: "
-                    + courtListType);
-        }
         if (endDate.isBefore(startDate)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endDate must be on or after startDate");
         }
@@ -196,19 +188,6 @@ public class CourtListPublishController implements CourtListPublishApi {
         return ResponseEntity.ok()
                 .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json"))
                 .body(responses);
-    }
-
-    private static final Set<CourtListType> SUPPORTED_DOWNLOAD_COURT_LIST_TYPES = EnumSet.of(
-            CourtListType.PUBLIC,
-            CourtListType.BENCH,
-            CourtListType.STANDARD,
-            CourtListType.ALPHABETICAL,
-            CourtListType.JUDGE,
-            CourtListType.USHERS_CROWN,
-            CourtListType.USHERS_MAGISTRATE);
-
-    private static boolean isSupportedCourtListTypeForDownload(CourtListType courtListType) {
-        return courtListType != null && SUPPORTED_DOWNLOAD_COURT_LIST_TYPES.contains(courtListType);
     }
 
     @Override

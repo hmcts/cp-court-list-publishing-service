@@ -3,7 +3,7 @@
     "method": "GET",
     "urlPathPattern": "/listing-service/query/api/rest/listing/courtlistpayload",
     "queryParameters": {
-      "listId": {"equalTo": "ALPHABETICAL"}
+      "listId": {"equalTo": "ONLINE_PUBLIC"}
     },
     "headers": {
       "Accept": {"equalTo": "application/vnd.listing.search.court.list.payload+json"},
@@ -13,12 +13,7 @@
   "response": {
     "status": 200,
     "headers": {"Content-Type": "application/vnd.listing.search.court.list.payload+json"},
-    "jsonBody": {
-      "listType": "alphabetical",
-      "templateName": "CourtList",
-      "courtCentreName": "Test Court",
-      "hearingDates": []
-    }
+    "bodyFileName": "court-list-payload-online-public.json"
   },
   "priority": 2
 }

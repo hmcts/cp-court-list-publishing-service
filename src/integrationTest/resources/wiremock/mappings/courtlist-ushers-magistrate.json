@@ -1,28 +1,24 @@
 {
   "request": {
     "method": "GET",
-    "urlPathPattern": "/listing-service/query/api/rest/listing/courtlist",
+    "urlPathPattern": "/listing-service/query/api/rest/listing/courtlistpayload",
     "queryParameters": {
-      "listId": {
-        "equalTo": "USHERS_MAGISTRATE"
-      }
+      "listId": {"equalTo": "USHERS_MAGISTRATE"}
     },
     "headers": {
-      "Accept": {
-        "equalTo": "application/vnd.listing.search.court.list+json"
-      },
-      "CJSCPPUID": {
-        "matches": ".+"
-      }
+      "Accept": {"equalTo": "application/vnd.listing.search.court.list.payload+json"},
+      "CJSCPPUID": {"matches": ".+"}
     }
   },
   "response": {
     "status": 200,
-    "headers": {
-      "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "Content-Disposition": "attachment; filename=\"UshersList.docx\""
-    },
-    "bodyFileName": "minimal-docx.docx"
+    "headers": {"Content-Type": "application/vnd.listing.search.court.list.payload+json"},
+    "jsonBody": {
+      "listType": "ushers_magistrate",
+      "templateName": "UshersMagistrateList",
+      "courtCentreName": "Test Court",
+      "hearingDates": []
+    }
   },
   "priority": 2
 }
