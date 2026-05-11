@@ -66,7 +66,6 @@ class CourtListDownloadServiceTest {
 
     @Test
     void generateCourtListDownloadRendersPdfForBenchUsingListingTemplateName() throws IOException {
-        // Listing's enum maps BENCH to "BenchAndStandardCourtList" - same template as STANDARD.
         String payloadJson = "{\"listType\":\"bench\",\"templateName\":\"BenchAndStandardCourtList\"}";
         stubListingPayload(CourtListType.BENCH, null, payloadJson);
         when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList")))
@@ -136,14 +135,18 @@ class CourtListDownloadServiceTest {
     }
 
     @Test
-    void generateCourtListDownloadThrowsWhenListingPayloadMissingTemplateName() {
-        String payloadWithoutTemplate = "{\"listType\":\"standard\"}";
-        stubListingPayload(CourtListType.STANDARD, null, payloadWithoutTemplate);
+    void generateCourtListDownloadFallsBackToRegisteredTemplateWhenPayloadOmitsTemplateName() throws IOException {
+        String payloadWithoutTemplate = "{\"listType\":\"alphabetical\"}";
+        stubListingPayload(CourtListType.ALPHABETICAL, null, payloadWithoutTemplate);
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CourtList")))
+                .thenReturn(PDF_BYTES);
 
-        assertThatThrownBy(() -> service.generateCourtListDownload(
-                CourtListType.STANDARD, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID))
-                .isInstanceOf(CourtListDownloadException.class)
-                .hasMessageContaining("missing required field 'templateName'");
+        CourtListFileResult result = service.generateCourtListDownload(
+                CourtListType.ALPHABETICAL, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID);
+
+        assertThat(result.content()).isEqualTo(PDF_BYTES);
+        assertThat(result.filename()).isEqualTo("CourtList.pdf");
+        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CourtList"));
     }
 
     @Test
@@ -152,7 +155,6 @@ class CourtListDownloadServiceTest {
                 CourtListType.PRISON, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("Unsupported court list type for download");
-        // Listing must not be called for an unsupported type - fail-fast on the supported-types check.
         verifyNoInteractions(courtListDataService);
         verifyNoInteractions(documentGeneratorClient);
     }

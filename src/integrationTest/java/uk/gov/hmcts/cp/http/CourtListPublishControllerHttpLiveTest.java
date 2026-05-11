@@ -337,7 +337,6 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         byte[] body = response.getBody();
         assertThat(body).as("PDF body for %s must be non-null", courtListType).isNotNull();
         assertThat(body.length).as("PDF body for %s must be non-empty", courtListType).isGreaterThan(0);
-        // PDF magic header: %PDF
         assertThat(new String(body, 0, Math.min(4, body.length)))
                 .as("PDF body for %s must start with %%PDF magic", courtListType)
                 .startsWith("%PDF");
@@ -368,7 +367,6 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         byte[] body = response.getBody();
         assertThat(body).as("DOCX body for %s must be non-null", courtListType).isNotNull();
         assertThat(body.length).as("DOCX body for %s must be non-empty", courtListType).isGreaterThan(0);
-        // DOCX is a ZIP container — magic header is PK\x03\x04
         assertThat(body[0]).as("DOCX body for %s must start with byte 'P'", courtListType).isEqualTo((byte) 'P');
         assertThat(body[1]).as("DOCX body for %s must start with byte 'K'", courtListType).isEqualTo((byte) 'K');
 
@@ -376,8 +374,6 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         verifyDocumentGeneratorCalled(expectedTemplate(courtListType), "docx");
     }
 
-    // Mirrors templateName values returned by the wiremock listing stubs (which themselves match
-    // listing's CourtListType enum). Publishing-service uses whatever templateName the payload carries.
     private static String expectedTemplate(CourtListType type) {
         switch (type) {
             case PUBLIC:             return "PublicCourtList";

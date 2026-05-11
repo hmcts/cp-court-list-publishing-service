@@ -15,7 +15,6 @@
     "headers": {"Content-Type": "application/vnd.listing.search.court.list.payload+json"},
     "jsonBody": {
       "listType": "alphabetical",
-      "templateName": "CourtList",
       "courtCentreName": "Test Court",
       "hearingDates": []
     }

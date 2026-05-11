@@ -13,7 +13,9 @@ import uk.gov.hmcts.cp.services.DocumentGeneratorClient;
 import java.io.IOException;
 import java.io.StringReader;
 import java.time.LocalDate;
+import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -32,16 +34,19 @@ public class CourtListDownloadService {
             CourtListType.USHERS_CROWN,
             CourtListType.USHERS_MAGISTRATE);
 
-    // Set of list types we accept for download. Used only as a guard against unsupported types
-    // (PRISON, ONLINE_PUBLIC, etc.); the actual template name comes from the listing payload.
-    private static final Set<CourtListType> SUPPORTED_TYPES = EnumSet.of(
-            CourtListType.PUBLIC,
-            CourtListType.BENCH,
-            CourtListType.STANDARD,
-            CourtListType.ALPHABETICAL,
-            CourtListType.JUDGE,
-            CourtListType.USHERS_CROWN,
-            CourtListType.USHERS_MAGISTRATE);
+    private static final Map<CourtListType, String> FALLBACK_TEMPLATE_BY_TYPE = new EnumMap<>(CourtListType.class);
+
+    static {
+        FALLBACK_TEMPLATE_BY_TYPE.put(CourtListType.PUBLIC, "PublicCourtList");
+        FALLBACK_TEMPLATE_BY_TYPE.put(CourtListType.BENCH, "BenchAndStandardCourtList");
+        FALLBACK_TEMPLATE_BY_TYPE.put(CourtListType.STANDARD, "BenchAndStandardCourtList");
+        FALLBACK_TEMPLATE_BY_TYPE.put(CourtListType.ALPHABETICAL, "CourtList");
+        FALLBACK_TEMPLATE_BY_TYPE.put(CourtListType.JUDGE, "JudgeList");
+        FALLBACK_TEMPLATE_BY_TYPE.put(CourtListType.USHERS_CROWN, "UshersCrownList");
+        FALLBACK_TEMPLATE_BY_TYPE.put(CourtListType.USHERS_MAGISTRATE, "UshersMagistrateList");
+    }
+
+    private static final Set<CourtListType> SUPPORTED_TYPES = FALLBACK_TEMPLATE_BY_TYPE.keySet();
 
     private final CourtListDataService courtListDataService;
     private final DocumentGeneratorClient documentGeneratorClient;
@@ -76,14 +81,12 @@ public class CourtListDownloadService {
             throw new CourtListDownloadException("Failed to parse court list payload JSON: " + e.getMessage(), e);
         }
 
-        // Listing's payload carries the templateName matching the templates registered in document-generator.
-        // Use it directly so we stay aligned with whatever listing decides, no hardcoded mapping required.
-        final String templateName = payload.containsKey(KEY_TEMPLATE_NAME) && !payload.isNull(KEY_TEMPLATE_NAME)
-                ? payload.getString(KEY_TEMPLATE_NAME, null)
-                : null;
+        String templateName = null;
+        if (payload.containsKey(KEY_TEMPLATE_NAME) && !payload.isNull(KEY_TEMPLATE_NAME)) {
+            templateName = payload.getString(KEY_TEMPLATE_NAME, null);
+        }
         if (templateName == null || templateName.isBlank()) {
-            throw new CourtListDownloadException(
-                    "Listing payload for " + courtListType + " is missing required field 'templateName'");
+            templateName = FALLBACK_TEMPLATE_BY_TYPE.get(courtListType);
         }
 
         final byte[] content;
