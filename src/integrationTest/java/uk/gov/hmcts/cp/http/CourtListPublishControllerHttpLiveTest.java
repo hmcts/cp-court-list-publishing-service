@@ -376,15 +376,17 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         verifyDocumentGeneratorCalled(expectedTemplate(courtListType), "docx");
     }
 
+    // Mirrors templateName values returned by the wiremock listing stubs (which themselves match
+    // listing's CourtListType enum). Publishing-service uses whatever templateName the payload carries.
     private static String expectedTemplate(CourtListType type) {
         switch (type) {
             case PUBLIC:             return "PublicCourtList";
-            case BENCH:              return "BenchCourtList";
+            case BENCH:              return "BenchAndStandardCourtList";
             case STANDARD:           return "BenchAndStandardCourtList";
-            case ALPHABETICAL:       return "AlphabeticalCourtList";
+            case ALPHABETICAL:       return "CourtList";
             case JUDGE:              return "JudgeList";
-            case USHERS_CROWN:       return "UshersCrownCourtList";
-            case USHERS_MAGISTRATE:  return "UshersMagistrateCourtList";
+            case USHERS_CROWN:       return "UshersCrownList";
+            case USHERS_MAGISTRATE:  return "UshersMagistrateList";
             default: throw new IllegalArgumentException("No template mapping for " + type);
         }
     }
