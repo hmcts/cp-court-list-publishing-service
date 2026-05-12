@@ -79,7 +79,8 @@ public class CourtListDataService {
             String endDate,
             String cjscppuid,
             boolean includeApplications) {
-        String json = getCourtListData(listId, courtCentreId, null, startDate, endDate, false, cjscppuid, includeApplications);
+        boolean restricted = cjscppuid != null && !cjscppuid.isBlank();
+        String json = getCourtListData(listId, courtCentreId, null, startDate, endDate, restricted, cjscppuid, includeApplications);
 
         try {
             return OBJECT_MAPPER.readValue(json, CourtListPayload.class);
@@ -93,10 +94,11 @@ public class CourtListDataService {
             CourtListType courtListType, String courtCentreId, String courtRoomId,
             LocalDate startDate, LocalDate endDate, String cjscppuid) {
         if (PROGRESSION_ENRICHED_TYPES.contains(courtListType)) {
+            boolean restricted = cjscppuid != null && !cjscppuid.isBlank();
             return progressionQueryService.getCourtListPayload(
                     courtListType, courtCentreId, courtRoomId,
                     startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT),
-                    false, cjscppuid, false);
+                    restricted, cjscppuid, false);
         }
         return fetchCourtListPayloadFromListing(
                 courtListType, courtCentreId, courtRoomId,
@@ -119,7 +121,7 @@ public class CourtListDataService {
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate.format(DATE_FORMAT))
                 .queryParam("endDate", endDate.format(DATE_FORMAT))
-                .queryParam("restricted", false);
+                .queryParam("restricted", true);
         if (courtRoomId != null && !courtRoomId.isBlank()) {
             builder.queryParam("courtRoomId", courtRoomId);
         }

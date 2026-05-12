@@ -22,6 +22,8 @@ import java.io.StringWriter;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
@@ -33,6 +35,9 @@ import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
     private static final Logger logger = LoggerFactory.getLogger(CourtListPublishAndPDFGenerationTask.class);
+
+    private static final Set<CourtListType> PROGRESSION_PDF_TYPES = EnumSet.of(
+            CourtListType.PUBLIC, CourtListType.STANDARD, CourtListType.BENCH);
 
     private final CourtListStatusRepository repository;
     private final CourtListQueryService courtListQueryService;
@@ -89,18 +94,24 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             logger.error("Error updating court list publish status to PUBLISH_SUCCESSFUL", e);
         }
 
-        CourtListPayload pdfPayload = null;
-        if (listId != null && courtCentreId != null && publishDate != null) {
-            try {
-                pdfPayload = courtListQueryService.getCourtListPayload(
-                        listId, courtCentreId, publishDate.toString(), publishDate.toString(), userId, false);
-            } catch (Exception e) {
-                logger.error("Error fetching court list payload for PDF generation", e);
-            }
-        }
-
         try {
-            UUID fileId = generateAndUploadPdf(executionInfo, pdfPayload);
+            UUID fileId;
+            if (listId != null && PROGRESSION_PDF_TYPES.contains(listId)
+                    && courtCentreId != null && publishDate != null && courtListId != null) {
+                fileId = pdfHelper.fetchFromProgressionAndUploadPdf(
+                        listId, courtCentreId, null, publishDate, publishDate, userId, courtListId);
+            } else {
+                CourtListPayload pdfPayload = null;
+                if (listId != null && courtCentreId != null && publishDate != null) {
+                    try {
+                        pdfPayload = courtListQueryService.getCourtListPayload(
+                                listId, courtCentreId, publishDate.toString(), publishDate.toString(), userId, false);
+                    } catch (Exception e) {
+                        logger.error("Error fetching court list payload for PDF generation", e);
+                    }
+                }
+                fileId = generateAndUploadPdf(executionInfo, pdfPayload);
+            }
             if (fileId != null && courtListId != null) {
                 updateFileIdAndLastUpdated(courtListId, fileId);
             }

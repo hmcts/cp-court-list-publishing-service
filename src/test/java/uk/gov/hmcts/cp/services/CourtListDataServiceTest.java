@@ -123,10 +123,10 @@ class CourtListDataServiceTest {
     }
 
     @Test
-    void getCourtListPayloadAlwaysCallsProgressionWithRestrictedFalseForStandard() {
+    void getCourtListPayloadCallsProgressionWithRestrictedTrueWhenCjscppuidPresent() {
         String json = "{\"listType\":\"standard\",\"courtCentreName\":\"Test Court\",\"ouCode\":\"B01LY\",\"courtId\":\"f8254db1-1683-483e-afb3-b87fde5a0a26\"}";
         when(progressionQueryService.getCourtListPayload(
-                eq(CourtListType.STANDARD), anyString(), any(), anyString(), anyString(), eq(false), anyString(), anyBoolean()))
+                eq(CourtListType.STANDARD), anyString(), any(), anyString(), anyString(), eq(true), anyString(), anyBoolean()))
                 .thenReturn(json);
 
         CourtListPayload result = courtListDataService.getCourtListPayload(
@@ -138,7 +138,7 @@ class CourtListDataServiceTest {
         assertThat(result.getOuCode()).isEqualTo("B01LY");
         assertThat(result.getCourtId()).isEqualTo("f8254db1-1683-483e-afb3-b87fde5a0a26");
         verify(progressionQueryService).getCourtListPayload(
-                eq(CourtListType.STANDARD), eq("courtCentre1"), any(), eq("2026-01-05"), eq("2026-01-12"), eq(false), eq("user-id"), eq(false));
+                eq(CourtListType.STANDARD), eq("courtCentre1"), any(), eq("2026-01-05"), eq("2026-01-12"), eq(true), eq("user-id"), eq(false));
     }
 
     @Test
@@ -157,7 +157,7 @@ class CourtListDataServiceTest {
     void getCourtListPayloadForDownloadRoutesStandardThroughProgression() {
         String json = "{\"listType\":\"standard\",\"templateName\":\"BenchAndStandardCourtList\",\"ouCode\":\"B01LY\"}";
         when(progressionQueryService.getCourtListPayload(
-                eq(CourtListType.STANDARD), anyString(), any(), anyString(), anyString(), eq(false), anyString(), eq(false)))
+                eq(CourtListType.STANDARD), anyString(), any(), anyString(), anyString(), eq(true), anyString(), eq(false)))
                 .thenReturn(json);
 
         String result = courtListDataService.getCourtListPayloadForDownload(
@@ -167,7 +167,7 @@ class CourtListDataServiceTest {
         assertThat(result).isEqualTo(json);
         verify(progressionQueryService).getCourtListPayload(
                 eq(CourtListType.STANDARD), eq("f8254db1-1683-483e-afb3-b87fde5a0a26"), any(),
-                eq("2026-02-27"), eq("2026-02-27"), eq(false), eq("user-id"), eq(false));
+                eq("2026-02-27"), eq("2026-02-27"), eq(true), eq("user-id"), eq(false));
         verifyNoInteractions(publicCourtListRestTemplate);
     }
 
@@ -217,7 +217,7 @@ class CourtListDataServiceTest {
                         && url.contains("courtRoomId=room-1")
                         && url.contains("startDate=2026-05-18")
                         && url.contains("endDate=2026-05-18")
-                        && url.contains("restricted=false")),
+                        && url.contains("restricted=true")),
                 eq(HttpMethod.GET), any(HttpEntity.class), eq(byte[].class));
     }
 
