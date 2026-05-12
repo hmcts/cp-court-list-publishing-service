@@ -22,6 +22,8 @@ import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -33,12 +35,20 @@ public class CourtListDataService {
     private static final String COURT_LIST_PATH = "/listing-service/query/api/rest/listing/courtlist";
     private static final String ACCEPT_COURTLIST_PAYLOAD = "application/vnd.listing.search.court.list.payload+json";
 
+    private static final Set<CourtListType> PROGRESSION_ENRICHED_TYPES = EnumSet.of(
+            CourtListType.PUBLIC,
+            CourtListType.STANDARD,
+            CourtListType.BENCH);
+
+    private final ProgressionQueryService progressionQueryService;
     private final RestTemplate publicCourtListRestTemplate;
     private final String courtListDataBaseUrl;
 
     public CourtListDataService(
+            final ProgressionQueryService progressionQueryService,
             final RestTemplate publicCourtListRestTemplate,
             @Value("${common-platform-query-api.base-url:}") final String courtListDataBaseUrl) {
+        this.progressionQueryService = progressionQueryService;
         this.publicCourtListRestTemplate = publicCourtListRestTemplate;
         this.courtListDataBaseUrl = courtListDataBaseUrl != null ? courtListDataBaseUrl : "";
     }
@@ -52,6 +62,10 @@ public class CourtListDataService {
             boolean restricted,
             String currentUserId,
             boolean includeApplications) {
+        if (PROGRESSION_ENRICHED_TYPES.contains(listId)) {
+            return progressionQueryService.getCourtListPayload(
+                    listId, courtCentreId, courtRoomId, startDate, endDate, restricted, currentUserId, includeApplications);
+        }
         return fetchCourtListPayloadFromListing(
                 listId, courtCentreId, courtRoomId, startDate, endDate, restricted, includeApplications, currentUserId);
     }
@@ -76,6 +90,12 @@ public class CourtListDataService {
     public String getCourtListPayloadForDownload(
             CourtListType courtListType, String courtCentreId, String courtRoomId,
             LocalDate startDate, LocalDate endDate, String cjscppuid) {
+        if (PROGRESSION_ENRICHED_TYPES.contains(courtListType)) {
+            return progressionQueryService.getCourtListPayload(
+                    courtListType, courtCentreId, courtRoomId,
+                    startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT),
+                    false, cjscppuid, false);
+        }
         return fetchCourtListPayloadFromListing(
                 courtListType, courtCentreId, courtRoomId,
                 startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT),
