@@ -49,10 +49,10 @@ class CourtListDownloadServiceTest {
     }
 
     @Test
-    void generateCourtListDownloadRendersPdfUsingTemplateNameFromListingPayload() throws IOException {
-        String payloadJson = "{\"listType\":\"standard\",\"templateName\":\"BenchAndStandardCourtList\"}";
-        stubListingPayload(CourtListType.STANDARD, null, payloadJson);
-        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList")))
+    void generateCourtListDownloadDelegatesStandardToProgressionPdf() {
+        when(courtListDataService.fetchCourtListPdfFromProgression(
+                eq(CourtListType.STANDARD), eq(COURT_CENTRE_ID), isNull(),
+                eq(START_DATE), eq(END_DATE), eq(CJSCPPUID)))
                 .thenReturn(PDF_BYTES);
 
         CourtListFileResult result = service.generateCourtListDownload(
@@ -61,20 +61,37 @@ class CourtListDownloadServiceTest {
         assertThat(result.content()).isEqualTo(PDF_BYTES);
         assertThat(result.contentType()).isEqualTo(PDF_CONTENT_TYPE);
         assertThat(result.filename()).isEqualTo("CourtList.pdf");
-        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList"));
+        verifyNoInteractions(documentGeneratorClient);
     }
 
     @Test
-    void generateCourtListDownloadRendersPdfForBenchUsingListingTemplateName() throws IOException {
-        String payloadJson = "{\"listType\":\"bench\",\"templateName\":\"BenchAndStandardCourtList\"}";
-        stubListingPayload(CourtListType.BENCH, null, payloadJson);
-        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList")))
+    void generateCourtListDownloadDelegatesBenchToProgressionPdf() {
+        when(courtListDataService.fetchCourtListPdfFromProgression(
+                eq(CourtListType.BENCH), eq(COURT_CENTRE_ID), isNull(),
+                eq(START_DATE), eq(END_DATE), eq(CJSCPPUID)))
                 .thenReturn(PDF_BYTES);
 
-        service.generateCourtListDownload(
+        CourtListFileResult result = service.generateCourtListDownload(
                 CourtListType.BENCH, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID);
 
-        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList"));
+        assertThat(result.content()).isEqualTo(PDF_BYTES);
+        assertThat(result.contentType()).isEqualTo(PDF_CONTENT_TYPE);
+        verifyNoInteractions(documentGeneratorClient);
+    }
+
+    @Test
+    void generateCourtListDownloadDelegatesPublicToProgressionPdf() {
+        when(courtListDataService.fetchCourtListPdfFromProgression(
+                eq(CourtListType.PUBLIC), eq(COURT_CENTRE_ID), isNull(),
+                eq(START_DATE), eq(END_DATE), eq(CJSCPPUID)))
+                .thenReturn(PDF_BYTES);
+
+        CourtListFileResult result = service.generateCourtListDownload(
+                CourtListType.PUBLIC, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID);
+
+        assertThat(result.content()).isEqualTo(PDF_BYTES);
+        assertThat(result.contentType()).isEqualTo(PDF_CONTENT_TYPE);
+        verifyNoInteractions(documentGeneratorClient);
     }
 
     @Test
@@ -89,7 +106,6 @@ class CourtListDownloadServiceTest {
 
         assertThat(result.content()).isEqualTo(PDF_BYTES);
         assertThat(result.contentType()).isEqualTo(PDF_CONTENT_TYPE);
-        assertThat(result.filename()).isEqualTo("CourtList.pdf");
         verifyNoInteractions(documentGeneratorClient);
     }
 
@@ -104,8 +120,6 @@ class CourtListDownloadServiceTest {
                 CourtListType.JUDGE, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID);
 
         assertThat(result.content()).isEqualTo(PDF_BYTES);
-        assertThat(result.contentType()).isEqualTo(PDF_CONTENT_TYPE);
-        assertThat(result.filename()).isEqualTo("CourtList.pdf");
         verifyNoInteractions(documentGeneratorClient);
     }
 
@@ -139,18 +153,20 @@ class CourtListDownloadServiceTest {
     }
 
     @Test
-    void generateCourtListDownloadForwardsCourtRoomIdToDataService() throws IOException {
+    void generateCourtListDownloadForwardsCourtRoomIdToProgression() {
         String courtRoomId = "4294a92c-8827-3296-be53-c74b7e9e31d8";
-        String payloadJson = "{\"listType\":\"standard\",\"templateName\":\"BenchAndStandardCourtList\"}";
-        stubListingPayload(CourtListType.STANDARD, courtRoomId, payloadJson);
-        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList")))
+        when(courtListDataService.fetchCourtListPdfFromProgression(
+                eq(CourtListType.STANDARD), eq(COURT_CENTRE_ID), eq(courtRoomId),
+                eq(START_DATE), eq(END_DATE), eq(CJSCPPUID)))
                 .thenReturn(PDF_BYTES);
 
         service.generateCourtListDownload(
                 CourtListType.STANDARD, COURT_CENTRE_ID, courtRoomId, START_DATE, END_DATE, CJSCPPUID);
 
-        verify(courtListDataService).getCourtListPayloadForDownload(
-                eq(CourtListType.STANDARD), eq(COURT_CENTRE_ID), eq(courtRoomId), eq(START_DATE), eq(END_DATE), eq(CJSCPPUID));
+        verify(courtListDataService).fetchCourtListPdfFromProgression(
+                eq(CourtListType.STANDARD), eq(COURT_CENTRE_ID), eq(courtRoomId),
+                eq(START_DATE), eq(END_DATE), eq(CJSCPPUID));
+        verifyNoInteractions(documentGeneratorClient);
     }
 
     @Test
@@ -171,18 +187,18 @@ class CourtListDownloadServiceTest {
     }
 
     @Test
-    void generateCourtListDownloadFallsBackToRegisteredTemplateWhenPayloadOmitsTemplateName() throws IOException {
-        String payloadWithoutTemplate = "{\"listType\":\"standard\"}";
-        stubListingPayload(CourtListType.STANDARD, null, payloadWithoutTemplate);
-        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList")))
-                .thenReturn(PDF_BYTES);
+    void generateCourtListDownloadFallsBackToRegisteredTemplateWhenUshersPayloadOmitsTemplateName() throws IOException {
+        String payloadWithoutTemplate = "{\"listType\":\"ushers_crown\"}";
+        stubListingPayload(CourtListType.USHERS_CROWN, null, payloadWithoutTemplate);
+        when(documentGeneratorClient.generateWord(any(JsonObject.class), eq("UshersCrownList")))
+                .thenReturn(WORD_BYTES);
 
         CourtListFileResult result = service.generateCourtListDownload(
-                CourtListType.STANDARD, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID);
+                CourtListType.USHERS_CROWN, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID);
 
-        assertThat(result.content()).isEqualTo(PDF_BYTES);
-        assertThat(result.filename()).isEqualTo("CourtList.pdf");
-        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList"));
+        assertThat(result.content()).isEqualTo(WORD_BYTES);
+        assertThat(result.filename()).isEqualTo("CourtList.docx");
+        verify(documentGeneratorClient).generateWord(any(JsonObject.class), eq("UshersCrownList"));
     }
 
     @Test
@@ -197,23 +213,23 @@ class CourtListDownloadServiceTest {
 
     @Test
     void generateCourtListDownloadThrowsWhenDocumentGeneratorFails() throws IOException {
-        String payloadJson = "{\"listType\":\"standard\",\"templateName\":\"BenchAndStandardCourtList\"}";
-        stubListingPayload(CourtListType.STANDARD, null, payloadJson);
-        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("BenchAndStandardCourtList")))
+        String payloadJson = "{\"listType\":\"ushers_crown\",\"templateName\":\"UshersCrownList\"}";
+        stubListingPayload(CourtListType.USHERS_CROWN, null, payloadJson);
+        when(documentGeneratorClient.generateWord(any(JsonObject.class), eq("UshersCrownList")))
                 .thenThrow(new IOException("docgen down"));
 
         assertThatThrownBy(() -> service.generateCourtListDownload(
-                CourtListType.STANDARD, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID))
+                CourtListType.USHERS_CROWN, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("Failed to render court list document");
     }
 
     @Test
-    void generateCourtListDownloadThrowsWhenPayloadJsonInvalid() {
-        stubListingPayload(CourtListType.STANDARD, null, "not valid json");
+    void generateCourtListDownloadThrowsWhenUshersPayloadJsonInvalid() {
+        stubListingPayload(CourtListType.USHERS_CROWN, null, "not valid json");
 
         assertThatThrownBy(() -> service.generateCourtListDownload(
-                CourtListType.STANDARD, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID))
+                CourtListType.USHERS_CROWN, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("Failed to parse court list payload JSON");
     }

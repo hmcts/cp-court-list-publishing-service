@@ -347,8 +347,8 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         } else if (courtListType == CourtListType.PUBLIC
                 || courtListType == CourtListType.STANDARD
                 || courtListType == CourtListType.BENCH) {
-            verifyProgressionCourtlistdataCalled(courtListType);
-            verifyDocumentGeneratorCalled(expectedTemplate(courtListType), "pdf");
+            verifyProgressionCourtlistBinaryCalled(courtListType);
+            verifyDocumentGeneratorNotCalled();
         } else {
             verifyListingPayloadCalled(courtListType);
             verifyDocumentGeneratorCalled(expectedTemplate(courtListType), "pdf");
@@ -413,19 +413,19 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 .hasSize(1);
     }
 
-    private void verifyProgressionCourtlistdataCalled(CourtListType courtListType) throws Exception {
+    private void verifyProgressionCourtlistBinaryCalled(CourtListType courtListType) throws Exception {
         List<JsonNode> matches = wiremockRequestsMatching(req -> {
             if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
                 return false;
             }
             String url = wiremockRequestUrl(req);
-            return url.contains("/progression-service/query/api/rest/progression/courtlistdata")
+            return url.contains("/progression-service/query/api/rest/progression/courtlist")
+                    && !url.contains("/courtlistdata")
                     && url.contains("listId=" + courtListType.name())
-                    && url.contains("restricted=false")
-                    && url.contains("includeApplications=false");
+                    && url.contains("restricted=false");
         });
         assertThat(matches)
-                .as("Progression /courtlistdata must be called exactly once for %s with restricted=false and includeApplications=false", courtListType)
+                .as("Progression /courtlist binary endpoint must be called exactly once for %s with restricted=false", courtListType)
                 .hasSize(1);
     }
 

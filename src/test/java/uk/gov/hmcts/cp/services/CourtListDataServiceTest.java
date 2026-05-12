@@ -199,6 +199,50 @@ class CourtListDataServiceTest {
     }
 
     @Test
+    void fetchCourtListPdfFromProgressionCallsCourtlistBinaryEndpointAndReturnsBytes() {
+        byte[] pdfBytes = "%PDF-1.6 progression".getBytes();
+        when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(pdfBytes, HttpStatus.OK));
+
+        byte[] result = courtListDataService.fetchCourtListPdfFromProgression(
+                CourtListType.STANDARD, "f8254db1-1683-483e-afb3-b87fde5a0a26", "room-1",
+                LocalDate.of(2026, 5, 18), LocalDate.of(2026, 5, 18), "user-id");
+
+        assertThat(result).isEqualTo(pdfBytes);
+        verify(publicCourtListRestTemplate).exchange(
+                argThat((String url) -> url.contains("/progression-service/query/api/rest/progression/courtlist")
+                        && !url.contains("/courtlistdata")
+                        && url.contains("listId=STANDARD")
+                        && url.contains("courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26")
+                        && url.contains("courtRoomId=room-1")
+                        && url.contains("startDate=2026-05-18")
+                        && url.contains("endDate=2026-05-18")
+                        && url.contains("restricted=false")),
+                eq(HttpMethod.GET), any(HttpEntity.class), eq(byte[].class));
+    }
+
+    @Test
+    void fetchCourtListPdfFromProgression_throwsWhenCjscppuidMissing() {
+        assertThatThrownBy(() -> courtListDataService.fetchCourtListPdfFromProgression(
+                CourtListType.STANDARD, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
+                LocalDate.of(2026, 5, 18), LocalDate.of(2026, 5, 18), null))
+                .isInstanceOf(CourtListDownloadException.class)
+                .hasMessageContaining("CJSCPPUID");
+    }
+
+    @Test
+    void fetchCourtListPdfFromProgression_throwsWhenProgressionReturnsEmptyBody() {
+        when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(new byte[0], HttpStatus.OK));
+
+        assertThatThrownBy(() -> courtListDataService.fetchCourtListPdfFromProgression(
+                CourtListType.STANDARD, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
+                LocalDate.of(2026, 5, 18), LocalDate.of(2026, 5, 18), "user-id"))
+                .isInstanceOf(CourtListDownloadException.class)
+                .hasMessageContaining("empty response");
+    }
+
+    @Test
     void fetchCourtListPdfFromListingReturnsPdfBytesAndCallsCourtListEndpointWithRestrictedFalse() {
         byte[] pdfBytes = "%PDF-1.6 fake".getBytes();
         when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(byte[].class)))
