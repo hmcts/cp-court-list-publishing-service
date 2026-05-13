@@ -422,10 +422,10 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
             return url.contains("/progression-service/query/api/rest/progression/courtlist")
                     && !url.contains("/courtlistdata")
                     && url.contains("listId=" + courtListType.name())
-                    && url.contains("restricted=true");
+                    && url.contains("restricted=false");
         });
         assertThat(matches)
-                .as("Progression /courtlist binary endpoint must be called exactly once for %s with restricted=true", courtListType)
+                .as("Progression /courtlist binary endpoint must be called exactly once for %s with restricted=false (default)", courtListType)
                 .hasSize(1);
     }
 

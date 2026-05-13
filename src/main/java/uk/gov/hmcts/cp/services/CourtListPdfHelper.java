@@ -64,10 +64,12 @@ public class CourtListPdfHelper {
      * refdata enrichment (PUBLIC / STANDARD / BENCH).
      */
     public UUID fetchFromProgressionAndUploadPdf(CourtListType courtListType, String courtCentreId, String courtRoomId,
-                                                 LocalDate startDate, LocalDate endDate, String cjscppuid, UUID courtListId) {
-        log.info("Fetching rendered PDF from progression for court list ID: {}, type: {}", courtListId, courtListType);
+                                                 LocalDate startDate, LocalDate endDate, String cjscppuid,
+                                                 UUID courtListId, boolean restricted) {
+        log.info("Fetching rendered PDF from progression for court list ID: {}, type: {}, restricted: {}",
+                courtListId, courtListType, restricted);
         byte[] pdfBytes = courtListDataService.fetchCourtListPdfFromProgression(
-                courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid);
+                courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid, restricted);
         return pdfGenerationService.uploadPdfBytes(pdfBytes, courtListId);
     }
 }

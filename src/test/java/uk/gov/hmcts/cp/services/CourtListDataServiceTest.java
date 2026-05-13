@@ -154,7 +154,7 @@ class CourtListDataServiceTest {
     }
 
     @Test
-    void getCourtListPayloadForDownloadRoutesStandardThroughProgression() {
+    void getCourtListPayloadForDownloadRoutesStandardThroughProgressionWithRestrictedTrue() {
         String json = "{\"listType\":\"standard\",\"templateName\":\"BenchAndStandardCourtList\",\"ouCode\":\"B01LY\"}";
         when(progressionQueryService.getCourtListPayload(
                 eq(CourtListType.STANDARD), anyString(), any(), anyString(), anyString(), eq(true), anyString(), eq(false)))
@@ -162,13 +162,30 @@ class CourtListDataServiceTest {
 
         String result = courtListDataService.getCourtListPayloadForDownload(
                 CourtListType.STANDARD, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
-                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id");
+                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id", true);
 
         assertThat(result).isEqualTo(json);
         verify(progressionQueryService).getCourtListPayload(
                 eq(CourtListType.STANDARD), eq("f8254db1-1683-483e-afb3-b87fde5a0a26"), any(),
                 eq("2026-02-27"), eq("2026-02-27"), eq(true), eq("user-id"), eq(false));
         verifyNoInteractions(publicCourtListRestTemplate);
+    }
+
+    @Test
+    void getCourtListPayloadForDownloadRoutesStandardThroughProgressionWithRestrictedFalse() {
+        String json = "{\"listType\":\"standard\"}";
+        when(progressionQueryService.getCourtListPayload(
+                eq(CourtListType.STANDARD), anyString(), any(), anyString(), anyString(), eq(false), anyString(), eq(false)))
+                .thenReturn(json);
+
+        String result = courtListDataService.getCourtListPayloadForDownload(
+                CourtListType.STANDARD, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
+                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id", false);
+
+        assertThat(result).isEqualTo(json);
+        verify(progressionQueryService).getCourtListPayload(
+                eq(CourtListType.STANDARD), eq("f8254db1-1683-483e-afb3-b87fde5a0a26"), any(),
+                eq("2026-02-27"), eq("2026-02-27"), eq(false), eq("user-id"), eq(false));
     }
 
     @Test
@@ -179,7 +196,7 @@ class CourtListDataServiceTest {
 
         String result = courtListDataService.getCourtListPayloadForDownload(
                 CourtListType.USHERS_CROWN, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
-                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id");
+                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id", false);
 
         assertThat(result).isEqualTo(json);
         verify(progressionQueryService, never()).getCourtListPayload(
@@ -193,7 +210,7 @@ class CourtListDataServiceTest {
 
         assertThatThrownBy(() -> serviceWithNoUrl.getCourtListPayloadForDownload(
                 CourtListType.USHERS_CROWN, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
-                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id"))
+                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id", false))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("Court list data is not configured");
     }
@@ -206,7 +223,7 @@ class CourtListDataServiceTest {
 
         byte[] result = courtListDataService.fetchCourtListPdfFromProgression(
                 CourtListType.STANDARD, "f8254db1-1683-483e-afb3-b87fde5a0a26", "room-1",
-                LocalDate.of(2026, 5, 18), LocalDate.of(2026, 5, 18), "user-id");
+                LocalDate.of(2026, 5, 18), LocalDate.of(2026, 5, 18), "user-id", true);
 
         assertThat(result).isEqualTo(pdfBytes);
         verify(publicCourtListRestTemplate).exchange(
@@ -222,10 +239,25 @@ class CourtListDataServiceTest {
     }
 
     @Test
+    void fetchCourtListPdfFromProgressionForwardsRestrictedFalseAsQueryParam() {
+        byte[] pdfBytes = "%PDF-1.6 progression-nonrestricted".getBytes();
+        when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(byte[].class)))
+                .thenReturn(new ResponseEntity<>(pdfBytes, HttpStatus.OK));
+
+        courtListDataService.fetchCourtListPdfFromProgression(
+                CourtListType.BENCH, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
+                LocalDate.of(2026, 5, 18), LocalDate.of(2026, 5, 18), "user-id", false);
+
+        verify(publicCourtListRestTemplate).exchange(
+                argThat((String url) -> url.contains("listId=BENCH") && url.contains("restricted=false")),
+                eq(HttpMethod.GET), any(HttpEntity.class), eq(byte[].class));
+    }
+
+    @Test
     void fetchCourtListPdfFromProgression_throwsWhenCjscppuidMissing() {
         assertThatThrownBy(() -> courtListDataService.fetchCourtListPdfFromProgression(
                 CourtListType.STANDARD, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
-                LocalDate.of(2026, 5, 18), LocalDate.of(2026, 5, 18), null))
+                LocalDate.of(2026, 5, 18), LocalDate.of(2026, 5, 18), null, true))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("CJSCPPUID");
     }
@@ -237,20 +269,20 @@ class CourtListDataServiceTest {
 
         assertThatThrownBy(() -> courtListDataService.fetchCourtListPdfFromProgression(
                 CourtListType.STANDARD, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
-                LocalDate.of(2026, 5, 18), LocalDate.of(2026, 5, 18), "user-id"))
+                LocalDate.of(2026, 5, 18), LocalDate.of(2026, 5, 18), "user-id", true))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("empty response");
     }
 
     @Test
-    void fetchCourtListPdfFromListingReturnsPdfBytesAndCallsCourtListEndpointWithRestrictedFalse() {
+    void fetchCourtListPdfFromListingReturnsPdfBytesAndForwardsRestrictedFlag() {
         byte[] pdfBytes = "%PDF-1.6 fake".getBytes();
         when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(pdfBytes, HttpStatus.OK));
 
         byte[] result = courtListDataService.fetchCourtListPdfFromListing(
                 CourtListType.ALPHABETICAL, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
-                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id");
+                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id", false);
 
         assertThat(result).isEqualTo(pdfBytes);
         verify(publicCourtListRestTemplate).exchange(
@@ -273,7 +305,7 @@ class CourtListDataServiceTest {
 
         assertThatThrownBy(() -> courtListDataService.fetchCourtListPdfFromListing(
                 CourtListType.JUDGE, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
-                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id"))
+                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id", false))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("empty response");
     }
@@ -285,7 +317,7 @@ class CourtListDataServiceTest {
 
         assertThatThrownBy(() -> serviceWithNoUrl.fetchCourtListPdfFromListing(
                 CourtListType.ALPHABETICAL, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
-                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id"))
+                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id", false))
                 .isInstanceOf(CourtListDownloadException.class)
                 .hasMessageContaining("Court list data is not configured");
     }

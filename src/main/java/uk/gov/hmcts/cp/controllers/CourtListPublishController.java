@@ -112,7 +112,8 @@ public class CourtListPublishController implements CourtListPublishApi {
             LocalDate startDate,
             LocalDate endDate,
             CourtListType courtListType,
-            UUID courtRoomId) {
+            UUID courtRoomId,
+            Boolean restricted) {
         if (courtCentreId == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "courtCentreId is required");
         }
@@ -139,7 +140,8 @@ public class CourtListPublishController implements CourtListPublishApi {
                     courtRoomId != null ? courtRoomId.toString() : null,
                     startDate,
                     endDate,
-                    cjscppuid);
+                    cjscppuid,
+                    Boolean.TRUE.equals(restricted));
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType(result.contentType()));
             headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.filename() + "\"");

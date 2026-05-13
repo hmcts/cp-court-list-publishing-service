@@ -71,17 +71,18 @@ public class CourtListDownloadService {
                                                          final String courtRoomId,
                                                          final LocalDate startDate,
                                                          final LocalDate endDate,
-                                                         final String cjscppuid) {
+                                                         final String cjscppuid,
+                                                         final boolean restricted) {
         if (!SUPPORTED_TYPES.contains(courtListType)) {
             throw new CourtListDownloadException("Unsupported court list type for download: " + courtListType);
         }
 
-        LOG.info("Generating court list document for type={}, courtCentreId={}, startDate={}, endDate={}",
-                courtListType, sanitizeForLog(courtCentreId), startDate, endDate);
+        LOG.info("Generating court list document for type={}, courtCentreId={}, startDate={}, endDate={}, restricted={}",
+                courtListType, sanitizeForLog(courtCentreId), startDate, endDate, restricted);
 
         if (DELEGATED_TO_LISTING_TYPES.contains(courtListType)) {
             final byte[] pdf = courtListDataService.fetchCourtListPdfFromListing(
-                    courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid);
+                    courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid, restricted);
             LOG.info("Court list document fetched from listing for type={}, courtCentreId={}, size={} bytes",
                     courtListType, sanitizeForLog(courtCentreId), pdf.length);
             return new CourtListFileResult(pdf, CONTENT_TYPE_PDF, PDF_FILENAME);
@@ -89,7 +90,7 @@ public class CourtListDownloadService {
 
         if (DELEGATED_TO_PROGRESSION_TYPES.contains(courtListType)) {
             final byte[] pdf = courtListDataService.fetchCourtListPdfFromProgression(
-                    courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid);
+                    courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid, restricted);
             LOG.info("Court list document fetched from progression for type={}, courtCentreId={}, size={} bytes",
                     courtListType, sanitizeForLog(courtCentreId), pdf.length);
             return new CourtListFileResult(pdf, CONTENT_TYPE_PDF, PDF_FILENAME);
@@ -98,7 +99,7 @@ public class CourtListDownloadService {
         final boolean wantsWord = WORD_DOWNLOAD_TYPES.contains(courtListType);
 
         final String payloadJson = courtListDataService.getCourtListPayloadForDownload(
-                courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid);
+                courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid, restricted);
 
         final JsonObject payload;
         try (JsonReader reader = Json.createReader(new StringReader(payloadJson))) {

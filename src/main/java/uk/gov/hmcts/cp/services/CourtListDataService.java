@@ -92,9 +92,8 @@ public class CourtListDataService {
 
     public String getCourtListPayloadForDownload(
             CourtListType courtListType, String courtCentreId, String courtRoomId,
-            LocalDate startDate, LocalDate endDate, String cjscppuid) {
+            LocalDate startDate, LocalDate endDate, String cjscppuid, boolean restricted) {
         if (PROGRESSION_ENRICHED_TYPES.contains(courtListType)) {
-            boolean restricted = cjscppuid != null && !cjscppuid.isBlank();
             return progressionQueryService.getCourtListPayload(
                     courtListType, courtCentreId, courtRoomId,
                     startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT),
@@ -103,12 +102,12 @@ public class CourtListDataService {
         return fetchCourtListPayloadFromListing(
                 courtListType, courtCentreId, courtRoomId,
                 startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT),
-                false, false, cjscppuid);
+                restricted, false, cjscppuid);
     }
 
     public byte[] fetchCourtListPdfFromProgression(
             CourtListType courtListType, String courtCentreId, String courtRoomId,
-            LocalDate startDate, LocalDate endDate, String cjscppuid) {
+            LocalDate startDate, LocalDate endDate, String cjscppuid, boolean restricted) {
         if (courtListDataBaseUrl.isBlank()) {
             throw new CourtListDownloadException("Court list data is not configured");
         }
@@ -121,7 +120,7 @@ public class CourtListDataService {
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate.format(DATE_FORMAT))
                 .queryParam("endDate", endDate.format(DATE_FORMAT))
-                .queryParam("restricted", true);
+                .queryParam("restricted", restricted);
         if (courtRoomId != null && !courtRoomId.isBlank()) {
             builder.queryParam("courtRoomId", courtRoomId);
         }
@@ -147,7 +146,7 @@ public class CourtListDataService {
 
     public byte[] fetchCourtListPdfFromListing(
             CourtListType courtListType, String courtCentreId, String courtRoomId,
-            LocalDate startDate, LocalDate endDate, String cjscppuid) {
+            LocalDate startDate, LocalDate endDate, String cjscppuid, boolean restricted) {
         if (courtListDataBaseUrl.isBlank()) {
             throw new CourtListDownloadException("Court list data is not configured");
         }
@@ -157,7 +156,7 @@ public class CourtListDataService {
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate.format(DATE_FORMAT))
                 .queryParam("endDate", endDate.format(DATE_FORMAT))
-                .queryParam("restricted", false);
+                .queryParam("restricted", restricted);
         if (courtRoomId != null && !courtRoomId.isBlank()) {
             builder.queryParam("courtRoomId", courtRoomId);
         }

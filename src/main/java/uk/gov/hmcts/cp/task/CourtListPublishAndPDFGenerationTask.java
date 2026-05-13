@@ -99,7 +99,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             if (listId != null && PROGRESSION_PDF_TYPES.contains(listId)
                     && courtCentreId != null && publishDate != null && courtListId != null) {
                 fileId = pdfHelper.fetchFromProgressionAndUploadPdf(
-                        listId, courtCentreId, null, publishDate, publishDate, userId, courtListId);
+                        listId, courtCentreId, null, publishDate, publishDate, userId, courtListId, false);
             } else {
                 CourtListPayload pdfPayload = null;
                 if (listId != null && courtCentreId != null && publishDate != null) {
