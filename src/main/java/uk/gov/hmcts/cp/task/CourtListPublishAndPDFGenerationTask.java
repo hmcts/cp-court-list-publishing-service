@@ -95,11 +95,8 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
 
         try {
-            UUID fileId;
-            if (listId != null && PROGRESSION_PDF_TYPES.contains(listId)
-                    && courtCentreId != null && publishDate != null && courtListId != null) {
-                fileId = pdfHelper.fetchFromProgressionAndUploadPdf(
-                        listId, courtCentreId, null, publishDate, publishDate, userId, courtListId, false);
+            if (listId != null && PROGRESSION_PDF_TYPES.contains(listId) && courtListId != null) {
+                updateFileIdAndLastUpdated(courtListId, null);
             } else {
                 CourtListPayload pdfPayload = null;
                 if (listId != null && courtCentreId != null && publishDate != null) {
@@ -110,10 +107,10 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                         logger.error("Error fetching court list payload for PDF generation", e);
                     }
                 }
-                fileId = generateAndUploadPdf(executionInfo, pdfPayload);
-            }
-            if (fileId != null && courtListId != null) {
-                updateFileIdAndLastUpdated(courtListId, fileId);
+                UUID fileId = generateAndUploadPdf(executionInfo, pdfPayload);
+                if (fileId != null && courtListId != null) {
+                    updateFileIdAndLastUpdated(courtListId, fileId);
+                }
             }
         } catch (Exception e) {
             logger.error("Error generating and uploading PDF", e);

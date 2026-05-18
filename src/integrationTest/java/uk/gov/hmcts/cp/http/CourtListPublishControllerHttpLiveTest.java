@@ -6,11 +6,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -37,6 +40,11 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
 
     private final RestTemplate http = new RestTemplate();
     private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
+
+    @BeforeEach
+    void resetWireMockBeforeEach() {
+        AbstractTest.resetWireMock();
+    }
 
     @Test
     void postCourtListPublish_creates_court_list_publish_status_successfully() throws Exception {
@@ -318,7 +326,6 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     private void getDownloadCourtListReturnsPdfForType(CourtListType courtListType) throws Exception {
-        AbstractTest.resetWireMock();
         HttpHeaders headers = new HttpHeaders();
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         headers.setAccept(java.util.List.of(MediaType.parseMediaType(DOWNLOAD_ACCEPT)));
@@ -340,6 +347,9 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         assertThat(new String(body, 0, Math.min(4, body.length)))
                 .as("PDF body for %s must start with %%PDF magic", courtListType)
                 .startsWith("%PDF");
+        assertThat(body)
+                .as("PDF body for %s must match the WireMock-stubbed minimal-pdf.pdf bytes", courtListType)
+                .isEqualTo(loadResourceBytes("wiremock/__files/minimal-pdf.pdf"));
 
         if (courtListType == CourtListType.ALPHABETICAL || courtListType == CourtListType.JUDGE) {
             verifyListingCourtListBinaryCalled(courtListType);
@@ -356,7 +366,9 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     private void getDownloadCourtListReturnsWordForType(CourtListType courtListType) throws Exception {
-        AbstractTest.resetWireMock();
+        String expectedContent = loadResourceText(expectedDocxContentResource(courtListType));
+        DocumentGeneratorStub.stubDocumentCreate(expectedContent);
+
         HttpHeaders headers = new HttpHeaders();
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         headers.setAccept(java.util.List.of(MediaType.parseMediaType(DOWNLOAD_ACCEPT)));
@@ -376,12 +388,20 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 .contains("attachment", "CourtList.docx");
         byte[] body = response.getBody();
         assertThat(body).as("DOCX body for %s must be non-null", courtListType).isNotNull();
-        assertThat(body.length).as("DOCX body for %s must be non-empty", courtListType).isGreaterThan(0);
-        assertThat(body[0]).as("DOCX body for %s must start with byte 'P'", courtListType).isEqualTo((byte) 'P');
-        assertThat(body[1]).as("DOCX body for %s must start with byte 'K'", courtListType).isEqualTo((byte) 'K');
+        assertThat(body)
+                .as("DOCX body for %s must match every byte (and therefore every field value) of the stubbed content fixture", courtListType)
+                .isEqualTo(expectedContent.getBytes(StandardCharsets.UTF_8));
 
         verifyListingPayloadCalled(courtListType);
         verifyDocumentGeneratorCalled(expectedTemplate(courtListType), "docx");
+    }
+
+    private static String expectedDocxContentResource(CourtListType type) {
+        switch (type) {
+            case USHERS_CROWN:      return "wiremock/__files/expected-ushers-crown-docx-content.txt";
+            case USHERS_MAGISTRATE: return "wiremock/__files/expected-ushers-magistrate-docx-content.txt";
+            default: throw new IllegalArgumentException("No expected DOCX content fixture for " + type);
+        }
     }
 
     private static String expectedTemplate(CourtListType type) {
@@ -492,6 +512,17 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
             }
         }
         return out;
+    }
+
+    private byte[] loadResourceBytes(String resourcePath) throws Exception {
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+            assertThat(in).as("Resource %s must be on the test classpath", resourcePath).isNotNull();
+            return in.readAllBytes();
+        }
+    }
+
+    private String loadResourceText(String resourcePath) throws Exception {
+        return new String(loadResourceBytes(resourcePath), StandardCharsets.UTF_8);
     }
 
     private static String wiremockRequestUrl(JsonNode req) {

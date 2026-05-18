@@ -9,7 +9,6 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.taskmanager.domain.converter.JsonObjectConverter;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -24,7 +23,6 @@ public class CourtListPdfHelper {
 
     private final PdfGenerationService pdfGenerationService;
     private final JsonObjectConverter objectConverter;
-    private final CourtListDataService courtListDataService;
 
     /**
      * Generates and uploads PDF for the given court list payload and court list ID.
@@ -58,18 +56,4 @@ public class CourtListPdfHelper {
         }
     }
 
-    /**
-     * Fetches the rendered PDF binary from progression's /courtlist endpoint and uploads it to blob
-     * storage as {courtListId}.pdf. Used for list types that progression renders server-side with full
-     * refdata enrichment (PUBLIC / STANDARD / BENCH).
-     */
-    public UUID fetchFromProgressionAndUploadPdf(CourtListType courtListType, String courtCentreId, String courtRoomId,
-                                                 LocalDate startDate, LocalDate endDate, String cjscppuid,
-                                                 UUID courtListId, boolean restricted) {
-        log.info("Fetching rendered PDF from progression for court list ID: {}, type: {}, restricted: {}",
-                courtListId, courtListType, restricted);
-        byte[] pdfBytes = courtListDataService.fetchCourtListPdfFromProgression(
-                courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid, restricted);
-        return pdfGenerationService.uploadPdfBytes(pdfBytes, courtListId);
-    }
 }
