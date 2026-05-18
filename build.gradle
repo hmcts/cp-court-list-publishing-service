@@ -2,7 +2,7 @@ plugins {
     id 'application'
     id 'java'
 
-    id 'org.springframework.boot' version '4.0.0'
+    id 'org.springframework.boot' version '4.0.6'
     id 'io.spring.dependency-management' version '1.1.7'
 
     id 'jacoco'
@@ -38,8 +38,9 @@ def azureADOArtifactActor = System.getenv("AZURE_DEVOPS_ARTIFACT_USERNAME")
 def azureADOArtifactToken = System.getenv("AZURE_DEVOPS_ARTIFACT_TOKEN")
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
 }
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << "-Xlint:unchecked" << "-Werror"
@@ -129,7 +130,7 @@ dependencies {
     implementation 'com.google.guava:guava:33.3.1-jre'
 
     // Azure Blob Storage – exclude Netty HTTP client (conflicts with Spring Boot 4's Netty 4.2.x)
-    // and use the JDK HttpClient backend instead (JDK 21)
+    // and use the JDK HttpClient backend instead (JDK 25)
     implementation('com.azure:azure-storage-blob:12.33.2') {
         exclude group: 'com.azure', module: 'azure-core-http-netty'
     }
