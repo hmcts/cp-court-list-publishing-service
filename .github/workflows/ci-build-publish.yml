@@ -81,7 +81,7 @@ jobs:
           ARTEFACT_VERSION: ${{ needs.Artefact-Version.outputs.artefact_version }}
         run: |
           echo "Building with ARTEFACT_VERSION=$ARTEFACT_VERSION"
-          gradle build -DARTEFACT_VERSION=$ARTEFACT_VERSION
+          ./gradlew build -DARTEFACT_VERSION=$ARTEFACT_VERSION
 
       - name: Extract repo name
         id: repo_vars
@@ -135,7 +135,7 @@ jobs:
 
           echo "Publishing artefact for version: $ARTEFACT_VERSION"
           
-          gradle publish \
+          ./gradlew publish \
             -DARTEFACT_VERSION=$ARTEFACT_VERSION \
             -DGITHUB_REPOSITORY=${{ github.repository }} \
             -DGITHUB_ACTOR=${{ github.actor }} \
@@ -152,7 +152,7 @@ jobs:
         run: echo "REPO_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
 
       - name: Trigger ADO pipeline
-        uses: hmcts/trigger-ado-pipeline@v1
+        uses: hmcts/trigger-ado-pipeline@v2
         with:
           pipeline_id: 460
           ado_pat: ${{ secrets.HMCTS_ADO_PAT }}
@@ -161,5 +161,7 @@ jobs:
               "GROUP_ID": "uk.gov.hmcts.cp",
               "ARTIFACT_ID": "${{ env.REPO_NAME }}",
               "ARTIFACT_VERSION": "${{ needs.Artefact-Version.outputs.artefact_version }}",
-              "TARGET_REPOSITORY": "${{ github.repository }}"
+              "TARGET_REPOSITORY": "${{ github.repository }}",
+              "agentDemand": "ubuntu-j25",
+              "baseImage": "hmcts/apm-services:25-jre"
             }
