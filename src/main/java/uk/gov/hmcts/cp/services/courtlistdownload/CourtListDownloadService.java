@@ -3,6 +3,7 @@ package uk.gov.hmcts.cp.services.courtlistdownload;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
+import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -78,13 +79,13 @@ public class CourtListDownloadService {
         }
 
         LOG.info("Generating court list document for type={}, courtCentreId={}, startDate={}, endDate={}, restricted={}",
-                courtListType, sanitizeForLog(courtCentreId), startDate, endDate, restricted);
+                courtListType, Encode.forJava(courtCentreId), startDate, endDate, restricted);
 
         if (DELEGATED_TO_LISTING_TYPES.contains(courtListType)) {
             final byte[] pdf = courtListDataService.fetchCourtListPdfFromListing(
                     courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid, restricted);
             LOG.info("Court list document fetched from listing for type={}, courtCentreId={}, size={} bytes",
-                    courtListType, sanitizeForLog(courtCentreId), pdf.length);
+                    courtListType, Encode.forJava(courtCentreId), pdf.length);
             return new CourtListFileResult(pdf, CONTENT_TYPE_PDF, PDF_FILENAME);
         }
 
@@ -92,7 +93,7 @@ public class CourtListDownloadService {
             final byte[] pdf = courtListDataService.fetchCourtListPdfFromProgression(
                     courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid, restricted);
             LOG.info("Court list document fetched from progression for type={}, courtCentreId={}, size={} bytes",
-                    courtListType, sanitizeForLog(courtCentreId), pdf.length);
+                    courtListType, Encode.forJava(courtCentreId), pdf.length);
             return new CourtListFileResult(pdf, CONTENT_TYPE_PDF, PDF_FILENAME);
         }
 
@@ -126,25 +127,10 @@ public class CourtListDownloadService {
         }
 
         LOG.info("Court list document generated for type={}, template={}, courtCentreId={}, format={}, size={} bytes",
-                courtListType, templateName, sanitizeForLog(courtCentreId), wantsWord ? "docx" : "pdf", content.length);
+                courtListType, templateName, Encode.forJava(courtCentreId), wantsWord ? "docx" : "pdf", content.length);
 
         return wantsWord
                 ? new CourtListFileResult(content, CONTENT_TYPE_WORD, WORD_FILENAME)
                 : new CourtListFileResult(content, CONTENT_TYPE_PDF, PDF_FILENAME);
-    }
-
-    private static String sanitizeForLog(final String value) {
-        if (value == null) {
-            return null;
-        }
-        String withoutCrLf = value.replace('\r', ' ').replace('\n', ' ');
-        StringBuilder cleaned = new StringBuilder(withoutCrLf.length());
-        for (int i = 0; i < withoutCrLf.length(); i++) {
-            char c = withoutCrLf.charAt(i);
-            if (!Character.isISOControl(c)) {
-                cleaned.append(c);
-            }
-        }
-        return cleaned.toString();
     }
 }
