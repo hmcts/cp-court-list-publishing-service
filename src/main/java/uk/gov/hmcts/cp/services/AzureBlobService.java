@@ -5,6 +5,7 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.owasp.encoder.Encode;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +21,7 @@ public class AzureBlobService {
     private final BlobContainerClient blobContainerClient;
 
     public void uploadJson(String payload, String blobName) {
-        String safeBlobName = sanitizeForLog(blobName);
+        String safeBlobName = Encode.forJava(blobName);
         log.info("Uploading JSON payload to blob: {}", safeBlobName);
         try {
             byte[] bytes = payload.getBytes(StandardCharsets.UTF_8);
@@ -34,13 +35,5 @@ public class AzureBlobService {
             throw new RuntimeException(
                 "Azure storage error while uploading JSON payload: " + blobName + ". " + e.getMessage(), e);
         }
-    }
-
-    private static String sanitizeForLog(String value) {
-        if (value == null) {
-            return "<null>";
-        }
-        // Remove CR/LF to prevent log injection / log forging
-        return value.replace('\r', ' ').replace('\n', ' ');
     }
 }
