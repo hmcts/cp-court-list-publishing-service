@@ -14,7 +14,6 @@ import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.domain.DtsMeta;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
-import uk.gov.hmcts.cp.task.CourtListPublishAndPDFGenerationTask;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -23,6 +22,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import static uk.gov.hmcts.cp.task.CourtListPublishAndPDFGenerationTask.ALERT_PATTERN;
 
 @Service
 @RequiredArgsConstructor
@@ -84,7 +85,7 @@ public class CaTHService {
 
             log.info("Successfully sent court list document to CaTH. Response status: {}", res);
         } catch (Exception e) {
-            log.error("Error {} sending court list document to CaTH endpoint: {}", CourtListPublishAndPDFGenerationTask.ALERT_PATTERN, e.getMessage(), e);
+            log.error("Error {} sending court list document to CaTH endpoint: {}", ALERT_PATTERN, e.getMessage(), e);
             throw new RuntimeException("Failed to send court list document to CaTH: " + e.getMessage(), e);
         }
     }
@@ -96,7 +97,7 @@ public class CaTHService {
                     String blobName = buildBlobName(courtListId);
                     blobService.uploadJson(payload, blobName);
                 } catch (Exception e) {
-                    log.error("Error {} uploading CaTH payload to blob storage, continuing with publish", CourtListPublishAndPDFGenerationTask.ALERT_PATTERN, e);
+                    log.error("Error {} uploading CaTH payload to blob storage, continuing with publish", ALERT_PATTERN, e);
                 }
             },
             () -> log.debug("Azure Blob Service not available, skipping payload upload")

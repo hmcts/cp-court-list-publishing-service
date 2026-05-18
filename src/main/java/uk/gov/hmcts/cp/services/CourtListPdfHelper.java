@@ -6,11 +6,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
-import uk.gov.hmcts.cp.task.CourtListPublishAndPDFGenerationTask;
 import uk.gov.hmcts.cp.taskmanager.domain.converter.JsonObjectConverter;
 
 import java.io.IOException;
 import java.util.UUID;
+
+import static uk.gov.hmcts.cp.task.CourtListPublishAndPDFGenerationTask.ALERT_PATTERN;
 
 /**
  * Helper class for PDF generation operations related to court list publishing.
@@ -49,10 +50,10 @@ public class CourtListPdfHelper {
             log.warn("No PDF template for court list type: {} (court list ID: {})", courtListType, courtListId);
             throw new RuntimeException("No PDF template defined for court list type: " + courtListType, e);
         } catch (IOException e) {
-            log.error("Error {} generating and uploading PDF for court list ID: {}", CourtListPublishAndPDFGenerationTask.ALERT_PATTERN, courtListId, e);
+            log.error("Error {} generating and uploading PDF for court list ID: {}", ALERT_PATTERN, courtListId, e);
             throw new RuntimeException("Failed to generate or upload PDF: " + e.getMessage(), e);
         } catch (Exception e) {
-            log.error("Error {} unexpected error during PDF generation for court list ID: {}", CourtListPublishAndPDFGenerationTask.ALERT_PATTERN, courtListId, e);
+            log.error("Error {} unexpected error during PDF generation for court list ID: {}", ALERT_PATTERN, courtListId, e);
             throw new RuntimeException("Failed to generate or upload PDF: " + e.getMessage(), e);
         }
     }
