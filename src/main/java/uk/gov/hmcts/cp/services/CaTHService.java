@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static uk.gov.hmcts.cp.task.CourtListPublishAndPDFGenerationTask.ALERT_PATTERN;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -83,7 +85,7 @@ public class CaTHService {
 
             log.info("Successfully sent court list document to CaTH. Response status: {}", res);
         } catch (Exception e) {
-            log.error("Error sending court list document to CaTH endpoint: {}", e.getMessage(), e);
+            log.error("Error {} sending court list document to CaTH endpoint: {}", ALERT_PATTERN, e.getMessage(), e);
             throw new RuntimeException("Failed to send court list document to CaTH: " + e.getMessage(), e);
         }
     }
@@ -95,7 +97,7 @@ public class CaTHService {
                     String blobName = buildBlobName(courtListId);
                     blobService.uploadJson(payload, blobName);
                 } catch (Exception e) {
-                    log.error("Failed to upload CaTH payload to blob storage, continuing with publish", e);
+                    log.error("Error {} uploading CaTH payload to blob storage, continuing with publish", ALERT_PATTERN, e);
                 }
             },
             () -> log.debug("Azure Blob Service not available, skipping payload upload")

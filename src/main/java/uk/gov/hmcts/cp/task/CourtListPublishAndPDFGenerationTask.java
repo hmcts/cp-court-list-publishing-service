@@ -34,6 +34,8 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
     private static final Logger logger = LoggerFactory.getLogger(CourtListPublishAndPDFGenerationTask.class);
 
+    public static final String ALERT_PATTERN = "PUBLISHING_FAILED";
+
     private final CourtListStatusRepository repository;
     private final CourtListQueryService courtListQueryService;
     private final CaTHService cathService;
@@ -74,7 +76,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                     payload = courtListQueryService.getCourtListPayload(
                             listId, courtCentreId, publishDate.toString(), publishDate.toString(), userId, true);
                 } catch (Exception e) {
-                    logger.error("Error fetching court list payload", e);
+                    logger.error("Error {} fetching court list payload", ALERT_PATTERN, e);
                 }
             }
         }
@@ -86,7 +88,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                 updateStatusToPublishSuccessful(courtListId);
             }
         } catch (Exception e) {
-            logger.error("Error updating court list publish status to PUBLISH_SUCCESSFUL", e);
+            logger.error("Error {} updating court list publish status to PUBLISH_SUCCESSFUL", ALERT_PATTERN, e);
         }
 
         CourtListPayload pdfPayload = null;
@@ -95,7 +97,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                 pdfPayload = courtListQueryService.getCourtListPayload(
                         listId, courtCentreId, publishDate.toString(), publishDate.toString(), userId, false);
             } catch (Exception e) {
-                logger.error("Error fetching court list payload for PDF generation", e);
+                logger.error("Error {} fetching court list payload for PDF generation before CaTH publishin", ALERT_PATTERN, e);
             }
         }
 
@@ -105,7 +107,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                 updateFileIdAndLastUpdated(courtListId, fileId);
             }
         } catch (Exception e) {
-            logger.error("Error generating and uploading PDF", e);
+            logger.error("Error {} generating and uploading PDF", ALERT_PATTERN, e);
             if (courtListId != null) {
                 updateErrorMessage(courtListId, e, ErrorContext.FILE);
             }
@@ -129,7 +131,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             queryAndSendCourtListToCaTH(executionInfo, payload, courtListId);
             return true;
         } catch (Exception e) {
-            logger.error("Error querying or sending court list to CaTH", e);
+            logger.error("Error {} querying or sending court list to CaTH", ALERT_PATTERN, e);
             if (courtListId != null) {
                 updateErrorMessage(courtListId, e, ErrorContext.PUBLISH);
             }
@@ -159,7 +161,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                     payload.getCourtIdNumeric(), payload.getIsWelsh(), courtListId);
             logger.info("Successfully sent court list document to CaTH endpoint");
         } catch (Exception e) {
-            logger.error("Error building document or sending court list to CaTH", e);
+            logger.error("Error {} building document or sending court list to CaTH", ALERT_PATTERN, e);
             throw new RuntimeException("Failed to send court list to CaTH: " + e.getMessage(), e);
         }
     }
@@ -185,7 +187,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
             logger.info("Successfully generated and uploaded PDF for court list ID: {}", courtListId);
             return fileId;
         } catch (Exception e) {
-            logger.error("Error generating and uploading PDF for court list ID: {}", courtListId, e);
+            logger.error("Error {} generating and uploading PDF for court list ID: {} after CaTH publishing", ALERT_PATTERN, courtListId, e);
             throw new RuntimeException("Error generating and uploading PDF: " + e.getMessage(), e);
         }
     }
