@@ -4,7 +4,6 @@ import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 import uk.gov.hmcts.cp.models.*;
 import uk.gov.hmcts.cp.models.transformed.schema.*;
-import uk.gov.hmcts.cp.util.CaTHStringUtils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -229,7 +228,7 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
         Application application = Application.builder()
                 .applicationReference(hearing.getCaseNumber())
                 .applicationType(courtApplication.getApplicationType())
-                .applicationParticulars(CaTHStringUtils.stripSurroundingWhitespace(courtApplication.getApplicationParticulars()))
+                .applicationParticulars(courtApplication.getApplicationParticulars())
                 .party(parties.isEmpty() ? null : parties)
                 .build();
         return Collections.singletonList(application);

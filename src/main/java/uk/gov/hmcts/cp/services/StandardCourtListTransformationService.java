@@ -6,7 +6,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.models.*;
 import uk.gov.hmcts.cp.models.transformed.schema.*;
-import uk.gov.hmcts.cp.util.CaTHStringUtils;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -133,7 +132,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         Application application = Application.builder()
                 .applicationReference(hearing.getCaseNumber())
                 .applicationType(courtApplication.getApplicationType())
-                .applicationParticulars(CaTHStringUtils.stripSurroundingWhitespace(courtApplication.getApplicationParticulars()))
+                .applicationParticulars(courtApplication.getApplicationParticulars())
                 .party(parties.isEmpty() ? null : parties)
                 .build();
         return Collections.singletonList(application);
@@ -314,7 +313,7 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         return OffenceSchema.builder()
                 .offenceCode(offence.getOffenceCode())
                 .offenceTitle(offence.getOffenceTitle())
-                .offenceWording(CaTHStringUtils.stripSurroundingWhitespace(offence.getOffenceWording()))
+                .offenceWording(offence.getOffenceWording())
                 .offenceMaxPen(offence.getMaxPenalty())
                 .reportingRestriction(offenceReportingRestriction)
                 .reportingRestrictionDetails(offenceReportingDetails)
