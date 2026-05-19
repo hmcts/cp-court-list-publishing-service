@@ -16,7 +16,9 @@ import java.util.regex.Pattern;
  *       the schemas (see the table on {@link #TAG_LIKE}).</li>
  *   <li>Surrounding whitespace is trimmed and internal whitespace runs are
  *       collapsed to a single space so {@code ^...$}-anchored schema patterns
- *       (dates, timestamps, etc.) survive stray whitespace from upstream.</li>
+ *       (dates, timestamps, etc.) survive stray whitespace from upstream.
+ *       Only ASCII whitespace is handled — the schemas' own patterns are
+ *       ASCII-only, so non-ASCII whitespace is left alone.</li>
  * </ol>
  *
  * <p>If nothing meaningful remains after cleaning, {@code null} is returned.
