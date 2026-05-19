@@ -224,7 +224,7 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
     }
 
     @Override
-    protected List<Application> buildApplications(Hearing hearing, CourtApplication courtApplication, List<Party> parties) {
+    protected List<Application> buildApplications(final Hearing hearing, final CourtApplication courtApplication, final List<Party> parties) {
         Application application = Application.builder()
                 .applicationReference(hearing.getCaseNumber())
                 .applicationType(courtApplication.getApplicationType())

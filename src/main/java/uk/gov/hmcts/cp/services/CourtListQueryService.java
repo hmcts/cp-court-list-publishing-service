@@ -28,17 +28,17 @@ public class CourtListQueryService {
      * Transforms an existing payload into CourtListDocument (no remote fetch).
      * Use when the payload was already obtained so that getCourtListPayload is not called again.
      */
-    public CourtListDocument buildCourtListDocumentFromPayload(CourtListPayload payload, CourtListType listId) {
+    public CourtListDocument buildCourtListDocumentFromPayload(final CourtListPayload payload, final CourtListType listId) {
         if (CourtListType.ONLINE_PUBLIC.equals(listId)) {
             log.info("Using PublicCourtListTransformationService for PUBLIC list type");
-            CourtListDocument document = onlinePublicCourtListTransformationService.transform(payload);
-            CourtListDocument sanitized = courtListDocumentSanitizer.sanitize(document);
+            final CourtListDocument document = onlinePublicCourtListTransformationService.transform(payload);
+            final CourtListDocument sanitized = courtListDocumentSanitizer.sanitize(document);
             jsonSchemaValidatorService.validate(sanitized, ONLINE_PUBLIC_COURT_LIST_SCHEMA_JSON);
             return sanitized;
         }
         log.info("Using CourtListTransformationService for list type: {}", listId);
-        CourtListDocument document = transformationService.transform(payload);
-        CourtListDocument sanitized = courtListDocumentSanitizer.sanitize(document);
+        final CourtListDocument document = transformationService.transform(payload);
+        final CourtListDocument sanitized = courtListDocumentSanitizer.sanitize(document);
         jsonSchemaValidatorService.validate(sanitized, STANDARD_COURT_LIST_SCHEMA_JSON);
         return sanitized;
     }
