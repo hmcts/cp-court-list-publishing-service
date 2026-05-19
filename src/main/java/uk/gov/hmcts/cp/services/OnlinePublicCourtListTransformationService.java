@@ -66,12 +66,9 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
         final List<Application> applications = applicationTransformResult.applications();
         final boolean hasApplications = applications != null && !applications.isEmpty();
 
-        List<CaseSchema> cases;
-        if (hasApplications) {
-            cases = Collections.emptyList();
-        } else {
-            cases = transformCases(hearing, applicationTransformResult.subjectPartyId());
-        }
+        final List<CaseSchema> cases = hasApplications
+                ? Collections.emptyList()
+                : transformCases(hearing, applicationTransformResult.subjectPartyId());
 
         if (cases.isEmpty() && !hasApplications) {
             return null;

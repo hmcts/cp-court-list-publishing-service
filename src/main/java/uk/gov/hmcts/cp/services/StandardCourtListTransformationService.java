@@ -62,12 +62,9 @@ public class StandardCourtListTransformationService extends BaseCourtListTransfo
         List<Application> applications = appResult.applications();
         boolean hasApplications = applications != null && !applications.isEmpty();
 
-        List<CaseSchema> cases;
-        if (hasApplications) {
-            cases = Collections.emptyList();
-        } else {
-            cases = transformCases(hearing, appResult.subjectPartyId());
-        }
+        final List<CaseSchema> cases = hasApplications
+                ? Collections.emptyList()
+                : transformCases(hearing, appResult.subjectPartyId());
 
         if (cases.isEmpty() && !hasApplications) {
             return null;
