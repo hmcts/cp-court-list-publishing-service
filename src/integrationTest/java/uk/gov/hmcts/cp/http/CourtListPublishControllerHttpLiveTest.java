@@ -392,7 +392,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 .as("DOCX body for %s must match every byte (and therefore every field value) of the stubbed content fixture", courtListType)
                 .isEqualTo(expectedContent.getBytes(StandardCharsets.UTF_8));
 
-        verifyListingPayloadCalled(courtListType);
+        verifyProgressionCourtlistDataCalled(courtListType);
         verifyDocumentGeneratorCalled(expectedTemplate(courtListType), "docx");
     }
 
@@ -430,6 +430,22 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         });
         assertThat(matches)
                 .as("Listing /courtlistpayload must be called exactly once for %s with restricted=false and includeApplications=false", courtListType)
+                .hasSize(1);
+    }
+
+    private void verifyProgressionCourtlistDataCalled(CourtListType courtListType) throws Exception {
+        List<JsonNode> matches = wiremockRequestsMatching(req -> {
+            if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
+                return false;
+            }
+            String url = wiremockRequestUrl(req);
+            return url.contains("/progression-service/query/api/rest/progression/courtlistdata")
+                    && url.contains("listId=" + courtListType.name())
+                    && url.contains("restricted=false")
+                    && url.contains("includeApplications=false");
+        });
+        assertThat(matches)
+                .as("Progression /courtlistdata must be called exactly once for %s with restricted=false and includeApplications=false", courtListType)
                 .hasSize(1);
     }
 
