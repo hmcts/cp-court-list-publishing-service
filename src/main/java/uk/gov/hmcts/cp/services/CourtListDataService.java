@@ -40,7 +40,8 @@ public class CourtListDataService {
     private static final Set<CourtListType> PROGRESSION_ENRICHED_TYPES = EnumSet.of(
             CourtListType.PUBLIC,
             CourtListType.STANDARD,
-            CourtListType.BENCH);
+            CourtListType.BENCH,
+            CourtListType.ONLINE_PUBLIC);
 
     private final ProgressionQueryService progressionQueryService;
     private final RestTemplate publicCourtListRestTemplate;

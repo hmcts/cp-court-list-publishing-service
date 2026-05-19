@@ -163,18 +163,18 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends CourtLi
             {
               "request": {
                 "method": "GET",
-                "urlPathPattern": "/listing-service/query/api/rest/listing/courtlistpayload",
+                "urlPathPattern": "/progression-service/query/api/rest/progression/courtlistdata.*",
                 "queryParameters": {"listId": {"equalTo": "ONLINE_PUBLIC"}}
               },
               "response": {
                 "status": 200,
-                "headers": {"Content-Type": "application/vnd.listing.search.court.list.payload+json"},
+                "headers": {"Content-Type": "application/json"},
                 "bodyFileName": "court-list-payload-public-schema-invalid.json"
               },
               "priority": 0
             }
             """;
-        postWireMockMapping(mappingJson, "schema-invalid listing payload");
+        postWireMockMapping(mappingJson, "schema-invalid progression payload");
     }
 
     private void addDocumentGeneratorFailureStub() throws Exception {
