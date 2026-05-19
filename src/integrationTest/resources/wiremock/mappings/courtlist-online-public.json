@@ -3,7 +3,7 @@
     "method": "GET",
     "urlPathPattern": "/progression-service/query/api/rest/progression/courtlistdata",
     "queryParameters": {
-      "listId": {"equalTo": "USHERS_MAGISTRATE"}
+      "listId": {"equalTo": "ONLINE_PUBLIC"}
     },
     "headers": {
       "Accept": {"equalTo": "application/vnd.progression.search.court.list.data+json"},
@@ -13,12 +13,7 @@
   "response": {
     "status": 200,
     "headers": {"Content-Type": "application/vnd.progression.search.court.list.data+json"},
-    "jsonBody": {
-      "listType": "ushers_magistrate",
-      "templateName": "UshersMagistrateList",
-      "courtCentreName": "Test Court",
-      "hearingDates": []
-    }
+    "bodyFileName": "court-list-payload-online-public.json"
   },
   "priority": 2
 }

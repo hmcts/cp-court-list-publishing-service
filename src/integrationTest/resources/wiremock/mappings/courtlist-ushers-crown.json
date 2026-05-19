@@ -1,28 +1,24 @@
 {
   "request": {
     "method": "GET",
-    "urlPathPattern": "/listing-service/query/api/rest/listing/courtlist",
+    "urlPathPattern": "/progression-service/query/api/rest/progression/courtlistdata",
     "queryParameters": {
-      "listId": {
-        "equalTo": "USHERS_CROWN"
-      }
+      "listId": {"equalTo": "USHERS_CROWN"}
     },
     "headers": {
-      "Accept": {
-        "equalTo": "application/vnd.listing.search.court.list+json"
-      },
-      "CJSCPPUID": {
-        "matches": ".+"
-      }
+      "Accept": {"equalTo": "application/vnd.progression.search.court.list.data+json"},
+      "CJSCPPUID": {"matches": ".+"}
     }
   },
   "response": {
     "status": 200,
-    "headers": {
-      "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "Content-Disposition": "attachment; filename=\"UshersList.docx\""
-    },
-    "bodyFileName": "minimal-docx.docx"
+    "headers": {"Content-Type": "application/vnd.progression.search.court.list.data+json"},
+    "jsonBody": {
+      "listType": "ushers_crown",
+      "templateName": "UshersCrownList",
+      "courtCentreName": "Test Court",
+      "hearingDates": []
+    }
   },
   "priority": 2
 }

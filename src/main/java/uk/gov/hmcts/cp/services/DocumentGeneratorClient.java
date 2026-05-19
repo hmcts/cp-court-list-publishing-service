@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -31,7 +30,6 @@ import static java.lang.String.format;
 
 @Component
 @RequiredArgsConstructor
-@ConditionalOnExpression("${azure.storage.enabled:false} or ${public-court-list.enabled:false}")
 public class DocumentGeneratorClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(DocumentGeneratorClient.class);

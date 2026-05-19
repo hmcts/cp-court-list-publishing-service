@@ -223,7 +223,8 @@ class CourtListPublishControllerTest {
                 UUID.randomUUID(),  // courtCentreId
                 LocalDate.now(),    // startDate
                 LocalDate.now(),    // endDate
-                CourtListType.STANDARD
+                CourtListType.STANDARD,
+                Boolean.FALSE       // restricted
         );
     }
 
