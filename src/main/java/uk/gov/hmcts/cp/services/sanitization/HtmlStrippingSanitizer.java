@@ -64,7 +64,7 @@ public class HtmlStrippingSanitizer {
             return null;
         }
         String stripped = TAG_LIKE.matcher(input).replaceAll(" ");
-        String collapsed = WHITESPACE.matcher(stripped).replaceAll(" ").trim();
+        String collapsed = WHITESPACE.matcher(stripped).replaceAll(" ").strip();
         if (collapsed.isEmpty()) {
             return null;
         }
