@@ -30,23 +30,23 @@ public class CourtListDocumentSanitizer {
 
     private final HtmlStrippingSanitizer stringSanitizer;
 
-    public CourtListDocument sanitize(CourtListDocument document) {
+    public CourtListDocument sanitize(final CourtListDocument document) {
         if (document == null) {
             return null;
         }
-        JsonNode root = OBJECT_MAPPER.valueToTree(document);
+        final JsonNode root = OBJECT_MAPPER.valueToTree(document);
         walk(root);
         return OBJECT_MAPPER.convertValue(root, CourtListDocument.class);
     }
 
-    private void walk(JsonNode node) {
+    private void walk(final JsonNode node) {
         if (node instanceof ObjectNode objectNode) {
-            List<String> fieldsToRemove = new ArrayList<>();
+            final List<String> fieldsToRemove = new ArrayList<>();
             objectNode.fieldNames().forEachRemaining(fieldName -> {
-                JsonNode child = objectNode.get(fieldName);
+                final JsonNode child = objectNode.get(fieldName);
                 if (child.isTextual()) {
-                    String original = child.asText();
-                    String cleaned = stringSanitizer.sanitize(original);
+                    final String original = child.asText();
+                    final String cleaned = stringSanitizer.sanitize(original);
                     if (cleaned == null) {
                         // entirely-tag input collapsed to empty: drop the field so
                         // JsonInclude.NON_NULL omits it from the outgoing JSON
@@ -61,10 +61,10 @@ public class CourtListDocumentSanitizer {
             fieldsToRemove.forEach(objectNode::remove);
         } else if (node instanceof ArrayNode arrayNode) {
             for (int i = 0; i < arrayNode.size(); i++) {
-                JsonNode child = arrayNode.get(i);
+                final JsonNode child = arrayNode.get(i);
                 if (child.isTextual()) {
-                    String original = child.asText();
-                    String cleaned = stringSanitizer.sanitize(original);
+                    final String original = child.asText();
+                    final String cleaned = stringSanitizer.sanitize(original);
                     if (cleaned == null) {
                         // keep array length stable by replacing entirely-tag entries
                         // with an empty string rather than removing the slot

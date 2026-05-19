@@ -59,12 +59,12 @@ public class HtmlStrippingSanitizer {
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
-    public String sanitize(String input) {
+    public String sanitize(final String input) {
         if (input == null || input.isEmpty()) {
             return null;
         }
-        String stripped = TAG_LIKE.matcher(input).replaceAll(" ");
-        String collapsed = WHITESPACE.matcher(stripped).replaceAll(" ").strip();
+        final String stripped = TAG_LIKE.matcher(input).replaceAll(" ");
+        final String collapsed = WHITESPACE.matcher(stripped).replaceAll(" ").strip();
         if (collapsed.isEmpty()) {
             return null;
         }
