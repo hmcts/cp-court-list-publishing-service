@@ -4,7 +4,6 @@ import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 import uk.gov.hmcts.cp.models.*;
 import uk.gov.hmcts.cp.models.transformed.schema.*;
-import uk.gov.hmcts.cp.util.CaTHStringUtils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,12 +66,9 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
         final List<Application> applications = applicationTransformResult.applications();
         final boolean hasApplications = applications != null && !applications.isEmpty();
 
-        List<CaseSchema> cases;
-        if (hasApplications) {
-            cases = Collections.emptyList();
-        } else {
-            cases = transformCases(hearing, applicationTransformResult.subjectPartyId());
-        }
+        final List<CaseSchema> cases = hasApplications
+                ? Collections.emptyList()
+                : transformCases(hearing, applicationTransformResult.subjectPartyId());
 
         if (cases.isEmpty() && !hasApplications) {
             return null;
@@ -225,11 +221,11 @@ public class OnlinePublicCourtListTransformationService extends BaseCourtListTra
     }
 
     @Override
-    protected List<Application> buildApplications(Hearing hearing, CourtApplication courtApplication, List<Party> parties) {
+    protected List<Application> buildApplications(final Hearing hearing, final CourtApplication courtApplication, final List<Party> parties) {
         Application application = Application.builder()
                 .applicationReference(hearing.getCaseNumber())
                 .applicationType(courtApplication.getApplicationType())
-                .applicationParticulars(CaTHStringUtils.stripSurroundingWhitespace(courtApplication.getApplicationParticulars()))
+                .applicationParticulars(courtApplication.getApplicationParticulars())
                 .party(parties.isEmpty() ? null : parties)
                 .build();
         return Collections.singletonList(application);
