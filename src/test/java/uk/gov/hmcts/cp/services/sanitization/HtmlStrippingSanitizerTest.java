@@ -85,6 +85,42 @@ class HtmlStrippingSanitizerTest {
     }
 
     @Test
+    void handlesRealisticOffenceWordingWithPlaceholderAndSurroundingNewlines() {
+        // Realistic offence-wording shape: a placeholder ("<the quantity>") inside
+        // a long narrative, plus surrounding newlines from upstream formatting. The
+        // placeholder is stripped (same lossy trade-off as
+        // dropsAngleBracketedPlaceholderText); newlines are trimmed and the gap
+        // around the dropped placeholder is collapsed to a single space.
+        // The non-ASCII '£' symbol and the '&/or' fragment must survive untouched.
+        String input = "\n"
+                + "MD71530 Possess a controlled drug of Class B - Cannabis / Cannabis Resin "
+                + "on 14/04/2026 at greater manchester had in your possession <the quantity> "
+                + "of cannabis, a controlled drug of class B in contravention of section 5(1) "
+                + "of the Misuse of Drugs Act 1971 Contrary to section 5(2) of and Schedule 4 "
+                + "to the Misuse of Drugs Act 1971. (Hearing 1) MAX PENALTY: EW:3M &/or £2500"
+                + "\n";
+
+        String expected = "MD71530 Possess a controlled drug of Class B - Cannabis / Cannabis Resin "
+                + "on 14/04/2026 at greater manchester had in your possession of cannabis, "
+                + "a controlled drug of class B in contravention of section 5(1) of the Misuse "
+                + "of Drugs Act 1971 Contrary to section 5(2) of and Schedule 4 to the Misuse "
+                + "of Drugs Act 1971. (Hearing 1) MAX PENALTY: EW:3M &/or £2500";
+
+        assertThat(sanitizer.sanitize(input)).isEqualTo(expected);
+    }
+
+    @Test
+    void dropsAngleBracketedPlaceholderText() {
+        // Real-world ambiguity: a human-authored string can use <...> as literal
+        // placeholder text (here "<amount due>"), but the schema's anti-HTML rule
+        // cannot distinguish that from an actual HTML tag — both match `<[^>]+>`.
+        // We must strip it to pass schema validation; the cost is silent data loss
+        // for human-authored angle-bracket templates of this shape.
+        String input = "she is due to pay <amount due> by september 2027";
+        assertThat(sanitizer.sanitize(input)).isEqualTo("she is due to pay by september 2027");
+    }
+
+    @Test
     void leavesBareLessThanIntactWhenNoMatchingGreaterThan() {
         // The schema regex requires a closing '>' to consider a substring tag-shaped,
         // so bare '<' or '>' on its own is left alone.

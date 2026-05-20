@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CourtListDocumentSanitizerTest {
 
     private final CourtListDocumentSanitizer sanitizer =
-            new CourtListDocumentSanitizer(new HtmlStrippingSanitizer());
+            new CourtListDocumentSanitizer(new WafPatternSanitizer("..\\,../"), new HtmlStrippingSanitizer());
 
     @Test
     void returnsNullWhenDocumentIsNull() {
@@ -89,6 +89,23 @@ class CourtListDocumentSanitizerTest {
         AddressSchema cleaned = sanitizer.sanitize(input).getVenue().getVenueAddress();
 
         assertThat(cleaned.getLine()).containsExactly("1 Court Street", "", "Floor 2");
+    }
+
+    @Test
+    void stripsWafBlockedPathTraversalSequences() {
+        // Path-traversal sequences like ../ or ..\ would be rejected by the
+        // Azure WAF if they appeared anywhere in the outbound JSON, even inside
+        // legitimate free text. The walker must strip them via WafPatternSanitizer
+        // before the document leaves this service.
+        CourtListDocument input = documentWithAddress(AddressSchema.builder()
+                .town("see ../docs for details")
+                .county("backslash variant ..\\here")
+                .build());
+
+        AddressSchema cleaned = sanitizer.sanitize(input).getVenue().getVenueAddress();
+
+        assertThat(cleaned.getTown()).isEqualTo("see docs for details");
+        assertThat(cleaned.getCounty()).isEqualTo("backslash variant here");
     }
 
     @Test
