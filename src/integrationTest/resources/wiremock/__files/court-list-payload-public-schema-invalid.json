@@ -25,7 +25,7 @@
                   "sequence": 1,
                   "reportingRestrictionReason": "",
                   "welshReportingRestrictionReason": "",
-                  "startTime": "10:30",
+                  "startTime": "not-a-time",
                   "hearingType": "First hearing",
                   "welshHearingType": "Gwrandawiad Cyntaf",
                   "caseNumber": null,
