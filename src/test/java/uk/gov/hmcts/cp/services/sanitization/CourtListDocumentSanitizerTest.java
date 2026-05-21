@@ -11,8 +11,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CourtListDocumentSanitizerTest {
 
-    private final CourtListDocumentSanitizer sanitizer =
-            new CourtListDocumentSanitizer(new WafPatternSanitizer("..\\,../"), new HtmlStrippingSanitizer());
+    private final CourtListDocumentSanitizer sanitizer = new CourtListDocumentSanitizer(
+            new WafPatternSanitizer("..\\,../"),
+            new HtmlStrippingSanitizer(),
+            new RequiredStringFieldsRegistry());
 
     @Test
     void returnsNullWhenDocumentIsNull() {
@@ -63,10 +65,11 @@ class CourtListDocumentSanitizerTest {
     }
 
     @Test
-    void dropsObjectFieldWhenSanitizationCollapsesToEmpty() {
-        // postCode is HTML-only after stripping -> sanitizer returns null
-        // -> walker removes the field -> JsonInclude.NON_NULL omits it from JSON
-        // -> when deserialised back into the POJO the field is null
+    void preservesRequiredFieldAsEmptyStringWhenSanitisationStripsValue() {
+        // postCode is HTML-only after stripping. The walker must keep the field
+        // present (as "") because postCode is declared as a required property
+        // in online-public-court-list-schema.json — CaTH would otherwise fail
+        // with "/venue/venueAddress: required property 'postCode' not found".
         CourtListDocument input = documentWithAddress(AddressSchema.builder()
                 .town("Manchester")
                 .postCode("<br /><br />")
@@ -75,7 +78,42 @@ class CourtListDocumentSanitizerTest {
         AddressSchema cleaned = sanitizer.sanitize(input).getVenue().getVenueAddress();
 
         assertThat(cleaned.getTown()).isEqualTo("Manchester");
-        assertThat(cleaned.getPostCode()).isNull();
+        assertThat(cleaned.getPostCode()).isEmpty();
+    }
+
+    @Test
+    void injectsEmptyStringForRequiredFieldEvenWhenUpstreamSuppliedNull() {
+        // Same required-field protection but for the harder case: upstream
+        // never set postCode at all (null in the POJO -> omitted from the
+        // JsonNode tree by JsonInclude.NON_NULL -> sanitiser would never see
+        // it). The required-field enforcement pass must inject "" here.
+        CourtListDocument input = documentWithAddress(AddressSchema.builder()
+                .town("Manchester")
+                // .postCode( ) deliberately omitted -> null
+                .build());
+
+        AddressSchema cleaned = sanitizer.sanitize(input).getVenue().getVenueAddress();
+
+        assertThat(cleaned.getTown()).isEqualTo("Manchester");
+        assertThat(cleaned.getPostCode()).isEmpty();
+    }
+
+    @Test
+    void preservesOptionalFieldAsEmptyStringWhenSanitisationStripsValue() {
+        // Even though town is optional, we no longer drop it when sanitisation
+        // strips the value to empty — preserving every field that was supplied
+        // keeps the JSON shape stable and avoids any chance of a "required
+        // property not found" failure if a schema ever upgrades a field from
+        // optional to required.
+        CourtListDocument input = documentWithAddress(AddressSchema.builder()
+                .town("<br />")
+                .postCode("M1 1AA")
+                .build());
+
+        AddressSchema cleaned = sanitizer.sanitize(input).getVenue().getVenueAddress();
+
+        assertThat(cleaned.getTown()).isEmpty();
+        assertThat(cleaned.getPostCode()).isEqualTo("M1 1AA");
     }
 
     @Test
