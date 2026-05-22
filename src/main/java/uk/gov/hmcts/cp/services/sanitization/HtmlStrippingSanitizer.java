@@ -22,8 +22,11 @@ import java.util.regex.Pattern;
  * </ol>
  *
  * <p>If nothing meaningful remains after cleaning, {@code null} is returned.
- * Combined with {@code JsonInclude.NON_NULL}, that causes the field to be
- * omitted from the outgoing JSON rather than serialised as an empty string.
+ * The walker uses this signal to drop the field from the outgoing JSON (via
+ * {@code JsonInclude.NON_NULL}), but only for fields that are NOT required by
+ * either CaTH schema. Required-field presence is enforced separately by the
+ * {@link CourtListDocumentSanitizer} after the walk, so this sanitiser is
+ * free to signal "nothing to send" without having to know the schema.
  */
 @Component
 public class HtmlStrippingSanitizer {
