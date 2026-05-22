@@ -39,7 +39,7 @@ public class CleanupJobIntegrationTest extends CourtListIntegrationTestBase {
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private static final String CLEANUP_ENDPOINT = BASE_URL + "/api/court-list-publish/publish-status-cleanup";
     private static final MediaType CLEANUP_ACCEPT =
-            MediaType.parseMediaType("application/vnd.courtlistpublishing-service.publish-status-cleanup.get+json");
+            MediaType.parseMediaType("application/vnd.courtlistpublishing-service.publish-status-cleanup+json");
 
     private static final int DAYS_BEYOND_RETENTION = 10;
 
@@ -125,15 +125,30 @@ public class CleanupJobIntegrationTest extends CourtListIntegrationTestBase {
     }
 
     @Test
-    void cleanupOldData_shouldNotDeleteRecord_whenBlobDoesNotExist() throws Exception {
+    void cleanupOldData_shouldNotDeleteRecord_whenPdfTypeAndPdfBlobDoesNotExist() throws Exception {
+        // ONLINE_PUBLIC requires both PDF and JSON blobs; if neither exists the record must be kept
         UUID courtListId = UUID.randomUUID();
         Instant oldInstant = Instant.now().minus(DAYS_BEYOND_RETENTION, ChronoUnit.DAYS);
         LocalDate oldPublishDate = LocalDate.now().minusDays(DAYS_BEYOND_RETENTION);
-        insertPublishStatusRow(courtListId, oldInstant, oldPublishDate, courtListId);
+        insertPublishStatusRow(courtListId, oldInstant, oldPublishDate, courtListId, "ONLINE_PUBLIC");
 
         invokePublishStatusCleanup();
 
         assertRowExists(courtListId);
+    }
+
+    @Test
+    void cleanupOldData_shouldDeletePdfTypeRecordAndBothBlobs_afterRetentionPeriod() throws Exception {
+        UUID courtListId = UUID.randomUUID();
+        Instant oldInstant = Instant.now().minus(DAYS_BEYOND_RETENTION, ChronoUnit.DAYS);
+        LocalDate oldPublishDate = LocalDate.now().minusDays(DAYS_BEYOND_RETENTION);
+        insertPublishStatusRow(courtListId, oldInstant, oldPublishDate, courtListId, "ONLINE_PUBLIC");
+        uploadPdfAndCathJson(courtListId);
+
+        invokePublishStatusCleanup();
+
+        assertRowAbsent(courtListId);
+        assertBlobsDeleted(courtListId);
     }
 
     @Test
@@ -158,12 +173,17 @@ public class CleanupJobIntegrationTest extends CourtListIntegrationTestBase {
         headers.setAccept(List.of(CLEANUP_ACCEPT));
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         ResponseEntity<String> response =
-                client.exchange(CLEANUP_ENDPOINT, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+                client.exchange(CLEANUP_ENDPOINT, HttpMethod.POST, new HttpEntity<>(headers), String.class);
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
     }
 
     private void insertPublishStatusRow(UUID courtListId, Instant lastUpdated, LocalDate publishDate, UUID fileId)
             throws SQLException {
+        insertPublishStatusRow(courtListId, lastUpdated, publishDate, fileId, "STANDARD");
+    }
+
+    private void insertPublishStatusRow(UUID courtListId, Instant lastUpdated, LocalDate publishDate, UUID fileId,
+                                        String courtListType) throws SQLException {
         UUID courtCentreId = UUID.randomUUID();
         try (Connection c = connection();
                 PreparedStatement ps = c.prepareStatement(
@@ -172,7 +192,7 @@ public class CleanupJobIntegrationTest extends CourtListIntegrationTestBase {
             ps.setObject(2, courtCentreId);
             ps.setString(3, "SUCCESSFUL");
             ps.setString(4, "SUCCESSFUL");
-            ps.setString(5, "STANDARD");
+            ps.setString(5, courtListType);
             ps.setTimestamp(6, Timestamp.from(lastUpdated));
             ps.setDate(7, Date.valueOf(publishDate));
             if (fileId != null) {

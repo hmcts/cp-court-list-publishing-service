@@ -5,17 +5,28 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 import uk.gov.hmcts.cp.services.CaTHService;
 import uk.gov.hmcts.cp.services.CourtListPublisherBlobClientService;
 
 import java.time.LocalDate;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @Slf4j
 public class CleanupJobService {
+
+    // Types whose publish flow stores only a CaTH JSON blob in Azure (no PDF).
+    // Matches PROGRESSION_PDF_TYPES in CourtListPublishAndPDFGenerationTask.
+    private static final Set<CourtListType> JSON_ONLY_TYPES = EnumSet.of(
+            CourtListType.PUBLIC,
+            CourtListType.STANDARD,
+            CourtListType.BENCH
+    );
 
     private final CourtListStatusRepository repository;
     private final BlobContainerClient blobContainerClient;
@@ -37,10 +48,17 @@ public class CleanupJobService {
         log.info("Cleanup: found {} record(s) older than {} days (cutoff {})", entities.size(), retentionDays, cutoff);
 
         for (CourtListStatusEntity entity : entities) {
-            boolean pdfOk = true;
             UUID fileId = entity.getFileId();
-            if (fileId != null) {
-                pdfOk = deletePdfBlob(entity, fileId);
+            boolean pdfOk;
+            if (JSON_ONLY_TYPES.contains(entity.getCourtListType())) {
+                // No PDF stored in Azure for these types; delete any orphaned PDF blob as best-effort
+                if (fileId != null) {
+                    deletePdfBlob(entity, fileId);
+                }
+                pdfOk = true;
+            } else {
+                // PDF+JSON types: PDF deletion must succeed before removing the DB record
+                pdfOk = (fileId == null) || deletePdfBlob(entity, fileId);
             }
             boolean cathJsonOk = deleteCathPayloadBlob(entity);
             if (pdfOk && cathJsonOk) {

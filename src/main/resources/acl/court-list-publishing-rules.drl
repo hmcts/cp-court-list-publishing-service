@@ -54,7 +54,7 @@ end
 rule "Allow – publish-status-cleanup (System Users only)"
 when
   $o: Outcome()
-  $a: Action(name == "courtlistpublishing-service.publish-status-cleanup.get")
+  $a: Action(name == "courtlistpublishing-service.publish-status-cleanup")
   eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, SecurityGroupConstants.getSystemUserOnlyRoles()))
 then
   $o.setSuccess(true);
