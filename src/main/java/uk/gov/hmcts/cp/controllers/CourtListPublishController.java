@@ -192,11 +192,6 @@ public class CourtListPublishController implements CourtListPublishApi {
                 .body(responses);
     }
 
-    @PostMapping(
-            value = CourtListPublishApi.PATH_PUBLISH_STATUS_CLEANUP,
-            produces = {PUBLISH_STATUS_CLEANUP_MEDIA_TYPE, "application/json"},
-            consumes = MediaType.ALL_VALUE
-    )
     @Override
     public ResponseEntity<PublishStatusCleanupResponse> publishStatusCleanup() {
         try {
