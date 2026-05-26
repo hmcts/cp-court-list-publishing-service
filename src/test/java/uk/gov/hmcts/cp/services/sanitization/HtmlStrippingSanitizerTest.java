@@ -26,6 +26,9 @@ class HtmlStrippingSanitizerTest {
 
     @Test
     void returnsNullWhenInputIsEmpty() {
+        // Empty in -> null out. Required-field presence is enforced by
+        // CourtListDocumentSanitizer after the walk; this sanitiser's job is
+        // only to signal "nothing meaningful left".
         assertThat(sanitizer.sanitize("")).isNull();
     }
 
@@ -78,6 +81,8 @@ class HtmlStrippingSanitizerTest {
 
     @Test
     void returnsNullWhenInputIsEntirelyTagLike() {
+        // Entirely-HTML inputs collapse to null; the walker decides whether
+        // to drop the field (optional) or substitute "" (required).
         assertThat(sanitizer.sanitize("<br />")).isNull();
         assertThat(sanitizer.sanitize("<br/><br/>")).isNull();
         assertThat(sanitizer.sanitize("&lt;br/&gt;")).isNull();

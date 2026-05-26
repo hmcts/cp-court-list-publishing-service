@@ -203,6 +203,30 @@ class CourtListPublishingAccessControlTest {
         assertThat(outcome.isSuccess()).isFalse();
     }
 
+    // --- publish-status-cleanup.post (System Users only) ---
+
+    @Test
+    void publishStatusCleanupPost_shouldAllowSystemUser() {
+        Action action = new Action(PUBLISH_STATUS_CLEANUP_POST, Map.of());
+        given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action,
+                SecurityGroupConstants.getSystemUserOnlyRoles())).willReturn(true);
+
+        Outcome outcome = evaluateRule(action);
+
+        assertThat(outcome.isSuccess()).isTrue();
+    }
+
+    @Test
+    void publishStatusCleanupPost_shouldDenyNonSystemUser() {
+        Action action = new Action(PUBLISH_STATUS_CLEANUP_POST, Map.of());
+        given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action,
+                SecurityGroupConstants.getSystemUserOnlyRoles())).willReturn(false);
+
+        Outcome outcome = evaluateRule(action);
+
+        assertThat(outcome.isSuccess()).isFalse();
+    }
+
     // --- unknown action should be denied ---
 
     @Test

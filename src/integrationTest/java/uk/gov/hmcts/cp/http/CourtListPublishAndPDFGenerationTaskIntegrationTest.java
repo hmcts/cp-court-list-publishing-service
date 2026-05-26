@@ -158,6 +158,15 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends CourtLi
         postWireMockMapping(mapping, "CaTH failure");
     }
 
+    /**
+     * Stubs upstream to return a payload whose {@code startTime} is unparseable.
+     * The transformer's {@code convertToIsoDateTime} returns {@code null} on
+     * parse failure, so {@code sittingStart} ends up null in the document.
+     * The required-field enforcement pass then injects {@code ""} for it, which
+     * still fails the schema's strict ISO-timestamp {@code pattern} — giving us
+     * a deterministic schema-validation failure that the sanitiser cannot
+     * silently recover.
+     */
     private void addSchemaInvalidPayloadStub() throws Exception {
         String mappingJson = """
             {
