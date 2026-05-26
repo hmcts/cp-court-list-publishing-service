@@ -207,21 +207,6 @@ public class CourtListPublishController implements CourtListPublishApi {
         }
     }
 
-    @Override
-    public ResponseEntity<PublishStatusCleanupResponse> publishStatusCleanupPost(Object body) {
-        try {
-            cleanupJobService.cleanupOldData(publishStatusCleanupDays);
-            return ResponseEntity.accepted()
-                    .contentType(MediaType.parseMediaType(PUBLISH_STATUS_CLEANUP_POST_MEDIA_TYPE))
-                    .body(PublishStatusCleanupResponse.builder().success(true).build());
-        } catch (Exception e) {
-            LOG.error("Publish status cleanup (POST) failed", e);
-            return ResponseEntity.accepted()
-                    .contentType(MediaType.parseMediaType(PUBLISH_STATUS_CLEANUP_POST_MEDIA_TYPE))
-                    .body(PublishStatusCleanupResponse.builder().success(false).build());
-        }
-    }
-
     private static String getCjscppuidFromRequest() {
         var attrs = RequestContextHolder.getRequestAttributes();
         if (attrs instanceof ServletRequestAttributes servletAttrs) {
