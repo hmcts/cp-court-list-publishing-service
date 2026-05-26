@@ -46,6 +46,7 @@ public class CourtListPublishController implements CourtListPublishApi {
     private static final String PDF_FILENAME = "CourtList.pdf";
     private static final String CONTENT_DISPOSITION_VALUE = "attachment; filename=\"" + PDF_FILENAME + "\"";
     private static final String PUBLISH_STATUS_CLEANUP_MEDIA_TYPE = "application/vnd.courtlistpublishing-service.publish-status-cleanup.get+json";
+    private static final String PUBLISH_STATUS_CLEANUP_POST_MEDIA_TYPE = "application/vnd.courtlistpublishing-service.publish-status-cleanup.post+json";
 
     private final CourtListPublishStatusService service;
     private final CourtListTaskTriggerService courtListTaskTriggerService;
@@ -203,6 +204,21 @@ public class CourtListPublishController implements CourtListPublishApi {
             LOG.error("Publish status cleanup failed", e);
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(PUBLISH_STATUS_CLEANUP_MEDIA_TYPE))
+                    .body(PublishStatusCleanupResponse.builder().success(false).build());
+        }
+    }
+
+    @Override
+    public ResponseEntity<PublishStatusCleanupResponse> publishStatusCleanupPost(Object body) {
+        try {
+            cleanupJobService.cleanupOldData(publishStatusCleanupDays);
+            return ResponseEntity.accepted()
+                    .contentType(MediaType.parseMediaType(PUBLISH_STATUS_CLEANUP_POST_MEDIA_TYPE))
+                    .body(PublishStatusCleanupResponse.builder().success(true).build());
+        } catch (Exception e) {
+            LOG.error("Publish status cleanup (POST) failed", e);
+            return ResponseEntity.accepted()
+                    .contentType(MediaType.parseMediaType(PUBLISH_STATUS_CLEANUP_POST_MEDIA_TYPE))
                     .body(PublishStatusCleanupResponse.builder().success(false).build());
         }
     }

@@ -30,6 +30,7 @@ class CourtListPublishingAccessControlTest {
     private static final String TEST_AUTH_POST = "courtlistpublishing-service.test-auth.post";
     private static final String PUBLIC_COURT_LIST_GET = "courtlistpublishing-service.public-court-list.get";
     private static final String PUBLISH_STATUS_CLEANUP_GET = "courtlistpublishing-service.publish-status-cleanup.get";
+    private static final String PUBLISH_STATUS_CLEANUP_POST = "courtlistpublishing-service.publish-status-cleanup.post";
 
     private static KieBase kieBase;
 
@@ -195,6 +196,30 @@ class CourtListPublishingAccessControlTest {
     @Test
     void publishStatusCleanupGet_shouldDenyNonSystemUser() {
         Action action = new Action(PUBLISH_STATUS_CLEANUP_GET, Map.of());
+        given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action,
+                SecurityGroupConstants.getSystemUserOnlyRoles())).willReturn(false);
+
+        Outcome outcome = evaluateRule(action);
+
+        assertThat(outcome.isSuccess()).isFalse();
+    }
+
+    // --- publish-status-cleanup.post (System Users only) ---
+
+    @Test
+    void publishStatusCleanupPost_shouldAllowSystemUser() {
+        Action action = new Action(PUBLISH_STATUS_CLEANUP_POST, Map.of());
+        given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action,
+                SecurityGroupConstants.getSystemUserOnlyRoles())).willReturn(true);
+
+        Outcome outcome = evaluateRule(action);
+
+        assertThat(outcome.isSuccess()).isTrue();
+    }
+
+    @Test
+    void publishStatusCleanupPost_shouldDenyNonSystemUser() {
+        Action action = new Action(PUBLISH_STATUS_CLEANUP_POST, Map.of());
         given(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups(action,
                 SecurityGroupConstants.getSystemUserOnlyRoles())).willReturn(false);
 
