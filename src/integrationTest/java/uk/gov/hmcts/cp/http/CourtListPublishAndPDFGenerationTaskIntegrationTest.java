@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -20,7 +19,6 @@ public class CourtListPublishAndPDFGenerationTaskIntegrationTest extends CourtLi
 
     private static final long WIREMOCK_STUB_REGISTER_DELAY_MS = 500;
 
-    @Disabled
     @Test
     void publishCourtList_shouldQueryAndSendToCaTH_whenValidRequest() throws Exception {
         UUID courtListId = publishOnlinePublicExpectingRequested();
