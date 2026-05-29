@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.services.sanitization.CourtListDocumentSanitizer;
 
 @Service
 @RequiredArgsConstructor
@@ -21,22 +22,25 @@ public class CourtListQueryService {
     private final StandardCourtListTransformationService transformationService;
     private final OnlinePublicCourtListTransformationService onlinePublicCourtListTransformationService;
     private final JsonSchemaValidatorService jsonSchemaValidatorService;
+    private final CourtListDocumentSanitizer courtListDocumentSanitizer;
 
     /**
      * Transforms an existing payload into CourtListDocument (no remote fetch).
      * Use when the payload was already obtained so that getCourtListPayload is not called again.
      */
-    public CourtListDocument buildCourtListDocumentFromPayload(CourtListPayload payload, CourtListType listId) {
+    public CourtListDocument buildCourtListDocumentFromPayload(final CourtListPayload payload, final CourtListType listId) {
         if (CourtListType.ONLINE_PUBLIC.equals(listId)) {
             log.info("Using PublicCourtListTransformationService for PUBLIC list type");
-            CourtListDocument document = onlinePublicCourtListTransformationService.transform(payload);
-            jsonSchemaValidatorService.validate(document, ONLINE_PUBLIC_COURT_LIST_SCHEMA_JSON);
-            return document;
+            final CourtListDocument document = onlinePublicCourtListTransformationService.transform(payload);
+            final CourtListDocument sanitized = courtListDocumentSanitizer.sanitize(document);
+            jsonSchemaValidatorService.validate(sanitized, ONLINE_PUBLIC_COURT_LIST_SCHEMA_JSON);
+            return sanitized;
         }
         log.info("Using CourtListTransformationService for list type: {}", listId);
-        CourtListDocument document = transformationService.transform(payload);
-        jsonSchemaValidatorService.validate(document, STANDARD_COURT_LIST_SCHEMA_JSON);
-        return document;
+        final CourtListDocument document = transformationService.transform(payload);
+        final CourtListDocument sanitized = courtListDocumentSanitizer.sanitize(document);
+        jsonSchemaValidatorService.validate(sanitized, STANDARD_COURT_LIST_SCHEMA_JSON);
+        return sanitized;
     }
 
     public @NotNull CourtListPayload getCourtListPayload(final CourtListType listId, final String courtCentreId, final String startDate, final String endDate, final String cjscppuid, final boolean includeApplications) {

@@ -32,6 +32,11 @@ cath:
   base-url: ${CATH_BASE_URL:http://localhost:8080}
   endpoint: ${CATH_ENDPOINT:/courtlistpublisher/publication}
   publishing-enabled: ${CATH_PUBLISHING_ENABLED:false}
+  # Comma-separated literal substrings that the Azure WAF would block in the
+  # outgoing payload (e.g. path-traversal sequences). Each entry is stripped
+  # from every text field before validation. Set CATH_WAF_BLOCKED_PATTERNS to
+  # "" to disable the sanitiser entirely (useful for tests and non-WAF envs).
+  waf-blocked-patterns: ${CATH_WAF_BLOCKED_PATTERNS:..\,../}
 taskmanager:
   schema:
     enabled: true
