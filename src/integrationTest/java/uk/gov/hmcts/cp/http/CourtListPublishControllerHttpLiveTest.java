@@ -317,22 +317,37 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         getDownloadCourtListReturnsPdfForType(CourtListType.STANDARD);
     }
 
-    private String buildDownloadUrl(CourtListType courtListType) {
+    @Test
+    void getDownloadCourtListForwardsRestrictedTrueToProgressionForStandard() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.STANDARD, true);
+    }
+
+    @Test
+    void getDownloadCourtListForwardsRestrictedTrueToListingForAlphabetical() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.ALPHABETICAL, true);
+    }
+
+    private String buildDownloadUrl(CourtListType courtListType, boolean restricted) {
         return DOWNLOAD_ENDPOINT
                 + "?courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26"
                 + "&startDate=2026-02-27"
                 + "&endDate=2026-02-27"
+                + "&restricted=" + restricted
                 + "&courtListType=" + courtListType.name();
     }
 
     private void getDownloadCourtListReturnsPdfForType(CourtListType courtListType) throws Exception {
+        getDownloadCourtListReturnsPdfForType(courtListType, false);
+    }
+
+    private void getDownloadCourtListReturnsPdfForType(CourtListType courtListType, boolean restricted) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         headers.setAccept(java.util.List.of(MediaType.parseMediaType(DOWNLOAD_ACCEPT)));
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         ResponseEntity<byte[]> response = http.exchange(
-                buildDownloadUrl(courtListType),
+                buildDownloadUrl(courtListType, restricted),
                 HttpMethod.GET,
                 entity,
                 byte[].class);
@@ -352,11 +367,12 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 .isEqualTo(loadResourceBytes("wiremock/__files/minimal-pdf.pdf"));
 
         // The court list binary is now always rendered locally from the JSON payload via the document
-        // generator; we must never fetch a pre-rendered binary from another context.
+        // generator; we must never fetch a pre-rendered binary from another context. The restricted flag
+        // must be forwarded verbatim to the payload endpoint.
         if (courtListType == CourtListType.ALPHABETICAL || courtListType == CourtListType.JUDGE) {
-            verifyListingPayloadCalled(courtListType);
+            verifyListingPayloadCalled(courtListType, restricted);
         } else { // PUBLIC, STANDARD, BENCH are progression-enriched
-            verifyProgressionCourtlistDataCalled(courtListType);
+            verifyProgressionCourtlistDataCalled(courtListType, restricted);
         }
         verifyDocumentGeneratorRenderedPdf();
         verifyBinaryCourtListEndpointsNotCalled(courtListType);
@@ -372,7 +388,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         ResponseEntity<byte[]> response = http.exchange(
-                buildDownloadUrl(courtListType),
+                buildDownloadUrl(courtListType, false),
                 HttpMethod.GET,
                 entity,
                 byte[].class);
@@ -389,7 +405,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 .as("DOCX body for %s must match every byte (and therefore every field value) of the stubbed content fixture", courtListType)
                 .isEqualTo(expectedContent.getBytes(StandardCharsets.UTF_8));
 
-        verifyProgressionCourtlistDataCalled(courtListType);
+        verifyProgressionCourtlistDataCalled(courtListType, false);
         verifyDocumentGeneratorCalled(expectedTemplate(courtListType), "docx");
     }
 
@@ -414,7 +430,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         }
     }
 
-    private void verifyListingPayloadCalled(CourtListType courtListType) throws Exception {
+    private void verifyListingPayloadCalled(CourtListType courtListType, boolean restricted) throws Exception {
         List<JsonNode> matches = wiremockRequestsMatching(req -> {
             if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
                 return false;
@@ -422,15 +438,15 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
             String url = wiremockRequestUrl(req);
             return url.contains("/listing-service/query/api/rest/listing/courtlistpayload")
                     && url.contains("listId=" + courtListType.name())
-                    && url.contains("restricted=false")
+                    && url.contains("restricted=" + restricted)
                     && url.contains("includeApplications=false");
         });
         assertThat(matches)
-                .as("Listing /courtlistpayload must be called exactly once for %s with restricted=false and includeApplications=false", courtListType)
+                .as("Listing /courtlistpayload must be called exactly once for %s with restricted=%s and includeApplications=false", courtListType, restricted)
                 .hasSize(1);
     }
 
-    private void verifyProgressionCourtlistDataCalled(CourtListType courtListType) throws Exception {
+    private void verifyProgressionCourtlistDataCalled(CourtListType courtListType, boolean restricted) throws Exception {
         List<JsonNode> matches = wiremockRequestsMatching(req -> {
             if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
                 return false;
@@ -438,11 +454,11 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
             String url = wiremockRequestUrl(req);
             return url.contains("/progression-service/query/api/rest/progression/courtlistdata")
                     && url.contains("listId=" + courtListType.name())
-                    && url.contains("restricted=false")
+                    && url.contains("restricted=" + restricted)
                     && url.contains("includeApplications=false");
         });
         assertThat(matches)
-                .as("Progression /courtlistdata must be called exactly once for %s with restricted=false and includeApplications=false", courtListType)
+                .as("Progression /courtlistdata must be called exactly once for %s with restricted=%s and includeApplications=false", courtListType, restricted)
                 .hasSize(1);
     }
 
