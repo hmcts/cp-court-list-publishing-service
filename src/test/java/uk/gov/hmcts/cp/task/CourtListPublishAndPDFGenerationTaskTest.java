@@ -17,6 +17,7 @@ import ch.qos.logback.classic.Logger;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -672,48 +673,6 @@ class CourtListPublishAndPDFGenerationTaskTest {
         verify(repository, times(2)).save(entity);
     }
 
-    @ParameterizedTest
-    @EnumSource(value = CourtListType.class, names = {"PUBLIC", "STANDARD", "BENCH"})
-    void execute_shouldSkipPdfGenerationAndMarkFileStatusSuccessfulWithNullFileId_forProgressionPdfType(CourtListType progressionType) {
-        JsonObject jobData = Json.createObjectBuilder()
-                .add(JobDataConstant.COURT_LIST_ID, courtListId.toString())
-                .add(JobDataConstant.COURT_CENTRE_ID, courtCentreId.toString())
-                .add(JobDataConstant.COURT_LIST_TYPE, progressionType.name())
-                .add(JobDataConstant.PUBLISH_DATE, LocalDate.now().toString())
-                .add(JobDataConstant.USER_ID, TEST_USER_ID)
-                .build();
-        String publishDateStr = jobData.getString(JobDataConstant.PUBLISH_DATE);
-        when(executionInfo.getJobData()).thenReturn(jobData);
-        when(repository.getByCourtListId(courtListId)).thenReturn(entity);
-
-        CourtListPayload payload = new CourtListPayload();
-        CourtListDocument courtListDocument = CourtListDocument.builder().build();
-        when(courtListQueryService.getCourtListPayload(
-                eq(progressionType),
-                eq(courtCentreId.toString()),
-                eq(publishDateStr),
-                eq(publishDateStr),
-                eq(TEST_USER_ID),
-                anyBoolean()
-        )).thenReturn(payload);
-        when(courtListQueryService.buildCourtListDocumentFromPayload(payload, progressionType))
-                .thenReturn(courtListDocument);
-
-        ExecutionInfo result = task.execute(executionInfo);
-
-        assertThat(result).isNotNull();
-        assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
-
-        verify(courtListQueryService, times(1)).getCourtListPayload(
-                progressionType, courtCentreId.toString(), publishDateStr, publishDateStr, TEST_USER_ID, true);
-        verify(courtListQueryService, never()).getCourtListPayload(
-                eq(progressionType), any(), any(), any(), any(), eq(false));
-        verify(pdfHelper, never()).generateAndUploadPdf(any(), any(), any());
-
-        assertThat(entity.getFileStatus()).isEqualTo(Status.SUCCESSFUL);
-        assertThat(entity.getFileId()).isNull();
-        assertThat(entity.getPublishStatus()).isEqualTo(Status.SUCCESSFUL);
-    }
 
     private JsonObject createJobDataWithCourtListId(UUID courtListId) {
         return Json.createObjectBuilder()

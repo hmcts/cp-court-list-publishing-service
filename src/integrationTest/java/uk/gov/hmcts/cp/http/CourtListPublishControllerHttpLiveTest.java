@@ -348,21 +348,18 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 .as("PDF body for %s must start with %%PDF magic", courtListType)
                 .startsWith("%PDF");
         assertThat(body)
-                .as("PDF body for %s must match the WireMock-stubbed minimal-pdf.pdf bytes", courtListType)
+                .as("PDF body for %s must match the WireMock-stubbed document-generator render bytes (minimal-pdf.pdf)", courtListType)
                 .isEqualTo(loadResourceBytes("wiremock/__files/minimal-pdf.pdf"));
 
+        // The court list binary is now always rendered locally from the JSON payload via the document
+        // generator; we must never fetch a pre-rendered binary from another context.
         if (courtListType == CourtListType.ALPHABETICAL || courtListType == CourtListType.JUDGE) {
-            verifyListingCourtListBinaryCalled(courtListType);
-            verifyDocumentGeneratorNotCalled();
-        } else if (courtListType == CourtListType.PUBLIC
-                || courtListType == CourtListType.STANDARD
-                || courtListType == CourtListType.BENCH) {
-            verifyProgressionCourtlistBinaryCalled(courtListType);
-            verifyDocumentGeneratorNotCalled();
-        } else {
             verifyListingPayloadCalled(courtListType);
-            verifyDocumentGeneratorCalled(expectedTemplate(courtListType), "pdf");
+        } else { // PUBLIC, STANDARD, BENCH are progression-enriched
+            verifyProgressionCourtlistDataCalled(courtListType);
         }
+        verifyDocumentGeneratorRenderedPdf();
+        verifyBinaryCourtListEndpointsNotCalled(courtListType);
     }
 
     private void getDownloadCourtListReturnsWordForType(CourtListType courtListType) throws Exception {
@@ -449,47 +446,40 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 .hasSize(1);
     }
 
-    private void verifyProgressionCourtlistBinaryCalled(CourtListType courtListType) throws Exception {
-        List<JsonNode> matches = wiremockRequestsMatching(req -> {
-            if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
-                return false;
-            }
-            String url = wiremockRequestUrl(req);
-            return url.contains("/progression-service/query/api/rest/progression/courtlist")
-                    && !url.contains("/courtlistdata")
-                    && url.contains("listId=" + courtListType.name())
-                    && url.contains("restricted=false");
-        });
-        assertThat(matches)
-                .as("Progression /courtlist binary endpoint must be called exactly once for %s with restricted=false (default)", courtListType)
-                .hasSize(1);
-    }
-
-    private void verifyListingCourtListBinaryCalled(CourtListType courtListType) throws Exception {
-        List<JsonNode> matches = wiremockRequestsMatching(req -> {
-            if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
-                return false;
-            }
-            String url = wiremockRequestUrl(req);
-            return url.contains("/listing-service/query/api/rest/listing/courtlist")
-                    && !url.contains("/courtlistpayload")
-                    && url.contains("listId=" + courtListType.name())
-                    && url.contains("restricted=false");
-        });
-        assertThat(matches)
-                .as("Listing /courtlist binary endpoint must be called exactly once for %s with restricted=false", courtListType)
-                .hasSize(1);
-    }
-
-    private void verifyDocumentGeneratorNotCalled() throws Exception {
+    private void verifyDocumentGeneratorRenderedPdf() throws Exception {
         List<JsonNode> matches = wiremockRequestsMatching(req -> {
             if (!"POST".equalsIgnoreCase(req.path("method").asText(""))) {
                 return false;
             }
-            return wiremockRequestUrl(req).contains("/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render");
+            String url = wiremockRequestUrl(req);
+            if (!url.contains("/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render")) {
+                return false;
+            }
+            return req.path("body").asText("").contains("\"conversionFormat\":\"pdf\"");
         });
         assertThat(matches)
-                .as("Document generator /render must not be called when listing renders the PDF")
+                .as("Document generator /render must be called exactly once with conversionFormat=pdf (local rendering)")
+                .hasSize(1);
+    }
+
+    /**
+     * Asserts the pre-rendered binary court list endpoints are never called: court list binaries must be
+     * generated locally from the payload, not fetched from listing/progression.
+     */
+    private void verifyBinaryCourtListEndpointsNotCalled(CourtListType courtListType) throws Exception {
+        List<JsonNode> matches = wiremockRequestsMatching(req -> {
+            if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
+                return false;
+            }
+            String url = wiremockRequestUrl(req);
+            boolean listingBinary = url.contains("/listing-service/query/api/rest/listing/courtlist")
+                    && !url.contains("/courtlistpayload");
+            boolean progressionBinary = url.contains("/progression-service/query/api/rest/progression/courtlist")
+                    && !url.contains("/courtlistdata");
+            return listingBinary || progressionBinary;
+        });
+        assertThat(matches)
+                .as("No pre-rendered binary court list endpoint may be called for %s", courtListType)
                 .isEmpty();
     }
 

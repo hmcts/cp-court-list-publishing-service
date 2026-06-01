@@ -35,15 +35,6 @@ public class CourtListDownloadService {
             CourtListType.USHERS_CROWN,
             CourtListType.USHERS_MAGISTRATE);
 
-    private static final Set<CourtListType> DELEGATED_TO_LISTING_TYPES = EnumSet.of(
-            CourtListType.ALPHABETICAL,
-            CourtListType.JUDGE);
-
-    private static final Set<CourtListType> DELEGATED_TO_PROGRESSION_TYPES = EnumSet.of(
-            CourtListType.PUBLIC,
-            CourtListType.STANDARD,
-            CourtListType.BENCH);
-
     private static final Map<CourtListType, String> FALLBACK_TEMPLATE_BY_TYPE = new EnumMap<>(CourtListType.class);
 
     static {
@@ -80,22 +71,6 @@ public class CourtListDownloadService {
 
         LOG.info("Generating court list document for type={}, courtCentreId={}, startDate={}, endDate={}, restricted={}",
                 courtListType, Encode.forJava(courtCentreId), startDate, endDate, restricted);
-
-        if (DELEGATED_TO_LISTING_TYPES.contains(courtListType)) {
-            final byte[] pdf = courtListDataService.fetchCourtListPdfFromListing(
-                    courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid, restricted);
-            LOG.info("Court list document fetched from listing for type={}, courtCentreId={}, size={} bytes",
-                    courtListType, Encode.forJava(courtCentreId), pdf.length);
-            return new CourtListFileResult(pdf, CONTENT_TYPE_PDF, PDF_FILENAME);
-        }
-
-        if (DELEGATED_TO_PROGRESSION_TYPES.contains(courtListType)) {
-            final byte[] pdf = courtListDataService.fetchCourtListPdfFromProgression(
-                    courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid, restricted);
-            LOG.info("Court list document fetched from progression for type={}, courtCentreId={}, size={} bytes",
-                    courtListType, Encode.forJava(courtCentreId), pdf.length);
-            return new CourtListFileResult(pdf, CONTENT_TYPE_PDF, PDF_FILENAME);
-        }
 
         final boolean wantsWord = WORD_DOWNLOAD_TYPES.contains(courtListType);
 
