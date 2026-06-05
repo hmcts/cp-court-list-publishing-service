@@ -715,6 +715,52 @@ class CourtListPublishAndPDFGenerationTaskTest {
         assertThat(entity.getPublishStatus()).isEqualTo(Status.SUCCESSFUL);
     }
 
+    @Test
+    void execute_shouldIncrementPublishCount_whenFileStatusBecomesSuccessful() {
+        // Given
+        entity.setPublishCount(2);
+        String publishDate = LocalDate.now().toString();
+        JsonObject jobData = createJobDataWithCourtListId(courtListId);
+        when(executionInfo.getJobData()).thenReturn(jobData);
+        when(repository.getByCourtListId(courtListId)).thenReturn(entity);
+
+        CourtListPayload payload = new CourtListPayload();
+        when(courtListQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean())).thenReturn(payload);
+        when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC))
+                .thenReturn(CourtListDocument.builder().build());
+        when(pdfHelper.generateAndUploadPdf(payload, courtListId, CourtListType.ONLINE_PUBLIC)).thenReturn(courtListId);
+
+        // When
+        task.execute(executionInfo);
+
+        // Then
+        assertThat(entity.getFileStatus()).isEqualTo(Status.SUCCESSFUL);
+        assertThat(entity.getPublishCount()).isEqualTo(3);
+    }
+
+    @Test
+    void execute_shouldNotIncrementPublishCount_whenFileStatusFails() {
+        // Given
+        entity.setPublishCount(1);
+        JsonObject jobData = createJobDataWithCourtListId(courtListId);
+        when(executionInfo.getJobData()).thenReturn(jobData);
+        when(repository.getByCourtListId(courtListId)).thenReturn(entity);
+
+        CourtListPayload payload = new CourtListPayload();
+        when(courtListQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean())).thenReturn(payload);
+        when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC))
+                .thenReturn(CourtListDocument.builder().build());
+        when(pdfHelper.generateAndUploadPdf(payload, courtListId, CourtListType.ONLINE_PUBLIC))
+                .thenThrow(new RuntimeException("PDF error"));
+
+        // When
+        task.execute(executionInfo);
+
+        // Then
+        assertThat(entity.getFileStatus()).isEqualTo(Status.FAILED);
+        assertThat(entity.getPublishCount()).isEqualTo(1);
+    }
+
     private JsonObject createJobDataWithCourtListId(UUID courtListId) {
         return Json.createObjectBuilder()
                 .add(JobDataConstant.COURT_LIST_ID, courtListId.toString())
