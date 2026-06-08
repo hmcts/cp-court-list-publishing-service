@@ -168,7 +168,7 @@ public class CourtListPublishController implements CourtListPublishApi {
                 request.getListType().getValue(),
                 null,
                 null,
-                null);
+                request.getListPayload());
 
         PublishCourtListResponse response = new PublishCourtListResponse(
                 result.getStatus(),
