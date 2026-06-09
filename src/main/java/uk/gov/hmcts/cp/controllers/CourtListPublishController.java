@@ -166,8 +166,8 @@ public class CourtListPublishController implements CourtListPublishApi {
 
         SjpPublishResult result = sjpCourtListPublishService.publishSjpCourtList(
                 request.getListType().getValue(),
-                null,
-                null,
+                request.getLanguage(),
+                request.getRequestType(),
                 request.getListPayload());
 
         PublishCourtListResponse response = new PublishCourtListResponse(
