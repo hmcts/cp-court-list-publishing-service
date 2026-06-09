@@ -48,9 +48,13 @@ public class SjpCourtListPublishService {
     /**
      * Publish SJP court list to CaTH when listPayload is provided (typically triggered by scheduler).
      *
+     * <p>Language is derived from {@code listPayload.isWelsh} — {@code true} → "WELSH", otherwise
+     * "ENGLISH" — mirroring the court-centre flag used by the non-SJP publishing flow.
+     * An explicit {@code language} argument overrides the payload-derived value when non-blank.
+     *
      * @param listType    SJP_PUBLISH_LIST or SJP_PRESS_LIST
-     * @param language    optional (default ENGLISH)
-     * @param requestType optional (e.g. FULL)
+     * @param language    optional override (default: derived from listPayload.isWelsh)
+     * @param requestType optional request type (e.g. "FULL"); passed through to DtsMeta
      * @param listPayload required for CaTH publish (generatedDateAndTime, readyCases); can be Map or POJO from API
      * @return status (ACCEPTED/FAILED), listType, message
      */
@@ -81,13 +85,18 @@ public class SjpCourtListPublishService {
             String documentName = isPressList ? DOCUMENT_NAME_PRESS : DOCUMENT_NAME_PUBLIC;
             String cathListType = isPressList ? CATH_LIST_TYPE_PRESS : CATH_LIST_TYPE_PUBLIC;
             String sensitivity = isPressList ? SENSITIVITY_CLASSIFIED : SENSITIVITY_PUBLIC;
-            String lang = (language != null && !language.isBlank()) ? language : "ENGLISH";
+
+            // Derive language from isWelsh on the payload (mirrors CaTHService / non-SJP flow).
+            // An explicit language argument takes precedence when provided.
+            String payloadLanguage = Boolean.TRUE.equals(payload.getIsWelsh()) ? "WELSH" : "ENGLISH";
+            String lang = (language != null && !language.isBlank()) ? language : payloadLanguage;
 
             String payloadJson = transformer.transform(payload, documentName);
-            DtsMeta meta = buildDtsMeta(cathListType, sensitivity, lang, payload.getCourtIdNumeric());
+            DtsMeta meta = buildDtsMeta(cathListType, sensitivity, lang, requestType, payload.getCourtIdNumeric());
 
             int status = courtListPublisher.publish(payloadJson, meta);
-            LOG.info("SJP court list published to CaTH, listType={}, status={}", listType, status);
+            LOG.info("SJP court list published to CaTH, listType={}, language={}, requestType={}, status={}",
+                    listType, lang, requestType, status);
 
             if (status >= 200 && status < 300) {
                 return SjpPublishResult.accepted(listType, "SJP court list published to CaTH");
@@ -102,8 +111,10 @@ public class SjpCourtListPublishService {
     /**
      * Same court id resolution as {@link uk.gov.hmcts.cp.services.CaTHService#sendCourtListToCaTH}:
      * use numeric id from payload when present, otherwise {@code "0"}.
+     * {@code requestType} (e.g. "FULL") is passed through to DtsMeta when provided.
      */
-    private static DtsMeta buildDtsMeta(String listType, String sensitivity, String language, String courtIdNumeric) {
+    private static DtsMeta buildDtsMeta(String listType, String sensitivity, String language,
+                                        String requestType, String courtIdNumeric) {
         final String courtIdForMeta = courtIdNumeric != null && !courtIdNumeric.isBlank()
                 ? courtIdNumeric
                 : "0";
@@ -120,6 +131,7 @@ public class SjpCourtListPublishService {
                 .sensitivity(sensitivity)
                 .displayFrom(contentDate)
                 .displayTo(displayTo)
+                .requestType(requestType)
                 .build();
     }
 

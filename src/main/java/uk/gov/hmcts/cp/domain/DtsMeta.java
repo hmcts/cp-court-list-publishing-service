@@ -24,4 +24,6 @@ public class DtsMeta {
     private final String sensitivity;
     private final String displayFrom;
     private final String displayTo;
+    /** Optional request type (e.g. "FULL"). Null when not provided. */
+    private final String requestType;
 }
