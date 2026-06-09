@@ -224,8 +224,11 @@ class CourtListPublishControllerTest {
 
     // ── SJP publish endpoint ──────────────────────────────────────────────────
 
+    private static final MediaType SJP_MEDIA_TYPE =
+            new MediaType("application", "vnd.courtlistpublishing-service.sjp.post+json");
+
     @Test
-    void publishSjpCourtList_returnsOk_withAcceptedStatus() throws Exception {
+    void publishSjpCourtList_returnsOk_withVendorContentTypeAndAcceptedStatus() throws Exception {
         when(sjpCourtListPublishService.publishSjpCourtList(
                 eq("SJP_PUBLISH_LIST"), isNull(), isNull(), any()))
                 .thenReturn(SjpPublishResult.accepted("SJP_PUBLISH_LIST", "SJP court list published to CaTH"));
@@ -234,9 +237,10 @@ class CourtListPublishControllerTest {
                 .listType(SjpListType.SJP_PUBLISH_LIST);
 
         mockMvc.perform(post(SJP_PUBLISH_URL)
-                        .contentType("application/vnd.courtlistpublishing-service.sjp.post+json")
+                        .contentType(SJP_MEDIA_TYPE)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(SJP_MEDIA_TYPE))
                 .andExpect(jsonPath("$.status").value("ACCEPTED"))
                 .andExpect(jsonPath("$.listType").value("SJP_PUBLISH_LIST"));
     }
@@ -253,10 +257,10 @@ class CourtListPublishControllerTest {
                 .requestType("FULL");
 
         mockMvc.perform(post(SJP_PUBLISH_URL)
-                        .contentType("application/vnd.courtlistpublishing-service.sjp.post+json")
+                        .contentType(SJP_MEDIA_TYPE)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("ACCEPTED"));
+                .andExpect(content().contentType(SJP_MEDIA_TYPE));
 
         verify(sjpCourtListPublishService).publishSjpCourtList(
                 eq("SJP_PRESS_LIST"), eq("WELSH"), eq("FULL"), any());
@@ -288,9 +292,10 @@ class CourtListPublishControllerTest {
                 """;
 
         mockMvc.perform(post(SJP_PUBLISH_URL)
-                        .contentType("application/vnd.courtlistpublishing-service.sjp.post+json")
+                        .contentType(SJP_MEDIA_TYPE)
                         .content(requestJson))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(SJP_MEDIA_TYPE));
 
         verify(sjpCourtListPublishService).publishSjpCourtList(
                 eq("SJP_PUBLISH_LIST"), isNull(), isNull(), any());
@@ -299,7 +304,7 @@ class CourtListPublishControllerTest {
     @Test
     void publishSjpCourtList_returnsBadRequest_whenListTypeMissing() throws Exception {
         mockMvc.perform(post(SJP_PUBLISH_URL)
-                        .contentType("application/vnd.courtlistpublishing-service.sjp.post+json")
+                        .contentType(SJP_MEDIA_TYPE)
                         .content("{}"))
                 .andExpect(status().isBadRequest());
     }
@@ -313,9 +318,10 @@ class CourtListPublishControllerTest {
                 .listType(SjpListType.SJP_PUBLISH_LIST);
 
         mockMvc.perform(post(SJP_PUBLISH_URL)
-                        .contentType("application/vnd.courtlistpublishing-service.sjp.post+json")
+                        .contentType(SJP_MEDIA_TYPE)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(SJP_MEDIA_TYPE))
                 .andExpect(jsonPath("$.status").value("FAILED"))
                 .andExpect(jsonPath("$.message").value("CaTH returned status 500"));
     }

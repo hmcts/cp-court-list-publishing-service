@@ -174,7 +174,9 @@ public class CourtListPublishController implements CourtListPublishApi {
                 result.getStatus(),
                 request.getListType(),
                 result.getMessage());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok()
+                .contentType(new MediaType("application", "vnd.courtlistpublishing-service.sjp.post+json"))
+                .body(response);
     }
 
     @SuppressWarnings("unused") // Method is used by Spring's request mapping
