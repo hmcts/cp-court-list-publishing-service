@@ -25,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -154,12 +155,15 @@ public class CourtListPublishController implements CourtListPublishApi {
 
     @Override
     public ResponseEntity<PublishCourtListResponse> publishSjpCourtList(
-            @RequestBody final PublishCourtListRequest request) {
+            @RequestBody @Valid final PublishCourtListRequest request) {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
         }
         if (request.getListType() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "listType is required");
+        }
+        if (request.getListPayload() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "listPayload is required");
         }
 
         LOG.atInfo().log("SJP court list publish request for listType: {}", request.getListType());
