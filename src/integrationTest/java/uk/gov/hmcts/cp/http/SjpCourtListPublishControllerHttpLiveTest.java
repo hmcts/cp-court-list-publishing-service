@@ -33,25 +33,21 @@ public class SjpCourtListPublishControllerHttpLiveTest extends AbstractTest {
     private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
 
     @Test
-    void postSjpCourtList_returns200_withFailedStatus_whenListPayloadOmitted() throws Exception {
+    void postSjpCourtList_returns400_whenListPayloadOmitted() {
         String requestJson = """
             {
                 "listType": "SJP_PUBLISH_LIST"
             }
             """;
 
-        ResponseEntity<String> response = postSjpRequest(requestJson);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        JsonNode body = objectMapper.readTree(response.getBody());
-        assertThat(body.get("status").asText()).isEqualTo("FAILED");
-        assertThat(body.get("listType").asText()).isEqualTo("SJP_PUBLISH_LIST");
-        assertThat(body.get("message").asText()).contains("listPayload");
+        assertThatThrownBy(() -> postSjpRequest(requestJson))
+                .isInstanceOf(HttpClientErrorException.class)
+                .satisfies(ex ->
+                    assertThat(((HttpClientErrorException) ex).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
     }
 
     @Test
-    void postSjpCourtList_returns200_withFailedStatus_whenListPayloadInBodyButNotExposedByApi() throws Exception {
-        // When API model exposes getListPayload() this can be changed to expect ACCEPTED
+    void postSjpCourtList_returns200_withAcceptedStatus_whenListPayloadProvided() throws Exception {
         String requestJson = """
             {
                 "listType": "SJP_PUBLISH_LIST",
@@ -74,16 +70,25 @@ public class SjpCourtListPublishControllerHttpLiveTest extends AbstractTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode body = objectMapper.readTree(response.getBody());
         assertThat(body.get("listType").asText()).isEqualTo("SJP_PUBLISH_LIST");
-        // Until API 0.1.21+ exposes listPayload, controller passes null -> FAILED
-        assertThat(body.get("status").asText()).isEqualTo("FAILED");
-        assertThat(body.get("message").asText()).contains("listPayload");
+        assertThat(body.get("status").asText()).isEqualTo("ACCEPTED");
     }
 
     @Test
     void postSjpCourtList_returns200_forPressListType() throws Exception {
         String requestJson = """
             {
-                "listType": "SJP_PRESS_LIST"
+                "listType": "SJP_PRESS_LIST",
+                "listPayload": {
+                    "generatedDateAndTime": "2025-03-09T10:00:00",
+                    "readyCases": [
+                        {
+                            "caseUrn": "SJP-INT-TEST-002",
+                            "defendantName": "Defendant Two",
+                            "prosecutorName": "CPS",
+                            "sjpOffences": [{"title": "Offence 2", "wording": "Wording 2"}]
+                        }
+                    ]
+                }
             }
             """;
 
@@ -92,8 +97,7 @@ public class SjpCourtListPublishControllerHttpLiveTest extends AbstractTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode body = objectMapper.readTree(response.getBody());
         assertThat(body.get("listType").asText()).isEqualTo("SJP_PRESS_LIST");
-        assertThat(body.get("status").asText()).isEqualTo("FAILED");
-        assertThat(body.get("message").asText()).contains("listPayload");
+        assertThat(body.get("status").asText()).isEqualTo("ACCEPTED");
     }
 
     @Test

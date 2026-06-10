@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.UUID;
 
 import uk.gov.hmcts.cp.openapi.model.PublishCourtListRequest;
+import uk.gov.hmcts.cp.openapi.model.SjpListPayload;
 import uk.gov.hmcts.cp.openapi.model.SjpListType;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -227,6 +228,16 @@ class CourtListPublishControllerTest {
     private static final MediaType SJP_MEDIA_TYPE =
             new MediaType("application", "vnd.courtlistpublishing-service.sjp.post+json");
 
+    private static SjpListPayload minimalSjpPayload() {
+        return new SjpListPayload()
+                .generatedDateAndTime("2025-03-09T10:00:00")
+                .readyCases(List.of(java.util.Map.of(
+                        "caseUrn", "URN1",
+                        "defendantName", "D",
+                        "prosecutorName", "P",
+                        "sjpOffences", List.of(java.util.Map.of("title", "t", "wording", "w")))));
+    }
+
     @Test
     void publishSjpCourtList_returnsOk_withVendorContentTypeAndAcceptedStatus() throws Exception {
         when(sjpCourtListPublishService.publishSjpCourtList(
@@ -234,7 +245,8 @@ class CourtListPublishControllerTest {
                 .thenReturn(SjpPublishResult.accepted("SJP_PUBLISH_LIST", "SJP court list published to CaTH"));
 
         PublishCourtListRequest request = new PublishCourtListRequest()
-                .listType(SjpListType.SJP_PUBLISH_LIST);
+                .listType(SjpListType.SJP_PUBLISH_LIST)
+                .listPayload(minimalSjpPayload());
 
         mockMvc.perform(post(SJP_PUBLISH_URL)
                         .contentType(SJP_MEDIA_TYPE)
@@ -254,7 +266,8 @@ class CourtListPublishControllerTest {
         PublishCourtListRequest request = new PublishCourtListRequest()
                 .listType(SjpListType.SJP_PRESS_LIST)
                 .language("WELSH")
-                .requestType("FULL");
+                .requestType("FULL")
+                .listPayload(minimalSjpPayload());
 
         mockMvc.perform(post(SJP_PUBLISH_URL)
                         .contentType(SJP_MEDIA_TYPE)
@@ -315,7 +328,8 @@ class CourtListPublishControllerTest {
                 .thenReturn(SjpPublishResult.failed("SJP_PUBLISH_LIST", "CaTH returned status 500"));
 
         PublishCourtListRequest request = new PublishCourtListRequest()
-                .listType(SjpListType.SJP_PUBLISH_LIST);
+                .listType(SjpListType.SJP_PUBLISH_LIST)
+                .listPayload(minimalSjpPayload());
 
         mockMvc.perform(post(SJP_PUBLISH_URL)
                         .contentType(SJP_MEDIA_TYPE)
