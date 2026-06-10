@@ -70,6 +70,10 @@ public class CourtListStatusEntity {
     @Column(name = "publish_date", nullable = false)
     private LocalDate publishDate;
 
+    @Setter
+    @Column(name = "publish_count", nullable = false)
+    private int publishCount;
+
     protected CourtListStatusEntity() {
     }
 

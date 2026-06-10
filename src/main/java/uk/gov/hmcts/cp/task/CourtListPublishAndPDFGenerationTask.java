@@ -270,6 +270,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         existingCourtListPublishEntity.setFileStatus(Status.SUCCESSFUL);
         existingCourtListPublishEntity.setFileErrorMessage(null);
         existingCourtListPublishEntity.setLastUpdated(Instant.now());
+        existingCourtListPublishEntity.setPublishCount(existingCourtListPublishEntity.getPublishCount() + 1);
         repository.save(existingCourtListPublishEntity);
         logger.info("Successfully updated fileId and lastUpdated for court list ID: {}", courtListId);
     }
