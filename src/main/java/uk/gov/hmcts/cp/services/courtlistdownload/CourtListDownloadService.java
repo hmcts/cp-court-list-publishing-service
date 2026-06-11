@@ -58,6 +58,25 @@ public class CourtListDownloadService {
 
     private static final Set<CourtListType> SUPPORTED_TYPES = FALLBACK_TEMPLATE_BY_TYPE.keySet();
 
+    private static final Map<CourtListType, String> CROWN_COURT_TEMPLATES = new EnumMap<>(CourtListType.class);
+    private static final Map<CourtListType, String> CROWN_COURT_WELSH_TEMPLATES = new EnumMap<>(CourtListType.class);
+
+    static {
+        CROWN_COURT_TEMPLATES.put(CourtListType.DRAFT, "CrownDailyList");
+        CROWN_COURT_TEMPLATES.put(CourtListType.FINAL, "CrownDailyList");
+        CROWN_COURT_TEMPLATES.put(CourtListType.ONLINE_PUBLIC, "CrownOnlinePublicCourtList");
+        CROWN_COURT_TEMPLATES.put(CourtListType.ALPHABETICAL, "CrownAlphabetical");
+        CROWN_COURT_TEMPLATES.put(CourtListType.FIRM, "CrownFirmList");
+
+        CROWN_COURT_WELSH_TEMPLATES.put(CourtListType.DRAFT, "CrownDailyListWelsh");
+        CROWN_COURT_WELSH_TEMPLATES.put(CourtListType.FINAL, "CrownDailyListWelsh");
+        CROWN_COURT_WELSH_TEMPLATES.put(CourtListType.ONLINE_PUBLIC, "CrownOnlinePublicCourtListWelsh");
+        CROWN_COURT_WELSH_TEMPLATES.put(CourtListType.ALPHABETICAL, "CrownAlphabeticalWelsh");
+        CROWN_COURT_WELSH_TEMPLATES.put(CourtListType.FIRM, "CrownFirmListWelsh");
+    }
+
+    private static final Set<CourtListType> CROWN_COURT_SUPPORTED_TYPES = CROWN_COURT_TEMPLATES.keySet();
+
     private final CourtListDataService courtListDataService;
     private final DocumentGeneratorClient documentGeneratorClient;
 
@@ -132,5 +151,51 @@ public class CourtListDownloadService {
         return wantsWord
                 ? new CourtListFileResult(content, CONTENT_TYPE_WORD, WORD_FILENAME)
                 : new CourtListFileResult(content, CONTENT_TYPE_PDF, PDF_FILENAME);
+    }
+
+    public CourtListFileResult generateCrownCourtPdf(
+            final CourtListType courtListType,
+            final boolean isWelsh,
+            final String courtCentreId,
+            final String courtRoomId,
+            final LocalDate startDate,
+            final LocalDate endDate,
+            final String cjscppuid,
+            final boolean restricted) {
+
+        if (!CROWN_COURT_SUPPORTED_TYPES.contains(courtListType)) {
+            throw new CourtListDownloadException(
+                    "Unsupported court list type for crown court download: " + courtListType);
+        }
+
+        Map<CourtListType, String> templates = isWelsh ? CROWN_COURT_WELSH_TEMPLATES : CROWN_COURT_TEMPLATES;
+        String templateName = templates.get(courtListType);
+
+        LOG.info("Generating crown court PDF for type={}, isWelsh={}, template={}, courtCentreId={}, startDate={}, endDate={}",
+                courtListType, isWelsh, templateName, Encode.forJava(courtCentreId), startDate, endDate);
+
+        final String payloadJson = courtListDataService.getCrownCourtDailyListPayload(
+                courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid, restricted);
+
+        final JsonObject payload;
+        try (JsonReader reader = Json.createReader(new StringReader(payloadJson))) {
+            payload = reader.readObject();
+        } catch (Exception e) {
+            throw new CourtListDownloadException(
+                    "Failed to parse crown court payload JSON: " + e.getMessage(), e);
+        }
+
+        final byte[] content;
+        try {
+            content = documentGeneratorClient.generatePdf(payload, templateName);
+        } catch (IOException e) {
+            throw new CourtListDownloadException(
+                    "Failed to render crown court PDF: " + e.getMessage(), e);
+        }
+
+        LOG.info("Crown court PDF generated for type={}, template={}, courtCentreId={}, size={} bytes",
+                courtListType, templateName, Encode.forJava(courtCentreId), content.length);
+
+        return new CourtListFileResult(content, CONTENT_TYPE_PDF, PDF_FILENAME);
     }
 }

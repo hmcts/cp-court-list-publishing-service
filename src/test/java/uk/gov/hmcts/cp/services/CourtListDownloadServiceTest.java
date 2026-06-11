@@ -234,8 +234,179 @@ class CourtListDownloadServiceTest {
                 .hasMessageContaining("Failed to parse court list payload JSON");
     }
 
+    @Test
+    void generateCrownCourtPdfUsesCrownDailyListTemplateForDraft() throws IOException {
+        stubCrownPayload(CourtListType.DRAFT, null, "{}");
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownDailyList")))
+                .thenReturn(PDF_BYTES);
+
+        CourtListFileResult result = service.generateCrownCourtPdf(
+                CourtListType.DRAFT, false, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
+
+        assertThat(result.content()).isEqualTo(PDF_BYTES);
+        assertThat(result.contentType()).isEqualTo(PDF_CONTENT_TYPE);
+        assertThat(result.filename()).isEqualTo("CourtList.pdf");
+        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CrownDailyList"));
+    }
+
+    @Test
+    void generateCrownCourtPdfUsesCrownDailyListTemplateForFinal() throws IOException {
+        stubCrownPayload(CourtListType.FINAL, null, "{}");
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownDailyList")))
+                .thenReturn(PDF_BYTES);
+
+        CourtListFileResult result = service.generateCrownCourtPdf(
+                CourtListType.FINAL, false, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
+
+        assertThat(result.content()).isEqualTo(PDF_BYTES);
+        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CrownDailyList"));
+    }
+
+    @Test
+    void generateCrownCourtPdfUsesWelshTemplateWhenIsWelshTrue() throws IOException {
+        stubCrownPayload(CourtListType.DRAFT, null, "{}");
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownDailyListWelsh")))
+                .thenReturn(PDF_BYTES);
+
+        CourtListFileResult result = service.generateCrownCourtPdf(
+                CourtListType.DRAFT, true, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
+
+        assertThat(result.content()).isEqualTo(PDF_BYTES);
+        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CrownDailyListWelsh"));
+    }
+
+    @Test
+    void generateCrownCourtPdfUsesAlphabeticalTemplate() throws IOException {
+        stubCrownPayload(CourtListType.ALPHABETICAL, null, "{}");
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownAlphabetical")))
+                .thenReturn(PDF_BYTES);
+
+        service.generateCrownCourtPdf(
+                CourtListType.ALPHABETICAL, false, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
+
+        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CrownAlphabetical"));
+    }
+
+    @Test
+    void generateCrownCourtPdfUsesCrownFirmListTemplateForFirmNonWelsh() throws IOException {
+        stubCrownPayload(CourtListType.FIRM, null, "{}");
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownFirmList")))
+                .thenReturn(PDF_BYTES);
+
+        service.generateCrownCourtPdf(
+                CourtListType.FIRM, false, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
+
+        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CrownFirmList"));
+    }
+
+    @Test
+    void generateCrownCourtPdfUsesCrownFirmListWelshTemplateForFirmWelsh() throws IOException {
+        stubCrownPayload(CourtListType.FIRM, null, "{}");
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownFirmListWelsh")))
+                .thenReturn(PDF_BYTES);
+
+        service.generateCrownCourtPdf(
+                CourtListType.FIRM, true, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
+
+        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CrownFirmListWelsh"));
+    }
+
+    @Test
+    void generateCrownCourtPdfUsesOnlinePublicTemplate() throws IOException {
+        stubCrownPayload(CourtListType.ONLINE_PUBLIC, null, "{}");
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownOnlinePublicCourtList")))
+                .thenReturn(PDF_BYTES);
+
+        service.generateCrownCourtPdf(
+                CourtListType.ONLINE_PUBLIC, false, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
+
+        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CrownOnlinePublicCourtList"));
+    }
+
+    @Test
+    void generateCrownCourtPdfUsesOnlinePublicWelshTemplate() throws IOException {
+        stubCrownPayload(CourtListType.ONLINE_PUBLIC, null, "{}");
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownOnlinePublicCourtListWelsh")))
+                .thenReturn(PDF_BYTES);
+
+        service.generateCrownCourtPdf(
+                CourtListType.ONLINE_PUBLIC, true, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
+
+        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CrownOnlinePublicCourtListWelsh"));
+    }
+
+    @Test
+    void generateCrownCourtPdfUsesAlphabeticalWelshTemplate() throws IOException {
+        stubCrownPayload(CourtListType.ALPHABETICAL, null, "{}");
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownAlphabeticalWelsh")))
+                .thenReturn(PDF_BYTES);
+
+        service.generateCrownCourtPdf(
+                CourtListType.ALPHABETICAL, true, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
+
+        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CrownAlphabeticalWelsh"));
+    }
+
+    @Test
+    void generateCrownCourtPdfForwardsCourtRoomId() throws IOException {
+        String courtRoomId = "4294a92c-8827-3296-be53-c74b7e9e31d8";
+        when(courtListDataService.getCrownCourtDailyListPayload(
+                eq(CourtListType.FINAL), eq(COURT_CENTRE_ID), eq(courtRoomId),
+                eq(START_DATE), eq(END_DATE), eq(CJSCPPUID), eq(false)))
+                .thenReturn("{}");
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownDailyList")))
+                .thenReturn(PDF_BYTES);
+
+        service.generateCrownCourtPdf(
+                CourtListType.FINAL, false, COURT_CENTRE_ID, courtRoomId, START_DATE, END_DATE, CJSCPPUID, false);
+
+        verify(courtListDataService).getCrownCourtDailyListPayload(
+                eq(CourtListType.FINAL), eq(COURT_CENTRE_ID), eq(courtRoomId),
+                eq(START_DATE), eq(END_DATE), eq(CJSCPPUID), eq(false));
+    }
+
+    @Test
+    void generateCrownCourtPdfRejectsUnsupportedType() {
+        assertThatThrownBy(() -> service.generateCrownCourtPdf(
+                CourtListType.PRISON, false, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false))
+                .isInstanceOf(CourtListDownloadException.class)
+                .hasMessageContaining("Unsupported court list type for crown court download");
+        verifyNoInteractions(courtListDataService);
+        verifyNoInteractions(documentGeneratorClient);
+    }
+
+    @Test
+    void generateCrownCourtPdfThrowsWhenPayloadJsonInvalid() {
+        stubCrownPayload(CourtListType.FINAL, null, "not valid json");
+
+        assertThatThrownBy(() -> service.generateCrownCourtPdf(
+                CourtListType.FINAL, false, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false))
+                .isInstanceOf(CourtListDownloadException.class)
+                .hasMessageContaining("Failed to parse crown court payload JSON");
+    }
+
+    @Test
+    void generateCrownCourtPdfThrowsWhenDocumentGeneratorFails() throws IOException {
+        stubCrownPayload(CourtListType.FINAL, null, "{}");
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownDailyList")))
+                .thenThrow(new IOException("docgen down"));
+
+        assertThatThrownBy(() -> service.generateCrownCourtPdf(
+                CourtListType.FINAL, false, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false))
+                .isInstanceOf(CourtListDownloadException.class)
+                .hasMessageContaining("Failed to render crown court PDF");
+    }
+
     private void stubListingPayload(CourtListType type, String courtRoomId, String payloadJson) {
         when(courtListDataService.getCourtListPayloadForDownload(
+                eq(type), eq(COURT_CENTRE_ID),
+                courtRoomId == null ? isNull() : eq(courtRoomId),
+                eq(START_DATE), eq(END_DATE), eq(CJSCPPUID), eq(false)))
+                .thenReturn(payloadJson);
+    }
+
+    private void stubCrownPayload(CourtListType type, String courtRoomId, String payloadJson) {
+        when(courtListDataService.getCrownCourtDailyListPayload(
                 eq(type), eq(COURT_CENTRE_ID),
                 courtRoomId == null ? isNull() : eq(courtRoomId),
                 eq(START_DATE), eq(END_DATE), eq(CJSCPPUID), eq(false)))
