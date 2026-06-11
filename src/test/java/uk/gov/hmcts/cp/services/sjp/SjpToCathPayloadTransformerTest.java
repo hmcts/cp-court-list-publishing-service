@@ -45,7 +45,7 @@ class SjpToCathPayloadTransformerTest {
 
         assertThat(master.getDocument()).isNotNull();
         assertThat(master.getDocument().getDocumentName()).isEqualTo("SJP Public list");
-        assertThat(master.getDocument().getPublicationDate()).isEqualTo("2025-03-09T10:00:00");
+        assertThat(master.getDocument().getPublicationDate()).isEqualTo("2025-03-09T10:00:00Z");
         assertThat(master.getDocument().getVersion()).isEqualTo("1.0");
 
         assertThat(master.getCourtLists()).hasSize(1);
@@ -79,7 +79,7 @@ class SjpToCathPayloadTransformerTest {
         JsonNode root = objectMapper.readTree(json);
         assertThat(root.has("document")).isTrue();
         assertThat(root.get("document").get("documentName").asText()).isEqualTo("SJP Press list");
-        assertThat(root.get("document").get("publicationDate").asText()).isEqualTo("2025-03-09T10:00:00");
+        assertThat(root.get("document").get("publicationDate").asText()).isEqualTo("2025-03-09T10:00:00Z");
         assertThat(root.has("courtLists")).isTrue();
         assertThat(root.get("courtLists").isArray()).isTrue();
         assertThat(root.get("courtLists").get(0).has("courtHouse")).isTrue();
