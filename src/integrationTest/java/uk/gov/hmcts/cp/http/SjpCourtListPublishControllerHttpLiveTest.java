@@ -75,6 +75,7 @@ public class SjpCourtListPublishControllerHttpLiveTest extends AbstractTest {
 
     @Test
     void postSjpCourtList_returns200_forPressListType() throws Exception {
+        // SJP_PRESS_LIST handles public.sjp.pending-cases-press-list-generated
         String requestJson = """
             {
                 "listType": "SJP_PRESS_LIST",
@@ -85,7 +86,7 @@ public class SjpCourtListPublishControllerHttpLiveTest extends AbstractTest {
                             "caseUrn": "SJP-INT-TEST-002",
                             "defendantName": "Defendant Two",
                             "prosecutorName": "CPS",
-                            "sjpOffences": [{"title": "Offence 2", "wording": "Wording 2"}]
+                            "sjpOffences": [{"title": "Offence 2", "wording": "Wording 2", "reportingRestriction": false}]
                         }
                     ]
                 }

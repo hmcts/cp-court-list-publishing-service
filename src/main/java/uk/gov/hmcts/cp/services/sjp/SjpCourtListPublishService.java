@@ -13,8 +13,13 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 /**
- * Publishes SJP court list (SJP_PUBLISH_LIST and SJP_PRESS_LIST) to CaTH.
- * Replicates staging PubHub flow: transform listPayload to CaTH format, build DtsMeta, use CourtListPublisher.
+ * Publishes SJP court lists to CaTH for the two in-scope event types:
+ * <ul>
+ *   <li>SJP_PUBLISH_LIST – triggered by public.sjp.pending-cases-public-list-generated</li>
+ *   <li>SJP_PRESS_LIST   – triggered by public.sjp.pending-cases-press-list-generated</li>
+ * </ul>
+ * The press transparency report (public.sjp.press-transparency-report-generated) is out of
+ * scope and remains in Staging PubHub.
  */
 @Service
 public class SjpCourtListPublishService {
@@ -46,7 +51,7 @@ public class SjpCourtListPublishService {
     }
 
     /**
-     * Publish SJP court list to CaTH when listPayload is provided (typically triggered by scheduler).
+     * Publish SJP court list to CaTH.
      *
      * <p>Language is derived from {@code listPayload.isWelsh} — {@code true} → "WELSH", otherwise
      * "ENGLISH" — mirroring the court-centre flag used by the non-SJP publishing flow.
