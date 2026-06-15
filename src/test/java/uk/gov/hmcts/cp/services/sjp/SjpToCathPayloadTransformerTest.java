@@ -45,7 +45,7 @@ class SjpToCathPayloadTransformerTest {
 
         assertThat(master.getDocument()).isNotNull();
         assertThat(master.getDocument().getDocumentName()).isEqualTo("SJP Public list");
-        assertThat(master.getDocument().getPublicationDate()).isEqualTo("2025-03-09T10:00:00");
+        assertThat(master.getDocument().getPublicationDate()).isEqualTo("2025-03-09T10:00:00Z");
         assertThat(master.getDocument().getVersion()).isEqualTo("1.0");
 
         assertThat(master.getCourtLists()).hasSize(1);
@@ -68,22 +68,48 @@ class SjpToCathPayloadTransformerTest {
     }
 
     @Test
-    void transform_producesValidJsonWithExpectedStructure() throws Exception {
+    void transform_publicList_producesValidJsonWithExpectedStructure() throws Exception {
         SjpListPayload payload = new SjpListPayload(
                 "2025-03-09T10:00:00",
                 List.of(Map.<String, Object>of("caseUrn", "urn-1", "defendantName", "Name"))
         );
 
-        String json = transformer.transform(payload, SjpDocumentType.SJP_PRESS_LIST.getValue());
+        String json = transformer.transform(payload, SjpDocumentType.SJP_PUBLIC_LIST.getValue());
 
         JsonNode root = objectMapper.readTree(json);
         assertThat(root.has("document")).isTrue();
-        assertThat(root.get("document").get("documentName").asText()).isEqualTo("SJP Press list");
-        assertThat(root.get("document").get("publicationDate").asText()).isEqualTo("2025-03-09T10:00:00");
+        assertThat(root.get("document").get("documentName").asText()).isEqualTo("SJP Public list");
+        assertThat(root.get("document").get("publicationDate").asText()).isEqualTo("2025-03-09T10:00:00Z");
         assertThat(root.has("courtLists")).isTrue();
         assertThat(root.get("courtLists").isArray()).isTrue();
         assertThat(root.get("courtLists").get(0).has("courtHouse")).isTrue();
         assertThat(root.get("courtLists").get(0).get("courtHouse").has("courtRoom")).isTrue();
+    }
+
+    @Test
+    void transform_pressList_producesValidJsonWithExpectedStructure() throws Exception {
+        // Triggered by public.sjp.pending-cases-press-list-generated (not the transparency report)
+        SjpListPayload payload = new SjpListPayload(
+                "2025-03-09T10:00:00",
+                List.of(Map.<String, Object>of(
+                        "caseUrn", "urn-2",
+                        "defendantName", "Name",
+                        "sjpOffences", List.of(Map.of("title", "Speeding", "wording", "Drove too fast", "reportingRestriction", true))
+                ))
+        );
+
+        String json = transformer.transform(payload, SjpDocumentType.SJP_PRESS_LIST.getValue());
+
+        JsonNode root = objectMapper.readTree(json);
+        assertThat(root.get("document").get("documentName").asText()).isEqualTo("SJP Press list");
+        assertThat(root.get("document").get("publicationDate").asText()).isEqualTo("2025-03-09T10:00:00Z");
+
+        JsonNode offence = root.get("courtLists").get(0)
+                .get("courtHouse").get("courtRoom").get(0)
+                .get("session").get(0).get("sittings").get(0)
+                .get("hearing").get(0).get("offence").get(0);
+        assertThat(offence.get("offenceTitle").asText()).isEqualTo("Speeding");
+        assertThat(offence.get("reportingRestriction").asBoolean()).isTrue();
     }
 
     @Test

@@ -60,7 +60,7 @@ public class SjpToCathPayloadTransformer {
     /**
      * Builds the CaTH payload (PubhubMaster) from the SJP list payload and serialises to JSON.
      *
-     * @param listPayload   SJP list payload (generatedDateAndTime, readyCases)
+     * @param listPayload  SJP list payload (generatedDateAndTime, readyCases)
      * @param documentName e.g. "SJP Public list" or "SJP Press list"
      * @return JSON string to send to CaTH via CourtListPublisher
      */
@@ -73,9 +73,7 @@ public class SjpToCathPayloadTransformer {
      * Builds the strongly-typed PubhubMaster for testing or reuse.
      */
     public PubhubMaster buildPubhubMaster(SjpListPayload listPayload, String documentName) {
-        String publicationDate = listPayload.getGeneratedDateAndTime() != null
-                ? listPayload.getGeneratedDateAndTime()
-                : "";
+        String publicationDate = toUtcIso(listPayload.getGeneratedDateAndTime());
 
         SjpCathDocument document = SjpCathDocument.builder()
                 .documentName(documentName)
@@ -268,5 +266,17 @@ public class SjpToCathPayloadTransformer {
         } catch (NumberFormatException e) {
             return Optional.empty();
         }
+    }
+
+    /**
+     * Ensures the date-time string ends with 'Z' (UTC) as required by CaTH publicationDate regex:
+     * {@code ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([.]\d{1,9})?Z$}
+     */
+    static String toUtcIso(String dateTime) {
+        if (dateTime == null || dateTime.isBlank()) {
+            return "";
+        }
+        String trimmed = dateTime.trim();
+        return trimmed.endsWith("Z") ? trimmed : trimmed + "Z";
     }
 }
