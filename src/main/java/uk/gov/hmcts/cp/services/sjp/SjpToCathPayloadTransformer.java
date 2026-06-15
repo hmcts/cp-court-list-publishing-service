@@ -60,7 +60,7 @@ public class SjpToCathPayloadTransformer {
     /**
      * Builds the CaTH payload (PubhubMaster) from the SJP list payload and serialises to JSON.
      *
-     * @param listPayload   SJP list payload (generatedDateAndTime, readyCases)
+     * @param listPayload  SJP list payload (generatedDateAndTime, readyCases)
      * @param documentName e.g. "SJP Public list" or "SJP Press list"
      * @return JSON string to send to CaTH via CourtListPublisher
      */
