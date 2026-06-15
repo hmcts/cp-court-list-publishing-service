@@ -15,8 +15,10 @@ import java.time.temporal.ChronoUnit;
 /**
  * Publishes SJP court lists to CaTH for the two in-scope event types:
  * <ul>
- *   <li>SJP_PUBLISH_LIST – triggered by public.sjp.pending-cases-public-list-generated</li>
- *   <li>SJP_PRESS_LIST   – triggered by public.sjp.pending-cases-press-list-generated</li>
+ *   <li>SJP_PUBLISH_LIST – triggered by public.sjp.pending-cases-public-list-generated
+ *       (mapped to CaTH list type SJP_PUBLIC_LIST)</li>
+ *   <li>SJP_PRESS_LIST   – triggered by public.sjp.pending-cases-press-list-generated
+ *       (mapped to CaTH list type SJP_PRESS_LIST)</li>
  * </ul>
  * The press transparency report (public.sjp.press-transparency-report-generated) is out of
  * scope and remains in Staging PubHub.
