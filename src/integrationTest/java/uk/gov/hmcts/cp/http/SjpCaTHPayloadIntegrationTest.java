@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * <ul>
  *   <li>Transforms the SJP payload into the expected CaTH JSON structure</li>
  *   <li>Sends the correct DtsMeta headers (x-list-type, x-sensitivity, x-language, x-court-id, etc.)</li>
- *   <li>Handles both SJP_PUBLISH_LIST and SJP_PRESS_LIST list types</li>
+ *   <li>Handles both SJP_PUBLIC_LIST and SJP_PRESS_LIST list types</li>
  *   <li>Skips the CaTH call when readyCases is empty</li>
  * </ul>
  *
@@ -63,7 +63,7 @@ public class SjpCaTHPayloadIntegrationTest extends AbstractTest {
     void publishPublicList_postsCorrectPayloadStructureToCaTH() throws Exception {
         String requestJson = """
             {
-              "listType": "SJP_PUBLISH_LIST",
+              "listType": "SJP_PUBLIC_LIST",
               "requestType": "FULL",
               "listPayload": {
                 "generatedDateAndTime": "2025-06-01T09:00:00",
@@ -94,7 +94,7 @@ public class SjpCaTHPayloadIntegrationTest extends AbstractTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode body = objectMapper.readTree(response.getBody());
         assertThat(body.get("status").asText()).isEqualTo("ACCEPTED");
-        assertThat(body.get("listType").asText()).isEqualTo("SJP_PUBLISH_LIST");
+        assertThat(body.get("listType").asText()).isEqualTo("SJP_PUBLIC_LIST");
 
         JsonNode cathReq = waitForAdditionalCaTHRequest(cathCountBefore);
         JsonNode cathPayload = parseCaTHBody(cathReq);
@@ -214,7 +214,7 @@ public class SjpCaTHPayloadIntegrationTest extends AbstractTest {
     void publishPublicList_sendsWelshLanguageHeader_whenIsWelshTrue() throws Exception {
         String requestJson = """
             {
-              "listType": "SJP_PUBLISH_LIST",
+              "listType": "SJP_PUBLIC_LIST",
               "listPayload": {
                 "generatedDateAndTime": "2025-06-01T09:00:00",
                 "isWelsh": true,
@@ -241,7 +241,7 @@ public class SjpCaTHPayloadIntegrationTest extends AbstractTest {
     void publishPublicList_sendsEnglishLanguageHeader_whenIsWelshFalse() throws Exception {
         String requestJson = """
             {
-              "listType": "SJP_PUBLISH_LIST",
+              "listType": "SJP_PUBLIC_LIST",
               "listPayload": {
                 "generatedDateAndTime": "2025-06-01T09:00:00",
                 "isWelsh": false,
@@ -268,7 +268,7 @@ public class SjpCaTHPayloadIntegrationTest extends AbstractTest {
     void publishPublicList_explicitLanguageOverridesIsWelsh() throws Exception {
         String requestJson = """
             {
-              "listType": "SJP_PUBLISH_LIST",
+              "listType": "SJP_PUBLIC_LIST",
               "language": "ENGLISH",
               "listPayload": {
                 "generatedDateAndTime": "2025-06-01T09:00:00",
@@ -298,7 +298,7 @@ public class SjpCaTHPayloadIntegrationTest extends AbstractTest {
     void publishPublicList_sendsDefaultCourtId_whenCourtIdNumericAbsent() throws Exception {
         String requestJson = """
             {
-              "listType": "SJP_PUBLISH_LIST",
+              "listType": "SJP_PUBLIC_LIST",
               "listPayload": {
                 "generatedDateAndTime": "2025-06-01T09:00:00",
                 "readyCases": [
@@ -326,7 +326,7 @@ public class SjpCaTHPayloadIntegrationTest extends AbstractTest {
     void publishPublicList_producesOneHearingPerReadyCase() throws Exception {
         String requestJson = """
             {
-              "listType": "SJP_PUBLISH_LIST",
+              "listType": "SJP_PUBLIC_LIST",
               "listPayload": {
                 "generatedDateAndTime": "2025-06-01T09:00:00",
                 "readyCases": [
@@ -377,7 +377,7 @@ public class SjpCaTHPayloadIntegrationTest extends AbstractTest {
     void publishPublicList_returns200Accepted_andSkipsCaTH_whenReadyCasesEmpty() throws Exception {
         String requestJson = """
             {
-              "listType": "SJP_PUBLISH_LIST",
+              "listType": "SJP_PUBLIC_LIST",
               "listPayload": {
                 "generatedDateAndTime": "2025-06-01T09:00:00",
                 "readyCases": []
@@ -405,7 +405,7 @@ public class SjpCaTHPayloadIntegrationTest extends AbstractTest {
     @Test
     void publish_returns400_whenListPayloadMissing() {
         String requestJson = """
-            { "listType": "SJP_PUBLISH_LIST" }
+            { "listType": "SJP_PUBLIC_LIST" }
             """;
 
         assertThatThrownBy(() -> postSjpRequest(requestJson))

@@ -36,7 +36,7 @@ public class SjpCourtListPublishControllerHttpLiveTest extends AbstractTest {
     void postSjpCourtList_returns400_whenListPayloadOmitted() {
         String requestJson = """
             {
-                "listType": "SJP_PUBLISH_LIST"
+                "listType": "SJP_PUBLIC_LIST"
             }
             """;
 
@@ -50,7 +50,7 @@ public class SjpCourtListPublishControllerHttpLiveTest extends AbstractTest {
     void postSjpCourtList_returns200_withAcceptedStatus_whenListPayloadProvided() throws Exception {
         String requestJson = """
             {
-                "listType": "SJP_PUBLISH_LIST",
+                "listType": "SJP_PUBLIC_LIST",
                 "listPayload": {
                     "generatedDateAndTime": "2025-03-09T10:00:00",
                     "readyCases": [
@@ -69,7 +69,7 @@ public class SjpCourtListPublishControllerHttpLiveTest extends AbstractTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode body = objectMapper.readTree(response.getBody());
-        assertThat(body.get("listType").asText()).isEqualTo("SJP_PUBLISH_LIST");
+        assertThat(body.get("listType").asText()).isEqualTo("SJP_PUBLIC_LIST");
         assertThat(body.get("status").asText()).isEqualTo("ACCEPTED");
     }
 

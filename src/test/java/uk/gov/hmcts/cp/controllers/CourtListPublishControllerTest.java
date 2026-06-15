@@ -241,11 +241,11 @@ class CourtListPublishControllerTest {
     @Test
     void publishSjpCourtList_returnsOk_withVendorContentTypeAndAcceptedStatus() throws Exception {
         when(sjpCourtListPublishService.publishSjpCourtList(
-                eq("SJP_PUBLISH_LIST"), isNull(), isNull(), any()))
-                .thenReturn(SjpPublishResult.accepted("SJP_PUBLISH_LIST", "SJP court list published to CaTH"));
+                eq("SJP_PUBLIC_LIST"), isNull(), isNull(), any()))
+                .thenReturn(SjpPublishResult.accepted("SJP_PUBLIC_LIST", "SJP court list published to CaTH"));
 
         PublishCourtListRequest request = new PublishCourtListRequest()
-                .listType(SjpListType.SJP_PUBLISH_LIST)
+                .listType(SjpListType.SJP_PUBLIC_LIST)
                 .listPayload(minimalSjpPayload());
 
         mockMvc.perform(post(SJP_PUBLISH_URL)
@@ -254,7 +254,7 @@ class CourtListPublishControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(SJP_MEDIA_TYPE))
                 .andExpect(jsonPath("$.status").value("ACCEPTED"))
-                .andExpect(jsonPath("$.listType").value("SJP_PUBLISH_LIST"));
+                .andExpect(jsonPath("$.listType").value("SJP_PUBLIC_LIST"));
     }
 
     @Test
@@ -282,12 +282,12 @@ class CourtListPublishControllerTest {
     @Test
     void publishSjpCourtList_passesListPayloadToService() throws Exception {
         when(sjpCourtListPublishService.publishSjpCourtList(
-                eq("SJP_PUBLISH_LIST"), isNull(), isNull(), any()))
-                .thenReturn(SjpPublishResult.accepted("SJP_PUBLISH_LIST", "published"));
+                eq("SJP_PUBLIC_LIST"), isNull(), isNull(), any()))
+                .thenReturn(SjpPublishResult.accepted("SJP_PUBLIC_LIST", "published"));
 
         String requestJson = """
                 {
-                  "listType": "SJP_PUBLISH_LIST",
+                  "listType": "SJP_PUBLIC_LIST",
                   "listPayload": {
                     "generatedDateAndTime": "2025-03-09T10:00:00",
                     "isWelsh": true,
@@ -311,7 +311,7 @@ class CourtListPublishControllerTest {
                 .andExpect(content().contentType(SJP_MEDIA_TYPE));
 
         verify(sjpCourtListPublishService).publishSjpCourtList(
-                eq("SJP_PUBLISH_LIST"), isNull(), isNull(), any());
+                eq("SJP_PUBLIC_LIST"), isNull(), isNull(), any());
     }
 
     @Test
@@ -325,10 +325,10 @@ class CourtListPublishControllerTest {
     @Test
     void publishSjpCourtList_returnsOk_withFailedStatus_whenServiceFails() throws Exception {
         when(sjpCourtListPublishService.publishSjpCourtList(any(), any(), any(), any()))
-                .thenReturn(SjpPublishResult.failed("SJP_PUBLISH_LIST", "CaTH returned status 500"));
+                .thenReturn(SjpPublishResult.failed("SJP_PUBLIC_LIST", "CaTH returned status 500"));
 
         PublishCourtListRequest request = new PublishCourtListRequest()
-                .listType(SjpListType.SJP_PUBLISH_LIST)
+                .listType(SjpListType.SJP_PUBLIC_LIST)
                 .listPayload(minimalSjpPayload());
 
         mockMvc.perform(post(SJP_PUBLISH_URL)

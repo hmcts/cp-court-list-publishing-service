@@ -15,8 +15,8 @@ import java.time.temporal.ChronoUnit;
 /**
  * Publishes SJP court lists to CaTH for the two in-scope event types:
  * <ul>
- *   <li>SJP_PUBLISH_LIST – triggered by public.sjp.pending-cases-public-list-generated
- *       (mapped to CaTH list type SJP_PUBLIC_LIST)</li>
+ *   <li>SJP_PUBLIC_LIST – triggered by public.sjp.pending-cases-public-list-generated
+ *       (published to CaTH list type SJP_PUBLIC_LIST)</li>
  *   <li>SJP_PRESS_LIST   – triggered by public.sjp.pending-cases-press-list-generated
  *       (mapped to CaTH list type SJP_PRESS_LIST)</li>
  * </ul>
@@ -38,7 +38,7 @@ public class SjpCourtListPublishService {
     private static final String DOCUMENT_NAME_PUBLIC = "SJP Public list";
     private static final String DOCUMENT_NAME_PRESS = "SJP Press list";
 
-    public static final String SJP_PUBLISH_LIST = "SJP_PUBLISH_LIST";
+    public static final String SJP_PUBLIC_LIST = "SJP_PUBLIC_LIST";
     public static final String SJP_PRESS_LIST = "SJP_PRESS_LIST";
 
     private final SjpToCathPayloadTransformer transformer;
@@ -59,7 +59,7 @@ public class SjpCourtListPublishService {
      * "ENGLISH" — mirroring the court-centre flag used by the non-SJP publishing flow.
      * An explicit {@code language} argument overrides the payload-derived value when non-blank.
      *
-     * @param listType    SJP_PUBLISH_LIST or SJP_PRESS_LIST
+     * @param listType    SJP_PUBLIC_LIST or SJP_PRESS_LIST
      * @param language    optional override (default: derived from listPayload.isWelsh)
      * @param requestType optional request type (e.g. "FULL"); passed through to DtsMeta
      * @param listPayload required for CaTH publish (generatedDateAndTime, readyCases); can be Map or POJO from API
