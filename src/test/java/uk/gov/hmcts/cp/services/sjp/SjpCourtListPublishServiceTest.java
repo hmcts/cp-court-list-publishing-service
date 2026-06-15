@@ -47,7 +47,7 @@ class SjpCourtListPublishServiceTest {
 
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, "325");
 
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLISH_LIST, null, null, payload);
+        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
 
         DtsMeta meta = capturePublishedMeta();
         assertThat(meta.getCourtId()).isEqualTo("325");
@@ -59,7 +59,7 @@ class SjpCourtListPublishServiceTest {
 
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, "   ");
 
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLISH_LIST, null, null, payload);
+        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
 
         assertThat(capturePublishedMeta().getCourtId()).isEqualTo("0");
     }
@@ -72,7 +72,7 @@ class SjpCourtListPublishServiceTest {
 
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, null, true);
 
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLISH_LIST, null, null, payload);
+        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
 
         assertThat(capturePublishedMeta().getLanguage()).isEqualTo("WELSH");
     }
@@ -83,7 +83,7 @@ class SjpCourtListPublishServiceTest {
 
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, null, false);
 
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLISH_LIST, null, null, payload);
+        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
 
         assertThat(capturePublishedMeta().getLanguage()).isEqualTo("ENGLISH");
     }
@@ -94,7 +94,7 @@ class SjpCourtListPublishServiceTest {
 
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, null, null);
 
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLISH_LIST, null, null, payload);
+        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
 
         assertThat(capturePublishedMeta().getLanguage()).isEqualTo("ENGLISH");
     }
@@ -106,7 +106,7 @@ class SjpCourtListPublishServiceTest {
         // isWelsh=true but explicit language="ENGLISH" should win
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, null, true);
 
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLISH_LIST, "ENGLISH", null, payload);
+        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, "ENGLISH", null, payload);
 
         assertThat(capturePublishedMeta().getLanguage()).isEqualTo("ENGLISH");
     }
@@ -119,7 +119,7 @@ class SjpCourtListPublishServiceTest {
 
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
 
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLISH_LIST, null, "FULL", payload);
+        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, "FULL", payload);
 
         assertThat(capturePublishedMeta().getRequestType()).isEqualTo("FULL");
     }
@@ -130,7 +130,7 @@ class SjpCourtListPublishServiceTest {
 
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
 
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLISH_LIST, null, null, payload);
+        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
 
         assertThat(capturePublishedMeta().getRequestType()).isNull();
     }
@@ -140,7 +140,7 @@ class SjpCourtListPublishServiceTest {
     @Test
     void publishSjpCourtList_returnsFailed_whenListPayloadNull() {
         SjpCourtListPublishService.SjpPublishResult result =
-                service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLISH_LIST, null, null, null);
+                service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, null);
 
         assertThat(result.getStatus()).isEqualTo("FAILED");
         assertThat(result.getMessage()).contains("listPayload is required");
@@ -151,7 +151,7 @@ class SjpCourtListPublishServiceTest {
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", List.of());
 
         SjpCourtListPublishService.SjpPublishResult result =
-                service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLISH_LIST, null, null, payload);
+                service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
 
         assertThat(result.getStatus()).isEqualTo("ACCEPTED");
         assertThat(result.getMessage()).contains("no readyCases");
