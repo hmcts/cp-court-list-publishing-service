@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.services.CourtListDataService;
 import uk.gov.hmcts.cp.services.DocumentGeneratorClient;
+import uk.gov.hmcts.cp.services.TemplateInfo;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -58,22 +59,13 @@ public class CourtListDownloadService {
 
     private static final Set<CourtListType> SUPPORTED_TYPES = FALLBACK_TEMPLATE_BY_TYPE.keySet();
 
-    private static final Map<CourtListType, String> CROWN_COURT_TEMPLATES = new EnumMap<>(CourtListType.class);
-    private static final Map<CourtListType, String> CROWN_COURT_WELSH_TEMPLATES = new EnumMap<>(CourtListType.class);
-
-    static {
-        CROWN_COURT_TEMPLATES.put(CourtListType.DRAFT, "CrownDailyList");
-        CROWN_COURT_TEMPLATES.put(CourtListType.FINAL, "CrownDailyList");
-        CROWN_COURT_TEMPLATES.put(CourtListType.ONLINE_PUBLIC, "CrownOnlinePublicCourtList");
-        CROWN_COURT_TEMPLATES.put(CourtListType.ALPHABETICAL, "CrownAlphabetical");
-        CROWN_COURT_TEMPLATES.put(CourtListType.FIRM, "CrownFirmList");
-
-        CROWN_COURT_WELSH_TEMPLATES.put(CourtListType.DRAFT, "CrownDailyListWelsh");
-        CROWN_COURT_WELSH_TEMPLATES.put(CourtListType.FINAL, "CrownDailyListWelsh");
-        CROWN_COURT_WELSH_TEMPLATES.put(CourtListType.ONLINE_PUBLIC, "CrownOnlinePublicCourtListWelsh");
-        CROWN_COURT_WELSH_TEMPLATES.put(CourtListType.ALPHABETICAL, "CrownAlphabeticalWelsh");
-        CROWN_COURT_WELSH_TEMPLATES.put(CourtListType.FIRM, "CrownFirmListWelsh");
-    }
+    private static final Map<CourtListType, TemplateInfo> CROWN_COURT_TEMPLATES = Map.of(
+            CourtListType.DRAFT,         new TemplateInfo("CrownDailyList",             "CrownDailyListWelsh"),
+            CourtListType.FINAL,         new TemplateInfo("CrownDailyList",             "CrownDailyListWelsh"),
+            CourtListType.ONLINE_PUBLIC, new TemplateInfo("CrownOnlinePublicCourtList", "CrownOnlinePublicCourtListWelsh"),
+            CourtListType.ALPHABETICAL,  new TemplateInfo("CrownAlphabetical",          "CrownAlphabeticalWelsh"),
+            CourtListType.FIRM,          new TemplateInfo("CrownFirmList",              "CrownFirmListWelsh")
+    );
 
     private static final Set<CourtListType> CROWN_COURT_SUPPORTED_TYPES = CROWN_COURT_TEMPLATES.keySet();
 
@@ -168,8 +160,8 @@ public class CourtListDownloadService {
                     "Unsupported court list type for crown court download: " + courtListType);
         }
 
-        Map<CourtListType, String> templates = isWelsh ? CROWN_COURT_WELSH_TEMPLATES : CROWN_COURT_TEMPLATES;
-        String templateName = templates.get(courtListType);
+        TemplateInfo templates = CROWN_COURT_TEMPLATES.get(courtListType);
+        String templateName = isWelsh ? templates.welshTemplate() : templates.englishTemplate();
 
         LOG.info("Generating crown court PDF for type={}, isWelsh={}, template={}, courtCentreId={}, startDate={}, endDate={}",
                 courtListType, isWelsh, templateName, Encode.forJava(courtCentreId), startDate, endDate);
