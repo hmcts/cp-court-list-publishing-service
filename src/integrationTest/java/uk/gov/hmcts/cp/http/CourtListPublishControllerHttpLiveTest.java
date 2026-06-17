@@ -37,6 +37,8 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     private static final String REQUESTED_STATUS = Status.REQUESTED.toString();
     private static final String COURT_LIST_TYPE_PUBLIC = CourtListType.PUBLIC.toString();
     private static final String COURT_LIST_TYPE_FINAL = CourtListType.FINAL.toString();
+    private static final String CROWN_COURT_CENTRE_ID = "cc000000-0000-0000-0000-000000000001";
+    private static final String CROWN_COURT_CENTRE_ID_WELSH = "cc000000-0000-0000-0000-000000000002";
 
     private final RestTemplate http = new RestTemplate();
     private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
@@ -546,6 +548,113 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
             return req.get("url").asText("");
         }
         return req.path("absoluteUrl").asText("");
+    }
+
+    // Crown court tests
+
+    @Test
+    void getDownloadCourtListReturnsPdfWhenDraftAndCrownCourt() throws Exception {
+        getDownloadCourtListReturnsCrownCourtPdfForType(CourtListType.DRAFT, CROWN_COURT_CENTRE_ID, false);
+    }
+
+    @Test
+    void getDownloadCourtListReturnsPdfWhenFinalAndCrownCourt() throws Exception {
+        getDownloadCourtListReturnsCrownCourtPdfForType(CourtListType.FINAL, CROWN_COURT_CENTRE_ID, false);
+    }
+
+    @Test
+    void getDownloadCourtListReturnsPdfWhenAlphabeticalAndCrownCourt() throws Exception {
+        getDownloadCourtListReturnsCrownCourtPdfForType(CourtListType.ALPHABETICAL, CROWN_COURT_CENTRE_ID, false);
+    }
+
+    @Test
+    void getDownloadCourtListReturnsPdfWhenOnlinePublicAndCrownCourt() throws Exception {
+        getDownloadCourtListReturnsCrownCourtPdfForType(CourtListType.ONLINE_PUBLIC, CROWN_COURT_CENTRE_ID, false);
+    }
+
+    @Test
+    void getDownloadCourtListReturnsPdfWhenFirmAndCrownCourt() throws Exception {
+        getDownloadCourtListReturnsCrownCourtPdfForType(CourtListType.FIRM, CROWN_COURT_CENTRE_ID, false);
+    }
+
+    @Test
+    void getDownloadCourtListReturnsPdfWhenAlphabeticalAndWelshCrownCourt() throws Exception {
+        getDownloadCourtListReturnsCrownCourtPdfForType(CourtListType.ALPHABETICAL, CROWN_COURT_CENTRE_ID_WELSH, true);
+    }
+
+    private String buildCrownCourtDownloadUrl(CourtListType courtListType, String courtCentreId) {
+        return DOWNLOAD_ENDPOINT
+                + "?courtCentreId=" + courtCentreId
+                + "&startDate=2026-02-27"
+                + "&endDate=2026-02-27"
+                + "&courtListType=" + courtListType.name();
+    }
+
+    private void getDownloadCourtListReturnsCrownCourtPdfForType(CourtListType courtListType, String courtCentreId, boolean isWelsh) throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
+        headers.setAccept(java.util.List.of(MediaType.parseMediaType(DOWNLOAD_ACCEPT)));
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<byte[]> response = http.exchange(
+                buildCrownCourtDownloadUrl(courtListType, courtCentreId),
+                HttpMethod.GET,
+                entity,
+                byte[].class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_PDF);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
+                .contains("attachment", "CourtList.pdf");
+        byte[] body = response.getBody();
+        assertThat(body).as("PDF body for %s must be non-null", courtListType).isNotNull();
+        assertThat(body.length).as("PDF body for %s must be non-empty", courtListType).isGreaterThan(0);
+        assertThat(new String(body, 0, Math.min(4, body.length)))
+                .as("PDF body for %s must start with %%PDF magic", courtListType)
+                .startsWith("%PDF");
+        assertThat(body)
+                .as("PDF body for %s must match the WireMock-stubbed minimal-pdf.pdf bytes", courtListType)
+                .isEqualTo(loadResourceBytes("wiremock/__files/minimal-pdf.pdf"));
+
+        verifyCrownDailyListPayloadCalled(courtListType);
+        verifyDocumentGeneratorCalled(expectedCrownTemplate(courtListType, isWelsh), "pdf");
+    }
+
+    private void verifyCrownDailyListPayloadCalled(CourtListType courtListType) throws Exception {
+        List<JsonNode> matches = wiremockRequestsMatching(req -> {
+            if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
+                return false;
+            }
+            String url = wiremockRequestUrl(req);
+            return url.contains("/listing-service/query/api/rest/listing/courtlistpayload")
+                    && url.contains("listId=" + courtListType.name())
+                    && url.contains("restricted=false");
+        });
+        assertThat(matches)
+                .as("Crown daily list /courtlistpayload must be called exactly once for %s", courtListType)
+                .hasSize(1);
+    }
+
+    private static String expectedCrownTemplate(CourtListType type, boolean isWelsh) {
+        if (isWelsh) {
+            switch (type) {
+                case DRAFT:
+                case FINAL:       return "CrownDailyListWelsh";
+                case ONLINE_PUBLIC: return "CrownOnlinePublicCourtListWelsh";
+                case ALPHABETICAL: return "CrownAlphabeticalWelsh";
+                case FIRM:        return "CrownFirmListWelsh";
+                default: throw new IllegalArgumentException("No crown Welsh template for " + type);
+            }
+        } else {
+            switch (type) {
+                case DRAFT:
+                case FINAL:       return "CrownDailyList";
+                case ONLINE_PUBLIC: return "CrownOnlinePublicCourtList";
+                case ALPHABETICAL: return "CrownAlphabetical";
+                case FIRM:        return "CrownFirmList";
+                default: throw new IllegalArgumentException("No crown template for " + type);
+            }
+        }
     }
 
 }

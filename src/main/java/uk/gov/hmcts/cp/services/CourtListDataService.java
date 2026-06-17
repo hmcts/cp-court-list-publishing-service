@@ -34,6 +34,7 @@ public class CourtListDataService {
     private static final String COURT_LIST_PAYLOAD_PATH = "/listing-service/query/api/rest/listing/courtlistpayload";
     private static final String COURT_LIST_PATH = "/listing-service/query/api/rest/listing/courtlist";
     private static final String ACCEPT_COURTLIST_PAYLOAD = "application/vnd.listing.search.court.list.payload+json";
+    private static final String ACCEPT_CROWN_DAILY_LIST_PAYLOAD = "application/vnd.listing.search.daily.list.payload+json";
     private static final String PROGRESSION_COURTLIST_PATH = "/progression-service/query/api/rest/progression/courtlist";
     private static final String ACCEPT_PROGRESSION_COURTLIST = "application/vnd.progression.search.court.list+json";
 
@@ -185,9 +186,26 @@ public class CourtListDataService {
         }
     }
 
+    public String getCrownCourtDailyListPayload(
+            CourtListType courtListType, String courtCentreId, String courtRoomId,
+            LocalDate startDate, LocalDate endDate, String cjscppuid, boolean restricted) {
+        return fetchCourtListPayloadFromListing(
+                courtListType, courtCentreId, courtRoomId,
+                startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT),
+                restricted, false, cjscppuid, ACCEPT_CROWN_DAILY_LIST_PAYLOAD);
+    }
+
     private String fetchCourtListPayloadFromListing(
             CourtListType listId, String courtCentreId, String courtRoomId,
             String startDate, String endDate, boolean restricted, boolean includeApplications, String cjscppuid) {
+        return fetchCourtListPayloadFromListing(listId, courtCentreId, courtRoomId,
+                startDate, endDate, restricted, includeApplications, cjscppuid, ACCEPT_COURTLIST_PAYLOAD);
+    }
+
+    private String fetchCourtListPayloadFromListing(
+            CourtListType listId, String courtCentreId, String courtRoomId,
+            String startDate, String endDate, boolean restricted, boolean includeApplications,
+            String cjscppuid, String acceptHeader) {
         if (courtListDataBaseUrl.isBlank()) {
             throw new CourtListDownloadException("Court list data is not configured");
         }
@@ -205,7 +223,7 @@ public class CourtListDataService {
         String url = builder.build().toUriString();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Collections.singletonList(MediaType.parseMediaType(ACCEPT_COURTLIST_PAYLOAD)));
+        headers.setAccept(Collections.singletonList(MediaType.parseMediaType(acceptHeader)));
         if (cjscppuid != null && !cjscppuid.isBlank()) {
             headers.set(AppConstant.CJSCPPUID, cjscppuid);
         }

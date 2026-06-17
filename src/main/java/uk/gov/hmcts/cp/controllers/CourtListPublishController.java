@@ -10,6 +10,8 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.PublishStatusCleanupResponse;
 import uk.gov.hmcts.cp.openapi.model.PublishCourtListRequest;
 import uk.gov.hmcts.cp.openapi.model.PublishCourtListResponse;
+import uk.gov.hmcts.cp.models.CourtCentreData;
+import uk.gov.hmcts.cp.services.ReferenceDataService;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListFileResult;
@@ -37,6 +39,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -53,6 +56,7 @@ public class CourtListPublishController implements CourtListPublishApi {
     private final CourtListDownloadService courtListDownloadService;
     private final SjpCourtListPublishService sjpCourtListPublishService;
     private final CleanupJobService cleanupJobService;
+    private final ReferenceDataService referenceDataService;
 
     @Value("${cleanup.publish-status-cleanup-days:90}")
     private int publishStatusCleanupDays;
@@ -61,12 +65,14 @@ public class CourtListPublishController implements CourtListPublishApi {
                                      CourtListTaskTriggerService courtListTaskTriggerService,
                                      CourtListDownloadService courtListDownloadService,
                                      CleanupJobService cleanupJobService,
-                                     SjpCourtListPublishService sjpCourtListPublishService) {
+                                     SjpCourtListPublishService sjpCourtListPublishService,
+                                     ReferenceDataService referenceDataService) {
         this.service = service;
         this.courtListTaskTriggerService = courtListTaskTriggerService;
         this.courtListDownloadService = courtListDownloadService;
         this.cleanupJobService = cleanupJobService;
         this.sjpCourtListPublishService = sjpCourtListPublishService;
+        this.referenceDataService = referenceDataService;
     }
 
 
@@ -134,15 +140,25 @@ public class CourtListPublishController implements CourtListPublishApi {
         if (cjscppuid == null || cjscppuid.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CJSCPPUID header is required");
         }
+        Optional<CourtCentreData> courtCentreDataOpt = referenceDataService.getCourtCenterDataByCourtCentreId(
+                courtCentreId.toString(), cjscppuid);
+        boolean isCrownCourt = courtCentreDataOpt.isPresent() && isCrownCourt(courtCentreDataOpt.get());
         try {
-            CourtListFileResult result = courtListDownloadService.generateCourtListDownload(
-                    courtListType,
-                    courtCentreId.toString(),
-                    courtRoomId != null ? courtRoomId.toString() : null,
-                    startDate,
-                    endDate,
-                    cjscppuid,
-                    Boolean.TRUE.equals(restricted));
+            final CourtListFileResult result;
+            if (isCrownCourt) {
+                boolean isWelsh = Boolean.TRUE.equals(courtCentreDataOpt.get().getIsWelsh());
+                result = courtListDownloadService.generateCrownCourtPdf(
+                        courtListType, isWelsh,
+                        courtCentreId.toString(),
+                        courtRoomId != null ? courtRoomId.toString() : null,
+                        startDate, endDate, cjscppuid, Boolean.TRUE.equals(restricted));
+            } else {
+                result = courtListDownloadService.generateCourtListDownload(
+                        courtListType,
+                        courtCentreId.toString(),
+                        courtRoomId != null ? courtRoomId.toString() : null,
+                        startDate, endDate, cjscppuid, Boolean.TRUE.equals(restricted));
+            }
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType(result.contentType()));
             headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.filename() + "\"");
@@ -219,6 +235,11 @@ public class CourtListPublishController implements CourtListPublishApi {
             return servletAttrs.getRequest().getHeader(AppConstant.CJSCPPUID);
         }
         return null;
+    }
+
+    private static boolean isCrownCourt(CourtCentreData courtCentreData) {
+        String oucodeL1Code = courtCentreData.getOucodeL1Code();
+        return "C".equalsIgnoreCase(oucodeL1Code);
     }
 }
 
