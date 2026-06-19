@@ -32,6 +32,7 @@ public class CourtListDataService {
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final String COURT_LIST_PAYLOAD_PATH = "/listing-service/query/api/rest/listing/courtlistpayload";
+    private static final String DAILY_LIST_PAYLOAD_PATH = "/listing-service/query/api/rest/listing/dailylistpayload";
     private static final String COURT_LIST_PATH = "/listing-service/query/api/rest/listing/courtlist";
     private static final String ACCEPT_COURTLIST_PAYLOAD = "application/vnd.listing.search.court.list.payload+json";
     private static final String ACCEPT_CROWN_DAILY_LIST_PAYLOAD = "application/vnd.listing.search.daily.list.payload+json";
@@ -189,28 +190,32 @@ public class CourtListDataService {
     public String getCrownCourtDailyListPayload(
             CourtListType courtListType, String courtCentreId, String courtRoomId,
             LocalDate startDate, LocalDate endDate, String cjscppuid, boolean restricted) {
-        return fetchCourtListPayloadFromListing(
+        log.info("Fetching crown court daily list payload for listId={}, courtCentreId={}, startDate={}, endDate={}",
+                courtListType, courtCentreId, startDate, endDate);
+        String result = fetchCourtListPayloadFromListing(
                 courtListType, courtCentreId, courtRoomId,
                 startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT),
-                restricted, false, cjscppuid, ACCEPT_CROWN_DAILY_LIST_PAYLOAD);
+                restricted, false, cjscppuid, ACCEPT_CROWN_DAILY_LIST_PAYLOAD, DAILY_LIST_PAYLOAD_PATH);
+        log.info("Successfully fetched crown court daily list payload for listId={}, courtCentreId={}", courtListType, courtCentreId);
+        return result;
     }
 
     private String fetchCourtListPayloadFromListing(
             CourtListType listId, String courtCentreId, String courtRoomId,
             String startDate, String endDate, boolean restricted, boolean includeApplications, String cjscppuid) {
         return fetchCourtListPayloadFromListing(listId, courtCentreId, courtRoomId,
-                startDate, endDate, restricted, includeApplications, cjscppuid, ACCEPT_COURTLIST_PAYLOAD);
+                startDate, endDate, restricted, includeApplications, cjscppuid, ACCEPT_COURTLIST_PAYLOAD, COURT_LIST_PAYLOAD_PATH);
     }
 
     private String fetchCourtListPayloadFromListing(
             CourtListType listId, String courtCentreId, String courtRoomId,
             String startDate, String endDate, boolean restricted, boolean includeApplications,
-            String cjscppuid, String acceptHeader) {
+            String cjscppuid, String acceptHeader, String path) {
         if (courtListDataBaseUrl.isBlank()) {
             throw new CourtListDownloadException("Court list data is not configured");
         }
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(courtListDataBaseUrl).path(COURT_LIST_PAYLOAD_PATH)
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(courtListDataBaseUrl).path(path)
                 .queryParam("listId", listId.name())
                 .queryParam("courtCentreId", courtCentreId)
                 .queryParam("startDate", startDate)
