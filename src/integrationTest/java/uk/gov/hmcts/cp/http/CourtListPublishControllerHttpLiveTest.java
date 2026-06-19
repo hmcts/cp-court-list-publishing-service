@@ -626,12 +626,12 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 return false;
             }
             String url = wiremockRequestUrl(req);
-            return url.contains("/listing-service/query/api/rest/listing/courtlistpayload")
+            return url.contains("/listing-service/query/api/rest/listing/dailylistpayload")
                     && url.contains("listId=" + courtListType.name())
                     && url.contains("restricted=false");
         });
         assertThat(matches)
-                .as("Crown daily list /courtlistpayload must be called exactly once for %s", courtListType)
+                .as("Crown daily list /dailylistpayload must be called exactly once for %s", courtListType)
                 .hasSize(1);
     }
 

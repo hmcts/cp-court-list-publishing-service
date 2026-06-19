@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPath": "/listing-service/query/api/rest/listing/courtlistpayload",
+    "urlPath": "/listing-service/query/api/rest/listing/dailylistpayload",
     "queryParameters": {
       "listId": { "equalTo": "FIRM" }
     },

@@ -33,6 +33,7 @@ class CourtListDataServiceTest {
 
     private static final String LISTING_BASE_URL = "https://internal.example.com";
     private static final String LISTING_PATH = "/listing-service/query/api/rest/listing/courtlistpayload";
+    private static final String DAILY_LIST_PATH = "/listing-service/query/api/rest/listing/dailylistpayload";
 
     @Mock
     private RestTemplate publicCourtListRestTemplate;
@@ -383,7 +384,7 @@ class CourtListDataServiceTest {
 
         assertThat(result).isEqualTo(payload);
         verify(publicCourtListRestTemplate).exchange(
-                argThat((String url) -> url.contains(LISTING_PATH) && url.contains("listId=DRAFT")
+                argThat((String url) -> url.contains(DAILY_LIST_PATH) && url.contains("listId=DRAFT")
                         && url.contains("courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26")
                         && url.contains("startDate=2026-02-27") && url.contains("endDate=2026-02-27")),
                 eq(HttpMethod.GET),
