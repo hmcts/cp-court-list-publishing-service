@@ -3,7 +3,7 @@
     "method": "GET",
     "urlPath": "/listing-service/query/api/rest/listing/dailylistpayload",
     "queryParameters": {
-      "listId": { "equalTo": "FINAL" }
+      "publishCourtListType": { "equalTo": "FINAL" }
     },
     "headers": {
       "Accept": {

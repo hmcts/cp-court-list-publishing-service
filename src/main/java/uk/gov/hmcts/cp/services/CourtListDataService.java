@@ -190,14 +190,47 @@ public class CourtListDataService {
     public String getCrownCourtDailyListPayload(
             CourtListType courtListType, String courtCentreId, String courtRoomId,
             LocalDate startDate, LocalDate endDate, String cjscppuid, boolean restricted) {
-        log.info("Fetching crown court daily list payload for listId={}, courtCentreId={}, startDate={}, endDate={}",
+        log.info("Fetching crown court daily list payload for publishCourtListType={}, courtCentreId={}, startDate={}, endDate={}",
                 courtListType, courtCentreId, startDate, endDate);
-        String result = fetchCourtListPayloadFromListing(
-                courtListType, courtCentreId, courtRoomId,
-                startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT),
-                restricted, false, cjscppuid, ACCEPT_CROWN_DAILY_LIST_PAYLOAD, DAILY_LIST_PAYLOAD_PATH);
-        log.info("Successfully fetched crown court daily list payload for listId={}, courtCentreId={}", courtListType, courtCentreId);
+        String result = fetchDailyListPayload(
+                courtListType, courtCentreId,
+                startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT), cjscppuid);
+        log.info("Successfully fetched crown court daily list payload for publishCourtListType={}, courtCentreId={}", courtListType, courtCentreId);
         return result;
+    }
+
+    private String fetchDailyListPayload(
+            CourtListType publishCourtListType, String courtCentreId,
+            String startDate, String endDate, String cjscppuid) {
+        if (courtListDataBaseUrl.isBlank()) {
+            throw new CourtListDownloadException("Court list data is not configured");
+        }
+
+        String url = UriComponentsBuilder.fromUriString(courtListDataBaseUrl).path(DAILY_LIST_PAYLOAD_PATH)
+                .queryParam("publishCourtListType", publishCourtListType.name())
+                .queryParam("courtCentreId", courtCentreId)
+                .queryParam("startDate", startDate)
+                .queryParam("endDate", endDate)
+                .build().toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.parseMediaType(ACCEPT_CROWN_DAILY_LIST_PAYLOAD)));
+        if (cjscppuid != null && !cjscppuid.isBlank()) {
+            headers.set(AppConstant.CJSCPPUID, cjscppuid);
+        }
+
+        try {
+            ResponseEntity<String> response = publicCourtListRestTemplate.exchange(
+                    url, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+            String body = response.getBody();
+            if (body == null || body.isBlank()) {
+                throw new CourtListDownloadException("Court list payload API returned empty response");
+            }
+            return body;
+        } catch (RestClientException e) {
+            log.error("Daily list payload API call failed for publishCourtListType={}, courtCentreId={}", publishCourtListType, courtCentreId, e);
+            throw new CourtListDownloadException("Failed to fetch court list payload: " + e.getMessage(), e);
+        }
     }
 
     private String fetchCourtListPayloadFromListing(
