@@ -3,7 +3,7 @@
     "method": "GET",
     "urlPath": "/listing-service/query/api/rest/listing/dailylistpayload",
     "queryParameters": {
-      "listId": { "equalTo": "ONLINE_PUBLIC" }
+      "publishCourtListType": { "equalTo": "ONLINE_PUBLIC" }
     },
     "headers": {
       "Accept": {
