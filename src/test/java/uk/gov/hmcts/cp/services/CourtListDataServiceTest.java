@@ -384,9 +384,10 @@ class CourtListDataServiceTest {
 
         assertThat(result).isEqualTo(payload);
         verify(publicCourtListRestTemplate).exchange(
-                argThat((String url) -> url.contains(DAILY_LIST_PATH) && url.contains("listId=DRAFT")
+                argThat((String url) -> url.contains(DAILY_LIST_PATH) && url.contains("publishCourtListType=DRAFT")
                         && url.contains("courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26")
-                        && url.contains("startDate=2026-02-27") && url.contains("endDate=2026-02-27")),
+                        && url.contains("startDate=2026-02-27") && url.contains("endDate=2026-02-27")
+                        && !url.contains("restricted=") && !url.contains("includeApplications=")),
                 eq(HttpMethod.GET),
                 argThat((HttpEntity<?> entity) -> entity.getHeaders().getAccept().stream()
                         .anyMatch(mt -> "application/vnd.listing.search.daily.list.payload+json".equals(mt.toString()))),
@@ -407,7 +408,7 @@ class CourtListDataServiceTest {
     }
 
     @Test
-    void getCrownCourtDailyListPayloadForwardsCourtRoomIdWhenPresent() {
+    void getCrownCourtDailyListPayloadSendsOnlyRequiredParameters() {
         String payload = "{\"listType\":\"alphabetical\"}";
         String courtRoomId = "4294a92c-8827-3296-be53-c74b7e9e31d8";
         when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
@@ -418,7 +419,10 @@ class CourtListDataServiceTest {
                 LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id", false);
 
         verify(publicCourtListRestTemplate).exchange(
-                argThat((String url) -> url.contains("courtRoomId=" + courtRoomId)),
+                argThat((String url) -> url.contains("publishCourtListType=ALPHABETICAL")
+                        && !url.contains("courtRoomId=")
+                        && !url.contains("restricted=")
+                        && !url.contains("includeApplications=")),
                 eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
     }
 
