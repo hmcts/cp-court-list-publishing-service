@@ -621,17 +621,31 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     private void verifyCrownDailyListPayloadCalled(CourtListType courtListType) throws Exception {
-        List<JsonNode> matches = wiremockRequestsMatching(req -> {
-            if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
-                return false;
-            }
-            String url = wiremockRequestUrl(req);
-            return url.contains("/listing-service/query/api/rest/listing/dailylistpayload")
-                    && url.contains("publishCourtListType=" + courtListType.name());
-        });
-        assertThat(matches)
-                .as("Crown daily list /dailylistpayload must be called exactly once for %s", courtListType)
-                .hasSize(1);
+        if (CourtListType.ALPHABETICAL.equals(courtListType)) {
+            List<JsonNode> matches = wiremockRequestsMatching(req -> {
+                if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
+                    return false;
+                }
+                String url = wiremockRequestUrl(req);
+                return url.contains("/listing-service/query/api/rest/listing/courtlistpayload")
+                        && url.contains("listId=" + courtListType.name());
+            });
+            assertThat(matches)
+                    .as("Crown alphabetical /courtlistpayload must be called exactly once for %s", courtListType)
+                    .hasSize(1);
+        } else {
+            List<JsonNode> matches = wiremockRequestsMatching(req -> {
+                if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
+                    return false;
+                }
+                String url = wiremockRequestUrl(req);
+                return url.contains("/listing-service/query/api/rest/listing/dailylistpayload")
+                        && url.contains("publishCourtListType=" + courtListType.name());
+            });
+            assertThat(matches)
+                    .as("Crown daily list /dailylistpayload must be called exactly once for %s", courtListType)
+                    .hasSize(1);
+        }
     }
 
     private static String expectedCrownTemplate(CourtListType type, boolean isWelsh) {
@@ -640,7 +654,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 case DRAFT:
                 case FINAL:       return "CrownDailyListWelsh";
                 case ONLINE_PUBLIC: return "CrownOnlinePublicCourtListWelsh";
-                case ALPHABETICAL: return "CrownAlphabeticalWelsh";
+                case ALPHABETICAL: return "CourtListEnglishWelsh";
                 case FIRM:        return "CrownFirmListWelsh";
                 default: throw new IllegalArgumentException("No crown Welsh template for " + type);
             }
@@ -649,7 +663,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
                 case DRAFT:
                 case FINAL:       return "CrownDailyList";
                 case ONLINE_PUBLIC: return "CrownOnlinePublicCourtList";
-                case ALPHABETICAL: return "CrownAlphabetical";
+                case ALPHABETICAL: return "CourtList";
                 case FIRM:        return "CrownFirmList";
                 default: throw new IllegalArgumentException("No crown template for " + type);
             }

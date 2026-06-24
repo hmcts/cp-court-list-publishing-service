@@ -190,6 +190,15 @@ public class CourtListDataService {
     public String getCrownCourtDailyListPayload(
             CourtListType courtListType, String courtCentreId, String courtRoomId,
             LocalDate startDate, LocalDate endDate, String cjscppuid, boolean restricted) {
+        if (CourtListType.ALPHABETICAL.equals(courtListType)) {
+            log.info("Fetching crown court alphabetical payload for courtCentreId={}, startDate={}, endDate={}",
+                    courtCentreId, startDate, endDate);
+            return fetchCourtListPayloadFromListing(
+                    courtListType, courtCentreId, courtRoomId,
+                    startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT),
+                    restricted, false, cjscppuid,
+                    ACCEPT_COURTLIST_PAYLOAD, COURT_LIST_PAYLOAD_PATH);
+        }
         log.info("Fetching crown court daily list payload for publishCourtListType={}, courtCentreId={}, startDate={}, endDate={}",
                 courtListType, courtCentreId, startDate, endDate);
         String result = fetchDailyListPayload(

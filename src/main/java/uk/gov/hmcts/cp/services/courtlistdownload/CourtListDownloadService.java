@@ -63,7 +63,7 @@ public class CourtListDownloadService {
             CourtListType.DRAFT,         new TemplateInfo("CrownDailyList",             "CrownDailyListWelsh"),
             CourtListType.FINAL,         new TemplateInfo("CrownDailyList",             "CrownDailyListWelsh"),
             CourtListType.ONLINE_PUBLIC, new TemplateInfo("CrownOnlinePublicCourtList", "CrownOnlinePublicCourtListWelsh"),
-            CourtListType.ALPHABETICAL,  new TemplateInfo("CrownAlphabetical",          "CrownAlphabeticalWelsh"),
+            CourtListType.ALPHABETICAL,  new TemplateInfo("CourtList",           "CourtListEnglishWelsh"),
             CourtListType.FIRM,          new TemplateInfo("CrownFirmList",              "CrownFirmListWelsh")
     );
 

@@ -278,13 +278,13 @@ class CourtListDownloadServiceTest {
     @Test
     void generateCrownCourtPdfUsesAlphabeticalTemplate() throws IOException {
         stubCrownPayload(CourtListType.ALPHABETICAL, null, "{}");
-        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownAlphabetical")))
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CourtList")))
                 .thenReturn(PDF_BYTES);
 
         service.generateCrownCourtPdf(
                 CourtListType.ALPHABETICAL, false, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
 
-        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CrownAlphabetical"));
+        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CourtList"));
     }
 
     @Test
@@ -338,13 +338,13 @@ class CourtListDownloadServiceTest {
     @Test
     void generateCrownCourtPdfUsesAlphabeticalWelshTemplate() throws IOException {
         stubCrownPayload(CourtListType.ALPHABETICAL, null, "{}");
-        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownAlphabeticalWelsh")))
+        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CourtListEnglishWelsh")))
                 .thenReturn(PDF_BYTES);
 
         service.generateCrownCourtPdf(
                 CourtListType.ALPHABETICAL, true, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
 
-        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CrownAlphabeticalWelsh"));
+        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CourtListEnglishWelsh"));
     }
 
     @Test
