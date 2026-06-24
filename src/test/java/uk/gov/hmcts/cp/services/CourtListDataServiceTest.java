@@ -408,22 +408,44 @@ class CourtListDataServiceTest {
     }
 
     @Test
-    void getCrownCourtDailyListPayloadSendsOnlyRequiredParameters() {
-        String payload = "{\"listType\":\"alphabetical\"}";
+    void getCrownCourtDailyListPayloadSendsOnlyRequiredParametersForDailyTypes() {
+        String payload = "{\"listType\":\"draft\"}";
         String courtRoomId = "4294a92c-8827-3296-be53-c74b7e9e31d8";
         when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(new ResponseEntity<>(payload, HttpStatus.OK));
 
         courtListDataService.getCrownCourtDailyListPayload(
-                CourtListType.ALPHABETICAL, "f8254db1-1683-483e-afb3-b87fde5a0a26", courtRoomId,
+                CourtListType.DRAFT, "f8254db1-1683-483e-afb3-b87fde5a0a26", courtRoomId,
                 LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id", false);
 
         verify(publicCourtListRestTemplate).exchange(
-                argThat((String url) -> url.contains("publishCourtListType=ALPHABETICAL")
+                argThat((String url) -> url.contains("publishCourtListType=DRAFT")
                         && !url.contains("courtRoomId=")
                         && !url.contains("restricted=")
                         && !url.contains("includeApplications=")),
                 eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    void getCrownCourtDailyListPayloadForAlphabeticalUsesCourtListPayloadEndpoint() {
+        String payload = "{\"listType\":\"alphabetical\"}";
+        String courtRoomId = "4294a92c-8827-3296-be53-c74b7e9e31d8";
+        when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(payload, HttpStatus.OK));
+
+        String result = courtListDataService.getCrownCourtDailyListPayload(
+                CourtListType.ALPHABETICAL, "f8254db1-1683-483e-afb3-b87fde5a0a26", courtRoomId,
+                LocalDate.of(2026, 2, 27), LocalDate.of(2026, 2, 27), "user-id", false);
+
+        assertThat(result).isEqualTo(payload);
+        verify(publicCourtListRestTemplate).exchange(
+                argThat((String url) -> url.contains(LISTING_PATH)
+                        && url.contains("listId=ALPHABETICAL")
+                        && !url.contains("publishCourtListType=")),
+                eq(HttpMethod.GET),
+                argThat((HttpEntity<?> entity) -> entity.getHeaders().getAccept().stream()
+                        .anyMatch(mt -> "application/vnd.listing.search.court.list.payload+json".equals(mt.toString()))),
+                eq(String.class));
     }
 
     @Test
