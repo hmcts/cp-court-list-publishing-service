@@ -50,7 +50,7 @@ public class SjpCourtListPublishService {
     public SjpCourtListPublishService(
             SjpToCathPayloadTransformer transformer,
             CourtListPublisher courtListPublisher,
-            @Value("${cath.publishing-enabled}") boolean cathPublishingEnabled) {
+            @Value("${cath.publishing-enabled:false}") boolean cathPublishingEnabled) {
         this.transformer = transformer;
         this.courtListPublisher = courtListPublisher;
         this.cathPublishingEnabled = cathPublishingEnabled;
