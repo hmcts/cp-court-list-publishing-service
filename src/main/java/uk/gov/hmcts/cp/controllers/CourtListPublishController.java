@@ -136,6 +136,8 @@ public class CourtListPublishController implements CourtListPublishApi {
         if (endDate.isBefore(startDate)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endDate must be on or after startDate");
         }
+        LOG.atInfo().log("downloadCourtList called with courtCentreId={}, startDate={}, endDate={}, courtListType={}, courtRoomId={}, restricted={}",
+                courtCentreId, startDate, endDate, courtListType, courtRoomId, restricted);
         String cjscppuid = getCjscppuidFromRequest();
         if (cjscppuid == null || cjscppuid.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CJSCPPUID header is required");
@@ -143,6 +145,7 @@ public class CourtListPublishController implements CourtListPublishApi {
         Optional<CourtCentreData> courtCentreDataOpt = referenceDataService.getCourtCenterDataByCourtCentreId(
                 courtCentreId.toString(), cjscppuid);
         boolean isCrownCourt = courtCentreDataOpt.isPresent() && isCrownCourt(courtCentreDataOpt.get());
+        LOG.atInfo().log("downloadCourtList courtCentreId={} isCrownCourt={}", courtCentreId, isCrownCourt);
         try {
             final CourtListFileResult result;
             if (isCrownCourt) {
