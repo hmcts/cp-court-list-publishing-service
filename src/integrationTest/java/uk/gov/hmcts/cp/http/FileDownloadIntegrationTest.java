@@ -57,6 +57,7 @@ class FileDownloadIntegrationTest extends AbstractTest {
         // When
         HttpHeaders downloadHeaders = new HttpHeaders();
         downloadHeaders.setAccept(java.util.List.of(ACCEPT_FILES_DOWNLOAD));
+        downloadHeaders.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         ResponseEntity<byte[]> response = http.exchange(
                 DOWNLOAD_ENDPOINT + "/" + nonExistentFileId,
                 HttpMethod.GET,
@@ -91,6 +92,7 @@ class FileDownloadIntegrationTest extends AbstractTest {
         // When - Download the file (only meaningful if task succeeded)
         HttpHeaders downloadHeaders = new HttpHeaders();
         downloadHeaders.setAccept(java.util.List.of(ACCEPT_FILES_DOWNLOAD));
+        downloadHeaders.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         ResponseEntity<byte[]> downloadResponse = http.exchange(
                 DOWNLOAD_ENDPOINT + "/" + courtListId,
                 HttpMethod.GET,
@@ -139,6 +141,7 @@ class FileDownloadIntegrationTest extends AbstractTest {
     private ResponseEntity<String> getStatusRequest(UUID courtListId) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(java.util.List.of(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json")));
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         String url = GET_STATUS_ENDPOINT + "?courtListId=" + courtListId;
 
         ResponseEntity<String> response = http.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), String.class);

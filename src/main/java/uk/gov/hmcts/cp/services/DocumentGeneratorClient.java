@@ -4,10 +4,10 @@ import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonWriter;
 import lombok.RequiredArgsConstructor;
+import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -31,7 +31,6 @@ import static java.lang.String.format;
 
 @Component
 @RequiredArgsConstructor
-@ConditionalOnExpression("${azure.storage.enabled:false} or ${public-court-list.enabled:false}")
 public class DocumentGeneratorClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(DocumentGeneratorClient.class);
@@ -39,6 +38,7 @@ public class DocumentGeneratorClient {
     private static final String KEY_TEMPLATE_PAYLOAD = "templatePayload";
     private static final String KEY_CONVERSION_FORMAT = "conversionFormat";
     private static final String DOCUMENT_CONVERSION_FORMAT_PDF = "pdf";
+    private static final String DOCUMENT_CONVERSION_FORMAT_DOCX = "docx";
     private static final String RENDER_MEDIA_TYPE = "application/vnd.systemdocgenerator.render+json";
 
     private final RestTemplate restTemplate;
@@ -48,8 +48,16 @@ public class DocumentGeneratorClient {
     private String commonPlatformQueryApiBaseUrl;
 
     public byte[] generatePdf(final JsonObject templatePayload, final String templateName) throws IOException {
+        return render(templatePayload, templateName, DOCUMENT_CONVERSION_FORMAT_PDF);
+    }
+
+    public byte[] generateWord(final JsonObject templatePayload, final String templateName) throws IOException {
+        return render(templatePayload, templateName, DOCUMENT_CONVERSION_FORMAT_DOCX);
+    }
+
+    private byte[] render(final JsonObject templatePayload, final String templateName, final String conversionFormat) throws IOException {
         try {
-            ResponseEntity<byte[]> response = callRender(restTemplate, templatePayload, templateName);
+            ResponseEntity<byte[]> response = callRender(restTemplate, templatePayload, templateName, conversionFormat);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && response.getBody().length > 0) {
                 return response.getBody();
             }
@@ -59,7 +67,7 @@ public class DocumentGeneratorClient {
                             templateName, response.getStatusCode())
             );
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            LOG.error("HTTP error generating PDF with template: {}", templateName, e);
+            LOG.error("HTTP error generating {} with template: {}", conversionFormat, Encode.forJava(templateName), e);
             throw new ResponseStatusException(
                     HttpStatus.valueOf(e.getStatusCode().value()),
                     format("Failed to generate document with identifier %s: %s",
@@ -67,18 +75,18 @@ public class DocumentGeneratorClient {
                     e
             );
         } catch (RestClientException e) {
-            LOG.error("Rest client error generating PDF with template: {}", templateName, e);
+            LOG.error("Rest client error generating {} with template: {}", conversionFormat, Encode.forJava(templateName), e);
             throw new IOException(format("Failed to generate document with identifier %s: %s",
                     templateName, e.getMessage()), e);
         }
     }
 
     private ResponseEntity<byte[]> callRender(final RestTemplate restTemplate, final JsonObject templatePayload,
-                                                final String templateName) {
+                                                final String templateName, final String conversionFormat) {
         JsonObject payload = Json.createObjectBuilder()
                 .add("templateName", templateName)
                 .add(KEY_TEMPLATE_PAYLOAD, templatePayload != null ? templatePayload : Json.createObjectBuilder().build())
-                .add(KEY_CONVERSION_FORMAT, DOCUMENT_CONVERSION_FORMAT_PDF)
+                .add(KEY_CONVERSION_FORMAT, conversionFormat)
                 .build();
 
         URI uri = UriComponentsBuilder
@@ -99,7 +107,7 @@ public class DocumentGeneratorClient {
         String jsonPayload = jsonObjectToString(payload);
         HttpEntity<String> requestEntity = new HttpEntity<>(jsonPayload, headers);
 
-        LOG.info("Calling document generator at {} with template: {}", uri, templateName);
+        LOG.info("Calling document generator at {} with template: {}", uri, Encode.forJava(templateName));
         return restTemplate.exchange(uri, HttpMethod.POST, requestEntity, byte[].class);
     }
 

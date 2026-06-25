@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/usersgroups-query-api/query/api/rest/usersgroups/users/logged-in-user/permissions",
+    "headers": {
+      "Accept": {
+        "equalTo": "application/vnd.usersgroups.get-logged-in-user-permissions+json"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/vnd.usersgroups.get-logged-in-user-permissions+json"
+    },
+    "bodyFileName": "logged-in-user-permissions.json"
+  },
+  "priority": 1
+}

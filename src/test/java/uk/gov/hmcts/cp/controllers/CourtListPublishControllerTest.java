@@ -20,6 +20,8 @@ import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
+import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
+import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService.SjpPublishResult;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -29,8 +31,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import uk.gov.hmcts.cp.openapi.model.PublishCourtListRequest;
+import uk.gov.hmcts.cp.openapi.model.SjpListPayload;
+import uk.gov.hmcts.cp.openapi.model.SjpListType;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -57,6 +64,9 @@ class CourtListPublishControllerTest {
     @Mock
     private CourtListDownloadService courtListDownloadService;
 
+    @Mock
+    private SjpCourtListPublishService sjpCourtListPublishService;
+
     @InjectMocks
     private CourtListPublishController controller;
 
@@ -65,6 +75,7 @@ class CourtListPublishControllerTest {
 
     private static final String PUBLISH_URL = "/api/court-list-publish/publish";
     private static final String BASE_URL = "/api/court-list-publish";
+    private static final String SJP_PUBLISH_URL = "/api/court-list-publish/sjp/publishCourtList";
 
     @BeforeEach
     void setUp() {
@@ -212,12 +223,130 @@ class CourtListPublishControllerTest {
         verify(service).findPublishStatus(null, courtCentreId, publishDate, null);
     }
 
+    // ── SJP publish endpoint ──────────────────────────────────────────────────
+
+    private static final MediaType SJP_MEDIA_TYPE =
+            new MediaType("application", "vnd.courtlistpublishing-service.sjp.post+json");
+
+    private static SjpListPayload minimalSjpPayload() {
+        return new SjpListPayload()
+                .generatedDateAndTime("2025-03-09T10:00:00")
+                .readyCases(List.of(java.util.Map.of(
+                        "caseUrn", "URN1",
+                        "defendantName", "D",
+                        "prosecutorName", "P",
+                        "sjpOffences", List.of(java.util.Map.of("title", "t", "wording", "w")))));
+    }
+
+    @Test
+    void publishSjpCourtList_returnsOk_withVendorContentTypeAndAcceptedStatus() throws Exception {
+        when(sjpCourtListPublishService.publishSjpCourtList(
+                eq("SJP_PUBLIC_LIST"), isNull(), isNull(), any()))
+                .thenReturn(SjpPublishResult.accepted("SJP_PUBLIC_LIST", "SJP court list published to CaTH"));
+
+        PublishCourtListRequest request = new PublishCourtListRequest()
+                .listType(SjpListType.SJP_PUBLIC_LIST)
+                .listPayload(minimalSjpPayload());
+
+        mockMvc.perform(post(SJP_PUBLISH_URL)
+                        .contentType(SJP_MEDIA_TYPE)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(SJP_MEDIA_TYPE))
+                .andExpect(jsonPath("$.status").value("ACCEPTED"))
+                .andExpect(jsonPath("$.listType").value("SJP_PUBLIC_LIST"));
+    }
+
+    @Test
+    void publishSjpCourtList_passesLanguageAndRequestTypeToService() throws Exception {
+        when(sjpCourtListPublishService.publishSjpCourtList(
+                eq("SJP_PRESS_LIST"), eq("WELSH"), eq("FULL"), any()))
+                .thenReturn(SjpPublishResult.accepted("SJP_PRESS_LIST", "published"));
+
+        PublishCourtListRequest request = new PublishCourtListRequest()
+                .listType(SjpListType.SJP_PRESS_LIST)
+                .language("WELSH")
+                .requestType("FULL")
+                .listPayload(minimalSjpPayload());
+
+        mockMvc.perform(post(SJP_PUBLISH_URL)
+                        .contentType(SJP_MEDIA_TYPE)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(SJP_MEDIA_TYPE));
+
+        verify(sjpCourtListPublishService).publishSjpCourtList(
+                eq("SJP_PRESS_LIST"), eq("WELSH"), eq("FULL"), any());
+    }
+
+    @Test
+    void publishSjpCourtList_passesListPayloadToService() throws Exception {
+        when(sjpCourtListPublishService.publishSjpCourtList(
+                eq("SJP_PUBLIC_LIST"), isNull(), isNull(), any()))
+                .thenReturn(SjpPublishResult.accepted("SJP_PUBLIC_LIST", "published"));
+
+        String requestJson = """
+                {
+                  "listType": "SJP_PUBLIC_LIST",
+                  "listPayload": {
+                    "generatedDateAndTime": "2025-03-09T10:00:00",
+                    "isWelsh": true,
+                    "courtIdNumeric": "325",
+                    "readyCases": [
+                      {
+                        "caseUrn": "SJP-001",
+                        "defendantName": "Test Defendant",
+                        "prosecutorName": "CPS",
+                        "sjpOffences": [{"title": "Offence", "wording": "Wording"}]
+                      }
+                    ]
+                  }
+                }
+                """;
+
+        mockMvc.perform(post(SJP_PUBLISH_URL)
+                        .contentType(SJP_MEDIA_TYPE)
+                        .content(requestJson))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(SJP_MEDIA_TYPE));
+
+        verify(sjpCourtListPublishService).publishSjpCourtList(
+                eq("SJP_PUBLIC_LIST"), isNull(), isNull(), any());
+    }
+
+    @Test
+    void publishSjpCourtList_returnsBadRequest_whenListTypeMissing() throws Exception {
+        mockMvc.perform(post(SJP_PUBLISH_URL)
+                        .contentType(SJP_MEDIA_TYPE)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void publishSjpCourtList_returnsOk_withFailedStatus_whenServiceFails() throws Exception {
+        when(sjpCourtListPublishService.publishSjpCourtList(any(), any(), any(), any()))
+                .thenReturn(SjpPublishResult.failed("SJP_PUBLIC_LIST", "CaTH returned status 500"));
+
+        PublishCourtListRequest request = new PublishCourtListRequest()
+                .listType(SjpListType.SJP_PUBLIC_LIST)
+                .listPayload(minimalSjpPayload());
+
+        mockMvc.perform(post(SJP_PUBLISH_URL)
+                        .contentType(SJP_MEDIA_TYPE)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(SJP_MEDIA_TYPE))
+                .andExpect(jsonPath("$.status").value("FAILED"))
+                .andExpect(jsonPath("$.message").value("CaTH returned status 500"));
+    }
+
     private CourtListPublishRequest createValidRequest() {
         return new CourtListPublishRequest(
                 UUID.randomUUID(),  // courtCentreId
                 LocalDate.now(),    // startDate
                 LocalDate.now(),    // endDate
-                CourtListType.STANDARD
+                CourtListType.STANDARD,
+                Boolean.FALSE       // restricted
         );
     }
 

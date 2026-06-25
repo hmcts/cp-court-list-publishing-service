@@ -8,8 +8,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * STANDARD: CaTH publish, PDF generation, PDF bytes vs expected file.
- * Clears {@code court_list_publish_status} and jobs before each test.
+ * STANDARD: CaTH publish, asynchronous PDF generation and blob upload. The generated PDF is rendered
+ * locally via the document generator (stubbed) and downloaded from blob storage; the downloaded bytes
+ * must match the stubbed render content. Clears {@code court_list_publish_status} and jobs before each test.
  */
 class CourtListStandardPdfContentIntegrationTest extends CourtListIntegrationTestBase {
 

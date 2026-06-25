@@ -14,12 +14,21 @@ then
   $o.setSuccess(true);
 end
 
+rule "Allow – sjp publish (System Users only)"
+when
+  $o: Outcome()
+  $a: Action(name == "courtlistpublishing-service.sjp.post")
+  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, SecurityGroupConstants.getSystemUserOnlyRoles()))
+then
+  $o.setSuccess(true);
+end
+
 rule "Allow – court-list-publish and download"
 when
   $o: Outcome()
   $a: Action(name == "courtlistpublishing-service.publish.get" ||
              name == "courtlistpublishing-service.files.download" ||
-             name == "courtlistpublishing-service.download.post")
+             name == "courtlistpublishing-service.download.get")
   eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, SecurityGroupConstants.getPublishingRoles()))
 then
   $o.setSuccess(true);
@@ -38,6 +47,15 @@ when
   $o: Outcome()
   $a: Action(name == "courtlistpublishing-service.public-court-list.get")
   eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, SecurityGroupConstants.getPublishingRoles()))
+then
+  $o.setSuccess(true);
+end
+
+rule "Allow – publish-status-cleanup (System Users only)"
+when
+  $o: Outcome()
+  $a: Action(name == "courtlistpublishing-service.publish-status-cleanup")
+  eval(userAndGroupProvider.isMemberOfAnyOfTheSuppliedGroups($a, SecurityGroupConstants.getSystemUserOnlyRoles()))
 then
   $o.setSuccess(true);
 end

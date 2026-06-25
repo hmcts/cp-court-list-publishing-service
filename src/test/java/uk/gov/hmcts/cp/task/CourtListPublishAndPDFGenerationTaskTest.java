@@ -17,8 +17,11 @@ import ch.qos.logback.classic.Logger;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
@@ -668,6 +671,53 @@ class CourtListPublishAndPDFGenerationTaskTest {
                 .contains(errorMessage, causeMessage, "RuntimeException", "IllegalStateException");
         assertThat(entity.getFileStatus()).isEqualTo(Status.FAILED);
         verify(repository, times(2)).save(entity);
+    }
+
+
+    @Test
+    void execute_shouldIncrementPublishCount_whenFileStatusBecomesSuccessful() {
+        // Given
+        entity.setPublishCount(2);
+        String publishDate = LocalDate.now().toString();
+        JsonObject jobData = createJobDataWithCourtListId(courtListId);
+        when(executionInfo.getJobData()).thenReturn(jobData);
+        when(repository.getByCourtListId(courtListId)).thenReturn(entity);
+
+        CourtListPayload payload = new CourtListPayload();
+        when(courtListQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean())).thenReturn(payload);
+        when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC))
+                .thenReturn(CourtListDocument.builder().build());
+        when(pdfHelper.generateAndUploadPdf(payload, courtListId, CourtListType.ONLINE_PUBLIC)).thenReturn(courtListId);
+
+        // When
+        task.execute(executionInfo);
+
+        // Then
+        assertThat(entity.getFileStatus()).isEqualTo(Status.SUCCESSFUL);
+        assertThat(entity.getPublishCount()).isEqualTo(3);
+    }
+
+    @Test
+    void execute_shouldNotIncrementPublishCount_whenFileStatusFails() {
+        // Given
+        entity.setPublishCount(1);
+        JsonObject jobData = createJobDataWithCourtListId(courtListId);
+        when(executionInfo.getJobData()).thenReturn(jobData);
+        when(repository.getByCourtListId(courtListId)).thenReturn(entity);
+
+        CourtListPayload payload = new CourtListPayload();
+        when(courtListQueryService.getCourtListPayload(any(), any(), any(), any(), any(), anyBoolean())).thenReturn(payload);
+        when(courtListQueryService.buildCourtListDocumentFromPayload(payload, CourtListType.ONLINE_PUBLIC))
+                .thenReturn(CourtListDocument.builder().build());
+        when(pdfHelper.generateAndUploadPdf(payload, courtListId, CourtListType.ONLINE_PUBLIC))
+                .thenThrow(new RuntimeException("PDF error"));
+
+        // When
+        task.execute(executionInfo);
+
+        // Then
+        assertThat(entity.getFileStatus()).isEqualTo(Status.FAILED);
+        assertThat(entity.getPublishCount()).isEqualTo(1);
     }
 
     private JsonObject createJobDataWithCourtListId(UUID courtListId) {

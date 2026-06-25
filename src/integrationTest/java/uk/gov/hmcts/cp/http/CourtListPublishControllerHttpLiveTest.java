@@ -6,9 +6,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -28,13 +33,18 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     private static final String BASE_URL = System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service");
     private static final String PUBLISH_ENDPOINT = BASE_URL + "/api/court-list-publish/publish";
     private static final String DOWNLOAD_ENDPOINT = BASE_URL + "/api/court-list-publish/download";
-    private static final String DOWNLOAD_CONTENT_TYPE = "application/vnd.courtlistpublishing-service.download.post+json";
+    private static final String DOWNLOAD_ACCEPT = "application/vnd.courtlistpublishing-service.download.get+json";
     private static final String REQUESTED_STATUS = Status.REQUESTED.toString();
     private static final String COURT_LIST_TYPE_PUBLIC = CourtListType.PUBLIC.toString();
     private static final String COURT_LIST_TYPE_FINAL = CourtListType.FINAL.toString();
 
     private final RestTemplate http = new RestTemplate();
     private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
+
+    @BeforeEach
+    void resetWireMockBeforeEach() {
+        AbstractTest.resetWireMock();
+    }
 
     @Test
     void postCourtListPublish_creates_court_list_publish_status_successfully() throws Exception {
@@ -242,6 +252,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     private ResponseEntity<String> getRequest(String url) {
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(java.util.List.of(new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json")));
+        headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
         return http.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), String.class);
     }
 
@@ -272,23 +283,72 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     @Test
-    void postDownloadCourtListReturnsPdfWhenPublicCourtListEnabledAndStubbed() throws Exception {
-        String requestJson = """
-            {
-                "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",
-                "startDate": "2026-02-27",
-                "endDate": "2026-02-27",
-                "courtListType": "PUBLIC"
-            }
-            """;
+    void getDownloadCourtListReturnsPdfWhenPublicAndStubbed() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.PUBLIC);
+    }
+
+    @Test
+    void getDownloadCourtListReturnsPdfWhenBenchAndStubbed() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.BENCH);
+    }
+
+    @Test
+    void getDownloadCourtListReturnsPdfWhenAlphabeticalAndStubbed() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.ALPHABETICAL);
+    }
+
+    @Test
+    void getDownloadCourtListReturnsPdfWhenJudgeAndStubbed() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.JUDGE);
+    }
+
+    @Test
+    void getDownloadCourtListReturnsWordWhenUshersCrownAndStubbed() throws Exception {
+        getDownloadCourtListReturnsWordForType(CourtListType.USHERS_CROWN);
+    }
+
+    @Test
+    void getDownloadCourtListReturnsWordWhenUshersMagistrateAndStubbed() throws Exception {
+        getDownloadCourtListReturnsWordForType(CourtListType.USHERS_MAGISTRATE);
+    }
+
+    @Test
+    void getDownloadCourtListReturnsPdfWhenStandardAndStubbed() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.STANDARD);
+    }
+
+    @Test
+    void getDownloadCourtListForwardsRestrictedTrueToProgressionForStandard() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.STANDARD, true);
+    }
+
+    @Test
+    void getDownloadCourtListForwardsRestrictedTrueToListingForAlphabetical() throws Exception {
+        getDownloadCourtListReturnsPdfForType(CourtListType.ALPHABETICAL, true);
+    }
+
+    private String buildDownloadUrl(CourtListType courtListType, boolean restricted) {
+        return DOWNLOAD_ENDPOINT
+                + "?courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26"
+                + "&startDate=2026-02-27"
+                + "&endDate=2026-02-27"
+                + "&restricted=" + restricted
+                + "&courtListType=" + courtListType.name();
+    }
+
+    private void getDownloadCourtListReturnsPdfForType(CourtListType courtListType) throws Exception {
+        getDownloadCourtListReturnsPdfForType(courtListType, false);
+    }
+
+    private void getDownloadCourtListReturnsPdfForType(CourtListType courtListType, boolean restricted) throws Exception {
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(DOWNLOAD_CONTENT_TYPE));
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
-        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+        headers.setAccept(java.util.List.of(MediaType.parseMediaType(DOWNLOAD_ACCEPT)));
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         ResponseEntity<byte[]> response = http.exchange(
-                DOWNLOAD_ENDPOINT,
-                HttpMethod.POST,
+                buildDownloadUrl(courtListType, restricted),
+                HttpMethod.GET,
                 entity,
                 byte[].class);
 
@@ -296,42 +356,203 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_PDF);
         assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
                 .contains("attachment", "CourtList.pdf");
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().length).isGreaterThan(0);
+        byte[] body = response.getBody();
+        assertThat(body).as("PDF body for %s must be non-null", courtListType).isNotNull();
+        assertThat(body.length).as("PDF body for %s must be non-empty", courtListType).isGreaterThan(0);
+        assertThat(new String(body, 0, Math.min(4, body.length)))
+                .as("PDF body for %s must start with %%PDF magic", courtListType)
+                .startsWith("%PDF");
+        assertThat(body)
+                .as("PDF body for %s must match the WireMock-stubbed document-generator render bytes (minimal-pdf.pdf)", courtListType)
+                .isEqualTo(loadResourceBytes("wiremock/__files/minimal-pdf.pdf"));
+
+        // The court list binary is now always rendered locally from the JSON payload via the document
+        // generator; we must never fetch a pre-rendered binary from another context. The restricted flag
+        // must be forwarded verbatim to the payload endpoint.
+        if (courtListType == CourtListType.ALPHABETICAL || courtListType == CourtListType.JUDGE) {
+            verifyListingPayloadCalled(courtListType, restricted);
+        } else { // PUBLIC, STANDARD, BENCH are progression-enriched
+            verifyProgressionCourtlistDataCalled(courtListType, restricted);
+        }
+        verifyDocumentGeneratorRenderedPdf();
+        verifyBinaryCourtListEndpointsNotCalled(courtListType);
     }
 
-    @Test
-    void postDownloadCourtListReturnsBadRequestWhenCourtListTypeIsAlphabetical() {
-        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.ALPHABETICAL);
-    }
-
-    @Test
-    void postDownloadCourtListReturnsBadRequestWhenCourtListTypeIsUshersCrown() {
-        assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType.USHERS_CROWN);
-    }
-
-    private void assertDownloadCourtListReturnsBadRequestForUnsupportedType(CourtListType courtListType) {
-        String requestJson = """
-            {
-                "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",
-                "startDate": "2026-02-27",
-                "endDate": "2026-02-27",
-                "courtListType": "%s"
-            }
-            """.formatted(courtListType.name());
+    private void getDownloadCourtListReturnsWordForType(CourtListType courtListType) throws Exception {
+        String expectedContent = loadResourceText(expectedDocxContentResource(courtListType));
+        DocumentGeneratorStub.stubDocumentCreate(expectedContent);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(DOWNLOAD_CONTENT_TYPE));
         headers.set(CJSCPPUID_HEADER, INTEGRATION_TEST_USER_ID);
-        HttpEntity<String> entity = new HttpEntity<>(requestJson, headers);
+        headers.setAccept(java.util.List.of(MediaType.parseMediaType(DOWNLOAD_ACCEPT)));
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-        assertThatThrownBy(() -> http.exchange(
-                DOWNLOAD_ENDPOINT,
-                HttpMethod.POST,
+        ResponseEntity<byte[]> response = http.exchange(
+                buildDownloadUrl(courtListType, false),
+                HttpMethod.GET,
                 entity,
-                byte[].class))
-                .isInstanceOf(HttpClientErrorException.BadRequest.class)
-                .hasMessageContaining("Only PUBLIC court list type is supported for download");
+                byte[].class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getContentType()).isNotNull();
+        assertThat(response.getHeaders().getContentType().toString())
+                .isEqualTo("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
+                .contains("attachment", "CourtList.docx");
+        byte[] body = response.getBody();
+        assertThat(body).as("DOCX body for %s must be non-null", courtListType).isNotNull();
+        assertThat(body)
+                .as("DOCX body for %s must match every byte (and therefore every field value) of the stubbed content fixture", courtListType)
+                .isEqualTo(expectedContent.getBytes(StandardCharsets.UTF_8));
+
+        verifyProgressionCourtlistDataCalled(courtListType, false);
+        verifyDocumentGeneratorCalled(expectedTemplate(courtListType), "docx");
     }
+
+    private static String expectedDocxContentResource(CourtListType type) {
+        switch (type) {
+            case USHERS_CROWN:      return "wiremock/__files/expected-ushers-crown-docx-content.txt";
+            case USHERS_MAGISTRATE: return "wiremock/__files/expected-ushers-magistrate-docx-content.txt";
+            default: throw new IllegalArgumentException("No expected DOCX content fixture for " + type);
+        }
+    }
+
+    private static String expectedTemplate(CourtListType type) {
+        switch (type) {
+            case PUBLIC:             return "PublicCourtList";
+            case BENCH:              return "BenchAndStandardCourtList";
+            case STANDARD:           return "BenchAndStandardCourtList";
+            case ALPHABETICAL:       return "CourtList";
+            case JUDGE:              return "JudgeList";
+            case USHERS_CROWN:       return "UshersCrownList";
+            case USHERS_MAGISTRATE:  return "UshersMagistrateList";
+            default: throw new IllegalArgumentException("No template mapping for " + type);
+        }
+    }
+
+    private void verifyListingPayloadCalled(CourtListType courtListType, boolean restricted) throws Exception {
+        List<JsonNode> matches = wiremockRequestsMatching(req -> {
+            if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
+                return false;
+            }
+            String url = wiremockRequestUrl(req);
+            return url.contains("/listing-service/query/api/rest/listing/courtlistpayload")
+                    && url.contains("listId=" + courtListType.name())
+                    && url.contains("restricted=" + restricted)
+                    && url.contains("includeApplications=false");
+        });
+        assertThat(matches)
+                .as("Listing /courtlistpayload must be called exactly once for %s with restricted=%s and includeApplications=false", courtListType, restricted)
+                .hasSize(1);
+    }
+
+    private void verifyProgressionCourtlistDataCalled(CourtListType courtListType, boolean restricted) throws Exception {
+        List<JsonNode> matches = wiremockRequestsMatching(req -> {
+            if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
+                return false;
+            }
+            String url = wiremockRequestUrl(req);
+            return url.contains("/progression-service/query/api/rest/progression/courtlistdata")
+                    && url.contains("listId=" + courtListType.name())
+                    && url.contains("restricted=" + restricted)
+                    && url.contains("includeApplications=false");
+        });
+        assertThat(matches)
+                .as("Progression /courtlistdata must be called exactly once for %s with restricted=%s and includeApplications=false", courtListType, restricted)
+                .hasSize(1);
+    }
+
+    private void verifyDocumentGeneratorRenderedPdf() throws Exception {
+        List<JsonNode> matches = wiremockRequestsMatching(req -> {
+            if (!"POST".equalsIgnoreCase(req.path("method").asText(""))) {
+                return false;
+            }
+            String url = wiremockRequestUrl(req);
+            if (!url.contains("/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render")) {
+                return false;
+            }
+            return req.path("body").asText("").contains("\"conversionFormat\":\"pdf\"");
+        });
+        assertThat(matches)
+                .as("Document generator /render must be called exactly once with conversionFormat=pdf (local rendering)")
+                .hasSize(1);
+    }
+
+    /**
+     * Asserts the pre-rendered binary court list endpoints are never called: court list binaries must be
+     * generated locally from the payload, not fetched from listing/progression.
+     */
+    private void verifyBinaryCourtListEndpointsNotCalled(CourtListType courtListType) throws Exception {
+        List<JsonNode> matches = wiremockRequestsMatching(req -> {
+            if (!"GET".equalsIgnoreCase(req.path("method").asText(""))) {
+                return false;
+            }
+            String url = wiremockRequestUrl(req);
+            boolean listingBinary = url.contains("/listing-service/query/api/rest/listing/courtlist")
+                    && !url.contains("/courtlistpayload");
+            boolean progressionBinary = url.contains("/progression-service/query/api/rest/progression/courtlist")
+                    && !url.contains("/courtlistdata");
+            return listingBinary || progressionBinary;
+        });
+        assertThat(matches)
+                .as("No pre-rendered binary court list endpoint may be called for %s", courtListType)
+                .isEmpty();
+    }
+
+    private void verifyDocumentGeneratorCalled(String templateName, String conversionFormat) throws Exception {
+        List<JsonNode> matches = wiremockRequestsMatching(req -> {
+            if (!"POST".equalsIgnoreCase(req.path("method").asText(""))) {
+                return false;
+            }
+            String url = wiremockRequestUrl(req);
+            if (!url.contains("/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render")) {
+                return false;
+            }
+            String body = req.path("body").asText("");
+            return body.contains("\"templateName\":\"" + templateName + "\"")
+                    && body.contains("\"conversionFormat\":\"" + conversionFormat + "\"");
+        });
+        assertThat(matches)
+                .as("Document generator /render must be called exactly once with templateName=%s and conversionFormat=%s",
+                        templateName, conversionFormat)
+                .hasSize(1);
+    }
+
+    private List<JsonNode> wiremockRequestsMatching(java.util.function.Predicate<JsonNode> requestPredicate) throws Exception {
+        ResponseEntity<String> admin = http.getForEntity(AbstractTest.WIREMOCK_ADMIN_REQUESTS, String.class);
+        assertThat(admin.getStatusCode().is2xxSuccessful()).isTrue();
+        JsonNode root = objectMapper.readTree(admin.getBody());
+        JsonNode requests = root.get("requests");
+        if (requests == null) {
+            requests = root.isArray() ? root : objectMapper.createArrayNode();
+        }
+        List<JsonNode> out = new ArrayList<>();
+        for (JsonNode entry : requests) {
+            JsonNode req = entry.has("request") ? entry.get("request") : entry;
+            if (requestPredicate.test(req)) {
+                out.add(req);
+            }
+        }
+        return out;
+    }
+
+    private byte[] loadResourceBytes(String resourcePath) throws Exception {
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+            assertThat(in).as("Resource %s must be on the test classpath", resourcePath).isNotNull();
+            return in.readAllBytes();
+        }
+    }
+
+    private String loadResourceText(String resourcePath) throws Exception {
+        return new String(loadResourceBytes(resourcePath), StandardCharsets.UTF_8);
+    }
+
+    private static String wiremockRequestUrl(JsonNode req) {
+        if (req.has("url")) {
+            return req.get("url").asText("");
+        }
+        return req.path("absoluteUrl").asText("");
+    }
+
 }
 

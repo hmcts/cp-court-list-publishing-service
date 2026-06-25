@@ -406,6 +406,55 @@ class CourtListStatusRepositoryTest {
     }
 
     @Test
+    void save_shouldPersistPublishCount_whenSet() {
+        // Given
+        UUID courtListId = UUID.randomUUID();
+        CourtListStatusEntity entity = new CourtListStatusEntity(
+                courtListId,
+                UUID.randomUUID(),
+                Status.REQUESTED,
+                Status.REQUESTED,
+                CourtListType.ONLINE_PUBLIC,
+                Instant.now()
+        );
+        entity.setPublishDate(LocalDate.now());
+        entity.setPublishCount(5);
+
+        // When
+        repository.save(entity);
+        entityManager.flush();
+        entityManager.clear();
+
+        // Then
+        CourtListStatusEntity retrieved = repository.findById(courtListId).orElseThrow();
+        assertThat(retrieved.getPublishCount()).isEqualTo(5);
+    }
+
+    @Test
+    void save_shouldDefaultPublishCountToZero_whenNotSet() {
+        // Given
+        UUID courtListId = UUID.randomUUID();
+        CourtListStatusEntity entity = new CourtListStatusEntity(
+                courtListId,
+                UUID.randomUUID(),
+                Status.REQUESTED,
+                Status.REQUESTED,
+                CourtListType.STANDARD,
+                Instant.now()
+        );
+        entity.setPublishDate(LocalDate.now());
+
+        // When
+        repository.save(entity);
+        entityManager.flush();
+        entityManager.clear();
+
+        // Then
+        CourtListStatusEntity retrieved = repository.findById(courtListId).orElseThrow();
+        assertThat(retrieved.getPublishCount()).isZero();
+    }
+
+    @Test
     void delete_shouldRemoveEntity_whenEntityExists() {
         // Given
         UUID courtListId = UUID.randomUUID();

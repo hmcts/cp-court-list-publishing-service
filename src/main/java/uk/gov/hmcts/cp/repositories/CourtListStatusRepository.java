@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -28,6 +30,9 @@ public interface CourtListStatusRepository extends JpaRepository<CourtListStatus
 
     List<CourtListStatusEntity> findByCourtCentreIdAndPublishDate(
             UUID courtCentreId, LocalDate publishDate);
+
+    @Query("SELECT e FROM CourtListStatusEntity e WHERE e.publishDate < :cutoff")
+    List<CourtListStatusEntity> findByPublishDateBefore(@Param("cutoff") LocalDate cutoff);
 
 }
 

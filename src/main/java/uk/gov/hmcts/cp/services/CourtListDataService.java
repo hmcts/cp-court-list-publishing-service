@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import uk.gov.hmcts.cp.config.AppConstant;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
@@ -22,16 +22,25 @@ import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
-import java.util.Map;
+import java.util.EnumSet;
+import java.util.Set;
 
 @Service
 @Slf4j
 public class CourtListDataService {
 
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
-    private static final String LIST_ID_PUBLIC = "PUBLIC";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
-    private static final String COURT_LIST_DATA_PATH = "courtlist";
+    private static final String COURT_LIST_PAYLOAD_PATH = "/listing-service/query/api/rest/listing/courtlistpayload";
+    private static final String ACCEPT_COURTLIST_PAYLOAD = "application/vnd.listing.search.court.list.payload+json";
+
+    private static final Set<CourtListType> PROGRESSION_ENRICHED_TYPES = EnumSet.of(
+            CourtListType.PUBLIC,
+            CourtListType.STANDARD,
+            CourtListType.BENCH,
+            CourtListType.ONLINE_PUBLIC,
+            CourtListType.USHERS_CROWN,
+            CourtListType.USHERS_MAGISTRATE);
 
     private final ProgressionQueryService progressionQueryService;
     private final RestTemplate publicCourtListRestTemplate;
@@ -55,9 +64,12 @@ public class CourtListDataService {
             boolean restricted,
             String currentUserId,
             boolean includeApplications) {
-        String json = progressionQueryService.getCourtListPayload(
-                listId, courtCentreId, courtRoomId, startDate, endDate, restricted, currentUserId, includeApplications);
-        return json != null ? json : "{}";
+        if (PROGRESSION_ENRICHED_TYPES.contains(listId)) {
+            return progressionQueryService.getCourtListPayload(
+                    listId, courtCentreId, courtRoomId, startDate, endDate, restricted, currentUserId, includeApplications);
+        }
+        return fetchCourtListPayloadFromListing(
+                listId, courtCentreId, courtRoomId, startDate, endDate, restricted, includeApplications, currentUserId);
     }
 
     public CourtListPayload getCourtListPayload(
@@ -67,7 +79,7 @@ public class CourtListDataService {
             String endDate,
             String cjscppuid,
             boolean includeApplications) {
-        boolean restricted = cjscppuid != null && !cjscppuid.trim().isEmpty();
+        boolean restricted = cjscppuid != null && !cjscppuid.isBlank();
         String json = getCourtListData(listId, courtCentreId, null, startDate, endDate, restricted, cjscppuid, includeApplications);
 
         try {
@@ -78,31 +90,57 @@ public class CourtListDataService {
         }
     }
 
-    public Map<String, Object> getPublicCourtListPayload(String courtCentreId, LocalDate startDate, LocalDate endDate) {
-        if (courtListDataBaseUrl.isBlank()) {
-            throw new CourtListDownloadException("Public court list data is not configured");
+    public String getCourtListPayloadForDownload(
+            CourtListType courtListType, String courtCentreId, String courtRoomId,
+            LocalDate startDate, LocalDate endDate, String cjscppuid, boolean restricted) {
+        if (PROGRESSION_ENRICHED_TYPES.contains(courtListType)) {
+            return progressionQueryService.getCourtListPayload(
+                    courtListType, courtCentreId, courtRoomId,
+                    startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT),
+                    restricted, cjscppuid, false);
         }
-        String url = UriComponentsBuilder.fromUriString(courtListDataBaseUrl + "/" + COURT_LIST_DATA_PATH)
-                .queryParam("listId", LIST_ID_PUBLIC)
+        return fetchCourtListPayloadFromListing(
+                courtListType, courtCentreId, courtRoomId,
+                startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT),
+                restricted, false, cjscppuid);
+    }
+
+    private String fetchCourtListPayloadFromListing(
+            CourtListType listId, String courtCentreId, String courtRoomId,
+            String startDate, String endDate, boolean restricted, boolean includeApplications, String cjscppuid) {
+        if (courtListDataBaseUrl.isBlank()) {
+            throw new CourtListDownloadException("Court list data is not configured");
+        }
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(courtListDataBaseUrl).path(COURT_LIST_PAYLOAD_PATH)
+                .queryParam("listId", listId.name())
                 .queryParam("courtCentreId", courtCentreId)
-                .queryParam("startDate", startDate.format(DATE_FORMAT))
-                .queryParam("endDate", endDate.format(DATE_FORMAT))
-                .queryParam("restricted", false)
-                .build()
-                .toUriString();
+                .queryParam("startDate", startDate)
+                .queryParam("endDate", endDate)
+                .queryParam("restricted", restricted)
+                .queryParam("includeApplications", includeApplications);
+        if (courtRoomId != null && !courtRoomId.isBlank()) {
+            builder.queryParam("courtRoomId", courtRoomId);
+        }
+        String url = builder.build().toUriString();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Collections.singletonList(
-                MediaType.parseMediaType("application/vnd.courtlist.search.court.list+json")));
+        headers.setAccept(Collections.singletonList(MediaType.parseMediaType(ACCEPT_COURTLIST_PAYLOAD)));
+        if (cjscppuid != null && !cjscppuid.isBlank()) {
+            headers.set(AppConstant.CJSCPPUID, cjscppuid);
+        }
 
         try {
-            ResponseEntity<Map<String, Object>> response = publicCourtListRestTemplate.exchange(
-                    url, HttpMethod.GET, new HttpEntity<>(headers),
-                    new ParameterizedTypeReference<Map<String, Object>>() {});
-            return response.getBody();
+            ResponseEntity<String> response = publicCourtListRestTemplate.exchange(
+                    url, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+            String body = response.getBody();
+            if (body == null || body.isBlank()) {
+                throw new CourtListDownloadException("Court list payload API returned empty response");
+            }
+            return body;
         } catch (RestClientException e) {
-            log.error("Court list data API call failed for courtCentreId={}", courtCentreId, e);
-            throw new CourtListDownloadException("Failed to fetch court list: " + e.getMessage(), e);
+            log.error("Court list payload API call failed for listId={}, courtCentreId={}", listId, courtCentreId, e);
+            throw new CourtListDownloadException("Failed to fetch court list payload: " + e.getMessage(), e);
         }
     }
 }

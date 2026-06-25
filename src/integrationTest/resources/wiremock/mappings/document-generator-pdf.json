@@ -1,7 +1,12 @@
 {
   "request": {
     "method": "POST",
-    "urlPathPattern": "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render"
+    "urlPathPattern": "/systemdocgenerator-command-api/command/api/rest/systemdocgenerator/render",
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": "$.[?(@.conversionFormat == 'pdf')]"
+      }
+    ]
   },
   "response": {
     "status": 200,

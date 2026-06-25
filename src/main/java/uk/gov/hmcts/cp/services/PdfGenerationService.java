@@ -60,6 +60,16 @@ public class PdfGenerationService {
     }
 
     /**
+     * Uploads pre-rendered PDF bytes to blob storage as {courtListId}.pdf.
+     */
+    public UUID uploadPdfBytes(byte[] pdfBytes, UUID courtListId) {
+        LOGGER.info("Uploading pre-rendered PDF for court list ID: {}, size: {} bytes", courtListId, pdfBytes.length);
+        blobClientService.uploadPdf(new ByteArrayInputStream(pdfBytes), pdfBytes.length, courtListId);
+        LOGGER.info("Successfully uploaded pre-rendered PDF for court list ID: {}", courtListId);
+        return courtListId;
+    }
+
+    /**
      * Gets the size of the generated PDF
      */
     public long getPdfSize(ByteArrayOutputStream pdfOutputStream) {

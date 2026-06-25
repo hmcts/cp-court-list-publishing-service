@@ -1,0 +1,10 @@
+{
+  "userId": "ba4e97ab-2174-4fa2-abfe-3ac2bb04bc75",
+  "groups": [
+    { "groupId": "11111111-1111-1111-1111-111111111111", "groupName": "Listing Officers", "prosecutingAuthority": null },
+    { "groupId": "22222222-2222-2222-2222-222222222222", "groupName": "System Users", "prosecutingAuthority": null }
+  ],
+  "permissions": [
+    { "permissionId": "33333333-3333-3333-3333-333333333333", "object": "Court List", "action": "Publish", "description": "Publish court list" }
+  ]
+}
