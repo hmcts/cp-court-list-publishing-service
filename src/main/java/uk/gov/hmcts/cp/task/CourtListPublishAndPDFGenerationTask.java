@@ -52,7 +52,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                                                 CourtListQueryService courtListQueryService,
                                                 CaTHService cathService,
                                                 CourtListPdfHelper pdfHelper,
-                                                @Value("${cath.publishing-enabled}") boolean cathPublishingEnabled) {
+                                                @Value("${cath.publishing-enabled:false}") boolean cathPublishingEnabled) {
         this.repository = repository;
         this.courtListQueryService = courtListQueryService;
         this.cathService = cathService;
