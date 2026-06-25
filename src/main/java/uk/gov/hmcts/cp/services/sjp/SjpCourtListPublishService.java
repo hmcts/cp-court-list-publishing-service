@@ -3,6 +3,7 @@ package uk.gov.hmcts.cp.services.sjp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.domain.DtsMeta;
@@ -43,13 +44,16 @@ public class SjpCourtListPublishService {
 
     private final SjpToCathPayloadTransformer transformer;
     private final CourtListPublisher courtListPublisher;
+    private final boolean cathPublishingEnabled;
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
 
     public SjpCourtListPublishService(
             SjpToCathPayloadTransformer transformer,
-            CourtListPublisher courtListPublisher) {
+            CourtListPublisher courtListPublisher,
+            @Value("${cath.publishing-enabled:false}") boolean cathPublishingEnabled) {
         this.transformer = transformer;
         this.courtListPublisher = courtListPublisher;
+        this.cathPublishingEnabled = cathPublishingEnabled;
     }
 
     /**
@@ -71,6 +75,11 @@ public class SjpCourtListPublishService {
             String requestType,
             Object listPayload) {
         LOG.info("SJP court list publish request for listType: {}", listType);
+
+        if (!cathPublishingEnabled) {
+            LOG.debug("CaTH publishing is disabled (CATH_PUBLISHING_ENABLED=false), skipping SJP CaTH send");
+            return SjpPublishResult.accepted(listType, "CaTH publishing is disabled");
+        }
 
         SjpListPayload payload;
         if (listPayload == null) {
