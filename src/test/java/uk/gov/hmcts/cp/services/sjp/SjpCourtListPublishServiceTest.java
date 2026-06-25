@@ -16,6 +16,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,7 +37,7 @@ class SjpCourtListPublishServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new SjpCourtListPublishService(new SjpToCathPayloadTransformer(), courtListPublisher);
+        service = new SjpCourtListPublishService(new SjpToCathPayloadTransformer(), courtListPublisher, true);
     }
 
     // ── courtId ─────────────────────────────────────────────────────────────
@@ -133,6 +134,22 @@ class SjpCourtListPublishServiceTest {
         service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
 
         assertThat(capturePublishedMeta().getRequestType()).isNull();
+    }
+
+    // ── cath publishing disabled ─────────────────────────────────────────────
+
+    @Test
+    void publishSjpCourtList_returnsAccepted_whenCathPublishingDisabled() {
+        SjpCourtListPublishService disabledService =
+                new SjpCourtListPublishService(new SjpToCathPayloadTransformer(), courtListPublisher, false);
+
+        SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
+        SjpCourtListPublishService.SjpPublishResult result =
+                disabledService.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
+
+        assertThat(result.getStatus()).isEqualTo("ACCEPTED");
+        assertThat(result.getMessage()).contains("disabled");
+        verify(courtListPublisher, never()).publish(anyString(), any(DtsMeta.class));
     }
 
     // ── guard clauses ────────────────────────────────────────────────────────
