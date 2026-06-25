@@ -102,7 +102,7 @@ public class CourtListDownloadService {
         }
 
         LOG.info("Court list document generated for type={}, template={}, courtCentreId={}, format={}, size={} bytes",
-                courtListType, templateName, Encode.forJava(courtCentreId), wantsWord ? "docx" : "pdf", content.length);
+                courtListType, Encode.forJava(templateName), Encode.forJava(courtCentreId), wantsWord ? "docx" : "pdf", content.length);
 
         return wantsWord
                 ? new CourtListFileResult(content, CONTENT_TYPE_WORD, WORD_FILENAME)

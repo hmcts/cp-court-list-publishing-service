@@ -1,6 +1,7 @@
 package uk.gov.hmcts.cp.services.sjp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -70,7 +71,7 @@ public class SjpCourtListPublishService {
             String language,
             String requestType,
             Object listPayload) {
-        LOG.info("SJP court list publish request for listType: {}", listType);
+        LOG.info("SJP court list publish request for listType: {}", Encode.forJava(listType));
 
         SjpListPayload payload;
         if (listPayload == null) {
@@ -79,7 +80,7 @@ public class SjpCourtListPublishService {
         try {
             payload = OBJECT_MAPPER.convertValue(listPayload, SjpListPayload.class);
         } catch (Exception e) {
-            LOG.warn("Invalid listPayload: {}", e.getMessage());
+            LOG.warn("Invalid listPayload: {}", Encode.forJava(e.getMessage()));
             return SjpPublishResult.failed(listType, "Invalid listPayload: " + e.getMessage());
         }
 
@@ -103,14 +104,14 @@ public class SjpCourtListPublishService {
 
             int status = courtListPublisher.publish(payloadJson, meta);
             LOG.info("SJP court list published to CaTH, listType={}, language={}, requestType={}, status={}",
-                    listType, lang, requestType, status);
+                    Encode.forJava(listType), Encode.forJava(lang), Encode.forJava(requestType), status);
 
             if (status >= 200 && status < 300) {
                 return SjpPublishResult.accepted(listType, "SJP court list published to CaTH");
             }
             return SjpPublishResult.failed(listType, "CaTH returned status " + status);
         } catch (Exception e) {
-            LOG.error("Failed to publish SJP court list to CaTH: {}", e.getMessage(), e);
+            LOG.error("Failed to publish SJP court list to CaTH: {}", Encode.forJava(e.getMessage()), e);
             return SjpPublishResult.failed(listType, "Failed to publish to CaTH: " + e.getMessage());
         }
     }

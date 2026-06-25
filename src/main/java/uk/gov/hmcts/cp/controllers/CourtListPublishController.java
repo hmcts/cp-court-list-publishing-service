@@ -17,6 +17,7 @@ import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
 import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService.SjpPublishResult;
 
+import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ByteArrayResource;
@@ -148,7 +149,7 @@ public class CourtListPublishController implements CourtListPublishApi {
             headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.filename() + "\"");
             return ResponseEntity.ok().headers(headers).body(new ByteArrayResource(result.content()));
         } catch (CourtListDownloadException e) {
-            LOG.warn("Court list download error: {}", e.getMessage());
+            LOG.warn("Court list download error: {}", Encode.forJava(e.getMessage()));
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, e.getMessage());
         }
     }

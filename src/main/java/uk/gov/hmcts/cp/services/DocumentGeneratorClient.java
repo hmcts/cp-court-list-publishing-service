@@ -4,6 +4,7 @@ import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonWriter;
 import lombok.RequiredArgsConstructor;
+import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -66,7 +67,7 @@ public class DocumentGeneratorClient {
                             templateName, response.getStatusCode())
             );
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            LOG.error("HTTP error generating {} with template: {}", conversionFormat, templateName, e);
+            LOG.error("HTTP error generating {} with template: {}", conversionFormat, Encode.forJava(templateName), e);
             throw new ResponseStatusException(
                     HttpStatus.valueOf(e.getStatusCode().value()),
                     format("Failed to generate document with identifier %s: %s",
@@ -74,7 +75,7 @@ public class DocumentGeneratorClient {
                     e
             );
         } catch (RestClientException e) {
-            LOG.error("Rest client error generating {} with template: {}", conversionFormat, templateName, e);
+            LOG.error("Rest client error generating {} with template: {}", conversionFormat, Encode.forJava(templateName), e);
             throw new IOException(format("Failed to generate document with identifier %s: %s",
                     templateName, e.getMessage()), e);
         }
@@ -106,7 +107,7 @@ public class DocumentGeneratorClient {
         String jsonPayload = jsonObjectToString(payload);
         HttpEntity<String> requestEntity = new HttpEntity<>(jsonPayload, headers);
 
-        LOG.info("Calling document generator at {} with template: {}", uri, templateName);
+        LOG.info("Calling document generator at {} with template: {}", uri, Encode.forJava(templateName));
         return restTemplate.exchange(uri, HttpMethod.POST, requestEntity, byte[].class);
     }
 
