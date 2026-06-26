@@ -17,6 +17,10 @@ import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 import uk.gov.hmcts.cp.services.ReferenceDataService;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
+import uk.gov.hmcts.cp.services.sanitization.DocumentSanitizer;
+import uk.gov.hmcts.cp.services.sanitization.HtmlStrippingSanitizer;
+import uk.gov.hmcts.cp.services.sanitization.RequiredStringFieldsRegistry;
+import uk.gov.hmcts.cp.services.sanitization.WafPatternSanitizer;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -52,9 +56,15 @@ class SjpCathPublishingDisabledIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        DocumentSanitizer sanitizer = new DocumentSanitizer(
+                new WafPatternSanitizer("..\\.\\,../"),
+                new HtmlStrippingSanitizer(),
+                new RequiredStringFieldsRegistry());
+
         SjpCourtListPublishService sjpService = new SjpCourtListPublishService(
                 new SjpToCathPayloadTransformer(),
                 courtListPublisher,
+                sanitizer,
                 false  // CATH_PUBLISHING_ENABLED=false
         );
 
