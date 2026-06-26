@@ -9,7 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
-import uk.gov.hmcts.cp.services.sanitization.CourtListDocumentSanitizer;
+import uk.gov.hmcts.cp.services.sanitization.DocumentSanitizer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,7 +34,7 @@ class CourtListQueryServiceTest {
     private JsonSchemaValidatorService jsonSchemaValidatorService;
 
     @Mock
-    private CourtListDocumentSanitizer courtListDocumentSanitizer;
+    private DocumentSanitizer courtListDocumentSanitizer;
 
     @InjectMocks
     private CourtListQueryService courtListQueryService;

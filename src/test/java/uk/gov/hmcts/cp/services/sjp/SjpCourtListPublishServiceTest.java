@@ -9,6 +9,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.cp.domain.DtsMeta;
 import uk.gov.hmcts.cp.domain.sjp.SjpListPayload;
 import uk.gov.hmcts.cp.services.CourtListPublisher;
+import uk.gov.hmcts.cp.services.sanitization.DocumentSanitizer;
+import uk.gov.hmcts.cp.services.sanitization.HtmlStrippingSanitizer;
+import uk.gov.hmcts.cp.services.sanitization.RequiredStringFieldsRegistry;
+import uk.gov.hmcts.cp.services.sanitization.WafPatternSanitizer;
 
 import java.util.List;
 import java.util.Map;
@@ -35,9 +39,18 @@ class SjpCourtListPublishServiceTest {
             "prosecutorName", "P",
             "sjpOffences", List.of(Map.of("title", "t", "wording", "w"))));
 
+    private static final DocumentSanitizer SANITIZER = new DocumentSanitizer(
+            new WafPatternSanitizer("..\\.\\,../"),
+            new HtmlStrippingSanitizer(),
+            new RequiredStringFieldsRegistry());
+
     @BeforeEach
     void setUp() {
-        service = new SjpCourtListPublishService(new SjpToCathPayloadTransformer(), courtListPublisher, true);
+        service = new SjpCourtListPublishService(
+                new SjpToCathPayloadTransformer(),
+                courtListPublisher,
+                SANITIZER,
+                true);
     }
 
     // ── courtId ─────────────────────────────────────────────────────────────
@@ -141,7 +154,11 @@ class SjpCourtListPublishServiceTest {
     @Test
     void publishSjpCourtList_returnsAccepted_whenCathPublishingDisabled() {
         SjpCourtListPublishService disabledService =
-                new SjpCourtListPublishService(new SjpToCathPayloadTransformer(), courtListPublisher, false);
+                new SjpCourtListPublishService(
+                        new SjpToCathPayloadTransformer(),
+                        courtListPublisher,
+                        SANITIZER,
+                        false);
 
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         SjpCourtListPublishService.SjpPublishResult result =

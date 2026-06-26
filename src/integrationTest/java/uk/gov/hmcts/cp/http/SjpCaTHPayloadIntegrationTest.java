@@ -422,6 +422,68 @@ public class SjpCaTHPayloadIntegrationTest extends AbstractTest {
                         assertThat(((HttpClientErrorException) ex).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
     }
 
+    @Test
+    void publishPublicList_sanitizesWafBlockedPatternsAndHtmlFromCaTHPayload() throws Exception {
+        String requestJson = """
+            {
+              "listType": "SJP_PUBLIC_LIST",
+              "listPayload": {
+                "generatedDateAndTime": "2025-06-01T09:00:00",
+                "readyCases": [
+                  {
+                    "caseUrn": "URN-SANITIZE-001",
+                    "defendantName": "Jane Smith",
+                    "firstName": "Jane <br/> Middle",
+                    "lastName": "Smith../Suffix",
+                    "town": "Greater <br/> Manchester",
+                    "prosecutorName": "CPS ../Regional",
+                    "sjpOffences": [
+                      {"title": "Speeding <script>", "wording": "Drove at ../50mph in a 30 zone"}
+                    ]
+                  }
+                ]
+              }
+            }
+            """;
+
+        int cathCountBefore = listSjpCaTHRequests().size();
+        ResponseEntity<String> response = postSjpRequest(requestJson);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(objectMapper.readTree(response.getBody()).get("status").asText()).isEqualTo("ACCEPTED");
+
+        JsonNode cathReq = waitForAdditionalCaTHRequest(cathCountBefore);
+        JsonNode cathPayload = parseCaTHBody(cathReq);
+        JsonNode hearing0 = firstHearing(cathPayload);
+
+        // HTML tags and WAF path-traversal sequences must be stripped from all text fields
+
+        JsonNode prosecutor = findPartyByRole(hearing0.path("party"), "PROSECUTOR");
+        assertThat(prosecutor.path("organisationDetails").path("organisationName").asText())
+                .doesNotContain("../")
+                .isEqualTo("CPS Regional");
+
+        JsonNode accused = findPartyByRole(hearing0.path("party"), "ACCUSED");
+        JsonNode individualDetails = accused.path("individualDetails");
+        assertThat(individualDetails.path("individualForenames").asText())
+                .doesNotContain("<br/>")
+                .isEqualTo("Jane Middle");
+        assertThat(individualDetails.path("individualSurname").asText())
+                .doesNotContain("../")
+                .isEqualTo("Smith Suffix");
+        assertThat(individualDetails.path("address").path("town").asText())
+                .doesNotContain("<br/>")
+                .isEqualTo("Greater Manchester");
+
+        JsonNode offence0 = hearing0.path("offence").path(0);
+        assertThat(offence0.path("offenceTitle").asText())
+                .doesNotContain("<script>")
+                .isEqualTo("Speeding");
+        assertThat(offence0.path("offenceWording").asText())
+                .doesNotContain("../")
+                .isEqualTo("Drove at 50mph in a 30 zone");
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private ResponseEntity<String> postSjpRequest(String json) {
