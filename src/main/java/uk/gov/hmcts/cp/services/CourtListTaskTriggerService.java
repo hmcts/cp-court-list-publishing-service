@@ -2,6 +2,7 @@ package uk.gov.hmcts.cp.services;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
+import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,7 +86,7 @@ public class CourtListTaskTriggerService {
             executionService.executeWith(executionInfo);
             LOG.atInfo().log("Court list publishing task triggered successfully");
         } catch (Exception e) {
-            LOG.atError().log("Failed to execute task via ExecutionService: {}", e.getMessage(), e);
+            LOG.atError().log("Failed to execute task via ExecutionService: {}", Encode.forJava(e.getMessage()), e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Failed to trigger court list publishing task: " + e.getMessage(), e);
         }

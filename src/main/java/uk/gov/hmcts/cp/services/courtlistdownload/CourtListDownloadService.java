@@ -138,7 +138,7 @@ public class CourtListDownloadService {
         }
 
         LOG.info("Court list document generated for type={}, template={}, courtCentreId={}, format={}, size={} bytes",
-                courtListType, templateName, Encode.forJava(courtCentreId), wantsWord ? "docx" : "pdf", content.length);
+                courtListType, Encode.forJava(templateName), Encode.forJava(courtCentreId), wantsWord ? "docx" : "pdf", content.length);
 
         return wantsWord
                 ? new CourtListFileResult(content, CONTENT_TYPE_WORD, WORD_FILENAME)
@@ -164,7 +164,7 @@ public class CourtListDownloadService {
         String templateName = isWelsh ? templates.welshTemplate() : templates.englishTemplate();
 
         LOG.info("Generating crown court PDF for type={}, isWelsh={}, template={}, courtCentreId={}, startDate={}, endDate={}",
-                courtListType, isWelsh, templateName, Encode.forJava(courtCentreId), startDate, endDate);
+                courtListType, isWelsh, Encode.forJava(templateName), Encode.forJava(courtCentreId), startDate, endDate);
 
         final String payloadJson = courtListDataService.getCrownCourtDailyListPayload(
                 courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid, restricted);
@@ -186,7 +186,7 @@ public class CourtListDownloadService {
         }
 
         LOG.info("Crown court PDF generated for type={}, template={}, courtCentreId={}, size={} bytes",
-                courtListType, templateName, Encode.forJava(courtCentreId), content.length);
+                courtListType, Encode.forJava(templateName), Encode.forJava(courtCentreId), content.length);
 
         return new CourtListFileResult(content, CONTENT_TYPE_PDF, PDF_FILENAME);
     }

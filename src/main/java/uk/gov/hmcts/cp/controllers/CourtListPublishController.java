@@ -36,6 +36,7 @@ import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.owasp.encoder.Encode;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -167,7 +168,7 @@ public class CourtListPublishController implements CourtListPublishApi {
             headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.filename() + "\"");
             return ResponseEntity.ok().headers(headers).body(new ByteArrayResource(result.content()));
         } catch (CourtListDownloadException e) {
-            LOG.warn("Court list download error: {}", e.getMessage());
+            LOG.warn("Court list download error: {}", Encode.forJava(e.getMessage()));
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, e.getMessage());
         }
     }

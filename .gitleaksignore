@@ -1,0 +1,23 @@
+# Gitleaks false-positive suppressions.
+#
+# Each entry is a gitleaks "fingerprint" (commit:file:rule:line) for a finding
+# that has been reviewed and confirmed NOT to be a real secret. Fingerprints are
+# printed by the hmcts/secrets-scanner job output. This file is honoured by
+# gitleaks regardless of which config the scanner loads via GITLEAKS_CONFIG.
+#
+# Before adding a line here, confirm the value is genuinely not sensitive.
+
+# --- gradle.properties: apiSpecVersion release-version strings ---------------
+# `apiSpecVersion` is a build version (e.g. 0.1.27-SPRDT-848). The ticket suffix
+# makes the value look high-entropy, so the generic-api-key rule flags it. It is
+# a published artifact version, not a credential.
+6d881cd5308eca060590529de15d5fd56aa423d1:gradle.properties:generic-api-key:10
+4921c9a215ac6705098cbfaa6d43eda90cc5e17f:gradle.properties:generic-api-key:10
+
+# --- Azurite emulator development key -----------------------------------------
+# docker/integration-azurite-storage.env holds the PUBLIC, Microsoft-documented
+# default account key for the Azurite blob emulator account `devstoreaccount1`.
+# It is not a production secret (see docker/README.md). The inline `gitleaks:allow`
+# in that file does not apply because the key is read by a custom .env parser that
+# would treat a trailing comment as part of the value, so we suppress by fingerprint.
+246454de965fecbd5bc89c73f07af4d7ed2aeb75:docker/integration-azurite-storage.env:generic-api-key:7
