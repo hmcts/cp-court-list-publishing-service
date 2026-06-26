@@ -9,6 +9,7 @@ import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.domain.DtsMeta;
 import uk.gov.hmcts.cp.domain.sjp.SjpListPayload;
 import uk.gov.hmcts.cp.services.CourtListPublisher;
+import uk.gov.hmcts.cp.services.sanitization.DocumentSanitizer;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -44,15 +45,18 @@ public class SjpCourtListPublishService {
 
     private final SjpToCathPayloadTransformer transformer;
     private final CourtListPublisher courtListPublisher;
+    private final DocumentSanitizer documentSanitizer;
     private final boolean cathPublishingEnabled;
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
 
     public SjpCourtListPublishService(
             SjpToCathPayloadTransformer transformer,
             CourtListPublisher courtListPublisher,
+            DocumentSanitizer documentSanitizer,
             @Value("${cath.publishing-enabled:false}") boolean cathPublishingEnabled) {
         this.transformer = transformer;
         this.courtListPublisher = courtListPublisher;
+        this.documentSanitizer = documentSanitizer;
         this.cathPublishingEnabled = cathPublishingEnabled;
     }
 
@@ -107,7 +111,7 @@ public class SjpCourtListPublishService {
             String payloadLanguage = Boolean.TRUE.equals(payload.getIsWelsh()) ? "WELSH" : "ENGLISH";
             String lang = (language != null && !language.isBlank()) ? language : payloadLanguage;
 
-            String payloadJson = transformer.transform(payload, documentName);
+            String payloadJson = documentSanitizer.sanitize(transformer.transform(payload, documentName));
             DtsMeta meta = buildDtsMeta(cathListType, sensitivity, lang, requestType, payload.getCourtIdNumeric());
 
             int status = courtListPublisher.publish(payloadJson, meta);

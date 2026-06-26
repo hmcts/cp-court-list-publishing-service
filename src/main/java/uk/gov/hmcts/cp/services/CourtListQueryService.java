@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
-import uk.gov.hmcts.cp.services.sanitization.CourtListDocumentSanitizer;
+import uk.gov.hmcts.cp.services.sanitization.DocumentSanitizer;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +22,7 @@ public class CourtListQueryService {
     private final StandardCourtListTransformationService transformationService;
     private final OnlinePublicCourtListTransformationService onlinePublicCourtListTransformationService;
     private final JsonSchemaValidatorService jsonSchemaValidatorService;
-    private final CourtListDocumentSanitizer courtListDocumentSanitizer;
+    private final DocumentSanitizer courtListDocumentSanitizer;
 
     /**
      * Transforms an existing payload into CourtListDocument (no remote fetch).
