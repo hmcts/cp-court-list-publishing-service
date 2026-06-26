@@ -18,8 +18,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 /**
- * STANDARD: CaTH publish only — no PDF generation, no blob upload. Download is served live by
- * /api/court-list-publish/download which proxies progression's binary /courtlist endpoint.
+ * STANDARD: CaTH publish plus asynchronous PDF generation and blob upload ({@code fileId} populated).
+ * Download is served live by /api/court-list-publish/download which proxies progression's binary
+ * /courtlist endpoint (independent of the generated blob).
  * Asserts the downloaded PDF bytes equal the progression stub's bytes (the binary minimal-pdf.pdf).
  * Clears {@code court_list_publish_status} and jobs before each test.
  */
@@ -47,7 +48,7 @@ class CourtListStandardPdfContentIntegrationTest extends CourtListIntegrationTes
         try (Connection c = connection()) {
             assertPublishStatusRow(c, courtListId, "SUCCESSFUL", "SUCCESSFUL", null);
             assertCourtListType(c, courtListId, STANDARD.toString());
-            assertFileIdIsNull(c, courtListId);
+            assertFileIdIsNotNull(c, courtListId);
         }
 
         byte[] downloaded = downloadStandardCourtListSync();
@@ -69,12 +70,12 @@ class CourtListStandardPdfContentIntegrationTest extends CourtListIntegrationTes
         return response.getBody();
     }
 
-    private void assertFileIdIsNull(Connection c, UUID courtListId) throws Exception {
+    private void assertFileIdIsNotNull(Connection c, UUID courtListId) throws Exception {
         try (var ps = c.prepareStatement("SELECT file_id FROM court_list_publish_status WHERE court_list_id = ?")) {
             ps.setObject(1, courtListId);
             try (ResultSet rs = ps.executeQuery()) {
                 assertThat(rs.next()).isTrue();
-                assertThat(rs.getObject("file_id")).isNull();
+                assertThat(rs.getObject("file_id")).isNotNull();
             }
         }
     }
