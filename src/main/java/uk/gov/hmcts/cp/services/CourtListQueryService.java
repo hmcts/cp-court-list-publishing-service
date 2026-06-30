@@ -15,9 +15,6 @@ import uk.gov.hmcts.cp.services.sanitization.DocumentSanitizer;
 @Slf4j
 public class CourtListQueryService {
 
-    private static final String STANDARD_COURT_LIST_SCHEMA_JSON = "schema/standard-court-list-schema.json";
-    private static final String ONLINE_PUBLIC_COURT_LIST_SCHEMA_JSON = "schema/online-public-court-list-schema.json";
-
     private final CourtListDataService courtListDataService;
     private final StandardCourtListTransformationService transformationService;
     private final OnlinePublicCourtListTransformationService onlinePublicCourtListTransformationService;
@@ -33,13 +30,13 @@ public class CourtListQueryService {
             log.info("Using PublicCourtListTransformationService for PUBLIC list type");
             final CourtListDocument document = onlinePublicCourtListTransformationService.transform(payload);
             final CourtListDocument sanitized = courtListDocumentSanitizer.sanitize(document);
-            jsonSchemaValidatorService.validate(sanitized, ONLINE_PUBLIC_COURT_LIST_SCHEMA_JSON);
+            jsonSchemaValidatorService.validate(sanitized, PublicationSchema.ONLINE_PUBLIC);
             return sanitized;
         }
         log.info("Using CourtListTransformationService for list type: {}", listId);
         final CourtListDocument document = transformationService.transform(payload);
         final CourtListDocument sanitized = courtListDocumentSanitizer.sanitize(document);
-        jsonSchemaValidatorService.validate(sanitized, STANDARD_COURT_LIST_SCHEMA_JSON);
+        jsonSchemaValidatorService.validate(sanitized, PublicationSchema.STANDARD);
         return sanitized;
     }
 
