@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.cp.domain.DtsMeta;
 import uk.gov.hmcts.cp.domain.sjp.SjpListPayload;
 import uk.gov.hmcts.cp.services.CourtListPublisher;
+import uk.gov.hmcts.cp.services.JsonSchemaValidatorService;
 import uk.gov.hmcts.cp.services.sanitization.DocumentSanitizer;
 import uk.gov.hmcts.cp.services.sanitization.HtmlStrippingSanitizer;
 import uk.gov.hmcts.cp.services.sanitization.RequiredStringFieldsRegistry;
@@ -30,6 +31,9 @@ class SjpCourtListPublishServiceTest {
     @Mock
     private CourtListPublisher courtListPublisher;
 
+    @Mock
+    private JsonSchemaValidatorService jsonSchemaValidatorService;
+
     private SjpCourtListPublishService service;
 
     /** Minimal valid readyCases entry */
@@ -50,6 +54,7 @@ class SjpCourtListPublishServiceTest {
                 new SjpToCathPayloadTransformer(),
                 courtListPublisher,
                 SANITIZER,
+                jsonSchemaValidatorService,
                 true);
     }
 
@@ -158,6 +163,7 @@ class SjpCourtListPublishServiceTest {
                         new SjpToCathPayloadTransformer(),
                         courtListPublisher,
                         SANITIZER,
+                        jsonSchemaValidatorService,
                         false);
 
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);

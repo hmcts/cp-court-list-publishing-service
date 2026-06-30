@@ -15,6 +15,7 @@ import uk.gov.hmcts.cp.controllers.CourtListPublishController;
 import uk.gov.hmcts.cp.services.CourtListPublisher;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
+import uk.gov.hmcts.cp.services.JsonSchemaValidatorService;
 import uk.gov.hmcts.cp.services.ReferenceDataService;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
 import uk.gov.hmcts.cp.services.sanitization.DocumentSanitizer;
@@ -45,6 +46,7 @@ class SjpCathPublishingDisabledIntegrationTest {
     private static final String SJP_PUBLISH_URL = "/api/court-list-publish/sjp/publishCourtList";
 
     @Mock private CourtListPublisher courtListPublisher;
+    @Mock private JsonSchemaValidatorService jsonSchemaValidatorService;
     @Mock private CourtListPublishStatusService service;
     @Mock private CourtListTaskTriggerService courtListTaskTriggerService;
     @Mock private CourtListDownloadService courtListDownloadService;
@@ -65,6 +67,7 @@ class SjpCathPublishingDisabledIntegrationTest {
                 new SjpToCathPayloadTransformer(),
                 courtListPublisher,
                 sanitizer,
+                jsonSchemaValidatorService,
                 false  // CATH_PUBLISHING_ENABLED=false
         );
 
