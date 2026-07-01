@@ -38,26 +38,24 @@ public class JsonSchemaValidatorService {
         if (document == null) {
             throw new SchemaValidationException("Document cannot be null");
         }
-        try {
-            validateJsonNode(OBJECT_MAPPER.valueToTree(document), schema);
-        } catch (SchemaValidationException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new SchemaValidationException("Failed to convert document to JSON: " + e.getMessage(), e);
-        }
+        validate(() -> OBJECT_MAPPER.valueToTree(document), schema, "Failed to convert document to JSON: ");
     }
 
     public void validate(String json, PublicationSchema schema) {
         if (json == null || json.isBlank()) {
             throw new SchemaValidationException("JSON cannot be null or blank");
         }
+        validate(() -> OBJECT_MAPPER.readTree(json), schema, "JSON schema validation failed: ");
+    }
+
+    private void validate(JsonNodeSupplier jsonNodeSupplier, PublicationSchema schema, String errorPrefix) {
+        JsonNode jsonNode;
         try {
-            validateJsonNode(OBJECT_MAPPER.readTree(json), schema);
-        } catch (SchemaValidationException e) {
-            throw e;
+            jsonNode = jsonNodeSupplier.get();
         } catch (Exception e) {
-            throw new SchemaValidationException("JSON schema validation failed: " + e.getMessage(), e);
+            throw new SchemaValidationException(errorPrefix + e.getMessage(), e);
         }
+        validateJsonNode(jsonNode, schema);
     }
 
     private void validateJsonNode(JsonNode jsonNode, PublicationSchema schema) {
@@ -71,6 +69,11 @@ public class JsonSchemaValidatorService {
             throw new SchemaValidationException("JSON schema validation failed:\n" + messages);
         }
         log.debug("JSON schema validation passed");
+    }
+
+    @FunctionalInterface
+    private interface JsonNodeSupplier {
+        JsonNode get() throws IOException;
     }
 
     private JsonSchema loadSchema(PublicationSchema publicationSchema) {
