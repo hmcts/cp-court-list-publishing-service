@@ -8,7 +8,6 @@ import java.time.LocalDate;
 import java.util.Objects;
 import java.util.UUID;
 
-import jakarta.persistence.CheckConstraint;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -25,12 +24,7 @@ import static jakarta.persistence.EnumType.STRING;
  */
 @Getter
 @Entity
-@Table(name = "court_list_publish_status", check = {
-        @CheckConstraint(name = "ck_court_centre_id_required_for_non_sjp",
-                constraint = "court_centre_id IS NOT NULL OR starts_with(court_list_type, 'SJP_')"),
-        @CheckConstraint(name = "ck_file_status_required_for_non_sjp",
-                constraint = "file_status IS NOT NULL OR starts_with(court_list_type, 'SJP_')")
-})
+@Table(name = "court_list_publish_status")
 public class CourtListStatusEntity {
 
     @Id

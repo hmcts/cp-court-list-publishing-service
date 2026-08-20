@@ -6,23 +6,12 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Maps the CaTH wire vocabulary ({@code SjpListType}) plus a language onto the
- * fused {@link CourtListType} value used as the publish-status row key.
+ * Maps CaTH's {@code SjpListType} wire vocabulary plus a language onto the fused
+ * {@link CourtListType} used as the publish-status row key — SJP is national and all eight
+ * daily publishes share a publish date, so the fused type is the only row-key discriminator.
  *
- * <p>Two vocabularies exist deliberately:
- * <ul>
- *   <li>{@code SjpListType} - forwarded to CaTH as {@code DtsMeta.listType}. Mirrors
- *       CaTH's own {@code ListType} one-to-one and carries no language, because CaTH
- *       takes language as separate metadata.</li>
- *   <li>{@link CourtListType} - persisted in {@code court_list_publish_status.court_list_type}.
- *       Fuses audience, request type and language because SJP is national (no court
- *       centre) and all eight daily publishes share a publish date, leaving
- *       {@code court_list_type} as the only discriminator in the row key.</li>
- * </ul>
- *
- * <p>Unknown input is rejected rather than defaulted. A previous iteration of the
- * publishing path silently treated any unrecognised list type as a public list, which
- * let the bogus value {@code SJP_PUBLISH_LIST} flow through unnoticed.
+ * <p>Unknown input is rejected, never defaulted — a past bug silently treated any unrecognised
+ * list type as public, letting the bogus value {@code SJP_PUBLISH_LIST} through unnoticed.
  */
 public final class SjpStatusListTypeMapper {
 

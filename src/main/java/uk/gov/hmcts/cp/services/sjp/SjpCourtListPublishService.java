@@ -23,23 +23,12 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Accepts SJP court list publish requests for the four in-scope event types (full/delta,
- * public/press):
- * <ul>
- *   <li>SJP_PUBLIC_LIST / SJP_DELTA_PUBLIC_LIST – public.sjp.pending-cases-public-list-generated</li>
- *   <li>SJP_PRESS_LIST / SJP_DELTA_PRESS_LIST     – public.sjp.pending-cases-press-list-generated</li>
- * </ul>
- * The press transparency report (public.sjp.press-transparency-report-generated) is out of
- * scope and remains in Staging PubHub.
- *
- * <p>Validation happens synchronously; the actual transform, blob-storage upload, and CaTH
- * send are queued as an async job ({SjpPublishTask} via {@link SjpTaskTriggerService}),
- * matching the standard/online-public court list flow ({@code CourtListTaskTriggerService} /
- * {@code CourtListPublishAndPDFGenerationTask}). Tracking reuses {@code court_list_publish_status}
- * (the same table as the standard flow): SJP has no court-centre concept, so {@code courtCentreId}
- * is always null, and the row key is the fused {@link CourtListType} (see
- * {@link SjpStatusListTypeMapper}) plus publishDate — the fused value already encodes audience,
- * request type and language, which is what keeps all eight daily SJP publishes on separate rows.
+ * Validates and accepts SJP publish requests (full/delta, public/press); the transform, blob
+ * upload, and CaTH send are queued as an async job ({@link SjpTaskTriggerService} /
+ * {@code SjpPublishTask}), same split as the standard flow. Tracked in the shared
+ * {@code court_list_publish_status} table, keyed by the fused {@link CourtListType} (see
+ * {@link SjpStatusListTypeMapper}) plus publishDate; {@code courtCentreId} is always null
+ * (SJP is national).
  */
 @Service
 public class SjpCourtListPublishService {
@@ -71,11 +60,8 @@ public class SjpCourtListPublishService {
     }
 
     /**
-     * Accept an SJP court list for publishing to CaTH.
-     *
-     * <p>Only request-level validation (payload shape, non-empty readyCases, known list type)
-     * happens here; the transform, blob upload, schema validation, and CaTH send all happen
-     * later in {SjpPublishTask} once the job is picked up.
+     * Accepts an SJP list for publishing; only request-level validation happens here (transform,
+     * upload, and CaTH send happen later in {@code SjpPublishTask}).
      *
      * @param listType    SJP_PUBLIC_LIST, SJP_PRESS_LIST, SJP_DELTA_PUBLIC_LIST or SJP_DELTA_PRESS_LIST
      * @param language    optional override (default: derived from listPayload.isWelsh)
@@ -161,7 +147,6 @@ public class SjpCourtListPublishService {
     }
 
     /**
-     * Same court id resolution as {@link uk.gov.hmcts.cp.services.CaTHService#sendCourtListToCaTH}:
      * use numeric id from payload when present, otherwise {@code "0"}.
      */
     private static String normalizeCourtId(String courtIdNumeric) {

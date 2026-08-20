@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.domain.DtsMeta;
 import uk.gov.hmcts.cp.domain.sjp.SjpListPayload;
-import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 import uk.gov.hmcts.cp.services.AzureBlobService;
 import uk.gov.hmcts.cp.services.CaTHService;
 import uk.gov.hmcts.cp.services.CourtListPublisher;
@@ -30,19 +29,13 @@ import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 
 /**
- * Async worker for SJP court list publishing, queued by
- * {@link uk.gov.hmcts.cp.services.sjp.SjpTaskTriggerService}. Mirrors
- * {@link CourtListPublishAndPDFGenerationTask}'s CaTH-send step: transforms and sanitizes the
- * payload, uploads it to Azure blob storage (using the same blob-name convention as the
- * standard flow, {@link CaTHService#buildBlobName}, so the existing cleanup job already covers
- * SJP blobs) before publishing, then sends to CaTH. A repeat publish for the same day and fused
- * list type always re-transforms, re-uploads and re-sends, overwriting the same row — same as
- * the standard flow, no content-based dedup.
+ * Async worker for SJP publishing, queued by {@link uk.gov.hmcts.cp.services.sjp.SjpTaskTriggerService}.
+ * Mirrors the standard flow's CaTH-send step (transform, sanitize, upload to blob via the same
+ * {@link CaTHService#buildBlobName} convention, then publish), with no content dedup — a repeat
+ * trigger always re-sends and overwrites the row.
  *
- * <p>Tracked in {@code court_list_publish_status} (shared with the standard flow) via
- * {@link CourtListStatusRepository} — {@code courtCentreId} is always null for these rows
- * (SJP has no court-centre concept) and {@code fileStatus}/file-related columns are unused
- * (no PDF generation for SJP).
+ * <p>Tracked in the shared {@code court_list_publish_status} table; {@code courtCentreId} and
+ * file-related columns are always null for SJP rows (national, no PDF).
  */
 @Task("SJP_PUBLISH_TASK")
 @Component
