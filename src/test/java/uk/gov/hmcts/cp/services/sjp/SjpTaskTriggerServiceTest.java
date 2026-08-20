@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.hmcts.cp.openapi.model.SjpListType;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 import uk.gov.hmcts.cp.taskmanager.service.ExecutionService;
 
@@ -36,7 +37,7 @@ class SjpTaskTriggerServiceTest {
     @Test
     void triggerSjpPublishTask_submitsJobWithExpectedData() {
         service.triggerSjpPublishTask(
-                sjpListId, "325", SjpCourtListPublishService.SJP_PUBLIC_LIST,
+                sjpListId, "325", SjpListType.SJP_PUBLIC_LIST,
                 LocalDate.of(2025, 3, 9), "WELSH", "FULL", "{\"generatedDateAndTime\":\"2025-03-09T10:00:00\"}");
 
         ArgumentCaptor<ExecutionInfo> captor = ArgumentCaptor.forClass(ExecutionInfo.class);
@@ -46,7 +47,7 @@ class SjpTaskTriggerServiceTest {
         assertThat(submitted.getAssignedTaskName()).isEqualTo("SJP_PUBLISH_TASK");
         assertThat(submitted.getJobData().getString("sjpListId")).isEqualTo(sjpListId.toString());
         assertThat(submitted.getJobData().getString("sjpCourtIdNumeric")).isEqualTo("325");
-        assertThat(submitted.getJobData().getString("sjpListType")).isEqualTo(SjpCourtListPublishService.SJP_PUBLIC_LIST);
+        assertThat(submitted.getJobData().getString("sjpListType")).isEqualTo(SjpListType.SJP_PUBLIC_LIST.getValue());
         assertThat(submitted.getJobData().getString("sjpPublishDate")).isEqualTo("2025-03-09");
         assertThat(submitted.getJobData().getString("sjpLanguage")).isEqualTo("WELSH");
         assertThat(submitted.getJobData().getString("sjpRequestType")).isEqualTo("FULL");
@@ -56,7 +57,7 @@ class SjpTaskTriggerServiceTest {
     @Test
     void triggerSjpPublishTask_omitsOptionalFields_whenLanguageAndRequestTypeNull() {
         service.triggerSjpPublishTask(
-                sjpListId, "0", SjpCourtListPublishService.SJP_PRESS_LIST,
+                sjpListId, "0", SjpListType.SJP_PRESS_LIST,
                 LocalDate.of(2025, 3, 9), null, null, "{}");
 
         ArgumentCaptor<ExecutionInfo> captor = ArgumentCaptor.forClass(ExecutionInfo.class);
@@ -72,7 +73,7 @@ class SjpTaskTriggerServiceTest {
         doThrow(new RuntimeException("db unavailable")).when(executionService).executeWith(any());
 
         assertThatThrownBy(() -> service.triggerSjpPublishTask(
-                sjpListId, "0", SjpCourtListPublishService.SJP_PUBLIC_LIST,
+                sjpListId, "0", SjpListType.SJP_PUBLIC_LIST,
                 LocalDate.of(2025, 3, 9), null, null, "{}"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to trigger SJP publish task");

@@ -10,6 +10,7 @@ import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.domain.sjp.SjpListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.openapi.model.SjpListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 
@@ -19,7 +20,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -36,15 +36,6 @@ public class SjpCourtListPublishService {
     private static final Logger LOG = LoggerFactory.getLogger(SjpCourtListPublishService.class);
     private static final String STATUS_ACCEPTED = "ACCEPTED";
     private static final String STATUS_FAILED = "FAILED";
-    public static final String SJP_PUBLIC_LIST = "SJP_PUBLIC_LIST";
-    public static final String SJP_PRESS_LIST = "SJP_PRESS_LIST";
-    public static final String SJP_DELTA_PUBLIC_LIST = "SJP_DELTA_PUBLIC_LIST";
-    public static final String SJP_DELTA_PRESS_LIST = "SJP_DELTA_PRESS_LIST";
-
-    /** The CaTH list-type vocabulary. Anything outside this set is rejected, never defaulted. */
-    private static final Set<String> KNOWN_LIST_TYPES = Set.of(
-            SJP_PUBLIC_LIST, SJP_PRESS_LIST, SJP_DELTA_PUBLIC_LIST, SJP_DELTA_PRESS_LIST);
-
     private final CourtListStatusRepository repository;
     private final SjpTaskTriggerService sjpTaskTriggerService;
     private final boolean cathPublishingEnabled;
@@ -63,27 +54,26 @@ public class SjpCourtListPublishService {
      * Accepts an SJP list for publishing; only request-level validation happens here (transform,
      * upload, and CaTH send happen later in {@code SjpPublishTask}).
      *
-     * @param listType    SJP_PUBLIC_LIST, SJP_PRESS_LIST, SJP_DELTA_PUBLIC_LIST or SJP_DELTA_PRESS_LIST
+     * @param listType    the SJP list variant being published
      * @param language    optional override (default: derived from listPayload.isWelsh)
      * @param requestType optional request type (e.g. "FULL"); passed through to DtsMeta
      * @param listPayload required for CaTH publish (generatedDateAndTime, readyCases); can be Map or POJO from API
      * @return status (ACCEPTED/FAILED), listType, message
      */
     public SjpPublishResult publishSjpCourtList(
-            String listType,
+            SjpListType listType,
             String language,
             String requestType,
             Object listPayload) {
-        LOG.info("SJP court list publish request for listType: {}", Encode.forJava(listType));
+        LOG.info("SJP court list publish request for listType: {}", listType);
 
         if (!cathPublishingEnabled) {
             LOG.debug("CaTH publishing is disabled (CATH_PUBLISHING_ENABLED=false), skipping SJP CaTH send");
             return SjpPublishResult.accepted(listType, "CaTH publishing is disabled");
         }
 
-        if (!KNOWN_LIST_TYPES.contains(listType)) {
-            LOG.warn("Rejecting unknown SJP list type: {}", Encode.forJava(listType));
-            return SjpPublishResult.failed(listType, "Unknown SJP list type: " + listType);
+        if (listType == null) {
+            return SjpPublishResult.failed(null, "listType is required to publish to CaTH");
         }
 
         if (listPayload == null) {
@@ -114,7 +104,7 @@ public class SjpCourtListPublishService {
                     courtListId, courtIdNumeric, listType, publishDate, language, requestType, payloadJson);
 
             LOG.info("SJP court list publish request queued, courtListId={}, listType={}",
-                    courtListId, Encode.forJava(listType));
+                    courtListId, listType);
             return SjpPublishResult.accepted(listType, "SJP court list publish request accepted for processing");
         } catch (Exception e) {
             LOG.error("Failed to queue SJP court list for publishing: {}", Encode.forJava(e.getMessage()), e);
@@ -185,14 +175,14 @@ public class SjpCourtListPublishService {
     @lombok.Value
     public static class SjpPublishResult {
         String status;
-        String listType;
+        SjpListType listType;
         String message;
 
-        public static SjpPublishResult accepted(String listType, String message) {
+        public static SjpPublishResult accepted(SjpListType listType, String message) {
             return new SjpPublishResult(STATUS_ACCEPTED, listType, message);
         }
 
-        public static SjpPublishResult failed(String listType, String message) {
+        public static SjpPublishResult failed(SjpListType listType, String message) {
             return new SjpPublishResult(STATUS_FAILED, listType, message);
         }
     }

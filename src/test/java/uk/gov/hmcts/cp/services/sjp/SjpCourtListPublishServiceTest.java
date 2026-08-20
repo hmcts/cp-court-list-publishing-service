@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.domain.sjp.SjpListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.openapi.model.SjpListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 
@@ -62,7 +63,7 @@ class SjpCourtListPublishServiceTest {
 
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         SjpCourtListPublishService.SjpPublishResult result =
-                disabledService.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
+                disabledService.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, null, payload);
 
         assertThat(result.getStatus()).isEqualTo("ACCEPTED");
         assertThat(result.getMessage()).contains("disabled");
@@ -76,7 +77,7 @@ class SjpCourtListPublishServiceTest {
     @Test
     void publishSjpCourtList_returnsFailed_whenListPayloadNull() {
         SjpCourtListPublishService.SjpPublishResult result =
-                service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, null);
+                service.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, null, null);
 
         assertThat(result.getStatus()).isEqualTo("FAILED");
         assertThat(result.getMessage()).contains("listPayload is required");
@@ -87,7 +88,7 @@ class SjpCourtListPublishServiceTest {
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", List.of());
 
         SjpCourtListPublishService.SjpPublishResult result =
-                service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
+                service.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, null, payload);
 
         assertThat(result.getStatus()).isEqualTo("ACCEPTED");
         assertThat(result.getMessage()).contains("no readyCases");
@@ -98,22 +99,26 @@ class SjpCourtListPublishServiceTest {
     @Test
     void publishSjpCourtList_returnsFailed_whenListPayloadNotConvertible() {
         SjpCourtListPublishService.SjpPublishResult result =
-                service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, "not-a-payload-object");
+                service.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, null, "not-a-payload-object");
 
         assertThat(result.getStatus()).isEqualTo("FAILED");
         assertThat(result.getMessage()).contains("Invalid listPayload");
     }
 
-    // ── known list-type validation ───────────────────────────────────────────
+    // ── list-type validation ─────────────────────────────────────────────────
+    // An unrecognised list-type string (e.g. the old typo'd SJP_PUBLISH_LIST) is now rejected
+    // by Jackson at JSON deserialization, before it can ever reach this service as a listType
+    // parameter - SjpListType being the parameter type makes an unknown value unrepresentable
+    // here. Only the remaining possible invalid state - a null listType - is tested below.
 
     @Test
-    void publishSjpCourtList_rejectsUnknownListType_insteadOfDefaultingToPublic() {
+    void publishSjpCourtList_returnsFailed_whenListTypeNull() {
         SjpCourtListPublishService.SjpPublishResult result =
-                service.publishSjpCourtList("SJP_PUBLISH_LIST", null, null,
+                service.publishSjpCourtList(null, null, null,
                         new SjpListPayload("2025-03-09T10:00:00", ONE_CASE));
 
         assertThat(result.getStatus()).isEqualTo("FAILED");
-        assertThat(result.getMessage()).contains("SJP_PUBLISH_LIST");
+        assertThat(result.getMessage()).contains("listType is required");
         verify(sjpTaskTriggerService, never()).triggerSjpPublishTask(
                 any(), any(), any(), any(), any(), any(), any());
     }
@@ -123,11 +128,11 @@ class SjpCourtListPublishServiceTest {
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
 
         SjpCourtListPublishService.SjpPublishResult result =
-                service.publishSjpCourtList(SjpCourtListPublishService.SJP_DELTA_PUBLIC_LIST, null, null, payload);
+                service.publishSjpCourtList(SjpListType.SJP_DELTA_PUBLIC_LIST, null, null, payload);
 
         assertThat(result.getStatus()).isEqualTo("ACCEPTED");
         verify(sjpTaskTriggerService).triggerSjpPublishTask(
-                any(UUID.class), any(), eq(SjpCourtListPublishService.SJP_DELTA_PUBLIC_LIST),
+                any(UUID.class), any(), eq(SjpListType.SJP_DELTA_PUBLIC_LIST),
                 any(), any(), any(), anyString());
     }
 
@@ -138,11 +143,11 @@ class SjpCourtListPublishServiceTest {
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, "325");
 
         SjpCourtListPublishService.SjpPublishResult result =
-                service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, "FULL", payload);
+                service.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, "FULL", payload);
 
         assertThat(result.getStatus()).isEqualTo("ACCEPTED");
         verify(sjpTaskTriggerService).triggerSjpPublishTask(
-                any(UUID.class), eq("325"), eq(SjpCourtListPublishService.SJP_PUBLIC_LIST),
+                any(UUID.class), eq("325"), eq(SjpListType.SJP_PUBLIC_LIST),
                 eq(LocalDate.of(2025, 3, 9)), eq(null), eq("FULL"), anyString());
     }
 
@@ -150,10 +155,10 @@ class SjpCourtListPublishServiceTest {
     void publishSjpCourtList_normalizesCourtIdToZero_whenCourtIdNumericBlank() {
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, "   ");
 
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
+        service.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, null, payload);
 
         verify(sjpTaskTriggerService).triggerSjpPublishTask(
-                any(UUID.class), eq("0"), anyString(), any(LocalDate.class), any(), any(), anyString());
+                any(UUID.class), eq("0"), any(SjpListType.class), any(LocalDate.class), any(), any(), anyString());
     }
 
     // ── dedup key: fused CourtListType (audience + request type + language) ──
@@ -161,7 +166,7 @@ class SjpCourtListPublishServiceTest {
     @Test
     void publishSjpCourtList_looksUpDedupKey_usingFusedCourtListType_englishByDefault() {
         SjpListPayload payload = new SjpListPayload("2025-03-09", ONE_CASE);
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
+        service.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, null, payload);
 
         verify(repository).findByPublishDateAndCourtListType(
                 eq(LocalDate.of(2025, 3, 9)), eq(CourtListType.SJP_PUBLIC_FULL_ENGLISH));
@@ -170,7 +175,7 @@ class SjpCourtListPublishServiceTest {
     @Test
     void publishSjpCourtList_usesWelshFusedType_whenIsWelshTrue() {
         SjpListPayload payload = new SjpListPayload("2025-03-09", ONE_CASE, null, true);
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
+        service.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, null, payload);
 
         verify(repository).findByPublishDateAndCourtListType(
                 eq(LocalDate.of(2025, 3, 9)), eq(CourtListType.SJP_PUBLIC_FULL_WELSH));
@@ -179,7 +184,7 @@ class SjpCourtListPublishServiceTest {
     @Test
     void publishSjpCourtList_explicitLanguageOverridesIsWelsh_forDedupKey() {
         SjpListPayload payload = new SjpListPayload("2025-03-09", ONE_CASE, null, true);
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, "ENGLISH", null, payload);
+        service.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, "ENGLISH", null, payload);
 
         verify(repository).findByPublishDateAndCourtListType(
                 eq(LocalDate.of(2025, 3, 9)), eq(CourtListType.SJP_PUBLIC_FULL_ENGLISH));
@@ -188,7 +193,7 @@ class SjpCourtListPublishServiceTest {
     @Test
     void publishSjpCourtList_usesDistinctFusedType_forDeltaPress() {
         SjpListPayload payload = new SjpListPayload("2025-03-09", ONE_CASE);
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_DELTA_PRESS_LIST, null, null, payload);
+        service.publishSjpCourtList(SjpListType.SJP_DELTA_PRESS_LIST, null, null, payload);
 
         verify(repository).findByPublishDateAndCourtListType(
                 eq(LocalDate.of(2025, 3, 9)), eq(CourtListType.SJP_PRESS_DELTA_ENGLISH));
@@ -206,10 +211,10 @@ class SjpCourtListPublishServiceTest {
                 .thenReturn(Optional.of(existing));
 
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, "325");
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
+        service.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, null, payload);
 
         verify(sjpTaskTriggerService).triggerSjpPublishTask(
-                eq(existingId), eq("325"), anyString(), any(LocalDate.class), any(), any(), anyString());
+                eq(existingId), eq("325"), any(SjpListType.class), any(LocalDate.class), any(), any(), anyString());
         assertThat(existing.getPublishStatus()).isEqualTo(Status.REQUESTED);
         verify(repository).save(existing);
     }
@@ -217,14 +222,14 @@ class SjpCourtListPublishServiceTest {
     @Test
     void publishSjpCourtList_createsNewCourtListId_whenNoDedupMatch() {
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, "325");
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
+        service.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, null, payload);
 
         ArgumentCaptor<CourtListStatusEntity> entityCaptor = ArgumentCaptor.forClass(CourtListStatusEntity.class);
         verify(repository).save(entityCaptor.capture());
         CourtListStatusEntity saved = entityCaptor.getValue();
 
         verify(sjpTaskTriggerService).triggerSjpPublishTask(
-                eq(saved.getCourtListId()), eq("325"), anyString(), any(LocalDate.class), any(), any(), anyString());
+                eq(saved.getCourtListId()), eq("325"), any(SjpListType.class), any(LocalDate.class), any(), any(), anyString());
         assertThat(saved.getPublishStatus()).isEqualTo(Status.REQUESTED);
         assertThat(saved.getCourtCentreId()).isNull();
         assertThat(saved.getFileStatus()).isNull();
@@ -235,7 +240,7 @@ class SjpCourtListPublishServiceTest {
     @Test
     void publishSjpCourtList_derivesPublishDate_fromDateOnlyGeneratedDateAndTime() {
         SjpListPayload payload = new SjpListPayload("2025-03-09", ONE_CASE);
-        service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
+        service.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, null, payload);
 
         verify(repository).findByPublishDateAndCourtListType(
                 eq(LocalDate.of(2025, 3, 9)), any(CourtListType.class));
@@ -249,7 +254,7 @@ class SjpCourtListPublishServiceTest {
                         any(), any(), any(), any(), any(), any(), any());
 
         SjpCourtListPublishService.SjpPublishResult result =
-                service.publishSjpCourtList(SjpCourtListPublishService.SJP_PUBLIC_LIST, null, null, payload);
+                service.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, null, payload);
 
         assertThat(result.getStatus()).isEqualTo("FAILED");
         assertThat(result.getMessage()).contains("Failed to queue SJP court list for publishing");

@@ -24,6 +24,7 @@ import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.domain.DtsMeta;
 import uk.gov.hmcts.cp.domain.sjp.SjpListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.openapi.model.SjpListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 import uk.gov.hmcts.cp.services.AzureBlobService;
@@ -35,7 +36,6 @@ import uk.gov.hmcts.cp.services.sanitization.DocumentSanitizer;
 import uk.gov.hmcts.cp.services.sanitization.HtmlStrippingSanitizer;
 import uk.gov.hmcts.cp.services.sanitization.RequiredStringFieldsRegistry;
 import uk.gov.hmcts.cp.services.sanitization.WafPatternSanitizer;
-import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
 import uk.gov.hmcts.cp.services.sjp.SjpToCathPayloadTransformer;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 
@@ -123,7 +123,7 @@ class SjpPublishTaskTest {
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, "325");
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_PUBLIC_LIST, payload, null, null));
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
 
         task.execute(executionInfo);
 
@@ -135,7 +135,7 @@ class SjpPublishTaskTest {
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, "   ");
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_PUBLIC_LIST, payload, null, null));
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
 
         task.execute(executionInfo);
 
@@ -147,7 +147,7 @@ class SjpPublishTaskTest {
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, null, true);
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_PUBLIC_LIST, payload, null, null));
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
 
         task.execute(executionInfo);
 
@@ -159,7 +159,7 @@ class SjpPublishTaskTest {
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, null, true);
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_PUBLIC_LIST, payload, "ENGLISH", null));
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, "ENGLISH", null));
 
         task.execute(executionInfo);
 
@@ -171,7 +171,7 @@ class SjpPublishTaskTest {
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_PUBLIC_LIST, payload, null, "FULL"));
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, "FULL"));
 
         task.execute(executionInfo);
 
@@ -183,7 +183,7 @@ class SjpPublishTaskTest {
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_PRESS_LIST, payload, null, null));
+                jobData(courtListId, SjpListType.SJP_PRESS_LIST.getValue(), payload, null, null));
 
         task.execute(executionInfo);
 
@@ -199,7 +199,7 @@ class SjpPublishTaskTest {
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_DELTA_PUBLIC_LIST, payload, null, null));
+                jobData(courtListId, SjpListType.SJP_DELTA_PUBLIC_LIST.getValue(), payload, null, null));
 
         task.execute(executionInfo);
 
@@ -213,7 +213,7 @@ class SjpPublishTaskTest {
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_DELTA_PRESS_LIST, payload, null, null));
+                jobData(courtListId, SjpListType.SJP_DELTA_PRESS_LIST.getValue(), payload, null, null));
 
         task.execute(executionInfo);
 
@@ -229,7 +229,7 @@ class SjpPublishTaskTest {
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_PUBLIC_LIST, payload, null, null));
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
 
         task.execute(executionInfo);
 
@@ -244,7 +244,7 @@ class SjpPublishTaskTest {
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_PUBLIC_LIST, payload, null, null));
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
 
         task.execute(executionInfo);
 
@@ -259,7 +259,7 @@ class SjpPublishTaskTest {
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_PUBLIC_LIST, payload, null, null));
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
 
         taskWithoutBlob.execute(executionInfo);
 
@@ -282,7 +282,7 @@ class SjpPublishTaskTest {
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_PUBLIC_LIST, payload, null, null));
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
 
         task.execute(executionInfo);
 
@@ -301,7 +301,7 @@ class SjpPublishTaskTest {
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_PUBLIC_LIST, payload, null, null));
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
 
         task.execute(executionInfo);
 
@@ -321,7 +321,7 @@ class SjpPublishTaskTest {
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_PUBLIC_LIST, payload, null, null));
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
 
         task.execute(executionInfo);
 
@@ -339,7 +339,7 @@ class SjpPublishTaskTest {
         when(repository.getByCourtListId(courtListId)).thenReturn(entity);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         when(executionInfo.getJobData()).thenReturn(
-                jobData(courtListId, SjpCourtListPublishService.SJP_PUBLIC_LIST, payload, null, null));
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
 
         ExecutionInfo result = task.execute(executionInfo);
 
@@ -365,7 +365,7 @@ class SjpPublishTaskTest {
     void execute_returnsCompleted_whenPayloadMissingFromJobData() {
         JsonObject jobData = Json.createObjectBuilder()
                 .add(JobDataConstant.SJP_LIST_ID, courtListId.toString())
-                .add(JobDataConstant.SJP_LIST_TYPE, SjpCourtListPublishService.SJP_PUBLIC_LIST)
+                .add(JobDataConstant.SJP_LIST_TYPE, SjpListType.SJP_PUBLIC_LIST.getValue())
                 .build();
         when(executionInfo.getJobData()).thenReturn(jobData);
 

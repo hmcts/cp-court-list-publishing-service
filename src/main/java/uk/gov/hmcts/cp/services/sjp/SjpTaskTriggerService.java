@@ -6,6 +6,7 @@ import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import uk.gov.hmcts.cp.openapi.model.SjpListType;
 import uk.gov.hmcts.cp.task.JobDataConstant;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus;
@@ -36,7 +37,7 @@ public class SjpTaskTriggerService {
     public void triggerSjpPublishTask(
             final UUID sjpListId,
             final String courtIdNumeric,
-            final String listType,
+            final SjpListType listType,
             final LocalDate publishDate,
             final String language,
             final String requestType,
@@ -47,7 +48,7 @@ public class SjpTaskTriggerService {
         JsonObjectBuilder jobDataBuilder = Json.createObjectBuilder()
                 .add(JobDataConstant.SJP_LIST_ID, sjpListId.toString())
                 .add(JobDataConstant.SJP_COURT_ID_NUMERIC, courtIdNumeric)
-                .add(JobDataConstant.SJP_LIST_TYPE, listType)
+                .add(JobDataConstant.SJP_LIST_TYPE, listType.getValue())
                 .add(JobDataConstant.SJP_PUBLISH_DATE, publishDate.toString())
                 .add(JobDataConstant.SJP_PAYLOAD, payloadJson);
         if (language != null && !language.isBlank()) {

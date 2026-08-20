@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.domain.DtsMeta;
 import uk.gov.hmcts.cp.domain.sjp.SjpListPayload;
+import uk.gov.hmcts.cp.openapi.model.SjpListType;
 import uk.gov.hmcts.cp.services.AzureBlobService;
 import uk.gov.hmcts.cp.services.CaTHService;
 import uk.gov.hmcts.cp.services.CourtListPublisher;
@@ -14,7 +15,6 @@ import uk.gov.hmcts.cp.services.CourtListStatusUpdater;
 import uk.gov.hmcts.cp.services.JsonSchemaValidatorService;
 import uk.gov.hmcts.cp.services.PublicationSchema;
 import uk.gov.hmcts.cp.services.sanitization.DocumentSanitizer;
-import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
 import uk.gov.hmcts.cp.services.sjp.SjpToCathPayloadTransformer;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 import uk.gov.hmcts.cp.taskmanager.service.task.ExecutableTask;
@@ -51,8 +51,8 @@ public class SjpPublishTask implements ExecutableTask {
     private static final String TYPE_LIST = "LIST";
 
     /** Press variants (full and delta) carry CLASSIFIED sensitivity and the press schema. */
-    private static final java.util.Set<String> PRESS_LIST_TYPES = java.util.Set.of(
-            SjpCourtListPublishService.SJP_PRESS_LIST, SjpCourtListPublishService.SJP_DELTA_PRESS_LIST);
+    private static final java.util.Set<SjpListType> PRESS_LIST_TYPES = java.util.Set.of(
+            SjpListType.SJP_PRESS_LIST, SjpListType.SJP_DELTA_PRESS_LIST);
 
     private static final com.fasterxml.jackson.databind.ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
 
@@ -101,15 +101,23 @@ public class SjpPublishTask implements ExecutableTask {
     }
 
     private void publish(UUID courtListId, JsonObject jobData) throws Exception {
-        String listType = jobData.getString(JobDataConstant.SJP_LIST_TYPE, null);
+        String listTypeValue = jobData.getString(JobDataConstant.SJP_LIST_TYPE, null);
         String payloadJson = jobData.getString(JobDataConstant.SJP_PAYLOAD, null);
         String language = jobData.containsKey(JobDataConstant.SJP_LANGUAGE)
                 ? jobData.getString(JobDataConstant.SJP_LANGUAGE) : null;
         String requestType = jobData.containsKey(JobDataConstant.SJP_REQUEST_TYPE)
                 ? jobData.getString(JobDataConstant.SJP_REQUEST_TYPE) : null;
 
-        if (courtListId == null || listType == null || payloadJson == null) {
-            logger.warn("Missing required job data for SJP publish task, courtListId={}, listType={}", courtListId, listType);
+        if (courtListId == null || listTypeValue == null || payloadJson == null) {
+            logger.warn("Missing required job data for SJP publish task, courtListId={}, listType={}", courtListId, listTypeValue);
+            return;
+        }
+
+        SjpListType listType;
+        try {
+            listType = SjpListType.fromValue(listTypeValue);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Unknown SJP list type in job data for courtListId: {}, listType: {}", courtListId, listTypeValue);
             return;
         }
 
@@ -120,7 +128,7 @@ public class SjpPublishTask implements ExecutableTask {
         // Forwarded to CaTH verbatim: SjpListType mirrors CaTH's ListType one-to-one, so
         // collapsing delta variants here would make CaTH render delta content with the
         // full-list template.
-        String cathListType = listType;
+        String cathListType = listType.getValue();
         String sensitivity = isPressList ? SENSITIVITY_CLASSIFIED : SENSITIVITY_PUBLIC;
 
         String payloadLanguage = Boolean.TRUE.equals(payload.getIsWelsh()) ? "WELSH" : "ENGLISH";
