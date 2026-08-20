@@ -28,6 +28,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import uk.gov.hmcts.cp.services.CaTHService;
+import uk.gov.hmcts.cp.services.sjp.SjpStatusListTypeMapper;
 
 /**
  * Integration tests for the SJP async publish pipeline: POST /api/court-list-publish/sjp/publishCourtList
@@ -77,7 +78,12 @@ public class SjpAsyncPublishAndBlobUploadIntegrationTest extends CourtListIntegr
 
     /** Dates used by this class's tests — kept distinct per test so a scoped delete is exact. */
     private static final List<LocalDate> OWN_PUBLISH_DATES = List.of(
-            LocalDate.of(2025, 7, 15), LocalDate.of(2025, 7, 16), LocalDate.of(2025, 7, 17));
+            LocalDate.of(2025, 7, 15), LocalDate.of(2025, 7, 16), LocalDate.of(2025, 7, 17),
+            LocalDate.of(2025, 7, 18));
+
+    /** Fused court list types this class's tests create rows for; see {@link #deleteOwnRows()}. */
+    private static final List<String> OWN_COURT_LIST_TYPES = List.of(
+            "SJP_PUBLIC_FULL_ENGLISH", "SJP_PUBLIC_DELTA_ENGLISH");
 
     @BeforeEach
     void setUp() throws SQLException {
@@ -98,9 +104,11 @@ public class SjpAsyncPublishAndBlobUploadIntegrationTest extends CourtListIntegr
         try (Connection c = connection();
              PreparedStatement ps = c.prepareStatement(
                      "DELETE FROM court_list_publish_status WHERE court_centre_id IS NULL "
-                             + "AND court_list_type = 'SJP_PUBLIC_FULL_ENGLISH' AND publish_date = ANY(?)")) {
+                             + "AND court_list_type = ANY(?) AND publish_date = ANY(?)")) {
+            java.sql.Array types = c.createArrayOf("varchar", OWN_COURT_LIST_TYPES.toArray());
             java.sql.Array dates = c.createArrayOf("date", OWN_PUBLISH_DATES.toArray());
-            ps.setArray(1, dates);
+            ps.setArray(1, types);
+            ps.setArray(2, dates);
             ps.executeUpdate();
         }
     }
@@ -112,6 +120,10 @@ public class SjpAsyncPublishAndBlobUploadIntegrationTest extends CourtListIntegr
      */
     private static final String WIRE_LIST_TYPE = "SJP_PUBLIC_LIST";
     private static final String FUSED_LIST_TYPE = "SJP_PUBLIC_FULL_ENGLISH";
+
+    /** Delta variant of {@link #WIRE_LIST_TYPE}/{@link #FUSED_LIST_TYPE} — see {@link SjpStatusListTypeMapper}. */
+    private static final String DELTA_WIRE_LIST_TYPE = "SJP_DELTA_PUBLIC_LIST";
+    private static final String DELTA_FUSED_LIST_TYPE = "SJP_PUBLIC_DELTA_ENGLISH";
 
     @Test
     void publishSjpCourtList_uploadsPayloadToBlobBeforePublishing_andTracksStatusAsSuccessful() throws Exception {
@@ -179,6 +191,34 @@ public class SjpAsyncPublishAndBlobUploadIntegrationTest extends CourtListIntegr
         assertThat(countCathRequestsContaining(caseUrn))
                 .as("a repeat trigger republishes to CaTH again, even with identical content")
                 .isEqualTo(2);
+    }
+
+    @Test
+    void publishSjpCourtList_publishesDeltaListType_throughFullStack() throws Exception {
+        // Delta list types are forwarded to CaTH verbatim (never collapsed to the full-list wire
+        // value, so CaTH doesn't render delta content with the full-list template) and fused to a
+        // distinct CourtListType row key - see SjpStatusListTypeMapper. SjpPublishTaskTest already
+        // verifies this with mocks; this exercises the same behaviour through the full stack.
+        String courtIdNumeric = "777004";
+        LocalDate publishDate = LocalDate.of(2025, 7, 18);
+        String caseUrn = "URN-DELTA-001";
+
+        postSjpRequest(sjpRequestJson(DELTA_WIRE_LIST_TYPE, courtIdNumeric, "2025-07-18T09:00:00", caseUrn));
+
+        SjpStatusRow row = waitForPublishStatus(DELTA_FUSED_LIST_TYPE, publishDate, "SUCCESSFUL", SJP_TASK_TIMEOUT_MS);
+        assertThat(row.courtListId).isNotNull();
+
+        String blobName = CaTHService.buildBlobName(row.courtListId);
+        assertThat(BLOB_CONTAINER.getBlobClient(blobName).exists())
+                .as("delta payload should be uploaded to blob storage before publishing, blobName=%s", blobName)
+                .isTrue();
+
+        assertThat(countCathRequestsContaining(caseUrn)).isEqualTo(1);
+
+        JsonNode cathRequest = findCathRequestContaining(caseUrn);
+        assertThat(header(cathRequest, "x-list-type"))
+                .as("delta list type must be forwarded to CaTH verbatim, not collapsed to the full-list wire value")
+                .isEqualTo(DELTA_WIRE_LIST_TYPE);
     }
 
     // ── request helpers ──────────────────────────────────────────────────────
@@ -325,5 +365,48 @@ public class SjpAsyncPublishAndBlobUploadIntegrationTest extends CourtListIntegr
             }
         }
         return count;
+    }
+
+    /** Finds the CaTH request whose body contains {@code marker} (e.g. a caseUrn), for header inspection. */
+    private JsonNode findCathRequestContaining(String marker) throws Exception {
+        ResponseEntity<String> admin = http.getForEntity(WIREMOCK_ADMIN_REQUESTS, String.class);
+        assertThat(admin.getStatusCode().is2xxSuccessful()).isTrue();
+
+        JsonNode root = objectMapper.readTree(admin.getBody());
+        JsonNode requests = root.has("requests") ? root.get("requests") : root;
+
+        for (JsonNode entry : requests) {
+            JsonNode req = entry.has("request") ? entry.get("request") : entry;
+            if (!"POST".equalsIgnoreCase(req.path("method").asText())) {
+                continue;
+            }
+            String url = req.has("url") ? req.get("url").asText("") : req.path("absoluteUrl").asText("");
+            if (!url.contains(CATH_PUBLICATION_URL_PATH)) {
+                continue;
+            }
+            String body = req.has("body") ? req.get("body").asText("") : "";
+            if (body.contains(marker)) {
+                return req;
+            }
+        }
+        throw new AssertionError("No CaTH request found containing marker: " + marker);
+    }
+
+    private static String header(JsonNode req, String name) {
+        JsonNode headers = req.path("headers");
+        if (!headers.isObject()) {
+            return null;
+        }
+        JsonNode node = headers.get(name);
+        if (node == null) {
+            for (var it = headers.fields(); it.hasNext(); ) {
+                var e = it.next();
+                if (e.getKey().equalsIgnoreCase(name)) {
+                    node = e.getValue();
+                    break;
+                }
+            }
+        }
+        return node == null ? null : node.asText(null);
     }
 }
