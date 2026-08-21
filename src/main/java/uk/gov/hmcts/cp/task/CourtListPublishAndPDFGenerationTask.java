@@ -149,10 +149,13 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
         try {
             var courtListDocument = courtListQueryService.buildCourtListDocumentFromPayload(payload, listId);
-            logger.info("Sending transformed court list document to CaTH endpoint");
+            String language = Boolean.TRUE.equals(payload.getIsWelsh()) ? "WELSH" : "ENGLISH";
+            logger.info("Sending transformed court list document to CaTH endpoint, courtListType={}, language={}",
+                    listId, language);
             cathService.sendCourtListToCaTH(courtListDocument, listId, publishDate,
                     payload.getCourtIdNumeric(), payload.getIsWelsh(), courtListId);
-            logger.info("Successfully sent court list document to CaTH endpoint");
+            logger.info("Successfully sent court list document to CaTH endpoint, courtListType={}, language={}",
+                    listId, language);
         } catch (Exception e) {
             logger.error("Error {} building document or sending court list to CaTH", ALERT_PATTERN, e);
             throw new RuntimeException("Failed to send court list to CaTH: " + e.getMessage(), e);

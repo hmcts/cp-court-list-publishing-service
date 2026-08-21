@@ -67,7 +67,7 @@ public class SjpCourtListPublishService {
             String language,
             String requestType,
             Object listPayload) {
-        LOG.info("SJP court list publish request for listType: {}", listType);
+        LOG.info("SJP court list publish request for listType: {}, language: {}", listType, language);
 
         if (!cathPublishingEnabled) {
             LOG.debug("CaTH publishing is disabled (CATH_PUBLISHING_ENABLED=false), skipping SJP CaTH send");
@@ -99,14 +99,16 @@ public class SjpCourtListPublishService {
             LocalDate publishDate = deriveDate(payload.getGeneratedDateAndTime());
             String lang = resolveLanguage(language, payload);
             CourtListType fusedListType = SjpStatusListTypeMapper.toCourtListType(listType, lang);
+            LOG.info("SJP list type mapping resolved: listType={}, language={} -> fused courtListType={}",
+                    listType, lang, fusedListType);
             UUID courtListId = findOrCreateCourtListId(fusedListType, publishDate);
 
             String payloadJson = OBJECT_MAPPER.writeValueAsString(payload);
             sjpTaskTriggerService.triggerSjpPublishTask(
                     courtListId, courtIdNumeric, listType, publishDate, language, requestType, payloadJson);
 
-            LOG.info("SJP court list publish request queued, courtListId={}, listType={}",
-                    courtListId, listType);
+            LOG.info("SJP court list publish request queued, courtListId={}, listType={}, language={}, courtListType={}",
+                    courtListId, listType, lang, fusedListType);
             return SjpPublishResult.accepted(listType, "SJP court list publish request accepted for processing");
         } catch (Exception e) {
             LOG.error("Error {} failed to queue SJP court list for publishing: {}",

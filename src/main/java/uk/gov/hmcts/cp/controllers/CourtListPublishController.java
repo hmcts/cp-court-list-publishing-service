@@ -203,7 +203,8 @@ public class CourtListPublishController implements CourtListPublishApi {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "listPayload is required");
         }
 
-        LOG.atInfo().log("SJP court list publish request for listType: {}", request.getListType());
+        LOG.atInfo().log("SJP court list publish request for listType: {}, language: {}",
+                request.getListType(), request.getLanguage());
 
         SjpPublishResult result = sjpCourtListPublishService.publishSjpCourtList(
                 request.getListType(),
