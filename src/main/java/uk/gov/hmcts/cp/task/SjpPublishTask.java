@@ -25,6 +25,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
+import static uk.gov.hmcts.cp.task.CourtListPublishAndPDFGenerationTask.ALERT_PATTERN;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 
@@ -91,7 +92,7 @@ public class SjpPublishTask implements ExecutableTask {
                 publish(courtListId, jobData);
             }
         } catch (Exception e) {
-            logger.error("Error publishing SJP court list for courtListId: {}", courtListId, e);
+            logger.error("Error {} publishing SJP court list for courtListId: {}", ALERT_PATTERN, courtListId, e);
             if (courtListId != null) {
                 statusUpdater.markPublishFailed(courtListId, e);
             }
@@ -150,7 +151,8 @@ public class SjpPublishTask implements ExecutableTask {
             statusUpdater.markPublishSuccessful(courtListId);
         } else {
             RuntimeException cathFailure = new RuntimeException("CaTH returned status " + status);
-            logger.error("CaTH publish failed for courtListId: {}, listType: {}, status: {}", courtListId, listType, status, cathFailure);
+            logger.error("Error {} CaTH publish failed for courtListId: {}, listType: {}, status: {}",
+                    ALERT_PATTERN, courtListId, listType, status, cathFailure);
             statusUpdater.markPublishFailed(courtListId, cathFailure);
         }
     }
@@ -161,7 +163,7 @@ public class SjpPublishTask implements ExecutableTask {
                     try {
                         blobService.uploadJson(payload, CaTHService.buildBlobName(courtListId));
                     } catch (Exception e) {
-                        logger.error("Error uploading SJP payload to blob storage, continuing with publish", e);
+                        logger.error("Error {} uploading SJP payload to blob storage, continuing with publish", ALERT_PATTERN, e);
                     }
                 },
                 () -> logger.debug("Azure Blob Service not available, skipping SJP payload upload")

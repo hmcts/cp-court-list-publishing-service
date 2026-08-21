@@ -22,6 +22,8 @@ import java.time.format.DateTimeParseException;
 import java.util.Optional;
 import java.util.UUID;
 
+import static uk.gov.hmcts.cp.task.CourtListPublishAndPDFGenerationTask.ALERT_PATTERN;
+
 /**
  * Validates and accepts SJP publish requests (full/delta, public/press); the transform, blob
  * upload, and CaTH send are queued as an async job ({@link SjpTaskTriggerService} /
@@ -107,7 +109,8 @@ public class SjpCourtListPublishService {
                     courtListId, listType);
             return SjpPublishResult.accepted(listType, "SJP court list publish request accepted for processing");
         } catch (Exception e) {
-            LOG.error("Failed to queue SJP court list for publishing: {}", Encode.forJava(e.getMessage()), e);
+            LOG.error("Error {} failed to queue SJP court list for publishing: {}",
+                    ALERT_PATTERN, Encode.forJava(e.getMessage()), e);
             return SjpPublishResult.failed(listType, "Failed to queue SJP court list for publishing: " + e.getMessage());
         }
     }
