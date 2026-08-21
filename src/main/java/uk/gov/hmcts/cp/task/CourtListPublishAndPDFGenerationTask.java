@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.UUID;
 
+import static uk.gov.hmcts.cp.config.AppConstant.ALERT_PATTERN;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 
@@ -28,8 +29,6 @@ import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
     private static final Logger logger = LoggerFactory.getLogger(CourtListPublishAndPDFGenerationTask.class);
-
-    public static final String ALERT_PATTERN = "PUBLISHING_FAILED";
 
     private final CourtListStatusUpdater statusUpdater;
     private final CourtListQueryService courtListQueryService;

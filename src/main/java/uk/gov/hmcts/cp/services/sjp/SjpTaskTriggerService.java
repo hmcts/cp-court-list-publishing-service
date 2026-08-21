@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import static java.time.ZonedDateTime.now;
+import static uk.gov.hmcts.cp.config.AppConstant.ALERT_PATTERN;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
 
 /**
@@ -70,7 +71,8 @@ public class SjpTaskTriggerService {
             executionService.executeWith(executionInfo);
             LOG.atInfo().log("SJP publish task triggered successfully for sjpListId: {}", sjpListId);
         } catch (Exception e) {
-            LOG.atError().log("Failed to execute SJP publish task via ExecutionService: {}", Encode.forJava(e.getMessage()), e);
+            LOG.atError().log("Error {} failed to execute SJP publish task via ExecutionService: {}",
+                    ALERT_PATTERN, Encode.forJava(e.getMessage()), e);
             throw new RuntimeException("Failed to trigger SJP publish task: " + e.getMessage(), e);
         }
     }
