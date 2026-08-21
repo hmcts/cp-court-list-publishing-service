@@ -22,7 +22,7 @@ import java.time.format.DateTimeParseException;
 import java.util.Optional;
 import java.util.UUID;
 
-import static uk.gov.hmcts.cp.task.CourtListPublishAndPDFGenerationTask.ALERT_PATTERN;
+import static uk.gov.hmcts.cp.config.AppConstant.ALERT_PATTERN;
 
 /**
  * Validates and accepts SJP publish requests (full/delta, public/press); the transform, blob

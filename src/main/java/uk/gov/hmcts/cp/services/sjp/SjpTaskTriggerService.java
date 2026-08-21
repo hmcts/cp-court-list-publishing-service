@@ -16,7 +16,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import static java.time.ZonedDateTime.now;
-import static uk.gov.hmcts.cp.task.CourtListPublishAndPDFGenerationTask.ALERT_PATTERN;
+import static uk.gov.hmcts.cp.config.AppConstant.ALERT_PATTERN;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
 
 /**

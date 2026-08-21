@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import static uk.gov.hmcts.cp.task.CourtListPublishAndPDFGenerationTask.ALERT_PATTERN;
+import static uk.gov.hmcts.cp.config.AppConstant.ALERT_PATTERN;
 
 @Service
 @RequiredArgsConstructor
