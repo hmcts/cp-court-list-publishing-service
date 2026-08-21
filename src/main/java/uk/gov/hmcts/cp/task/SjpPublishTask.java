@@ -143,6 +143,8 @@ public class SjpPublishTask implements ExecutableTask {
         uploadPayloadToBlob(transformedPayload, courtListId);
 
         DtsMeta meta = buildDtsMeta(cathListType, sensitivity, lang, requestType, payload.getCourtIdNumeric());
+        logger.info("Sending SJP court list to CaTH, courtListId={}, cathListType={}, language={}, sensitivity={}",
+                courtListId, cathListType, lang, sensitivity);
         int status = courtListPublisher.publish(transformedPayload, meta);
         logger.info("SJP court list published to CaTH, courtListId={}, listType={}, language={}, status={}",
                 courtListId, listType, lang, status);

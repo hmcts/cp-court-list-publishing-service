@@ -47,7 +47,8 @@ public class CaTHService {
     public void sendCourtListToCaTH(CourtListDocument courtListDocument, final CourtListType courtListType, final LocalDate publishDate,
                                     String courtIdNumeric, Boolean isWelsh, UUID courtListId) {
         try {
-            log.info("Sending court list document to CaTH endpoint");
+            final String language = Boolean.TRUE.equals(isWelsh) ? "WELSH" : "ENGLISH";
+            log.info("Sending court list document to CaTH endpoint, courtListType={}, language={}", courtListType, language);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -62,8 +63,10 @@ public class CaTHService {
                 throw new IllegalStateException("Unsupported court list type "+courtListType);
             }
 
+            log.info("CaTH list type mapping resolved: courtListType={} -> cathListType={}, sensitivity={}",
+                    courtListType, cathListInfo.cathCourtListType(), cathListInfo.sensitivity());
+
             final Instant now = Instant.now();
-            final String language = Boolean.TRUE.equals(isWelsh) ? "WELSH" : "ENGLISH";
             final DtsMeta dtsMeta = DtsMeta.builder()
                     .provenance("COMMON_PLATFORM")
                     .type("LIST")
@@ -82,7 +85,8 @@ public class CaTHService {
 
             final Integer res = caTHPublisher.publish(payload, dtsMeta);
 
-            log.info("Successfully sent court list document to CaTH. Response status: {}", res);
+            log.info("Successfully sent court list document to CaTH, courtListType={}, language={}, status={}",
+                    courtListType, language, res);
         } catch (Exception e) {
             log.error("Error {} sending court list document to CaTH endpoint: {}", ALERT_PATTERN, e.getMessage(), e);
             throw new RuntimeException("Failed to send court list document to CaTH: " + e.getMessage(), e);
