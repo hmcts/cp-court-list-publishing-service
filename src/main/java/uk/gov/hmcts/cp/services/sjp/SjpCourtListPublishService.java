@@ -121,7 +121,8 @@ public class SjpCourtListPublishService {
      * Looks up an existing record by (publishDate, fused courtListType) — courtCentreId is always
      * null for SJP rows, since SJP is a national list with no court-centre concept — and reuses
      * its {@code courtListId}, otherwise creates a new one. Same lookup-and-reuse pattern as
-     * {@code CourtListPublishStatusService#createOrUpdate}.
+     * {@code CourtListPublishStatusService#createOrUpdate}: the reused row goes back to
+     * REQUESTED with the previous attempt's error message cleared.
      */
     private UUID findOrCreateCourtListId(CourtListType fusedListType, LocalDate publishDate) {
         Optional<CourtListStatusEntity> existing = repository.findByPublishDateAndCourtListType(
@@ -129,6 +130,7 @@ public class SjpCourtListPublishService {
         if (existing.isPresent()) {
             CourtListStatusEntity entity = existing.get();
             entity.setPublishStatus(Status.REQUESTED);
+            entity.setPublishErrorMessage(null);
             entity.setLastUpdated(Instant.now());
             repository.save(entity);
             return entity.getCourtListId();

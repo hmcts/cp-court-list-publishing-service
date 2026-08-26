@@ -259,4 +259,27 @@ class SjpCourtListPublishServiceTest {
         assertThat(result.getStatus()).isEqualTo("FAILED");
         assertThat(result.getMessage()).contains("Failed to queue SJP court list for publishing");
     }
+
+    // ── existing row is recycled: REQUESTED again, previous error cleared ────
+
+    @Test
+    void publishSjpCourtList_resetsExistingRowToRequested_andClearsPreviousPublishError() {
+        UUID existingId = UUID.randomUUID();
+        CourtListStatusEntity existing = new CourtListStatusEntity(
+                existingId, null, Status.FAILED, null,
+                CourtListType.SJP_PUBLIC_FULL_ENGLISH, java.time.Instant.now());
+        existing.setPublishDate(LocalDate.of(2025, 3, 9));
+        existing.setPublishErrorMessage("previous CaTH failure stack trace");
+        when(repository.findByPublishDateAndCourtListType(
+                LocalDate.of(2025, 3, 9), CourtListType.SJP_PUBLIC_FULL_ENGLISH))
+                .thenReturn(Optional.of(existing));
+
+        SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
+        service.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, null, payload);
+
+        assertThat(existing.getPublishStatus()).isEqualTo(Status.REQUESTED);
+        assertThat(existing.getPublishErrorMessage()).isNull();
+        verify(sjpTaskTriggerService).triggerSjpPublishTask(
+                eq(existingId), any(), any(SjpListType.class), any(LocalDate.class), any(), any(), anyString());
+    }
 }
