@@ -10,8 +10,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +23,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
 import uk.gov.hmcts.cp.domain.DtsMeta;
@@ -373,5 +378,149 @@ class SjpPublishTaskTest {
 
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verify(courtListPublisher, never()).publish(anyString(), any(DtsMeta.class));
+    }
+
+    // ── failure logs name the exact variant (press/public, delta/full, language) ──
+
+    private final List<ListAppender<ILoggingEvent>> attachedAppenders = new java.util.ArrayList<>();
+
+    private ListAppender<ILoggingEvent> attachTaskLogAppender() {
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        taskLogger().addAppender(appender);
+        attachedAppenders.add(appender);
+        return appender;
+    }
+
+    private static ch.qos.logback.classic.Logger taskLogger() {
+        return (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(SjpPublishTask.class);
+    }
+
+    @AfterEach
+    void detachAppenders() {
+        attachedAppenders.forEach(appender -> {
+            taskLogger().detachAppender(appender);
+            appender.stop();
+        });
+        attachedAppenders.clear();
+    }
+
+    private String errorLog(ListAppender<ILoggingEvent> appender) {
+        return appender.list.stream()
+                .filter(event -> event.getLevel() == Level.ERROR)
+                .map(ILoggingEvent::getFormattedMessage)
+                .reduce("", (a, b) -> a + "\n" + b);
+    }
+
+    @Test
+    void execute_errorLogNamesDeltaPressVariantAndLanguage_whenPublisherThrows() {
+        ListAppender<ILoggingEvent> appender = attachTaskLogAppender();
+        doThrow(new RuntimeException("CaTH publish failed with HTTP status 500"))
+                .when(courtListPublisher).publish(anyString(), any(DtsMeta.class));
+        SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE, "325", true);
+        when(executionInfo.getJobData()).thenReturn(
+                jobData(courtListId, SjpListType.SJP_DELTA_PRESS_LIST.getValue(), payload, null, "DELTA"));
+
+        task.execute(executionInfo);
+
+        assertThat(errorLog(appender))
+                .contains("listType=SJP_DELTA_PRESS_LIST")
+                .contains("audience=PRESS")
+                .contains("scope=DELTA")
+                .contains("language=WELSH")
+                .contains("requestType=DELTA")
+                .contains("courtId=325")
+                .contains(courtListId.toString());
+    }
+
+    @Test
+    void execute_errorLogNamesFullPublicEnglishVariant_whenCathReturnsNonSuccessStatus() {
+        ListAppender<ILoggingEvent> appender = attachTaskLogAppender();
+        when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(500);
+        SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
+        when(executionInfo.getJobData()).thenReturn(
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
+
+        task.execute(executionInfo);
+
+        assertThat(errorLog(appender))
+                .contains("listType=SJP_PUBLIC_LIST")
+                .contains("audience=PUBLIC")
+                .contains("scope=FULL")
+                .contains("language=ENGLISH")
+                .contains("status: 500");
+    }
+
+    @Test
+    void execute_errorLogFallsBackToRawJobData_whenPayloadCannotBeParsed() {
+        ListAppender<ILoggingEvent> appender = attachTaskLogAppender();
+        JsonObject jobData = Json.createObjectBuilder()
+                .add(JobDataConstant.SJP_LIST_ID, courtListId.toString())
+                .add(JobDataConstant.SJP_LIST_TYPE, SjpListType.SJP_DELTA_PUBLIC_LIST.getValue())
+                .add(JobDataConstant.SJP_LANGUAGE, "WELSH")
+                .add(JobDataConstant.SJP_REQUEST_TYPE, "DELTA")
+                .add(JobDataConstant.SJP_PAYLOAD, "{not-json")
+                .build();
+        when(executionInfo.getJobData()).thenReturn(jobData);
+
+        task.execute(executionInfo);
+
+        assertThat(errorLog(appender))
+                .contains("listType=SJP_DELTA_PUBLIC_LIST")
+                .contains("language=WELSH")
+                .contains("requestType=DELTA")
+                .contains("context unresolved");
+    }
+
+    // ── status lifecycle: every attempt cycles REQUESTED -> SUCCESSFUL/FAILED ──
+
+    @Test
+    void execute_cyclesRowBackThroughRequested_thenSuccessful_whenPreviousAttemptFailed() {
+        CourtListStatusEntity entity = new CourtListStatusEntity(
+                courtListId, null, Status.FAILED, null,
+                CourtListType.SJP_PUBLIC_FULL_ENGLISH, Instant.now());
+        entity.setPublishDate(LocalDate.of(2025, 3, 9));
+        entity.setPublishErrorMessage("previous CaTH failure stack trace");
+        when(repository.getByCourtListId(courtListId)).thenReturn(entity);
+        List<Status> savedStatuses = new java.util.ArrayList<>();
+        when(repository.save(any(CourtListStatusEntity.class))).thenAnswer(invocation -> {
+            savedStatuses.add(entity.getPublishStatus());
+            return entity;
+        });
+        when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
+        SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
+        when(executionInfo.getJobData()).thenReturn(
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
+
+        task.execute(executionInfo);
+
+        assertThat(savedStatuses).containsExactly(Status.REQUESTED, Status.SUCCESSFUL);
+        assertThat(entity.getPublishStatus()).isEqualTo(Status.SUCCESSFUL);
+        assertThat(entity.getPublishErrorMessage()).isNull();
+    }
+
+    @Test
+    void execute_doesNotRecordFailure_whenNewerAttemptAlreadyMarkedRowSuccessful() {
+        // Queued jobs are assigned in batches to a thread pool, so a slow failing attempt can
+        // finish after a newer attempt has already published successfully. The stale failure
+        // must not overwrite that success.
+        CourtListStatusEntity entity = new CourtListStatusEntity(
+                courtListId, null, Status.FAILED, null,
+                CourtListType.SJP_PUBLIC_FULL_ENGLISH, Instant.now());
+        entity.setPublishDate(LocalDate.of(2025, 3, 9));
+        when(repository.getByCourtListId(courtListId)).thenReturn(entity);
+        when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenAnswer(invocation -> {
+            entity.setPublishStatus(Status.SUCCESSFUL);
+            entity.setPublishErrorMessage(null);
+            throw new RuntimeException("CaTH publish failed with HTTP status 504");
+        });
+        SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
+        when(executionInfo.getJobData()).thenReturn(
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
+
+        task.execute(executionInfo);
+
+        assertThat(entity.getPublishStatus()).isEqualTo(Status.SUCCESSFUL);
+        assertThat(entity.getPublishErrorMessage()).isNull();
     }
 }

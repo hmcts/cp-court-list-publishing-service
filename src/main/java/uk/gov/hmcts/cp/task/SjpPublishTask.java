@@ -50,10 +50,16 @@ public class SjpPublishTask implements ExecutableTask {
     private static final String DOCUMENT_NAME_PRESS = "SJP Press list";
     private static final String PROVENANCE = "COMMON_PLATFORM";
     private static final String TYPE_LIST = "LIST";
+    private static final String LANGUAGE_WELSH = "WELSH";
+    private static final String LANGUAGE_ENGLISH = "ENGLISH";
 
     /** Press variants (full and delta) carry CLASSIFIED sensitivity and the press schema. */
     private static final java.util.Set<SjpListType> PRESS_LIST_TYPES = java.util.Set.of(
             SjpListType.SJP_PRESS_LIST, SjpListType.SJP_DELTA_PRESS_LIST);
+
+    /** Delta variants (press and public) carry only the changes since the last send. */
+    private static final java.util.Set<SjpListType> DELTA_LIST_TYPES = java.util.Set.of(
+            SjpListType.SJP_DELTA_PRESS_LIST, SjpListType.SJP_DELTA_PUBLIC_LIST);
 
     private static final com.fasterxml.jackson.databind.ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
 
@@ -78,30 +84,74 @@ public class SjpPublishTask implements ExecutableTask {
         this.azureBlobService = azureBlobService;
     }
 
+    /**
+     * What is being published, resolved once from job data so that every log line — including the
+     * catch-all failure log — can name the exact variant (press/public, delta/full, language).
+     */
+    private record SjpPublishContext(UUID courtListId,
+                                     SjpListType listType,
+                                     String language,
+                                     String requestType,
+                                     SjpListPayload payload) {
+
+        boolean isPressList() {
+            return PRESS_LIST_TYPES.contains(listType);
+        }
+
+        boolean isDeltaList() {
+            return DELTA_LIST_TYPES.contains(listType);
+        }
+
+        /** Human-readable descriptor of the failing/succeeding publish, for log correlation. */
+        String describe() {
+            return String.format("listType=%s, audience=%s, scope=%s, language=%s, requestType=%s, courtId=%s",
+                    listType.getValue(),
+                    isPressList() ? "PRESS" : "PUBLIC",
+                    isDeltaList() ? "DELTA" : "FULL",
+                    language,
+                    requestType,
+                    payload.getCourtIdNumeric());
+        }
+    }
+
     @Override
     public ExecutionInfo execute(ExecutionInfo executionInfo) {
         logger.info("Executing SJP_PUBLISH_TASK [job {}]", executionInfo);
 
         JsonObject jobData = executionInfo.getJobData();
-        UUID courtListId = jobData != null ? extractCourtListId(jobData) : null;
+        if (jobData == null) {
+            logger.warn("SJP_PUBLISH_TASK executed with no job data");
+            return completed(executionInfo);
+        }
+
+        UUID courtListId = extractCourtListId(jobData);
+        SjpPublishContext context = null;
 
         try {
-            if (jobData == null) {
-                logger.warn("SJP_PUBLISH_TASK executed with no job data");
-            } else {
-                publish(courtListId, jobData);
+            context = parseContext(courtListId, jobData);
+            if (context != null) {
+                publish(context);
             }
         } catch (Exception e) {
-            logger.error("Error {} publishing SJP court list for courtListId: {}", ALERT_PATTERN, courtListId, e);
+            logger.error("Error {} publishing SJP court list for courtListId: {}, {}",
+                    ALERT_PATTERN, courtListId, describe(context, jobData), e);
             if (courtListId != null) {
                 statusUpdater.markPublishFailed(courtListId, e);
             }
         }
 
+        return completed(executionInfo);
+    }
+
+    private static ExecutionInfo completed(ExecutionInfo executionInfo) {
         return executionInfo().from(executionInfo).withExecutionStatus(COMPLETED).build();
     }
 
-    private void publish(UUID courtListId, JsonObject jobData) throws Exception {
+    /**
+     * Resolves job data into a {@link SjpPublishContext}, or {@code null} (having logged why) when
+     * the job cannot be published at all.
+     */
+    private SjpPublishContext parseContext(UUID courtListId, JsonObject jobData) throws Exception {
         String listTypeValue = jobData.getString(JobDataConstant.SJP_LIST_TYPE, null);
         String payloadJson = jobData.getString(JobDataConstant.SJP_PAYLOAD, null);
         String language = jobData.containsKey(JobDataConstant.SJP_LANGUAGE)
@@ -111,7 +161,7 @@ public class SjpPublishTask implements ExecutableTask {
 
         if (courtListId == null || listTypeValue == null || payloadJson == null) {
             logger.warn("Missing required job data for SJP publish task, courtListId={}, listType={}", courtListId, listTypeValue);
-            return;
+            return null;
         }
 
         SjpListType listType;
@@ -119,42 +169,68 @@ public class SjpPublishTask implements ExecutableTask {
             listType = SjpListType.fromValue(listTypeValue);
         } catch (IllegalArgumentException e) {
             logger.warn("Unknown SJP list type in job data for courtListId: {}, listType: {}", courtListId, listTypeValue);
-            return;
+            return null;
         }
 
         SjpListPayload payload = OBJECT_MAPPER.readValue(payloadJson, SjpListPayload.class);
 
-        boolean isPressList = PRESS_LIST_TYPES.contains(listType);
+        String payloadLanguage = Boolean.TRUE.equals(payload.getIsWelsh()) ? LANGUAGE_WELSH : LANGUAGE_ENGLISH;
+        String resolvedLanguage = (language != null && !language.isBlank()) ? language : payloadLanguage;
+
+        return new SjpPublishContext(courtListId, listType, resolvedLanguage, requestType, payload);
+    }
+
+    /**
+     * Best-effort descriptor for the failure log: the fully resolved context when we got that far,
+     * otherwise whatever raw job data we have (the payload may have failed to parse).
+     */
+    private static String describe(SjpPublishContext context, JsonObject jobData) {
+        if (context != null) {
+            return context.describe();
+        }
+        return String.format("listType=%s, language=%s, requestType=%s (context unresolved)",
+                jobData.getString(JobDataConstant.SJP_LIST_TYPE, null),
+                jobData.getString(JobDataConstant.SJP_LANGUAGE, null),
+                jobData.getString(JobDataConstant.SJP_REQUEST_TYPE, null));
+    }
+
+    private void publish(SjpPublishContext context) throws Exception {
+        UUID courtListId = context.courtListId();
+        // Every attempt cycles the row REQUESTED -> SUCCESSFUL/FAILED, so a previous attempt's
+        // outcome (and its error message) never outlives it — including when this job is a
+        // re-run rather than a fresh accept.
+        statusUpdater.markPublishRequested(courtListId);
+
+        boolean isPressList = context.isPressList();
         String documentName = isPressList ? DOCUMENT_NAME_PRESS : DOCUMENT_NAME_PUBLIC;
         // Forwarded to CaTH verbatim: SjpListType mirrors CaTH's ListType one-to-one, so
         // collapsing delta variants here would make CaTH render delta content with the
         // full-list template.
-        String cathListType = listType.getValue();
+        String cathListType = context.listType().getValue();
         String sensitivity = isPressList ? SENSITIVITY_CLASSIFIED : SENSITIVITY_PUBLIC;
 
-        String payloadLanguage = Boolean.TRUE.equals(payload.getIsWelsh()) ? "WELSH" : "ENGLISH";
-        String lang = (language != null && !language.isBlank()) ? language : payloadLanguage;
-
-        String transformedPayload = documentSanitizer.sanitize(transformer.transform(payload, documentName));
+        String transformedPayload = documentSanitizer.sanitize(transformer.transform(context.payload(), documentName));
 
         PublicationSchema schema = isPressList ? PublicationSchema.SJP_PRESS : PublicationSchema.SJP_PUBLIC;
         jsonSchemaValidatorService.validate(transformedPayload, schema);
 
         uploadPayloadToBlob(transformedPayload, courtListId);
 
-        DtsMeta meta = buildDtsMeta(cathListType, sensitivity, lang, requestType, payload.getCourtIdNumeric());
-        logger.info("Sending SJP court list to CaTH, courtListId={}, cathListType={}, language={}, sensitivity={}",
-                courtListId, cathListType, lang, sensitivity);
+        DtsMeta meta = buildDtsMeta(cathListType, sensitivity, context.language(), context.requestType(),
+                context.payload().getCourtIdNumeric());
+        logger.info("Sending SJP court list to CaTH, courtListId={}, {}, sensitivity={}",
+                courtListId, context.describe(), sensitivity);
         int status = courtListPublisher.publish(transformedPayload, meta);
-        logger.info("SJP court list published to CaTH, courtListId={}, listType={}, language={}, status={}",
-                courtListId, listType, lang, status);
+        logger.info("SJP court list published to CaTH, courtListId={}, {}, status={}",
+                courtListId, context.describe(), status);
 
         if (status >= 200 && status < 300) {
             statusUpdater.markPublishSuccessful(courtListId);
         } else {
-            RuntimeException cathFailure = new RuntimeException("CaTH returned status " + status);
-            logger.error("Error {} CaTH publish failed for courtListId: {}, listType: {}, status: {}",
-                    ALERT_PATTERN, courtListId, listType, status, cathFailure);
+            RuntimeException cathFailure = new RuntimeException(
+                    "CaTH returned status " + status + " for " + context.describe());
+            logger.error("Error {} CaTH publish failed for courtListId: {}, {}, status: {}",
+                    ALERT_PATTERN, courtListId, context.describe(), status, cathFailure);
             statusUpdater.markPublishFailed(courtListId, cathFailure);
         }
     }
