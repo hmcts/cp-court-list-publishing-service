@@ -28,7 +28,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -203,10 +202,11 @@ public class CourtListPublishController implements CourtListPublishApi {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "listPayload is required");
         }
 
-        LOG.atInfo().log("SJP court list publish request for listType: {}", request.getListType());
+        LOG.atInfo().log("SJP court list publish request for listType: {}, language: {}",
+                request.getListType(), request.getLanguage());
 
         SjpPublishResult result = sjpCourtListPublishService.publishSjpCourtList(
-                request.getListType().getValue(),
+                request.getListType(),
                 request.getLanguage(),
                 request.getRequestType(),
                 request.getListPayload());

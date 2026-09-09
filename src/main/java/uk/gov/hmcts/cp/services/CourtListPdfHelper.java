@@ -11,7 +11,7 @@ import uk.gov.hmcts.cp.taskmanager.domain.converter.JsonObjectConverter;
 import java.io.IOException;
 import java.util.UUID;
 
-import static uk.gov.hmcts.cp.task.CourtListPublishAndPDFGenerationTask.ALERT_PATTERN;
+import static uk.gov.hmcts.cp.config.AppConstant.ALERT_PATTERN;
 
 /**
  * Helper class for PDF generation operations related to court list publishing.
