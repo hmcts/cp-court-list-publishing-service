@@ -200,7 +200,7 @@ public class SjpPublishTask implements ExecutableTask {
 
     private void tryPublishToCaTH(SjpPublishContext context) throws Exception {
         if (!cathPublishingEnabled) {
-            logger.debug("CaTH publishing is disabled (CATH_PUBLISHING_ENABLED=false), skipping SJP CaTH send");
+            LOGGER.debug("CaTH publishing is disabled (CATH_PUBLISHING_ENABLED=false), skipping SJP CaTH send");
             return;
         }
         publish(context);
