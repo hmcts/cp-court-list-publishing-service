@@ -3,6 +3,7 @@ package uk.gov.hmcts.cp.services.sjp;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
@@ -10,13 +11,31 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import uk.gov.hmcts.cp.cleanup.CleanupJobService;
 import uk.gov.hmcts.cp.controllers.CourtListPublishController;
+import uk.gov.hmcts.cp.domain.DtsMeta;
+import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.repositories.CourtListStatusRepository;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
+import uk.gov.hmcts.cp.services.CourtListPublisher;
+import uk.gov.hmcts.cp.services.CourtListStatusUpdater;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
+import uk.gov.hmcts.cp.services.JsonSchemaValidatorService;
 import uk.gov.hmcts.cp.services.ReferenceDataService;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
+import uk.gov.hmcts.cp.services.sanitization.DocumentSanitizer;
+import uk.gov.hmcts.cp.services.sanitization.HtmlStrippingSanitizer;
+import uk.gov.hmcts.cp.services.sanitization.RequiredStringFieldsRegistry;
+import uk.gov.hmcts.cp.services.sanitization.WafPatternSanitizer;
+import uk.gov.hmcts.cp.task.SjpPublishTask;
+import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
+import uk.gov.hmcts.cp.taskmanager.service.ExecutionService;
 
+import java.time.LocalDate;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,8 +56,15 @@ class SjpCathPublishingDisabledIntegrationTest {
             MediaType.parseMediaType("application/vnd.courtlistpublishing-service.sjp.post+json");
     private static final String SJP_PUBLISH_URL = "/api/court-list-publish/sjp/publishCourtList";
 
+    private static final DocumentSanitizer SANITIZER = new DocumentSanitizer(
+            new WafPatternSanitizer("..\\.\\,../"),
+            new HtmlStrippingSanitizer(),
+            new RequiredStringFieldsRegistry());
+
     @Mock private CourtListStatusRepository courtListStatusRepository;
-    @Mock private SjpTaskTriggerService sjpTaskTriggerService;
+    @Mock private ExecutionService executionService;
+    @Mock private CourtListPublisher courtListPublisher;
+    @Mock private JsonSchemaValidatorService jsonSchemaValidatorService;
     @Mock private CourtListPublishStatusService service;
     @Mock private CourtListTaskTriggerService courtListTaskTriggerService;
     @Mock private CourtListDownloadService courtListDownloadService;
@@ -49,11 +75,13 @@ class SjpCathPublishingDisabledIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        SjpCourtListPublishService sjpService = new SjpCourtListPublishService(
-                courtListStatusRepository,
-                sjpTaskTriggerService,
-                false  // CATH_PUBLISHING_ENABLED=false
-        );
+        lenient().when(courtListStatusRepository.findByPublishDateAndCourtListType(
+                        any(LocalDate.class), any(CourtListType.class)))
+                .thenReturn(Optional.empty());
+
+        SjpTaskTriggerService sjpTaskTriggerService = new SjpTaskTriggerService(executionService);
+        SjpCourtListPublishService sjpService =
+                new SjpCourtListPublishService(courtListStatusRepository, sjpTaskTriggerService);
 
         CourtListPublishController controller = new CourtListPublishController(
                 service,
@@ -67,8 +95,36 @@ class SjpCathPublishingDisabledIntegrationTest {
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
+    /** Posts the SJP publish request, returning the {@link ExecutionInfo} handed to the task manager. */
+    private ExecutionInfo publishAndCaptureQueuedExecution(String requestJson, String expectedListType) throws Exception {
+        mockMvc.perform(post(SJP_PUBLISH_URL)
+                        .contentType(SJP_CONTENT_TYPE)
+                        .content(requestJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"))
+                .andExpect(jsonPath("$.listType").value(expectedListType))
+                .andExpect(jsonPath("$.message").value("SJP court list publish request accepted for processing"));
+
+        ArgumentCaptor<ExecutionInfo> executionInfoCaptor = ArgumentCaptor.forClass(ExecutionInfo.class);
+        verify(executionService).executeWith(executionInfoCaptor.capture());
+        return executionInfoCaptor.getValue();
+    }
+
+    /** The task, as the task manager would build it, with CATH_PUBLISHING_ENABLED=false. */
+    private SjpPublishTask disabledTask() {
+        return new SjpPublishTask(
+                new CourtListStatusUpdater(courtListStatusRepository),
+                new SjpToCathPayloadTransformer(),
+                courtListPublisher,
+                SANITIZER,
+                jsonSchemaValidatorService,
+                Optional.empty(),
+                false // CATH_PUBLISHING_ENABLED=false
+        );
+    }
+
     @Test
-    void publishSjpCourtList_returnsAcceptedWithDisabledMessage_whenCathPublishingDisabled() throws Exception {
+    void publishSjpCourtList_queuesTask_thenTaskSkipsCaTHSend_whenCathPublishingDisabled() throws Exception {
         String requestJson = """
                 {
                   "listType": "SJP_PUBLIC_LIST",
@@ -86,20 +142,16 @@ class SjpCathPublishingDisabledIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(post(SJP_PUBLISH_URL)
-                        .contentType(SJP_CONTENT_TYPE)
-                        .content(requestJson))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("ACCEPTED"))
-                .andExpect(jsonPath("$.listType").value("SJP_PUBLIC_LIST"))
-                .andExpect(jsonPath("$.message").value("CaTH publishing is disabled"));
+        ExecutionInfo queuedExecution = publishAndCaptureQueuedExecution(requestJson, "SJP_PUBLIC_LIST");
 
-        verify(sjpTaskTriggerService, never()).triggerSjpPublishTask(
-                any(), any(), any(), any(), any(), any(), any());
+        ExecutionInfo result = disabledTask().execute(queuedExecution);
+
+        assertThat(result).isNotNull();
+        verify(courtListPublisher, never()).publish(anyString(), any(DtsMeta.class));
     }
 
     @Test
-    void publishSjpPressCourtList_returnsAcceptedWithDisabledMessage_whenCathPublishingDisabled() throws Exception {
+    void publishSjpPressCourtList_queuesTask_thenTaskSkipsCaTHSend_whenCathPublishingDisabled() throws Exception {
         String requestJson = """
                 {
                   "listType": "SJP_PRESS_LIST",
@@ -117,15 +169,11 @@ class SjpCathPublishingDisabledIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(post(SJP_PUBLISH_URL)
-                        .contentType(SJP_CONTENT_TYPE)
-                        .content(requestJson))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("ACCEPTED"))
-                .andExpect(jsonPath("$.listType").value("SJP_PRESS_LIST"))
-                .andExpect(jsonPath("$.message").value("CaTH publishing is disabled"));
+        ExecutionInfo queuedExecution = publishAndCaptureQueuedExecution(requestJson, "SJP_PRESS_LIST");
 
-        verify(sjpTaskTriggerService, never()).triggerSjpPublishTask(
-                any(), any(), any(), any(), any(), any(), any());
+        ExecutionInfo result = disabledTask().execute(queuedExecution);
+
+        assertThat(result).isNotNull();
+        verify(courtListPublisher, never()).publish(anyString(), any(DtsMeta.class));
     }
 }

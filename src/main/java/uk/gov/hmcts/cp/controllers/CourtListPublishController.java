@@ -63,11 +63,11 @@ public class CourtListPublishController implements CourtListPublishApi {
     private int publishStatusCleanupDays;
 
     public CourtListPublishController(final CourtListPublishStatusService service,
-                                     CourtListTaskTriggerService courtListTaskTriggerService,
-                                     CourtListDownloadService courtListDownloadService,
-                                     CleanupJobService cleanupJobService,
-                                     SjpCourtListPublishService sjpCourtListPublishService,
-                                     ReferenceDataService referenceDataService) {
+                                      final CourtListTaskTriggerService courtListTaskTriggerService,
+                                      final CourtListDownloadService courtListDownloadService,
+                                      final CleanupJobService cleanupJobService,
+                                      final SjpCourtListPublishService sjpCourtListPublishService,
+                                      final ReferenceDataService referenceDataService) {
         this.service = service;
         this.courtListTaskTriggerService = courtListTaskTriggerService;
         this.courtListDownloadService = courtListDownloadService;
@@ -94,7 +94,7 @@ public class CourtListPublishController implements CourtListPublishApi {
                 request.getEndDate()
         );
 
-        String userId = getCjscppuidFromRequest();
+        final String userId = getCjscppuidFromRequest();
         if (userId == null || userId.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CJSCPPUID header is required");
         }
