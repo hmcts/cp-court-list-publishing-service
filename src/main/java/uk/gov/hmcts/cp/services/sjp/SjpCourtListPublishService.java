@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
@@ -40,16 +39,13 @@ public class SjpCourtListPublishService {
     private static final String STATUS_FAILED = "FAILED";
     private final CourtListStatusRepository repository;
     private final SjpTaskTriggerService sjpTaskTriggerService;
-    private final boolean cathPublishingEnabled;
     private static final ObjectMapper OBJECT_MAPPER = ObjectMapperConfig.getObjectMapper();
 
     public SjpCourtListPublishService(
             CourtListStatusRepository repository,
-            SjpTaskTriggerService sjpTaskTriggerService,
-            @Value("${cath.publishing-enabled:false}") boolean cathPublishingEnabled) {
+            SjpTaskTriggerService sjpTaskTriggerService) {
         this.repository = repository;
         this.sjpTaskTriggerService = sjpTaskTriggerService;
-        this.cathPublishingEnabled = cathPublishingEnabled;
     }
 
     /**
@@ -68,11 +64,6 @@ public class SjpCourtListPublishService {
             String requestType,
             Object listPayload) {
         LOG.info("SJP court list publish request for listType: {}, language: {}", listType, language);
-
-        if (!cathPublishingEnabled) {
-            LOG.debug("CaTH publishing is disabled (CATH_PUBLISHING_ENABLED=false), skipping SJP CaTH send");
-            return SjpPublishResult.accepted(listType, "CaTH publishing is disabled");
-        }
 
         if (listType == null) {
             return SjpPublishResult.failed(null, "listType is required to publish to CaTH");

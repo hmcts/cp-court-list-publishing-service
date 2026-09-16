@@ -49,28 +49,13 @@ class SjpCourtListPublishServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new SjpCourtListPublishService(repository, sjpTaskTriggerService, true);
+        service = new SjpCourtListPublishService(repository, sjpTaskTriggerService);
         lenient().when(repository.findByPublishDateAndCourtListType(any(LocalDate.class), any(CourtListType.class)))
                 .thenReturn(Optional.empty());
     }
 
-    // ── cath publishing disabled ─────────────────────────────────────────────
-
-    @Test
-    void publishSjpCourtList_returnsAccepted_whenCathPublishingDisabled() {
-        SjpCourtListPublishService disabledService =
-                new SjpCourtListPublishService(repository, sjpTaskTriggerService, false);
-
-        SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
-        SjpCourtListPublishService.SjpPublishResult result =
-                disabledService.publishSjpCourtList(SjpListType.SJP_PUBLIC_LIST, null, null, payload);
-
-        assertThat(result.getStatus()).isEqualTo("ACCEPTED");
-        assertThat(result.getMessage()).contains("disabled");
-        verify(sjpTaskTriggerService, never()).triggerSjpPublishTask(
-                any(), any(), any(), any(), any(), any(), any());
-        verify(repository, never()).save(any());
-    }
+    // Note: the CATH_PUBLISHING_ENABLED guard now lives in SjpPublishTask (task level), not here
+    // - see SjpPublishTaskTest#execute_skipsCaTHPublish_whenCathPublishingDisabled.
 
     // ── guard clauses ────────────────────────────────────────────────────────
 

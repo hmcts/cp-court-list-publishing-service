@@ -93,7 +93,8 @@ class SjpPublishTaskTest {
                 courtListPublisher,
                 SANITIZER,
                 jsonSchemaValidatorService,
-                Optional.of(azureBlobService));
+                Optional.of(azureBlobService),
+                true);
     }
 
     private JsonObject jobData(UUID id, String listType, SjpListPayload payload, String language, String requestType) {
@@ -119,6 +120,31 @@ class SjpPublishTaskTest {
         ArgumentCaptor<DtsMeta> captor = ArgumentCaptor.forClass(DtsMeta.class);
         verify(courtListPublisher).publish(anyString(), captor.capture());
         return captor.getValue();
+    }
+
+    // ── cath publishing disabled ─────────────────────────────────────────────
+
+    @Test
+    void execute_skipsCaTHPublish_whenCathPublishingDisabled() {
+        SjpPublishTask disabledTask = new SjpPublishTask(
+                new CourtListStatusUpdater(repository),
+                new SjpToCathPayloadTransformer(),
+                courtListPublisher,
+                SANITIZER,
+                jsonSchemaValidatorService,
+                Optional.of(azureBlobService),
+                false);
+        SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
+        when(executionInfo.getJobData()).thenReturn(
+                jobData(courtListId, SjpListType.SJP_PUBLIC_LIST.getValue(), payload, null, null));
+
+        ExecutionInfo result = disabledTask.execute(executionInfo);
+
+        assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
+        verify(courtListPublisher, never()).publish(anyString(), any(DtsMeta.class));
+        verify(azureBlobService, never()).uploadJson(anyString(), anyString());
+        verify(repository, never()).save(any());
+        verify(repository, never()).getByCourtListId(any());
     }
 
     // ── DtsMeta building (courtId, language, requestType) ───────────────────
@@ -260,7 +286,7 @@ class SjpPublishTaskTest {
     void execute_skipsBlobUpload_whenBlobServiceNotAvailable() {
         SjpPublishTask taskWithoutBlob = new SjpPublishTask(
                 new CourtListStatusUpdater(repository), new SjpToCathPayloadTransformer(), courtListPublisher, SANITIZER,
-                jsonSchemaValidatorService, Optional.empty());
+                jsonSchemaValidatorService, Optional.empty(), true);
         when(courtListPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(200);
         SjpListPayload payload = new SjpListPayload("2025-03-09T10:00:00", ONE_CASE);
         when(executionInfo.getJobData()).thenReturn(
