@@ -3,6 +3,7 @@ package uk.gov.hmcts.cp.task;
 import jakarta.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.domain.DtsMeta;
@@ -69,19 +70,22 @@ public class SjpPublishTask implements ExecutableTask {
     private final DocumentSanitizer documentSanitizer;
     private final JsonSchemaValidatorService jsonSchemaValidatorService;
     private final Optional<AzureBlobService> azureBlobService;
+    private final boolean cathPublishingEnabled;
 
     public SjpPublishTask(CourtListStatusUpdater statusUpdater,
                            SjpToCathPayloadTransformer transformer,
                            CourtListPublisher courtListPublisher,
                            DocumentSanitizer documentSanitizer,
                            JsonSchemaValidatorService jsonSchemaValidatorService,
-                           Optional<AzureBlobService> azureBlobService) {
+                           Optional<AzureBlobService> azureBlobService,
+                           @Value("${cath.publishing-enabled:false}") boolean cathPublishingEnabled) {
         this.statusUpdater = statusUpdater;
         this.transformer = transformer;
         this.courtListPublisher = courtListPublisher;
         this.documentSanitizer = documentSanitizer;
         this.jsonSchemaValidatorService = jsonSchemaValidatorService;
         this.azureBlobService = azureBlobService;
+        this.cathPublishingEnabled = cathPublishingEnabled;
     }
 
     /**
@@ -130,7 +134,7 @@ public class SjpPublishTask implements ExecutableTask {
         try {
             context = parseContext(courtListId, jobData);
             if (context != null) {
-                publish(context);
+                tryPublishToCaTH(context);
             }
         } catch (Exception e) {
             LOGGER.error("Error {} publishing SJP court list for courtListId: {}, {}",
@@ -192,6 +196,14 @@ public class SjpPublishTask implements ExecutableTask {
                 jobData.getString(JobDataConstant.SJP_LIST_TYPE, null),
                 jobData.getString(JobDataConstant.SJP_LANGUAGE, null),
                 jobData.getString(JobDataConstant.SJP_REQUEST_TYPE, null));
+    }
+
+    private void tryPublishToCaTH(SjpPublishContext context) throws Exception {
+        if (!cathPublishingEnabled) {
+            logger.debug("CaTH publishing is disabled (CATH_PUBLISHING_ENABLED=false), skipping SJP CaTH send");
+            return;
+        }
+        publish(context);
     }
 
     private void publish(SjpPublishContext context) throws Exception {
