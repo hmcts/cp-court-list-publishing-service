@@ -1,3 +1,5 @@
+import org.cyclonedx.Version
+
 plugins {
     id 'application'
     id 'java'
@@ -10,7 +12,7 @@ plugins {
 
     id 'maven-publish'
     id 'com.github.ben-manes.versions' version '0.53.0'
-    id 'org.cyclonedx.bom' version '2.4.1'
+    id 'org.cyclonedx.bom' version '3.4.1'
     id "au.com.dius.pact" version "4.6.17"
     // generating git.properties file for Spring Boot apps. Properties are exposed by telemetry
     id 'com.gorylenko.gradle-git-properties' version '2.5.3'
@@ -236,12 +238,13 @@ tasks.named("dependencyUpdates").configure {
 
 //Creation of Software Bill of Materials
 //https://github.com/CycloneDX/cyclonedx-gradle-plugin
-cyclonedxBom {
+tasks.cyclonedxDirectBom {
     includeConfigs = ["runtimeClasspath"]
     skipConfigs = ["compileClasspath", "testImplementation", "testCompileClasspath", "testRuntimeClasspath"]
-    schemaVersion = "1.6"
+    schemaVersion = Version.VERSION_16
     componentVersion = providers.provider { project.version.toString() }
-    destination = layout.buildDirectory.dir("reports").get().asFile
+    jsonOutput = layout.buildDirectory.file("reports/bom.json")
+    xmlOutput = layout.buildDirectory.file("reports/bom.xml")
 }
 
 tasks.withType(AbstractArchiveTask).configureEach {
