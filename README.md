@@ -1,135 +1,194 @@
-# HMCTS Service Spring Boot Template
+# Court List Publishing Service
 
-This repository provides a template for building Spring Boot applications. While the initial use case was for the HMCTS API Marketplace, the template is designed to be reusable across jurisdictions and is intended as a base paved path for wider adoption.
+`cp-court-list-publishing-service` is the HMCTS Common Platform (Crime) service that publishes court lists. It:
 
-It includes essential configurations, dependencies, and recommended practices to help teams get started quickly.
+- builds court lists from the Listing, Progression and Reference Data services;
+- publishes them to **CaTH** (Courts and Tribunals Hearings) through Azure API Management;
+- generates PDFs and stores them in Azure Blob Storage;
+- produces on-demand PDF and Word downloads;
+- publishes national Single Justice Procedure (SJP) lists;
+- tracks the publish and file status of every list.
 
-**Note:** This template is not a framework, nor is it intended to evolve into one. It simply leverages the Spring ecosystem and proven libraries from the wider engineering community.
-
-As HMCTS services are hosted on Azure, the included dependencies reflect this. Our aim is to stay as close to the cloud as possible in order to maximise alignment with the Shared Responsibility Model and achieve optimal security and operability.
-
-## Want to Build Your Own Path?
-
-That’s absolutely fine — but if you do, make sure your approach meets the following baseline requirements:
-
-* Security – All services must meet HMCTS security standards, including vulnerability scanning and least privilege access.
-* Observability – Logs, metrics, and traces must be integrated into HMCTS observability stack (e.g. Azure Monitoring).
-* Audit – Systems must produce audit trails that meet legal and operational requirements.
-* CI/CD Integration – Pipelines must include automated testing, deployments to multiple environments, and use approved tooling (e.g. GitHub Actions or Azure DevOps).
-* Compliance & Policy Alignment – Services must align with HMCTS/MoJ policies (e.g. Coding in the Open, mandatory security practices).
-* Ownership & Support – Domain teams must clearly own the service, maintain a support model, and define escalation paths.
+| | |
+|---|---|
+| Base path | `/courtlistpublishing-service` |
+| Default port | `8082` |
+| Stack | Java 25, Spring Boot 4, PostgreSQL 16 + Flyway, Azure Blob Storage, task-manager-service |
+| API contract | [hmcts/api-cp-crime-court-list-publisher](https://github.com/hmcts/api-cp-crime-court-list-publisher) |
 
 ## Documentation
 
-Further documentation can be found in the [docs](docs) directory.
+The full application guide lives in [`docs/`](docs). It comes as [Markdown](docs/court-list-publishing-service.md), which renders on GitHub with diagrams, and as a standalone [HTML page](docs/court-list-publishing-service.html) to open in a browser.
 
-### Key Documentation
-- [Spring Boot v4 Upgrade Guide](docs/SpringUpgradev4.md) - Details on the Spring Boot v4 upgrade, tracing test fixes, and code refactoring improvements
-- [Environment Variables Guide](docs/EnvironmentVariables.md) - Complete guide to managing environment variables with `.env` and `.envrc` files
-- [JWT Filter Documentation](docs/JWTFilter.md) - JWT authentication filter configuration and usage
-- [Logging Documentation](docs/Logging.md) - Logging configuration and best practices
-- [Pipeline Documentation](docs/PIPELINE.md) - CI/CD pipeline configuration and deployment processes
+| If you want to… | Read |
+|---|---|
+| Understand what the service does, list types and business rules | [At a glance](docs/court-list-publishing-service.md#1-at-a-glance) · [Business guide](docs/court-list-publishing-service.md#2-business-guide) |
+| Understand the architecture and components | [Architecture](docs/court-list-publishing-service.md#3-architecture) |
+| Follow the publish, SJP, download and cleanup flows | [Key flows](docs/court-list-publishing-service.md#4-key-flows-step-by-step) · [Status lifecycle](docs/court-list-publishing-service.md#5-status-lifecycle) |
+| Call the API | [API reference](docs/court-list-publishing-service.md#6-api-reference) |
+| Work with the database | [Data model](docs/court-list-publishing-service.md#7-data-model) |
+| Check who can do what | [Security and access control](docs/court-list-publishing-service.md#8-security-and-access-control) |
+| Configure an environment | [Configuration](docs/court-list-publishing-service.md#9-configuration) |
+| Develop and change the code | [Developer guide](docs/court-list-publishing-service.md#10-developer-guide) |
+| Test the service | [QA and testing guide](docs/court-list-publishing-service.md#11-qa-and-testing-guide) |
+| Support or troubleshoot it | [Operations and support](docs/court-list-publishing-service.md#12-operations-and-support) |
+| Understand the build and deployment | [CI/CD pipeline](docs/court-list-publishing-service.md#13-cicd-pipeline) |
 
-### Prerequisites
+Other references:
 
-- ☕️ **Java 21.0.8 or later**: Ensure Java is installed and available on your `PATH`.
-- ⚙️ **Gradle**: [Install Gradle](https://gradle.org/install/). The project itself defines which Gradle version to use (gradle/wraper/gradle-wrapper.properties).
+- [`CLAUDE.md`](CLAUDE.md) is a condensed command and architecture reference for Claude Code.
+- [`docker/README.md`](docker/README.md) covers the integration Docker assets and the Azurite storage key.
+- [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) explains how to contribute.
 
-You can verify installation with:
+## API contract (OpenAPI)
+
+The REST API is defined first in a separate project, [hmcts/api-cp-crime-court-list-publisher](https://github.com/hmcts/api-cp-crime-court-list-publisher). It contains the spec [`court-list-publisher.openapi.yml`](https://github.com/hmcts/api-cp-crime-court-list-publisher/blob/main/src/main/resources/openapi/court-list-publisher.openapi.yml) and its [JSON schemas](https://github.com/hmcts/api-cp-crime-court-list-publisher/tree/main/src/main/resources/openapi/schema).
+
+That project publishes the artifact `uk.gov.hmcts.cp:api-cp-crime-court-list-publisher`. The artifact contains the generated controller interfaces (for example `CourtListPublishApi` and `FilesApi`) and the models (`CourtListPublishRequest`, `CourtListType`, and others) that this service implements.
+
+To change an endpoint, request/response model or enum value (such as a new `CourtListType`):
+
+1. Make the change in the [OpenAPI project](https://github.com/hmcts/api-cp-crime-court-list-publisher) and release a new version.
+2. Bump `apiSpecVersion` in [`gradle.properties`](gradle.properties).
+3. Implement the change in the controllers under `src/main/java/uk/gov/hmcts/cp/controllers`.
+4. Add a Drools rule for any new endpoint in [`court-list-publishing-rules.drl`](src/main/resources/acl/court-list-publishing-rules.drl). Requests with no matching rule are denied.
+
+## Prerequisites
+
+- **Java 25.** The Gradle toolchain is set to 25. Check with `java -version`.
+- **Docker** (Docker Desktop or the Docker engine), needed for integration tests and the local database.
+- **[direnv](https://direnv.net/)** (optional), to load local environment variables from `.env` through [`.envrc`](.envrc).
+
+Always use the Gradle wrapper (`./gradlew`). It pins the Gradle version in [`gradle/wrapper/gradle-wrapper.properties`](gradle/wrapper/gradle-wrapper.properties).
+
+## Build and test
+
 ```bash
-java -version
-gradle -v
+./gradlew bootJar                 # build the application jar
+./gradlew test                    # unit tests
+./gradlew integration             # integration tests against a docker-compose stack (Docker must be running)
+./gradlew build                   # unit + integration tests (needs Docker)
 ```
 
-## Installation
+Run a single test class or method:
 
-### Build
 ```bash
-gradle build
+./gradlew test --tests 'uk.gov.hmcts.cp.services.CaTHServiceTest'
+./gradlew test --tests 'uk.gov.hmcts.cp.services.CaTHServiceTest.someTestMethod'
+./gradlew integration --tests 'uk.gov.hmcts.cp.http.FileDownloadIntegrationTest'
 ```
 
-`build` will run all tests.
+Notes:
 
-### Tests
-- `gradle test` for running unit tests
-- `gradle integration` for running integration tests
+- The compiler runs with `-Werror`, so an unchecked-type warning fails the build.
+- `./gradlew integration` builds the jar and the app image, then starts [`docker/docker-compose.integration.yml`](docker/docker-compose.integration.yml) and runs the tests. Unit tests stop at the first failure (`failFast`).
+- The integration stack is **not** stopped automatically. Run `./gradlew composeDown` when you're finished.
+- If Docker Compose can't connect and the error mentions `.../docker/desktop/docker.sock`, start Docker Desktop. With the Linux `docker.io` engine, run `unset DOCKER_HOST`, `export DOCKER_HOST=unix:///var/run/docker.sock`, or `docker context use default`.
 
+### Integration test stack
 
-### Environment Setup for Local Builds
+| Container | Host port | Purpose |
+|---|---|---|
+| `app` | `8082` (debug `8787`) | The service, with profile `integration` |
+| `db` | `55432` | PostgreSQL 16 |
+| `wiremock` | `8089` | Stubs for Listing, Progression, Reference Data, usersgroups, Document Generator and CaTH. Mappings are in [`src/integrationTest/resources/wiremock`](src/integrationTest/resources/wiremock) |
+| `azurite` | `10000` | Azure Blob Storage emulator (see [`docker/README.md`](docker/README.md)) |
 
-This project uses a two-file approach for environment variable management with `.env` and `.envrc` files. 
+The `integration` profile replaces the real CaTH publisher with a stub that posts to WireMock, and points blob storage at Azurite. To debug the running app, attach a remote debugger to port `8787`.
 
-**Quick Setup:**
-1. Install `direnv`: `brew install direnv`
-2. Add to shell: `echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc`
-3. Allow direnv: `direnv allow`
-4. Create `.env` file with your local configuration
+For the test layers, the scenario checklist and how to inspect results, see the [QA and testing guide](docs/court-list-publishing-service.md#11-qa-and-testing-guide).
 
-**Server Port:** The application uses port `8082` by default. Override with:
-- Environment variable: `export SERVER_PORT=8080`
-- Gradle property: `./gradlew integration -Pserver.port=8080`
-- System property: `./gradlew integration -Dserver.port=8080`
+## Running locally
 
-**Azure Environment Variable:** To use Azure blob storage (upload only; no SAS URLs), set:
-- Azure Storage Enable: `export AZURE_STORAGE_ENABLED=true`
-- Account Name: `export AZURE_STORAGE_ACCOUNT_NAME=...`
-- For local/integration (Azurite): `docker/docker-compose.integration.yml` defaults to Microsoft’s **public** Azurite key (`devstoreaccount1`); see **`docker/README.md`** for why that is safe to commit and why secret scanners may still flag it (we use `# gitleaks:allow` on that line). Override `AZURE_STORAGE_ACCOUNT_KEY` only for a real storage account.
-- **Docker must be running** before `gradle composeBuild` / `integration`. The build runs `checkDockerDaemon` first so you get a short Gradle error instead of a vague compose failure. If you see `.../docker/desktop/docker.sock`: start **Docker Desktop**. If you use the Linux **docker.io** engine instead, run `unset DOCKER_HOST` and/or `export DOCKER_HOST=unix:///var/run/docker.sock` (or `docker context use default`).
-- **Publishing Hub / APIM**: set `AZURE_LOCAL_DTS_APIMURL` (and other `AZURE_LOCAL_DTS_*` / `AZURE_REMOTE_DTS_*` as needed) in each environment; defaults in `application-azure.yml` no longer embed internal hostnames.
+1. Start PostgreSQL. The default datasource expects it on `localhost:55432`:
 
-**Database information:** you can use postico to reach DB
-- Database : `courtlistpublishing`
-- Account Name: `courtlistpublishing`
-- Password: `courtlistpublishing`
+   ```bash
+   docker compose up -d db
+   ```
 
-📖 **For complete setup instructions, troubleshooting, and best practices, see the [Environment Variables Guide](docs/EnvironmentVariables.md).**
+2. Optionally, start the WireMock stubs so upstream calls have something to answer them:
+
+   ```bash
+   docker compose -f docker/docker-compose.integration.yml up -d wiremock
+   export CP_CLP_BASE_URL=http://localhost:8089
+   ```
+
+3. Run the service:
+
+   ```bash
+   ./gradlew bootRun
+   ```
+
+4. Check that it's up: <http://localhost:8082/courtlistpublishing-service/actuator/health>
+
+Flyway applies the database migrations on startup. You can connect a client such as Postico with database, user and password all set to `courtlistpublishing`.
+
+The root [`docker-compose.yml`](docker-compose.yml) and the integration stack both bind port `55432`. Stop one before starting the other.
+
+## Configuration
+
+All settings come from [`application.yaml`](src/main/resources/application.yaml) and the per-concern files it imports, such as `application-datasource.yml`, `application-azure.yml` and `application-authz.yml`. Every value can be overridden with an environment variable. Locally, put overrides in a `.env` file; [`.envrc`](.envrc) loads it through direnv:
+
+```bash
+brew install direnv
+echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc
+direnv allow
+```
+
+Commonly used variables:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SERVER_PORT` | `8082` | HTTP port. Can also be set with `./gradlew integration -Pserver.port=8080` |
+| `CP_CLP_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD` | local Postgres on `55432` / `courtlistpublishing` | Database |
+| `CP_CLP_BASE_URL` | `http://localhost:8080` | Base URL of the Common Platform query APIs |
+| `CATH_PUBLISHING_ENABLED` | `false` | Send lists to CaTH |
+| `AZURE_STORAGE_ENABLED` | `false` | Enables blob storage, PDF generation and file download. Also needs `AZURE_STORAGE_ACCOUNT_NAME` and `AZURE_CLIENT_ID` |
+| `AZURE_LOCAL_DTS_APIMURL`, `AZURE_LOCAL_DTS_*`, `AZURE_REMOTE_DTS_*` | — | APIM / Publishing Hub endpoint and Azure AD app registrations. Internal hostnames are not defaulted in the repo |
+| `CP_CLP_AUTHZ_ENABLED`, `CP_CLP_AUDIT_ENABLED` | `false` | Authorisation (Drools) and audit filters |
+| `PUBLISH_STATUS_CLEANUP_DAYS` | `90` | Retention period for publish records and files |
+
+The full list is in the [Configuration](docs/court-list-publishing-service.md#9-configuration) section of the guide. In deployed environments, secrets are mounted at `/mnt/secrets/rpe/`.
 
 ## Static code analysis
 
-Install PMD
+PMD uses the ruleset in [`.github/pmd-ruleset.xml`](.github/pmd-ruleset.xml):
 
 ```bash
-brew install pmd
+./gradlew pmdMain
 ```
+
+To run it outside Gradle, install PMD with `brew install pmd`, then:
+
 ```bash
-pmd check \
-    --dir src/main/java \
-    --rulesets \
-    .github/pmd-ruleset.xml \
-    --format html \
-    -r build/reports/pmd/pmd-report.html
+pmd check --dir src/main/java --rulesets .github/pmd-ruleset.xml --format html -r build/reports/pmd/pmd-report.html
 ```
 
-Run PMD from Gradle
+CI also runs CodeQL, an OWASP ZAP baseline scan and a secrets scanner. See [CI/CD pipeline](docs/court-list-publishing-service.md#13-cicd-pipeline).
 
-```
-gradle pmdTest
-```
+## Pact provider verification
 
-## Pact Provider Test
+To run Pact provider verification and publish the results to the Pact broker from your machine, add the following to `.env`, replacing the placeholders:
 
-Run pact provider test and publish verification report to pact broker locally
-
-Update .env file with below details (replacing placeholders with actual values):
 ```bash
-export PACT_PROVIDER_VERSION="0.1.0-local-YOUR-INITIALS" # or any version you want to use
+export PACT_PROVIDER_VERSION="0.1.0-local-YOUR-INITIALS"
 export PACT_VERIFIER_PUBLISH_RESULTS=true
 export PACT_PROVIDER_BRANCH="ANY_BRANCH_NAME_THAT_IS_NOT_A_DEFAULT_ONE"
 export PACT_BROKER_TOKEN="YOUR_PACTFLOW_BROKER_TOKEN"
 export PACT_BROKER_URL="https://hmcts-dts.pactflow.io"
-export PACT_ENV="local" # or value based on the environment you are testing against
+export PACT_ENV="local"
 ```
-Run Pact tests:
+
+Then run:
+
 ```bash
 ./gradlew pactVerificationTest
 ```
 
-### Contribute to This Repository
+## Contributing
 
-Contributions are welcome! Please see the [CONTRIBUTING.md](.github/CONTRIBUTING.md) file for guidelines.
-
-See also: [JWTFilter documentation](docs/JWTFilter.md)
+See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
