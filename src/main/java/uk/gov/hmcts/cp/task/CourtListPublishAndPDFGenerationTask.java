@@ -78,6 +78,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
 
         boolean cathSucceeded = tryPublishToCaTH(executionInfo, payload, courtListId);
+        trySendSamplePayloadsToCaTH();
 
         try {
             if (courtListId != null && cathSucceeded) {
