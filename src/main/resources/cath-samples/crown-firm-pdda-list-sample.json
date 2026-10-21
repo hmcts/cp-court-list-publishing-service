@@ -1,0 +1,202 @@
+{
+  "FirmList": {
+    "DocumentID": {
+      "UniqueID": "11111111-2222-3333-4444-555555555555",
+      "DocumentType": "FIRM",
+      "TimeStamp": "2026-10-30T16:00:00Z",
+      "Version": "1",
+      "SecurityClassification": "OFFICIAL"
+    },
+    "ListHeader": {
+      "StartDate": "2026-11-02",
+      "EndDate": "2026-11-06",
+      "Version": "1",
+      "PublishedTime": "2026-10-30T16:00:00Z"
+    },
+    "CrownCourt": {
+      "CourtHouseType": "Crown Court",
+      "CourtHouseCode": 100,
+      "CourtHouseName": "Example Crown Court",
+      "CourtHouseAddress": { "Line": ["1 Example Street", "Exampleton"], "PostCode": "EX1 1AA" },
+      "CourtHouseTelephone": "01234 567890"
+    },
+    "CourtLists": [
+      {
+        "SittingDate": "2026-11-02",
+        "CourtHouse": {
+          "CourtHouseType": "Crown Court",
+          "CourtHouseCode": 100,
+          "CourtHouseShortName": "Example",
+          "CourtHouseName": "Example Crown Court",
+          "CourtHouseAddress": { "Line": ["1 Example Street", "Exampleton"], "PostCode": "EX1 1AA" },
+          "CourtHouseTelephone": "01234 567890"
+        },
+        "Sittings": [
+          {
+            "CourtRoomNumber": 1,
+            "SittingAt": "10:00:00",
+            "SittingPriority": "F",
+            "SittingNote": "Sitting note",
+            "Judiciary": {
+              "Judge": {
+                "CitizenNameTitle": "His Honour Judge",
+                "CitizenNameForename": ["Example"],
+                "CitizenNameSurname": "Judge",
+                "CitizenNameSuffix": "KC",
+                "CitizenNameRequestedName": "Judge Example"
+              },
+              "Justice": [
+                { "CitizenNameTitle": "Mr", "CitizenNameForename": ["Test"], "CitizenNameSurname": "Justice", "CitizenNameSuffix": "JP", "CitizenNameRequestedName": "Test Justice" }
+              ]
+            },
+            "Hearings": [
+              {
+                "HearingSequenceNumber": 1,
+                "HearingDetails": {
+                  "HearingDescription": "Trial",
+                  "HearingDate": "2026-11-02",
+                  "HearingEndDate": "2026-11-04",
+                  "HearingType": "TRL"
+                },
+                "TimeMarkingNote": "Not before 10:30",
+                "CaseNumber": "TEST0000001",
+                "CaseNumberCaTH": "T20260001",
+                "Prosecution": {
+                  "Advocate": {
+                    "PersonalDetails": {
+                      "Name": {
+                        "CitizenNameTitle": "Ms",
+                        "CitizenNameForename": ["Test"],
+                        "CitizenNameSurname": "Advocate",
+                        "CitizenNameSuffix": "KC",
+                        "CitizenNameRequestedName": "Test Advocate"
+                      },
+                      "MaskedName": "T. A.",
+                      "IsMasked": "no"
+                    }
+                  },
+                  "ProsecutingReference": "PROS-REF-0001",
+                  "ProsecutingOrganisation": { "OrganisationName": "Crown Prosecution Service" },
+                  "ProsecutingAuthority": "Crown Prosecution Service"
+                },
+                "CommittingCourt": {
+                  "CourtHouseType": "Magistrates Court",
+                  "CourtHouseCode": 200,
+                  "CourtHouseShortName": "ExMags",
+                  "CourtHouseName": "Example Magistrates Court"
+                },
+                "ListNote": "Interpreter required",
+                "Defendants": [
+                  {
+                    "PersonalDetails": {
+                      "Name": {
+                        "CitizenNameTitle": "Mr",
+                        "CitizenNameForename": ["Test", "Middle"],
+                        "CitizenNameSurname": "Defendant",
+                        "CitizenNameSuffix": "Jr",
+                        "CitizenNameRequestedName": "Test Defendant"
+                      },
+                      "MaskedName": "T. D.",
+                      "IsMasked": "no",
+                      "DateOfBirth": { "BirthDate": "1990-04-15", "VerifiedBy": "birth certificate" },
+                      "Age": 36,
+                      "Sex": "male",
+                      "Address": { "Line": ["10 Sample Road", "Sampletown", "Sampleshire"], "PostCode": "SM1 2BB" },
+                      "Nationality": "British"
+                    },
+                    "URN": "00AA0000001",
+                    "Counsel": [
+                      {
+                        "Solicitor": [
+                          {
+                            "Party": {
+                              "Person": {
+                                "PersonalDetails": {
+                                  "Name": {
+                                    "CitizenNameTitle": "Ms",
+                                    "CitizenNameForename": ["Sam"],
+                                    "CitizenNameSurname": "Solicitor",
+                                    "CitizenNameSuffix": "LLB",
+                                    "CitizenNameRequestedName": "Sam Solicitor"
+                                  },
+                                  "MaskedName": "S. S.",
+                                  "IsMasked": "no",
+                                  "DateOfBirth": { "BirthDate": "1982-06-20", "VerifiedBy": "not verified" },
+                                  "Sex": "female",
+                                  "Address": { "Line": ["3 Legal Row"], "PostCode": "EX3 3CC" }
+                                }
+                              },
+                              "Organisation": { "OrganisationName": "Example Solicitors LLP" }
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "Charges": [
+                      { "OffenceStatement": "Example offence statement", "IndictmentCountNumber": 1, "CJSoffenceCode": "TEST001" }
+                    ]
+                  }
+                ],
+                "Respondent": ["Test Respondent"]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "ReserveList": [
+      {
+        "HearingDetails": {
+          "HearingDescription": "Plea and Trial Preparation",
+          "HearingDate": "2026-11-03",
+          "HearingEndDate": "2026-11-03",
+          "HearingType": "PTP"
+        },
+        "CaseNumber": "T20260002",
+        "CaseNumberCaTH": "T20260002",
+        "Prosecution": {
+          "Advocate": {
+            "PersonalDetails": {
+              "Name": {
+                "CitizenNameTitle": "Mr",
+                "CitizenNameForename": ["Reserve"],
+                "CitizenNameSurname": "Advocate",
+                "CitizenNameSuffix": "KC",
+                "CitizenNameRequestedName": "Reserve Advocate"
+              },
+              "MaskedName": "R. A.",
+              "IsMasked": "no"
+            }
+          },
+          "ProsecutingReference": "PROS-REF-0002",
+          "ProsecutingOrganisation": { "OrganisationName": "Example Prosecutor" },
+          "ProsecutingAuthority": "Other Prosecutor"
+        },
+        "CommittingCourt": {
+          "CourtHouseType": "Youth Court",
+          "CourtHouseCode": 300,
+          "CourtHouseShortName": "ExYouth",
+          "CourtHouseName": "Example Youth Court"
+        },
+        "ListNote": "Reserve case note",
+        "Defendants": [
+          {
+            "PersonalDetails": {
+              "Name": {
+                "CitizenNameTitle": "Ms",
+                "CitizenNameForename": ["Sample"],
+                "CitizenNameSurname": "Person",
+                "CitizenNameSuffix": "III",
+                "CitizenNameRequestedName": "Sample Person"
+              },
+              "MaskedName": "S. P.",
+              "IsMasked": "yes"
+            },
+            "URN": "00BB0000002"
+          }
+        ],
+        "Respondent": ["Reserve Respondent"]
+      }
+    ]
+  }
+}

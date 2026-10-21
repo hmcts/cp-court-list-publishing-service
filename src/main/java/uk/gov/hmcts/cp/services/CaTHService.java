@@ -93,6 +93,28 @@ public class CaTHService {
         }
     }
 
+    /**
+     * Sends an already-built payload (e.g. a Crown PDDA sample file) to CaTH with explicit list metadata.
+     */
+    public void sendRawPayloadToCaTH(final String payload, final String cathListType, final String sensitivity,
+                                     final String courtId, final String language,
+                                     final LocalDate contentDate, final LocalDate displayToDate) {
+        log.info("Sending raw payload to CaTH, cathListType={}, language={}", cathListType, language);
+        final DtsMeta dtsMeta = DtsMeta.builder()
+                .provenance("COMMON_PLATFORM")
+                .type("LIST")
+                .listType(cathListType)
+                .courtId(courtId)
+                .contentDate(StandardCourtListTransformationService.toIsoDateTimeOrNull(contentDate.toString()))
+                .language(language)
+                .sensitivity(sensitivity)
+                .displayFrom(Instant.now().toString())
+                .displayTo(getDisplayTo(displayToDate))
+                .build();
+        final Integer res = caTHPublisher.publish(payload, dtsMeta);
+        log.info("Successfully sent raw payload to CaTH, cathListType={}, status={}", cathListType, res);
+    }
+
     private void uploadPayloadToBlob(String payload, UUID courtListId) {
         azureBlobService.ifPresentOrElse(
             blobService -> {

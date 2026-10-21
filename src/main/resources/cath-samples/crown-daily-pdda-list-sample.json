@@ -1,0 +1,116 @@
+{
+  "DailyList": {
+    "DocumentID": { "UniqueID": "11111111-2222-3333-4444-555555555555", "DocumentType": "DL" },
+    "ListHeader": {
+      "StartDate": "2026-11-02",
+      "EndDate": "2026-11-02",
+      "Version": "1",
+      "PublishedTime": "2026-10-30T16:00:00Z"
+    },
+    "CrownCourt": {
+      "CourtHouseType": "Crown Court",
+      "CourtHouseCode": 100,
+      "CourtHouseName": "Example Crown Court",
+      "CourtHouseAddress": { "Line": ["1 Example Street", "Exampleton"], "PostCode": "EX1 1AA" },
+      "CourtHouseTelephone": "01234 567890"
+    },
+    "CourtLists": [
+      {
+        "CourtHouse": {
+          "CourtHouseType": "Crown Court",
+          "CourtHouseCode": 100,
+          "CourtHouseShortName": "Example",
+          "CourtHouseName": "Example Crown Court",
+          "CourtHouseAddress": { "Line": ["1 Example Street", "Exampleton"], "PostCode": "EX1 1AA" },
+          "CourtHouseTelephone": "01234 567890"
+        },
+        "Sittings": [
+          {
+            "CourtRoomNumber": 1,
+            "SittingAt": "10:00:00",
+            "SittingPriority": "T",
+            "SittingNote": "Sitting note",
+            "Judiciary": {
+              "Judge": {
+                "CitizenNameTitle": "His Honour Judge",
+                "CitizenNameForename": ["Example"],
+                "CitizenNameSurname": "Judge",
+                "CitizenNameSuffix": "KC",
+                "CitizenNameRequestedName": "Judge Example"
+              },
+              "Justice": [
+                { "CitizenNameTitle": "Mr", "CitizenNameForename": ["Test"], "CitizenNameSurname": "Justice", "CitizenNameSuffix": "JP", "CitizenNameRequestedName": "Test Justice" }
+              ]
+            },
+            "Hearings": [
+              {
+                "HearingSequenceNumber": 1,
+                "HearingDetails": { "HearingDescription": "Trial", "HearingType": "TRL" },
+                "TimeMarkingNote": "Not before 10:30",
+                "CaseNumber": "TEST0000001",
+                "CaseNumberCaTH": "T20260001",
+                "Prosecution": {
+                  "ProsecutingReference": "PROS-REF-0001",
+                  "ProsecutingOrganisation": { "OrganisationName": "Crown Prosecution Service" },
+                  "ProsecutingAuthority": "Crown Prosecution Service",
+                  "Advocate": {
+                    "PersonalDetails": {
+                      "Name": {
+                        "CitizenNameTitle": "Ms",
+                        "CitizenNameForename": ["Test"],
+                        "CitizenNameSurname": "Advocate",
+                        "CitizenNameSuffix": "KC",
+                        "CitizenNameRequestedName": "Test Advocate"
+                      },
+                      "MaskedName": "T. A.",
+                      "IsMasked": "no",
+                      "DateOfBirth": { "BirthDate": "1980-01-01", "VerifiedBy": "not verified" },
+                      "Age": 46,
+                      "Sex": "female",
+                      "Address": { "Line": ["5 Chambers Row"], "PostCode": "EX2 2BB" },
+                      "Nationality": "British"
+                    }
+                  }
+                },
+                "CommittingCourt": {
+                  "CourtHouseType": "Magistrates Court",
+                  "CourtHouseCode": 200,
+                  "CourtHouseShortName": "ExMags",
+                  "CourtHouseName": "Example Magistrates Court"
+                },
+                "ListNote": "Interpreter required",
+                "Defendants": [
+                  {
+                    "PersonalDetails": {
+                      "Name": {
+                        "CitizenNameTitle": "Mr",
+                        "CitizenNameForename": ["Test", "Middle"],
+                        "CitizenNameSurname": "Defendant",
+                        "CitizenNameSuffix": "Jr",
+                        "CitizenNameRequestedName": "Test Defendant"
+                      },
+                      "MaskedName": "T. D.",
+                      "IsMasked": "no",
+                      "DateOfBirth": { "BirthDate": "1990-04-15", "VerifiedBy": "birth certificate" },
+                      "Age": 36,
+                      "Sex": "male",
+                      "Address": { "Line": ["10 Sample Road", "Sampletown", "Sampleshire"], "PostCode": "SM1 2BB" },
+                      "Nationality": "British"
+                    },
+                    "URN": "00AA0000001",
+                    "PrisonerID": "A0000AA",
+                    "PrisonLocation": { "Location": ["HMP Example", "Wing A"] },
+                    "Charges": [
+                      { "OffenceStatement": "Example offence statement", "IndictmentCountNumber": 1, "CJSoffenceCode": "TEST001" }
+                    ]
+                  }
+                ],
+                "Respondent": ["Test Respondent"]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
