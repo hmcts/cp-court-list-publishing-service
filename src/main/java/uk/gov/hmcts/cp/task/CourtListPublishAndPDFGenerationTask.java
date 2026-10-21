@@ -144,7 +144,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                     LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 2)),
             new CathSample("cath-samples/crown-firm-pdda-list-sample.json", "CROWN_FIRM_PDDA_LIST",
                     LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 6)),
-            new CathSample("cath-samples/crown-advance-pdda-list-sample.json", "CROWN_WARNED_PDDA_LIST",
+            new CathSample("cath-samples/crown-advance-pdda-list-sample.json", "CROWN_ADVANCE_PDDA_LIST",
                     LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 6)));
 
     /**
