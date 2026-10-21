@@ -285,4 +285,48 @@ class CaTHServiceTest {
         final String expected = CaTHService.getDisplayTo(now);
         assertThat(expected).isEqualTo(now + "T23:59:00Z");
     }
+
+    @Test
+    void sendRawPayloadToCaTH_shouldPublishPayloadWithExplicitMetadata() {
+        when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenReturn(HttpStatus.OK.value());
+
+        cathService.sendRawPayloadToCaTH("{\"DailyList\":{}}", "CROWN_DAILY_LIST", "PUBLIC", "100", "ENGLISH",
+                LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 6));
+
+        ArgumentCaptor<String> payloadCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<DtsMeta> metaCaptor = ArgumentCaptor.forClass(DtsMeta.class);
+        verify(cathPublisher).publish(payloadCaptor.capture(), metaCaptor.capture());
+
+        assertThat(payloadCaptor.getValue()).isEqualTo("{\"DailyList\":{}}");
+        DtsMeta meta = metaCaptor.getValue();
+        assertThat(meta.getProvenance()).isEqualTo("COMMON_PLATFORM");
+        assertThat(meta.getType()).isEqualTo("LIST");
+        assertThat(meta.getListType()).isEqualTo("CROWN_DAILY_LIST");
+        assertThat(meta.getSensitivity()).isEqualTo("PUBLIC");
+        assertThat(meta.getCourtId()).isEqualTo("100");
+        assertThat(meta.getLanguage()).isEqualTo("ENGLISH");
+        assertThat(meta.getContentDate()).isEqualTo("2026-11-02T00:00:00.000Z");
+        assertThat(meta.getDisplayTo()).isEqualTo("2026-11-06T23:59:00Z");
+    }
+
+    @Test
+    void sendRawPayloadToCaTH_shouldPropagatePublisherFailure() {
+        when(cathPublisher.publish(anyString(), any(DtsMeta.class))).thenThrow(new RuntimeException("boom"));
+
+        assertThatThrownBy(() -> cathService.sendRawPayloadToCaTH("{}", "CROWN_FIRM_LIST", "PUBLIC", "100",
+                "ENGLISH", LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 6)))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("boom");
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {
+            "cath-samples/crown-daily-pdda-list-sample.json",
+            "cath-samples/crown-firm-pdda-list-sample.json",
+            "cath-samples/crown-advance-pdda-list-sample.json"})
+    void crownSamplePayloads_shouldBeOnClasspathAndValidJson(final String resource) throws Exception {
+        try (var in = new org.springframework.core.io.ClassPathResource(resource).getInputStream()) {
+            assertThat(new com.fasterxml.jackson.databind.ObjectMapper().readTree(in).isObject()).isTrue();
+        }
+    }
 }

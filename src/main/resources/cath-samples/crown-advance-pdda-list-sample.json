@@ -1,0 +1,165 @@
+{
+  "WarnedList": {
+    "DocumentID": { "UniqueID": "11111111-2222-3333-4444-555555555555", "DocumentType": "WARNED" },
+    "ListHeader": {
+      "StartDate": "2026-11-02",
+      "EndDate": "2026-11-06",
+      "Version": "1",
+      "PublishedTime": "2026-10-30T16:00:00Z"
+    },
+    "CrownCourt": {
+      "CourtHouseType": "Crown Court",
+      "CourtHouseCode": 100,
+      "CourtHouseName": "Example Crown Court",
+      "CourtHouseAddress": { "Line": ["1 Example Street", "Exampleton"], "PostCode": "EX1 1AA" },
+      "CourtHouseTelephone": "01234 567890"
+    },
+    "ListingInstruction": ["Example listing instruction 1", "Example listing instruction 2", "Example listing instruction 3"],
+    "CourtLists": [
+      {
+        "CourtHouse": {
+          "CourtHouseType": "Crown Court",
+          "CourtHouseCode": 100,
+          "CourtHouseShortName": "Example",
+          "CourtHouseName": "Example Crown Court",
+          "CourtHouseAddress": { "Line": ["1 Example Street", "Exampleton"], "PostCode": "EX1 1AA" },
+          "CourtHouseTelephone": "01234 567890"
+        },
+        "WithFixedDate": [
+          {
+            "HearingType": "TRL",
+            "Fixture": [
+              {
+                "FixedDate": "2026-11-03",
+                "Notes": "Fixture note",
+                "Cases": [
+                  {
+                    "CaseNumber": "TEST0000001",
+                    "CaseNumberCaTH": "T20260001",
+                    "CaseArrivedFrom": {
+                      "OriginatingCourt": { "CourtHouseCode": 200, "CourtHouseShortName": "ExMags", "CourtHouseName": "Example Magistrates Court" }
+                    },
+                    "Hearing": [
+                      {
+                        "HearingDescription": "Trial",
+                        "HearingDate": "2026-11-03",
+                        "HearingEndDate": "2026-11-05",
+                        "ListNote": "Interpreter required",
+                        "HearingType": "TRL"
+                      }
+                    ],
+                    "Defendants": [
+                      {
+                        "PersonalDetails": {
+                          "Name": {
+                            "CitizenNameTitle": "Mr",
+                            "CitizenNameForename": ["Test", "Middle"],
+                            "CitizenNameSurname": "Defendant",
+                            "CitizenNameSuffix": "Jr",
+                            "CitizenNameRequestedName": "Test Defendant"
+                          },
+                          "MaskedName": "T. D.",
+                          "IsMasked": "no",
+                          "DateOfBirth": { "BirthDate": "1990-04-15", "VerifiedBy": "birth certificate" },
+                          "Age": 36,
+                          "Sex": "male",
+                          "Address": { "Line": ["10 Sample Road", "Sampletown", "Sampleshire"], "PostCode": "SM1 2BB" },
+                          "Nationality": "British"
+                        },
+                        "URN": "00AA0000001",
+                        "PrisonerID": "A0000AA",
+                        "PrisonLocation": { "Location": ["HMP Example", "Wing A"] },
+                        "CustodyStatus": "In custody",
+                        "Counsel": [
+                          { "Solicitor": [ { "Party": { "Organisation": { "OrganisationName": "Example Solicitors LLP" } } } ] }
+                        ],
+                        "Charges": [
+                          { "OffenceStatement": "Example offence statement", "IndictmentCountNumber": 1, "CJSoffenceCode": "TEST001" }
+                        ]
+                      }
+                    ],
+                    "Prosecution": {
+                      "ProsecutingOrganisation": { "OrganisationName": "Crown Prosecution Service" },
+                      "ProsecutingAuthority": "Crown Prosecution Service"
+                    },
+                    "LinkedCases": [ { "CaseNumber": "TEST0000002" } ]
+                  },
+                  {
+                    "CaseNumber": "TEST0000003",
+                    "CaseNumberCaTH": "T20260003",
+                    "CaseArrivedFrom": { "Section53": "yes" },
+                    "Defendants": [
+                      { "PersonalDetails": { "Name": { "CitizenNameSurname": "Second" }, "IsMasked": "yes", "MaskedName": "S." } }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "WithoutFixedDate": [
+          {
+            "HearingType": "PTP",
+            "Fixture": [
+              {
+                "FixedDate": "2026-11-04",
+                "Notes": "Floating fixture note",
+                "Cases": [
+                  {
+                    "CaseNumber": "TEST0000004",
+                    "CaseNumberCaTH": "T20260004",
+                    "CaseArrivedFrom": { "Section53": "no" },
+                    "Hearing": [
+                      {
+                        "HearingDescription": "Plea and Trial Preparation",
+                        "HearingDate": "2026-11-04",
+                        "HearingEndDate": "2026-11-04",
+                        "ListNote": "Warned for the week",
+                        "HearingType": "PTP"
+                      }
+                    ],
+                    "Defendants": [
+                      {
+                        "PersonalDetails": {
+                          "Name": {
+                            "CitizenNameTitle": "Ms",
+                            "CitizenNameForename": ["Sample"],
+                            "CitizenNameSurname": "Person",
+                            "CitizenNameSuffix": "III",
+                            "CitizenNameRequestedName": "Sample Person"
+                          },
+                          "MaskedName": "S. P.",
+                          "IsMasked": "no",
+                          "DateOfBirth": { "BirthDate": "1985-09-30", "VerifiedBy": "not verified" },
+                          "Age": 41,
+                          "Sex": "female",
+                          "Address": { "Line": ["20 Sample Lane", "Sampleville"], "PostCode": "SM2 3CC" },
+                          "Nationality": "British"
+                        },
+                        "URN": "00BB0000002",
+                        "PrisonerID": "B0000BB",
+                        "PrisonLocation": { "Location": ["HMP Sample"] },
+                        "CustodyStatus": "On bail",
+                        "Counsel": [
+                          { "Solicitor": [ { "Party": { "Organisation": { "OrganisationName": "Sample Legal Ltd" } } } ] }
+                        ],
+                        "Charges": [
+                          { "OffenceStatement": "Another example offence statement", "IndictmentCountNumber": 2, "CJSoffenceCode": "TEST002" }
+                        ]
+                      }
+                    ],
+                    "Prosecution": {
+                      "ProsecutingOrganisation": { "OrganisationName": "Example Prosecutor" },
+                      "ProsecutingAuthority": "Other Prosecutor"
+                    },
+                    "LinkedCases": [ { "CaseNumber": "TEST0000005" } ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

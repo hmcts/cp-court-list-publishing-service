@@ -4,6 +4,7 @@ import jakarta.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
@@ -15,8 +16,10 @@ import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 import uk.gov.hmcts.cp.taskmanager.service.task.ExecutableTask;
 import uk.gov.hmcts.cp.taskmanager.service.task.Task;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.UUID;
 
 import static uk.gov.hmcts.cp.config.AppConstant.ALERT_PATTERN;
@@ -75,6 +78,7 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
         }
 
         boolean cathSucceeded = tryPublishToCaTH(executionInfo, payload, courtListId);
+        trySendSamplePayloadsToCaTH();
 
         try {
             if (courtListId != null && cathSucceeded) {
@@ -129,6 +133,37 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
                 statusUpdater.markPublishFailed(courtListId, e);
             }
             return false;
+        }
+    }
+
+    private record CathSample(String resource, String cathListType, LocalDate contentDate, LocalDate displayToDate) { }
+
+    private static final String SAMPLE_COURT_ID = "100";
+    private static final List<CathSample> CATH_SAMPLES = List.of(
+            new CathSample("cath-samples/crown-daily-pdda-list-sample.json", "CROWN_DAILY_LIST",
+                    LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 2)),
+            new CathSample("cath-samples/crown-firm-pdda-list-sample.json", "CROWN_FIRM_LIST",
+                    LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 6)),
+            new CathSample("cath-samples/crown-advance-pdda-list-sample.json", "CROWN_WARNED_LIST",
+                    LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 6)));
+
+    /**
+     * Additional CaTH calls for the three Crown sample payloads. Failures are logged and do not affect
+     * the court list publish status.
+     */
+    private void trySendSamplePayloadsToCaTH() {
+        if (!cathPublishingEnabled) {
+            return;
+        }
+        for (CathSample sample : CATH_SAMPLES) {
+            try {
+                String body = new String(new ClassPathResource(sample.resource()).getInputStream().readAllBytes(),
+                        StandardCharsets.UTF_8);
+                cathService.sendRawPayloadToCaTH(body, sample.cathListType(), "PUBLIC", SAMPLE_COURT_ID,
+                        "ENGLISH", sample.contentDate(), sample.displayToDate());
+            } catch (Exception e) {
+                LOGGER.error("Error {} sending sample payload {} to CaTH", ALERT_PATTERN, sample.resource(), e);
+            }
         }
     }
 
