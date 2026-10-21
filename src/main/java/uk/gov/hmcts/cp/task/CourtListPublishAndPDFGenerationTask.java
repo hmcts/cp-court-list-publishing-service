@@ -140,11 +140,11 @@ public class CourtListPublishAndPDFGenerationTask implements ExecutableTask {
 
     private static final String SAMPLE_COURT_ID = "100";
     private static final List<CathSample> CATH_SAMPLES = List.of(
-            new CathSample("cath-samples/crown-daily-pdda-list-sample.json", "CROWN_DAILY_LIST",
+            new CathSample("cath-samples/crown-daily-pdda-list-sample.json", "CROWN_DAILY_PDDA_LIST",
                     LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 2)),
-            new CathSample("cath-samples/crown-firm-pdda-list-sample.json", "CROWN_FIRM_LIST",
+            new CathSample("cath-samples/crown-firm-pdda-list-sample.json", "CROWN_FIRM_PDDA_LIST",
                     LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 6)),
-            new CathSample("cath-samples/crown-advance-pdda-list-sample.json", "CROWN_WARNED_LIST",
+            new CathSample("cath-samples/crown-advance-pdda-list-sample.json", "CROWN_WARNED_PDDA_LIST",
                     LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 6)));
 
     /**
