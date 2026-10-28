@@ -17,6 +17,7 @@ import uk.gov.hmcts.cp.config.AppConstant;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.models.CourtListPayload;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.services.crown.CrownListType;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 
 import java.time.LocalDate;
@@ -36,6 +37,7 @@ public class CourtListDataService {
     private static final String COURT_LIST_PATH = "/listing-service/query/api/rest/listing/courtlist";
     private static final String ACCEPT_COURTLIST_PAYLOAD = "application/vnd.listing.search.court.list.payload+json";
     private static final String ACCEPT_CROWN_DAILY_LIST_PAYLOAD = "application/vnd.listing.search.daily.list.payload+json";
+    private static final String ACCEPT_CROWN_LIST_PAYLOAD = "application/vnd.listing.search.crown.list.payload+json";
     private static final String PROGRESSION_COURTLIST_PATH = "/progression-service/query/api/rest/progression/courtlist";
     private static final String ACCEPT_PROGRESSION_COURTLIST = "application/vnd.progression.search.court.list+json";
 
@@ -209,9 +211,33 @@ public class CourtListDataService {
         return result;
     }
 
+    /**
+     * Fetches the court list the Crown lists are built from: the daily list payload with the additional data the Crown
+     * schemas need (linked cases, sitting notes, judge name parts, court address details). It is the same resource as
+     * the daily list, selected by the Crown media type. DRAFT and FINAL ask for a day; WARN and FIRM ask for a week.
+     */
+    public String getCrownListPayload(
+            CourtListType publishCourtListType, String courtCentreId,
+            LocalDate startDate, LocalDate endDate, String cjscppuid) {
+        log.info("Fetching Crown list payload for publishCourtListType={}, courtCentreId={}, startDate={}, endDate={}",
+                publishCourtListType, courtCentreId, startDate, endDate);
+        final boolean weekCommencing = CrownListType.from(publishCourtListType).isWeekCommencing();
+        return fetchDailyListPayload(publishCourtListType, courtCentreId,
+                startDate.format(DATE_FORMAT), endDate.format(DATE_FORMAT), cjscppuid,
+                ACCEPT_CROWN_LIST_PAYLOAD, weekCommencing);
+    }
+
     private String fetchDailyListPayload(
             CourtListType publishCourtListType, String courtCentreId,
             String startDate, String endDate, String cjscppuid) {
+        return fetchDailyListPayload(publishCourtListType, courtCentreId, startDate, endDate, cjscppuid,
+                ACCEPT_CROWN_DAILY_LIST_PAYLOAD, CourtListType.FIRM.equals(publishCourtListType));
+    }
+
+    private String fetchDailyListPayload(
+            CourtListType publishCourtListType, String courtCentreId,
+            String startDate, String endDate, String cjscppuid,
+            String acceptHeader, boolean weekCommencing) {
         if (courtListDataBaseUrl.isBlank()) {
             throw new CourtListDownloadException("Court list data is not configured");
         }
@@ -219,7 +245,7 @@ public class CourtListDataService {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(courtListDataBaseUrl).path(DAILY_LIST_PAYLOAD_PATH)
                 .queryParam("publishCourtListType", publishCourtListType.name())
                 .queryParam("courtCentreId", courtCentreId);
-        if (CourtListType.FIRM.equals(publishCourtListType)) {
+        if (weekCommencing) {
             builder.queryParam("weekCommencingStartDate", startDate)
                     .queryParam("weekCommencingEndDate", endDate);
         } else {
@@ -229,7 +255,7 @@ public class CourtListDataService {
         String url = builder.build().toUriString();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Collections.singletonList(MediaType.parseMediaType(ACCEPT_CROWN_DAILY_LIST_PAYLOAD)));
+        headers.setAccept(Collections.singletonList(MediaType.parseMediaType(acceptHeader)));
         if (cjscppuid != null && !cjscppuid.isBlank()) {
             headers.set(AppConstant.CJSCPPUID, cjscppuid);
         }

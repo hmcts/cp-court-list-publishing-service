@@ -10,6 +10,8 @@ public final class JobDataConstant {
     public static final String COURT_LIST_TYPE = "courtListType";
     public static final String PUBLISH_DATE = "publishDate";
     public static final String USER_ID = "userId";
+    public static final String START_DATE = "startDate";
+    public static final String END_DATE = "endDate";
 
     public static final String SJP_LIST_ID = "sjpListId";
     public static final String SJP_COURT_ID_NUMERIC = "sjpCourtIdNumeric";

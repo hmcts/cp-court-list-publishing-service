@@ -14,6 +14,7 @@ import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import uk.gov.hmcts.cp.domain.DtsMeta;
 import uk.gov.hmcts.cp.models.transformed.CourtListDocument;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
+import uk.gov.hmcts.cp.services.crown.CrownListType;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -32,6 +33,9 @@ public class CaTHService {
     record CathHeaderInfo(String cathCourtListType, String sensitivity){}
 
     private static final String CATH_BLOB_SUFFIX = "-cath.json";
+    /** Crown lists carry defendants' dates of birth and addresses, so they are not public. */
+    private static final String CROWN_SENSITIVITY = "CLASSIFIED";
+    private static final String CROWN_LANGUAGE = "ENGLISH";
 
     private static final Map<CourtListType, CathHeaderInfo> COURT_LIST_MAPPINGS = ImmutableMap.of(
             CourtListType.ONLINE_PUBLIC, new CathHeaderInfo("MAGISTRATES_PUBLIC_LIST", "PUBLIC"),
@@ -90,6 +94,43 @@ public class CaTHService {
         } catch (Exception e) {
             log.error("Error {} sending court list document to CaTH endpoint: {}", ALERT_PATTERN, e.getMessage(), e);
             throw new RuntimeException("Failed to send court list document to CaTH: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Publishes a Crown list that has already been built and validated against its CaTH schema.
+     *
+     * @param payload        the JSON document for {@code listType}
+     * @param startDate      first day the list covers (the content date)
+     * @param endDate        last day the list covers; it is shown until the end of that day
+     * @param courtIdNumeric the court's numeric id from reference data; {@code "0"} when it is not known
+     */
+    public void sendCrownListToCaTH(final String payload, final CrownListType listType, final LocalDate startDate,
+                                   final LocalDate endDate, final String courtIdNumeric, final UUID courtListId) {
+        try {
+            log.info("Sending Crown list to CaTH endpoint, cathListType={}", listType.cathListType());
+
+            final String courtIdFromRefData = courtIdNumeric != null && !courtIdNumeric.isBlank() ? courtIdNumeric : "0";
+            final DtsMeta dtsMeta = DtsMeta.builder()
+                    .provenance("COMMON_PLATFORM")
+                    .type("LIST")
+                    .listType(listType.cathListType())
+                    .courtId(courtIdFromRefData)
+                    .contentDate(StandardCourtListTransformationService.toIsoDateTimeOrNull(startDate.toString()))
+                    .language(CROWN_LANGUAGE)
+                    .sensitivity(CROWN_SENSITIVITY)
+                    .displayFrom(Instant.now().toString())
+                    .displayTo(getDisplayTo(endDate))
+                    .build();
+
+            uploadPayloadToBlob(payload, courtListId);
+
+            final Integer res = caTHPublisher.publish(payload, dtsMeta);
+
+            log.info("Successfully sent Crown list to CaTH, cathListType={}, status={}", listType.cathListType(), res);
+        } catch (Exception e) {
+            log.error("Error {} sending Crown list to CaTH endpoint: {}", ALERT_PATTERN, e.getMessage(), e);
+            throw new RuntimeException("Failed to send Crown list to CaTH: " + e.getMessage(), e);
         }
     }
 
