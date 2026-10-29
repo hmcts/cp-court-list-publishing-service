@@ -156,7 +156,7 @@
               "endTime": "2026-11-08T00:00",
               "hearingType": { "id": "e5f6a7b8-c9d0-1234-efab-345678901234", "description": "Trial" },
               "weekCommencing": true,
-              "caseIdentifier": { "caseReference": "35WX6068590" },
+              "caseIdentifier": { "caseReference": "T20260004" },
               "defendants": [
                 { "firstName": "Not", "lastName": "Reservable", "offences": [ { "offenceCode": "TEST006", "statementOfOffence": { "title": "Offence" } } ] }
               ]

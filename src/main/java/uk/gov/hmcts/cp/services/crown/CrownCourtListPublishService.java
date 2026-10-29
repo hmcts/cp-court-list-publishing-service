@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
+import uk.gov.hmcts.cp.domain.PublishSource;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
@@ -23,8 +24,9 @@ import java.util.UUID;
  * Accepts a request to publish a Crown court list to CaTH as one of the Crown schemas. Only the request is checked
  * here; the query, transformation, schema validation and CaTH send run later in {@code CrownPublishTask}.
  * <p>
- * The status is tracked in {@code court_list_publish_status} like other publishes, keyed by court centre, list type
- * and the start date. There is no file (no PDF), so the file status stays null, as it does for SJP lists.
+ * The status is tracked in {@code court_list_publish_status} like other publishes, keyed by court centre, list type,
+ * the start date and {@link PublishSource#CROWN}, so it never shares a row with a standard publish of the same list.
+ * There is no file (no PDF), so the file status stays null, as it does for SJP lists.
  */
 @Service
 public class CrownCourtListPublishService {
@@ -43,7 +45,7 @@ public class CrownCourtListPublishService {
     @Transactional
     public CourtListPublishResponse publish(final UUID courtCentreId, final CourtListType courtListType,
                                             final LocalDate startDate, final LocalDate endDate, final String userId) {
-        validate(courtCentreId, courtListType, startDate, endDate, userId);
+        validate(courtCentreId, courtListType, startDate, endDate);
 
         final CourtListStatusEntity entity = findOrCreate(courtCentreId, courtListType, startDate);
         final CourtListStatusEntity saved = repository.save(entity);
@@ -55,7 +57,7 @@ public class CrownCourtListPublishService {
     }
 
     private void validate(final UUID courtCentreId, final CourtListType courtListType,
-                          final LocalDate startDate, final LocalDate endDate, final String userId) {
+                          final LocalDate startDate, final LocalDate endDate) {
         if (courtCentreId == null) {
             throw badRequest("Court centre ID is required");
         }
@@ -72,8 +74,8 @@ public class CrownCourtListPublishService {
         if (endDate.isBefore(startDate)) {
             throw badRequest("End date must not be before start date");
         }
-        if (userId == null || userId.isBlank()) {
-            throw badRequest("CJSCPPUID header is required");
+        if (CrownListType.from(courtListType) == CrownListType.DAILY && !startDate.equals(endDate)) {
+            throw badRequest("Start date and end date must be the same for a daily list (DRAFT or FINAL)");
         }
     }
 
@@ -82,12 +84,11 @@ public class CrownCourtListPublishService {
      * previous attempt's error cleared; otherwise creates one.
      */
     private CourtListStatusEntity findOrCreate(final UUID courtCentreId, final CourtListType courtListType, final LocalDate publishDate) {
-        final Optional<CourtListStatusEntity> existing = repository.findByCourtCentreIdAndPublishDateAndCourtListType(
-                courtCentreId, publishDate, courtListType);
+        final Optional<CourtListStatusEntity> existing = repository.findByCourtCentreIdAndPublishDateAndCourtListTypeAndPublishSource(
+                courtCentreId, publishDate, courtListType, PublishSource.CROWN);
         if (existing.isPresent()) {
             final CourtListStatusEntity entity = existing.get();
             entity.setPublishStatus(Status.REQUESTED);
-            entity.setFileStatus(Status.REQUESTED);
             entity.setPublishErrorMessage(null);
             entity.setLastUpdated(Instant.now());
             return entity;
@@ -95,8 +96,7 @@ public class CrownCourtListPublishService {
         final CourtListStatusEntity entity = new CourtListStatusEntity(
                 UUID.randomUUID(), courtCentreId, Status.REQUESTED, null, courtListType, Instant.now());
         entity.setPublishDate(publishDate);
-        // court_list_publish_status requires a file status on every non-SJP row (ck_file_status_required_for_non_sjp)
-        entity.setFileStatus(Status.REQUESTED);
+        entity.setPublishSource(PublishSource.CROWN);
         return entity;
     }
 

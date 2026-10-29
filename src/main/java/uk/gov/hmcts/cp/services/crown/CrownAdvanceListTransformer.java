@@ -62,7 +62,7 @@ public class CrownAdvanceListTransformer extends AbstractCrownListTransformer {
                             .add(caseNode(hearing, sittingDate, sittingDate));
                 } else {
                     withoutFixedDate.computeIfAbsent(group, key -> MAPPER.createArrayNode())
-                            .add(caseNode(hearing, input.startDate(), input.startDate()));
+                            .add(caseNode(hearing, null, input.startDate()));
                 }
             }
         });

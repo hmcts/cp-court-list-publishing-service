@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
+import uk.gov.hmcts.cp.domain.PublishSource;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
@@ -50,7 +51,7 @@ class CrownCourtListPublishServiceTest {
 
     @Test
     void createsARequestedRowAndQueuesTheTask() {
-        when(repository.findByCourtCentreIdAndPublishDateAndCourtListType(COURT_CENTRE_ID, START, CourtListType.WARN))
+        when(repository.findByCourtCentreIdAndPublishDateAndCourtListTypeAndPublishSource(COURT_CENTRE_ID, START, CourtListType.WARN, PublishSource.CROWN))
                 .thenReturn(Optional.empty());
         when(repository.save(any(CourtListStatusEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -62,7 +63,8 @@ class CrownCourtListPublishServiceTest {
         assertThat(saved.getValue().getCourtListType()).isEqualTo(CourtListType.WARN);
         assertThat(saved.getValue().getPublishDate()).isEqualTo(START);
         assertThat(saved.getValue().getPublishStatus()).isEqualTo(Status.REQUESTED);
-        assertThat(saved.getValue().getFileStatus()).as("the table requires a file status on non-SJP rows").isEqualTo(Status.REQUESTED);
+        assertThat(saved.getValue().getFileStatus()).as("there is no PDF, so no file status").isNull();
+        assertThat(saved.getValue().getPublishSource()).isEqualTo(PublishSource.CROWN);
 
         assertThat(response.getCourtListId()).isEqualTo(saved.getValue().getCourtListId());
         assertThat(response.getPublishStatus()).isEqualTo(Status.REQUESTED);
@@ -75,7 +77,7 @@ class CrownCourtListPublishServiceTest {
                 UUID.randomUUID(), COURT_CENTRE_ID, Status.FAILED, null, CourtListType.FINAL, Instant.parse("2026-10-01T00:00:00Z"));
         existing.setPublishDate(START);
         existing.setPublishErrorMessage("CaTH rejected the list");
-        when(repository.findByCourtCentreIdAndPublishDateAndCourtListType(COURT_CENTRE_ID, START, CourtListType.FINAL))
+        when(repository.findByCourtCentreIdAndPublishDateAndCourtListTypeAndPublishSource(COURT_CENTRE_ID, START, CourtListType.FINAL, PublishSource.CROWN))
                 .thenReturn(Optional.of(existing));
         when(repository.save(existing)).thenReturn(existing);
 
@@ -90,10 +92,13 @@ class CrownCourtListPublishServiceTest {
 
     @Test
     void acceptsEveryListTypeThatMapsToACrownSchema() {
-        when(repository.findByCourtCentreIdAndPublishDateAndCourtListType(any(), any(), any())).thenReturn(Optional.empty());
+        when(repository.findByCourtCentreIdAndPublishDateAndCourtListTypeAndPublishSource(any(), any(), any(), any())).thenReturn(Optional.empty());
         when(repository.save(any(CourtListStatusEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        for (final CourtListType type : new CourtListType[] {CourtListType.DRAFT, CourtListType.FINAL, CourtListType.WARN, CourtListType.FIRM}) {
+        for (final CourtListType type : new CourtListType[] {CourtListType.DRAFT, CourtListType.FINAL}) {
+            assertThat(service.publish(COURT_CENTRE_ID, type, START, START, USER_ID).getCourtListType()).isEqualTo(type);
+        }
+        for (final CourtListType type : new CourtListType[] {CourtListType.WARN, CourtListType.FIRM}) {
             assertThat(service.publish(COURT_CENTRE_ID, type, START, END, USER_ID).getCourtListType()).isEqualTo(type);
         }
     }
@@ -113,8 +118,8 @@ class CrownCourtListPublishServiceTest {
         assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.FINAL, null, END, USER_ID), "Start date and end date are required");
         assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.FINAL, START, null, USER_ID), "Start date and end date are required");
         assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.FINAL, END, START, USER_ID), "End date must not be before start date");
-        assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.FINAL, START, END, null), "CJSCPPUID header is required");
-        assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.FINAL, START, END, " "), "CJSCPPUID header is required");
+        assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.FINAL, START, END, USER_ID), "must be the same for a daily list");
+        assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.DRAFT, START, END, USER_ID), "must be the same for a daily list");
         verifyNoInteractions(taskTriggerService);
         verify(repository, never()).save(any());
     }

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CrownListTransformationServiceTest {
 
@@ -254,7 +255,17 @@ class CrownListTransformationServiceTest {
         assertThat(fixedDates).containsExactlyInAnyOrder("2026-11-02", "2026-11-02", "2026-11-03");
 
         final List<String> floating = caseNumbers(courtList.path("WithoutFixedDate"));
-        assertThat(floating).containsExactlyInAnyOrder("T20260003", "35WX6068590");
+        assertThat(floating).containsExactlyInAnyOrder("T20260003", "T20260004");
+    }
+
+    @Test
+    void advanceListKeepsCommonPlatformUrnsAsCaseNumbers() throws IOException {
+        final JsonNode urnPayload = MAPPER.readTree(payload.toString().replace("T20260004", "35WX6068590"));
+
+        final JsonNode courtList = MAPPER.readTree(service.transform(CrownListType.ADVANCE, urnPayload, courtCentre, START, END))
+                .path(CrownListType.ADVANCE.rootElement()).path("CourtLists").get(0);
+
+        assertThat(caseNumbers(courtList.path("WithoutFixedDate"))).contains("35WX6068590");
     }
 
     @Test
@@ -274,10 +285,10 @@ class CrownListTransformationServiceTest {
     }
 
     @Test
-    void advanceListUsesTheWeekStartAsTheHearingDateForCasesWithoutAFixedDate() throws IOException {
+    void advanceListHasNoHearingDateForCasesWithoutAFixedDate() throws IOException {
         final JsonNode theCase = findCase(list(CrownListType.ADVANCE).path("CourtLists").get(0).path("WithoutFixedDate"), "T20260003");
 
-        assertThat(theCase.path("Hearing").get(0).path("HearingDate").asText()).isEqualTo("2026-11-02");
+        assertThat(theCase.path("Hearing").get(0).has("HearingDate")).isFalse();
     }
 
     // ---- firm list ---------------------------------------------------------------------------------------------
@@ -309,14 +320,34 @@ class CrownListTransformationServiceTest {
     }
 
     @Test
-    void firmReserveListHoldsWeekCommencingHearingsWhoseCaseNumberTheSchemaAccepts() throws IOException {
+    void firmReserveListHoldsTheWeekCommencingHearings() throws IOException {
         final JsonNode reserveList = list(CrownListType.FIRM).path("ReserveList");
 
-        assertThat(reserveList).hasSize(1);
+        assertThat(reserveList).hasSize(2);
         assertThat(reserveList.get(0).path("CaseNumber").asText()).isEqualTo("T20260003");
         assertThat(reserveList.get(0).path("CaseNumberCaTH").asText()).isEqualTo("T20260003");
         assertThat(reserveList.get(0).path("Defendants").get(0).path("URN").asText()).isEqualTo("T20260003");
-        assertThat(reserveList.toString()).doesNotContain("35WX6068590");
+        assertThat(reserveList.get(1).path("CaseNumber").asText()).isEqualTo("T20260004");
+    }
+
+    @Test
+    void firmListFailsInsteadOfDroppingAReserveHearingWhoseCaseNumberTheSchemaDoesNotAccept() throws IOException {
+        final JsonNode urnPayload = MAPPER.readTree(payload.toString().replace("T20260004", "35WX6068590"));
+
+        assertThatThrownBy(() -> service.transform(CrownListType.FIRM, urnPayload, courtCentre, START, END))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("1 reserve list hearing(s)")
+                .hasMessageContaining("so the list was not published");
+    }
+
+    @Test
+    void custodyStatusTreatsRemandedIntoTheCareOfAsCare() throws IOException {
+        final JsonNode careList = MAPPER.readTree(payload.toString()
+                .replace("Custody or remanded into custody", "Remanded into the care of the local authority"));
+
+        final String advance = service.transform(CrownListType.ADVANCE, careList, courtCentre, START, END);
+
+        assertThat(advance).contains("\"In care\"").doesNotContain("\"On remand\"");
     }
 
     // ---- helpers -----------------------------------------------------------------------------------------------

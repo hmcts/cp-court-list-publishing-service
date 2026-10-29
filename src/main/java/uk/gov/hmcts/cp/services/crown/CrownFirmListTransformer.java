@@ -89,8 +89,9 @@ public class CrownFirmListTransformer extends AbstractCrownListTransformer {
         });
 
         if (skippedReserveEntries[0] > 0) {
-            LOG.warn("{} reserve list hearing(s) were left out because their case number does not have the shape the "
-                    + "firm list schema requires for reserve list cases", skippedReserveEntries[0]);
+            throw new IllegalStateException(skippedReserveEntries[0] + " reserve list hearing(s) have a case number the firm "
+                    + "list schema does not accept (" + RESERVE_CASE_NUMBER.pattern() + "), so the list was not published "
+                    + "rather than sent without them");
         }
 
         courtLists.sort(Comparator.<DatedCourtList, LocalDate>comparing(c -> c.date).thenComparingInt(c -> c.site));

@@ -448,11 +448,12 @@ abstract class AbstractCrownListTransformer implements CrownListTransformer {
         if (description.contains("bail")) {
             return "On bail";
         }
-        if (description.contains("remand")) {
-            return "On remand";
-        }
+        // "remanded into the care of ..." is care, so this is checked before remand
         if (description.contains("care")) {
             return "In care";
+        }
+        if (description.contains("remand")) {
+            return "On remand";
         }
         return "Not applicable";
     }
