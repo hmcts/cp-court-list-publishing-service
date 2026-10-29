@@ -175,12 +175,20 @@ abstract class AbstractCrownListTransformer implements CrownListTransformer {
     protected List<JsonNode> visibleHearings(final JsonNode sitting) {
         final List<JsonNode> hearings = new ArrayList<>();
         sitting.path("hearings").forEach(hearing -> {
-            if (!bool(hearing, "restrictFromCourtList")) {
+            if (!restricted(hearing)) {
                 hearings.add(hearing);
             }
         });
         hearings.sort(Comparator.comparing(hearing -> startTime(hearing) == null ? LocalDateTime.MAX : startTime(hearing)));
         return hearings;
+    }
+
+    /**
+     * Whether the court has restricted the hearing, defendant, respondent or offence from the list. The Crown payload
+     * carries restrictFromCourtList; shadowListed is honoured as well, should the listing context send it.
+     */
+    protected boolean restricted(final JsonNode node) {
+        return bool(node, "restrictFromCourtList") || bool(node, "shadowListed");
     }
 
     protected int courtRoomNumber(final JsonNode sitting) {
@@ -308,7 +316,7 @@ abstract class AbstractCrownListTransformer implements CrownListTransformer {
     protected ArrayNode respondents(final JsonNode hearing) {
         final ArrayNode node = MAPPER.createArrayNode();
         hearing.path("respondents").forEach(respondent -> {
-            if (!bool(respondent, "restrictFromCourtList")) {
+            if (!restricted(respondent)) {
                 final String name = (orEmpty(text(respondent, "firstName")) + " " + orEmpty(text(respondent, "lastName"))).trim();
                 if (!name.isEmpty()) {
                     node.add(name);
@@ -342,6 +350,10 @@ abstract class AbstractCrownListTransformer implements CrownListTransformer {
         final ObjectNode node = MAPPER.createObjectNode();
         node.set("PersonalDetails", personalDetails(defendant, ageAt));
         node.put("URN", caseNumber(hearing));
+        // a masked defendant is anonymised: only the masked name and URN go out, no custody status, counsel or charges
+        if (restricted(defendant)) {
+            return node;
+        }
         if (withCustodyStatus) {
             putIfPresent(node, "CustodyStatus", custodyStatus(defendant.path("bailStatus")));
         }
@@ -365,7 +377,7 @@ abstract class AbstractCrownListTransformer implements CrownListTransformer {
     /** Name and masking only: what a reserve list entry carries for a defendant. */
     protected ObjectNode defendantNameOnly(final JsonNode defendant, final JsonNode hearing) {
         final ObjectNode details = MAPPER.createObjectNode();
-        final boolean masked = bool(defendant, "restrictFromCourtList");
+        final boolean masked = restricted(defendant);
         details.set("Name", defendantName(defendant, masked));
         if (masked) {
             details.put("MaskedName", MASK);
@@ -378,7 +390,7 @@ abstract class AbstractCrownListTransformer implements CrownListTransformer {
     }
 
     private ObjectNode personalDetails(final JsonNode defendant, final LocalDate ageAt) {
-        final boolean masked = bool(defendant, "restrictFromCourtList");
+        final boolean masked = restricted(defendant);
         final ObjectNode details = MAPPER.createObjectNode();
         details.set("Name", defendantName(defendant, masked));
         if (masked) {
@@ -419,7 +431,7 @@ abstract class AbstractCrownListTransformer implements CrownListTransformer {
     private ArrayNode charges(final JsonNode defendant) {
         final ArrayNode charges = MAPPER.createArrayNode();
         defendant.path("offences").forEach(offence -> {
-            if (bool(offence, "restrictFromCourtList")) {
+            if (restricted(offence)) {
                 return;
             }
             final ObjectNode charge = MAPPER.createObjectNode();

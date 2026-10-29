@@ -65,7 +65,7 @@ public class CrownCourtListPublishService {
             throw badRequest("Court list type is required");
         }
         if (!CrownListType.isSupported(courtListType)) {
-            throw badRequest("Court list type " + courtListType + " cannot be published as a Crown list; use DRAFT or FINAL "
+            throw badRequest("Court list type " + courtListType + " cannot be published as a Crown list; use FINAL "
                     + "(daily list), WARN (advance list) or FIRM (firm list)");
         }
         if (startDate == null || endDate == null) {
@@ -75,7 +75,7 @@ public class CrownCourtListPublishService {
             throw badRequest("End date must not be before start date");
         }
         if (CrownListType.from(courtListType) == CrownListType.DAILY && !startDate.equals(endDate)) {
-            throw badRequest("Start date and end date must be the same for a daily list (DRAFT or FINAL)");
+            throw badRequest("Start date and end date must be the same for a daily list (FINAL)");
         }
     }
 

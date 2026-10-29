@@ -39,6 +39,8 @@ public class CrownPublishTask implements ExecutableTask {
 
     public static final String TASK_NAME = "CROWN_PUBLISH_TASK";
 
+    private static final String CROWN_COURT_CODE = "C";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CrownPublishTask.class);
 
     private final CourtListStatusUpdater statusUpdater;
@@ -74,6 +76,10 @@ public class CrownPublishTask implements ExecutableTask {
 
         if (!cathPublishingEnabled) {
             LOGGER.debug("CaTH publishing is disabled (CATH_PUBLISHING_ENABLED=false), skipping the Crown publish");
+            if (courtListId != null) {
+                statusUpdater.markPublishFailed(courtListId, new IllegalStateException(
+                        "CaTH publishing is disabled (cath.publishing-enabled=false); the Crown list was not sent"));
+            }
             return completed(executionInfo);
         }
 
@@ -102,16 +108,32 @@ public class CrownPublishTask implements ExecutableTask {
         final String payloadJson = courtListDataService.getCrownListPayload(courtListType, courtCentreId, startDate, endDate, userId);
         final JsonNode payload = ObjectMapperConfig.getObjectMapper().readTree(payloadJson);
 
-        final CourtCentreData courtCentre = referenceDataService.getCourtCenterDataByCourtCentreId(courtCentreId, userId).orElse(null);
-        if (courtCentre == null) {
-            LOGGER.warn("No reference data for court centre {}; the court name, address and numeric id come from the listing payload", courtCentreId);
+        final CourtCentreData courtCentre = referenceDataService.getCourtCenterDataByCourtCentreId(courtCentreId, userId)
+                .orElseThrow(() -> new IllegalStateException("No reference data for court centre " + courtCentreId
+                        + "; cannot confirm it is a Crown court"));
+        if (!CROWN_COURT_CODE.equalsIgnoreCase(courtCentre.getOucodeL1Code())) {
+            throw new IllegalStateException("Court centre " + courtCentreId + " is not a Crown court (oucodeL1Code="
+                    + courtCentre.getOucodeL1Code() + "); it cannot be published as a Crown list");
         }
 
         final String document = transformationService.transform(crownListType, payload, courtCentre, startDate, endDate);
         schemaValidator.validate(document, crownListType.schema());
 
         cathService.sendCrownListToCaTH(document, crownListType, startDate, endDate,
-                courtCentre == null ? null : courtCentre.getCourtIdNumeric(), courtListId);
+                courtId(courtCentre, payload, courtCentreId), courtListId);
+    }
+
+    /** The numeric court id from reference data, else the one in the listing payload; the publish fails if neither has it. */
+    private static String courtId(final CourtCentreData courtCentre, final JsonNode payload, final String courtCentreId) {
+        final JsonNode site = payload.path("courtLists").path(0).path("crestCourtSite");
+        for (final String candidate : new String[] {courtCentre.getCourtIdNumeric(),
+                site.path("crestCourtSiteId").asText(null), site.path("crestCourtId").asText(null)}) {
+            if (candidate != null && !candidate.isBlank()) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("No numeric court id for court centre " + courtCentreId
+                + " in reference data or the listing payload");
     }
 
     private static ExecutionInfo completed(final ExecutionInfo executionInfo) {

@@ -10,8 +10,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CrownListTypeTest {
 
     @Test
-    void draftAndFinalSelectTheDailyList() {
-        assertThat(CrownListType.from(CourtListType.DRAFT)).isEqualTo(CrownListType.DAILY);
+    void finalSelectsTheDailyList() {
         assertThat(CrownListType.from(CourtListType.FINAL)).isEqualTo(CrownListType.DAILY);
     }
 
@@ -24,7 +23,7 @@ class CrownListTypeTest {
     @Test
     void everyOtherCourtListTypeIsRejected() {
         for (final CourtListType type : CourtListType.values()) {
-            if (type == CourtListType.DRAFT || type == CourtListType.FINAL || type == CourtListType.WARN || type == CourtListType.FIRM) {
+            if (type == CourtListType.FINAL || type == CourtListType.WARN || type == CourtListType.FIRM) {
                 assertThat(CrownListType.isSupported(type)).as(type.name()).isTrue();
             } else {
                 assertThat(CrownListType.isSupported(type)).as(type.name()).isFalse();

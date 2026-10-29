@@ -236,6 +236,19 @@ class CrownListTransformationServiceTest {
     }
 
     @Test
+    void aMaskedDefendantCarriesNoChargesCustodyStatusOrCounsel() throws IOException {
+        for (final CrownListType type : CrownListType.values()) {
+            final String json = list(type).toString();
+            assertThat(json).as(type.name()).doesNotContain("Hidden");
+        }
+        final JsonNode defendant = list(CrownListType.DAILY).path("CourtLists").get(0).path("Sittings").get(2)
+                .path("Hearings").get(1).path("Defendants").get(1);
+        assertThat(defendant.has("Charges")).isFalse();
+        assertThat(defendant.has("CustodyStatus")).isFalse();
+        assertThat(defendant.has("Counsel")).isFalse();
+    }
+
+    @Test
     void anApplicationHearingUsesTheApplicationReferenceAndListsRespondents() throws IOException {
         final JsonNode hearing = list(CrownListType.DAILY).path("CourtLists").get(0).path("Sittings").get(1).path("Hearings").get(0);
 

@@ -83,7 +83,6 @@ class CrownPublishTaskTest {
     @Test
     void publishesEachListTypeAsItsCrownSchemaAndRecordsSuccess() {
         for (final Object[] row : new Object[][] {
-                {CourtListType.DRAFT, CrownListType.DAILY, "DailyList"},
                 {CourtListType.FINAL, CrownListType.DAILY, "DailyList"},
                 {CourtListType.WARN, CrownListType.ADVANCE, "WarnedList"},
                 {CourtListType.FIRM, CrownListType.FIRM, "FirmList"}}) {
@@ -113,13 +112,37 @@ class CrownPublishTaskTest {
     }
 
     @Test
-    void stillPublishesWhenReferenceDataForTheCourtCentreIsNotAvailable() {
+    void failsWhenThereIsNoReferenceDataForTheCourtCentre() {
         when(courtListDataService.getCrownListPayload(any(), anyString(), any(), any(), any())).thenReturn(payload);
         when(referenceDataService.getCourtCenterDataByCourtCentreId(anyString(), any())).thenReturn(Optional.empty());
 
         task.execute(info(CourtListType.FINAL));
 
-        verify(cathService).sendCrownListToCaTH(anyString(), eq(CrownListType.DAILY), eq(START), eq(END), eq(null), eq(COURT_LIST_ID));
+        verifyNoInteractions(cathService);
+        verify(statusUpdater).markPublishFailed(eq(COURT_LIST_ID), any(IllegalStateException.class));
+    }
+
+    @Test
+    void failsWhenTheCourtCentreIsNotACrownCourt() {
+        when(courtListDataService.getCrownListPayload(any(), anyString(), any(), any(), any())).thenReturn(payload);
+        when(referenceDataService.getCourtCenterDataByCourtCentreId(anyString(), any())).thenReturn(Optional.of(
+                CourtCentreData.builder().oucodeL1Code("B").courtIdNumeric("100").build()));
+
+        task.execute(info(CourtListType.FINAL));
+
+        verifyNoInteractions(cathService);
+        verify(statusUpdater).markPublishFailed(eq(COURT_LIST_ID), any(IllegalStateException.class));
+    }
+
+    @Test
+    void fallsBackToThePayloadCourtIdWhenReferenceDataHasNone() {
+        when(courtListDataService.getCrownListPayload(any(), anyString(), any(), any(), any())).thenReturn(payload);
+        when(referenceDataService.getCourtCenterDataByCourtCentreId(anyString(), any())).thenReturn(Optional.of(
+                CourtCentreData.builder().oucodeL1Code("C").build()));
+
+        task.execute(info(CourtListType.FINAL));
+
+        verify(cathService).sendCrownListToCaTH(anyString(), eq(CrownListType.DAILY), eq(START), eq(END), eq("101"), eq(COURT_LIST_ID));
         verify(statusUpdater).markPublishSuccessful(COURT_LIST_ID);
     }
 
@@ -177,20 +200,21 @@ class CrownPublishTaskTest {
     }
 
     @Test
-    void doesNothingWhenCaThPublishingIsDisabled() {
+    void recordsAFailureWithoutPublishingWhenCaThPublishingIsDisabled() {
         task = new CrownPublishTask(statusUpdater, courtListDataService, referenceDataService, transformationService,
                 schemaValidator, cathService, false);
 
         final ExecutionInfo result = task.execute(info(CourtListType.FINAL));
 
         assertThat(result.getExecutionStatus()).isEqualTo(ExecutionStatus.COMPLETED);
-        verifyNoInteractions(courtListDataService, referenceDataService, cathService, statusUpdater);
+        verifyNoInteractions(courtListDataService, referenceDataService, cathService);
+        verify(statusUpdater).markPublishFailed(eq(COURT_LIST_ID), any(IllegalStateException.class));
     }
 
     private void stubListingAndReferenceData(final CourtListType courtListType) {
         when(courtListDataService.getCrownListPayload(eq(courtListType), anyString(), any(), any(), any())).thenReturn(payload);
         when(referenceDataService.getCourtCenterDataByCourtCentreId(anyString(), any())).thenReturn(Optional.of(
-                CourtCentreData.builder().oucodeL3Name("Example Crown Court").courtIdNumeric("100").build()));
+                CourtCentreData.builder().oucodeL1Code("C").oucodeL3Name("Example Crown Court").courtIdNumeric("100").build()));
     }
 
     private static ExecutionInfo info(final CourtListType courtListType) {

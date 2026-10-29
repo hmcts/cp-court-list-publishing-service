@@ -46,16 +46,16 @@ class CourtListDataServiceCrownTest {
     }
 
     @Test
-    void asksTheDailyListResourceForTheCrownMediaTypeWithDatesForDraftAndFinal() {
+    void asksTheDailyListResourceForTheCrownMediaTypeWithDatesForFinal() {
         stubResponse("{}");
 
-        service.getCrownListPayload(CourtListType.DRAFT, COURT_CENTRE_ID, START, START, "user-1");
+        service.getCrownListPayload(CourtListType.FINAL, COURT_CENTRE_ID, START, START, "user-1");
 
         final ArgumentCaptor<String> url = ArgumentCaptor.forClass(String.class);
         final ArgumentCaptor<HttpEntity> request = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).exchange(url.capture(), eq(HttpMethod.GET), request.capture(), eq(String.class));
         assertThat(url.getValue()).startsWith(BASE_URL + "/listing-service/query/api/rest/listing/dailylistpayload?")
-                .contains("publishCourtListType=DRAFT")
+                .contains("publishCourtListType=FINAL")
                 .contains("courtCentreId=" + COURT_CENTRE_ID)
                 .contains("startDate=2026-11-02")
                 .contains("endDate=2026-11-02")

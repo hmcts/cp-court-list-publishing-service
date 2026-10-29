@@ -29,7 +29,7 @@ public enum CrownListType {
     }
 
     /**
-     * DRAFT and FINAL select the daily list, WARN the advance list and FIRM the firm list.
+     * FINAL selects the daily list (a DRAFT is never published to CaTH), WARN the advance list and FIRM the firm list.
      *
      * @throws IllegalArgumentException for any other list type
      */
@@ -38,7 +38,6 @@ public enum CrownListType {
             throw new IllegalArgumentException("courtListType is required");
         }
         switch (courtListType) {
-            case DRAFT:
             case FINAL:
                 return DAILY;
             case WARN:
@@ -47,12 +46,12 @@ public enum CrownListType {
                 return FIRM;
             default:
                 throw new IllegalArgumentException("Unsupported court list type for a Crown list: " + courtListType
-                        + " (supported: DRAFT, FINAL, WARN, FIRM)");
+                        + " (supported: FINAL, WARN, FIRM)");
         }
     }
 
     public static boolean isSupported(final CourtListType courtListType) {
-        return courtListType == CourtListType.DRAFT || courtListType == CourtListType.FINAL
+        return courtListType == CourtListType.FINAL
                 || courtListType == CourtListType.WARN || courtListType == CourtListType.FIRM;
     }
 

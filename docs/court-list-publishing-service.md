@@ -563,7 +563,7 @@ flowchart TD
 
 ---
 
-### 4.6 Crown publish (DRAFT / FINAL / WARN / FIRM)
+### 4.6 Crown publish (FINAL / WARN / FIRM)
 
 Publishes a **Crown court** list to CaTH in the format of one of three HMCTS schemas
 (`crown_daily_list`, `crown_advance_list`, `crown_firm_list`, copied from
@@ -574,11 +574,11 @@ Publishes a **Crown court** list to CaTH in the format of one of three HMCTS sch
 
 | `courtListType` | Crown list | JSON root | CaTH `x-list-type` | Listing query |
 |---|---|---|---|---|
-| `DRAFT`, `FINAL` | Daily | `DailyList` | `CROWN_DAILY_LIST` | `startDate` / `endDate` |
+| `FINAL` | Daily | `DailyList` | `CROWN_DAILY_LIST` | `startDate` / `endDate` |
 | `WARN` | Advance | `WarnedList` | `CROWN_ADVANCE_LIST` | `weekCommencingStartDate` / `weekCommencingEndDate` |
 | `FIRM` | Firm | `FirmList` | `CROWN_FIRM_LIST` | `weekCommencingStartDate` / `weekCommencingEndDate` |
 
-Any other `courtListType` is rejected with `400`. Unlike the standard publish, `startDate` and `endDate` may differ
+Any other `courtListType` (including `DRAFT`, which is never sent to CaTH) is rejected with `400`. The task fails the publish, recording `FAILED` on the row, when the court centre is not a Crown court (`oucodeL1Code` ≠ `C`), has no reference data, or has no numeric court id in reference data or the payload; it also records `FAILED` when `cath.publishing-enabled=false`, so the row never stays `REQUESTED`. Restricted (`restrictFromCourtList` or `shadowListed`) hearings are dropped; a masked defendant carries only the masked name and URN, with no charges, custody status or counsel. Unlike the standard publish, `startDate` and `endDate` may differ
 (a week for WARN and FIRM); the status row is keyed on the start date. There is no PDF, so the row's file status is
 null, as it is for SJP.
 

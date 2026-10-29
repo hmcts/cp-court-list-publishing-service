@@ -95,7 +95,7 @@ class CrownCourtListPublishServiceTest {
         when(repository.findByCourtCentreIdAndPublishDateAndCourtListTypeAndPublishSource(any(), any(), any(), any())).thenReturn(Optional.empty());
         when(repository.save(any(CourtListStatusEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        for (final CourtListType type : new CourtListType[] {CourtListType.DRAFT, CourtListType.FINAL}) {
+        for (final CourtListType type : new CourtListType[] {CourtListType.FINAL}) {
             assertThat(service.publish(COURT_CENTRE_ID, type, START, START, USER_ID).getCourtListType()).isEqualTo(type);
         }
         for (final CourtListType type : new CourtListType[] {CourtListType.WARN, CourtListType.FIRM}) {
@@ -106,7 +106,8 @@ class CrownCourtListPublishServiceTest {
     @Test
     void rejectsACourtListTypeThatHasNoCrownSchema() {
         assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.STANDARD, START, END, USER_ID), "cannot be published as a Crown list");
-        assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.ONLINE_PUBLIC, START, END, USER_ID), "DRAFT or FINAL");
+        assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.ONLINE_PUBLIC, START, END, USER_ID), "cannot be published as a Crown list");
+        assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.DRAFT, START, START, USER_ID), "use FINAL");
         verifyNoInteractions(taskTriggerService);
         verify(repository, never()).save(any());
     }
@@ -119,7 +120,6 @@ class CrownCourtListPublishServiceTest {
         assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.FINAL, START, null, USER_ID), "Start date and end date are required");
         assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.FINAL, END, START, USER_ID), "End date must not be before start date");
         assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.FINAL, START, END, USER_ID), "must be the same for a daily list");
-        assertBadRequest(() -> service.publish(COURT_CENTRE_ID, CourtListType.DRAFT, START, END, USER_ID), "must be the same for a daily list");
         verifyNoInteractions(taskTriggerService);
         verify(repository, never()).save(any());
     }

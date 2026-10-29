@@ -12,7 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Builds the {@code crown_daily_list} document ({@code DailyList}) for DRAFT and FINAL lists: one court list per
+ * Builds the {@code crown_daily_list} document ({@code DailyList}) for FINAL lists: one court list per
  * court site, each with its sittings (a court room, a judge and the hearings in start time order).
  */
 @Component

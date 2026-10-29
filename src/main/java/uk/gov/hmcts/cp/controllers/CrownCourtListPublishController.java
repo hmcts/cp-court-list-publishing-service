@@ -1,5 +1,7 @@
 package uk.gov.hmcts.cp.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -17,7 +19,7 @@ import uk.gov.hmcts.cp.services.crown.CrownCourtListPublishService;
 
 /**
  * Publishes a Crown court list to CaTH in one of the Crown schemas. The schema is chosen by the court list type:
- * DRAFT and FINAL publish the daily list, WARN the advance list and FIRM the firm list.
+ * FINAL publishes the daily list; a DRAFT is not published to CaTH, WARN the advance list and FIRM the firm list.
  * <p>
  * The media type names the action for the authorization rules (courtlistpublishing-service.crown.post).
  */
@@ -35,6 +37,11 @@ public class CrownCourtListPublishController {
         this.service = service;
     }
 
+    @Operation(summary = "Publish a Crown court list to CaTH",
+            description = "Accepts a request to publish the FINAL daily, WARN advance or FIRM firm list of a Crown court centre to CaTH. "
+                    + "The work runs asynchronously; poll the court list publish status for the outcome.")
+    @ApiResponse(responseCode = "200", description = "Publish request accepted")
+    @ApiResponse(responseCode = "400", description = "Invalid request, or a list type that cannot be published as a Crown list")
     @PostMapping(path = PATH, consumes = MEDIA_TYPE, produces = MEDIA_TYPE)
     public ResponseEntity<CourtListPublishResponse> publishCrownCourtList(
             @RequestBody final CourtListPublishRequest request,

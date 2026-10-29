@@ -32,14 +32,11 @@ public class CrownCaTHPublishingIntegrationTest extends CourtListIntegrationTest
     private static final MediaType CROWN_MEDIA_TYPE = new MediaType("application", "vnd.courtlistpublishing-service.crown.post+json");
 
     @Test
-    void draftIsPublishedToCaThAsTheCrownDailyCrownList() throws Exception {
-        publishAndVerify("DRAFT", "2026-11-02", "2026-11-02", "CROWN_DAILY_LIST", "DailyList", "DL");
-    }
-
-    @Test
     void finalIsPublishedToCaThAsTheCrownDailyCrownList() throws Exception {
         publishAndVerify("FINAL", "2026-11-02", "2026-11-02", "CROWN_DAILY_LIST", "DailyList", "DL");
     }
+
+    private static final UUID CROWN_COURT_CENTRE_ID = UUID.fromString("cc000000-0000-0000-0000-000000000001");
 
     @Test
     void warnIsPublishedToCaThAsTheCrownAdvanceCrownList() throws Exception {
@@ -62,7 +59,7 @@ public class CrownCaTHPublishingIntegrationTest extends CourtListIntegrationTest
                                   final String cathListType, final String rootElement, final String documentType) throws Exception {
         final int before = findCaTHRequests(cathListType).size();
 
-        final ResponseEntity<String> response = postCrown(UUID.randomUUID(), courtListType, startDate, endDate);
+        final ResponseEntity<String> response = postCrown(CROWN_COURT_CENTRE_ID, courtListType, startDate, endDate);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         final JsonNode accepted = parseResponse(response);
@@ -77,8 +74,8 @@ public class CrownCaTHPublishingIntegrationTest extends CourtListIntegrationTest
         assertThat(header(cathRequest, "x-list-type")).isEqualTo(cathListType);
         assertThat(header(cathRequest, "x-sensitivity")).isEqualTo("CLASSIFIED");
         assertThat(header(cathRequest, "x-language")).isEqualTo("ENGLISH");
-        // the court id and name come from the reference data stub (referencedata-ou-courtrooms-by-courtcentreid.json)
-        assertThat(header(cathRequest, "x-court-id")).isEqualTo("415");
+        // the court id and name come from the reference data stub (referencedata-ou-courtrooms-crown.json)
+        assertThat(header(cathRequest, "x-court-id")).isEqualTo("001");
         assertThat(header(cathRequest, "x-content-date")).startsWith(startDate);
         assertThat(header(cathRequest, "x-display-to")).startsWith(endDate);
 
@@ -88,8 +85,8 @@ public class CrownCaTHPublishingIntegrationTest extends CourtListIntegrationTest
         assertThat(list.path("DocumentID").path("DocumentType").asText()).isEqualTo(documentType);
         assertThat(list.path("ListHeader").path("StartDate").asText()).isEqualTo(startDate);
         assertThat(list.path("ListHeader").path("EndDate").asText()).isEqualTo(endDate);
-        assertThat(list.path("CrownCourt").path("CourtHouseName").asText()).isEqualTo("Test Court");
-        assertThat(list.path("CrownCourt").path("CourtHouseCode").asInt()).isEqualTo(415);
+        assertThat(list.path("CrownCourt").path("CourtHouseName").asText()).isEqualTo("Test Crown Court");
+        assertThat(list.path("CrownCourt").path("CourtHouseCode").asInt()).isEqualTo(1);
         assertThat(list.path("CourtLists")).isNotEmpty();
     }
 
