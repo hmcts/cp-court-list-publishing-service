@@ -19,8 +19,9 @@ import lombok.Setter;
 import static jakarta.persistence.EnumType.STRING;
 
 /**
- * Shared by the standard/online-public court list flow and the SJP flow. A repeat publish for
- * the same key overwrites the existing row (via {@code lastUpdated}) — no content dedup.
+ * Shared by the standard/online-public court list flow, the SJP flow and the Crown flow. A repeat publish for
+ * the same key (which includes {@link #publishSource}) overwrites the existing row (via {@code lastUpdated}) — no
+ * content dedup.
  */
 @Getter
 @Entity
@@ -41,7 +42,7 @@ public class CourtListStatusEntity {
     @Column(name = "publish_status", nullable = false)
     private Status publishStatus;
 
-    /** NULL for SJP (no file is produced). */
+    /** NULL for SJP and Crown rows (no file is produced). */
     @Enumerated(STRING)
     @Setter
     @Column(name = "file_status")
@@ -80,6 +81,11 @@ public class CourtListStatusEntity {
     @Setter
     @Column(name = "publish_count", nullable = false)
     private int publishCount;
+
+    @Enumerated(STRING)
+    @Setter
+    @Column(name = "publish_source", nullable = false)
+    private PublishSource publishSource = PublishSource.STANDARD;
 
     protected CourtListStatusEntity() {
     }

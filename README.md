@@ -7,6 +7,7 @@
 - generates PDFs and stores them in Azure Blob Storage;
 - produces on-demand PDF and Word downloads;
 - publishes national Single Justice Procedure (SJP) lists;
+- publishes Crown court daily, advance and firm lists to CaTH in the HMCTS Crown formats;
 - tracks the publish and file status of every list.
 
 | | |

@@ -14,6 +14,15 @@ then
   $o.setSuccess(true);
 end
 
+rule "Allow – crown court list publish (same permission as publish-court-list)"
+when
+  $o: Outcome()
+  $a: Action(name == "courtlistpublishing-service.crown.post")
+  eval(userAndGroupProvider.hasPermission($a, PermissionConstants.accessToPublishCourtListPermissions()))
+then
+  $o.setSuccess(true);
+end
+
 rule "Allow – sjp publish (System Users only)"
 when
   $o: Outcome()

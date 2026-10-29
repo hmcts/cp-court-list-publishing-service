@@ -3,6 +3,7 @@ package uk.gov.hmcts.cp.repositories;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
+import uk.gov.hmcts.cp.domain.PublishSource;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 
@@ -558,5 +559,32 @@ class CourtListStatusRepositoryTest {
 
         // Then
         assertThat(foundEntities).isEmpty();
+    }
+
+    @Test
+    void crownAndStandardRowsForTheSameKeyAreSeparate() {
+        final UUID courtCentreId = UUID.randomUUID();
+        final LocalDate publishDate = LocalDate.of(2026, 11, 2);
+        final CourtListStatusEntity standard = new CourtListStatusEntity(
+                UUID.randomUUID(), courtCentreId, Status.REQUESTED, Status.REQUESTED, CourtListType.FINAL, Instant.now());
+        standard.setPublishDate(publishDate);
+        final CourtListStatusEntity crown = new CourtListStatusEntity(
+                UUID.randomUUID(), courtCentreId, Status.REQUESTED, null, CourtListType.FINAL, Instant.now());
+        crown.setPublishDate(publishDate);
+        crown.setPublishSource(PublishSource.CROWN);
+
+        repository.saveAndFlush(standard);
+        repository.saveAndFlush(crown);
+        entityManager.clear();
+
+        assertThat(repository.findByCourtCentreIdAndPublishDateAndCourtListType(courtCentreId, publishDate, CourtListType.FINAL))
+                .map(CourtListStatusEntity::getCourtListId).contains(standard.getCourtListId());
+        assertThat(repository.findByCourtCentreIdAndPublishDateAndCourtListTypeAndPublishSource(
+                courtCentreId, publishDate, CourtListType.FINAL, PublishSource.CROWN))
+                .map(CourtListStatusEntity::getCourtListId).contains(crown.getCourtListId());
+        assertThat(repository.findByCourtCentreIdAndPublishDate(courtCentreId, publishDate))
+                .extracting(CourtListStatusEntity::getCourtListId).containsExactly(standard.getCourtListId());
+        assertThat(repository.findByCourtCentreIdIsNotNull())
+                .extracting(CourtListStatusEntity::getCourtListId).containsExactly(standard.getCourtListId());
     }
 }

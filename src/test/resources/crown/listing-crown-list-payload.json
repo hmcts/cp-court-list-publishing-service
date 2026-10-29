@@ -1,0 +1,169 @@
+{
+  "courtCentreId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "weekCommencingStartDate": "2026-11-02",
+  "weekCommencingEndDate": "2026-11-08",
+  "publishedAt": "2026-10-30",
+  "documentType": "FINAL",
+  "isWelsh": false,
+  "courtCentreName": "Example Crown Court",
+  "courtLists": [
+    {
+      "crestCourtSite": {
+        "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+        "crestCourtId": "100",
+        "crestCourtSiteId": "101",
+        "crestCourtSiteName": "Example Crown Court",
+        "crestCourtShortName": "Example",
+        "crestCourtSiteCode": "EX01",
+        "courtType": "CROWN",
+        "courtCentreAddress1": "1 Example Street",
+        "courtCentreAddress2": "Exampleton",
+        "courtCentreAddress3": "Exampleshire",
+        "courtCentrePostcode": "EX1 1AA"
+      },
+      "sittings": [
+        {
+          "sittingDate": "2026-11-02",
+          "courtRoomId": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+          "courtRoomName": "Court Room 2",
+          "weekCommencing": false,
+          "sittingNote": "Court 2 sits late",
+          "judiciary": [
+            {
+              "isBenchChairman": true,
+              "isDeputy": false,
+              "judicialId": "d4e5f6a7-b8c9-0123-defa-234567890123",
+              "judiciaryName": "His Honour Judge Example KC",
+              "judiciaryTitle": "His Honour Judge",
+              "judiciaryForenames": "Mark J",
+              "judiciarySurname": "Example",
+              "judiciaryTitleSuffix": "KC"
+            },
+            {
+              "isBenchChairman": false,
+              "isDeputy": true,
+              "judicialId": "e4e5f6a7-b8c9-0123-defa-234567890124",
+              "judiciaryName": "Mr Test Justice",
+              "judiciaryTitle": "Mr",
+              "judiciaryForenames": "Test",
+              "judiciarySurname": "Justice"
+            }
+          ],
+          "hearings": [
+            {
+              "startTime": "2026-11-02T14:30",
+              "endTime": "2026-11-04T16:00",
+              "hearingType": { "id": "e5f6a7b8-c9d0-1234-efab-345678901234", "description": "Trial" },
+              "restrictFromCourtList": false,
+              "weekCommencing": false,
+              "publicListNote": "Interpreter required",
+              "caseIdentifier": { "caseReference": "T20260001", "authorityCode": "CPS" },
+              "prosecutor": { "organisationName": "Crown Prosecution Service" },
+              "linkedCases": [ { "caseId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "caseUrn": "LINKEDURN001" } ],
+              "defendants": [
+                {
+                  "id": "a7b8c9d0-e1f2-3456-abcd-567890123456",
+                  "firstName": "Test",
+                  "lastName": "Defendant",
+                  "restrictFromCourtList": false,
+                  "dateOfBirth": "1990-04-15",
+                  "nationalityDescription": "British",
+                  "address": { "address1": "10 Sample Road", "address2": "Sampletown", "postcode": "SM1 2BB" },
+                  "bailStatus": { "code": "P", "description": "Custody or remanded into custody" },
+                  "defenceOrganisation": "Example Solicitors LLP",
+                  "offences": [
+                    {
+                      "offenceCode": "TEST001",
+                      "count": 1,
+                      "statementOfOffence": { "title": "Example offence" },
+                      "restrictFromCourtList": false,
+                      "committingCourt": { "courtCentreId": "f6a7b8c9-d0e1-2345-fabc-456789012345", "courtHouseName": "Example Magistrates Court", "courtHouseCode": "200" }
+                    },
+                    {
+                      "offenceCode": "TEST002",
+                      "statementOfOffence": { "title": "Restricted offence" },
+                      "restrictFromCourtList": true
+                    }
+                  ]
+                },
+                {
+                  "id": "b7b8c9d0-e1f2-3456-abcd-567890123457",
+                  "firstName": "Hidden",
+                  "lastName": "Person",
+                  "restrictFromCourtList": true,
+                  "dateOfBirth": "1985-01-01",
+                  "offences": [ { "offenceCode": "TEST003", "statementOfOffence": { "title": "Offence of a masked defendant" } } ]
+                }
+              ]
+            },
+            {
+              "startTime": "2026-11-02T10:00",
+              "endTime": "2026-11-02T11:00",
+              "hearingType": { "id": "e5f6a7b8-c9d0-1234-efab-345678901235", "description": "Plea and Trial Preparation" },
+              "restrictFromCourtList": false,
+              "caseIdentifier": { "caseReference": "T20260002", "authorityCode": "TFL" },
+              "prosecutor": { "organisationName": "Transport for London" },
+              "defendants": [
+                { "firstName": "Second", "lastName": "Person", "restrictFromCourtList": false,
+                  "offences": [ { "offenceCode": "TEST004", "statementOfOffence": { "title": "Another offence" } } ] }
+              ]
+            },
+            {
+              "startTime": "2026-11-02T12:00",
+              "restrictFromCourtList": true,
+              "caseIdentifier": { "caseReference": "T20269999" },
+              "defendants": [ { "firstName": "Never", "lastName": "Listed", "offences": [] } ]
+            }
+          ]
+        },
+        {
+          "sittingDate": "2026-11-03",
+          "courtRoomId": "c3d4e5f6-a7b8-9012-cdef-123456789013",
+          "courtRoomName": "Courtroom 1",
+          "weekCommencing": false,
+          "judiciary": [],
+          "hearings": [
+            {
+              "startTime": "2026-11-03T10:00",
+              "endTime": "2026-11-03T11:00",
+              "hearingType": { "id": "e5f6a7b8-c9d0-1234-efab-345678901236", "description": "Application" },
+              "applicationReference": "APP00001",
+              "applicant": { "firstName": "Test", "lastName": "Applicant" },
+              "respondents": [ { "firstName": "Test", "lastName": "Respondent", "restrictFromCourtList": false } ],
+              "defendants": [ { "firstName": "Test", "lastName": "Subject", "offences": [] } ]
+            }
+          ]
+        },
+        {
+          "sittingDate": "2026-11-02",
+          "weekCommencing": true,
+          "judiciary": [],
+          "hearings": [
+            {
+              "startTime": "2026-11-02T00:00",
+              "endTime": "2026-11-08T00:00",
+              "hearingType": { "id": "e5f6a7b8-c9d0-1234-efab-345678901234", "description": "Trial" },
+              "weekCommencing": true,
+              "caseIdentifier": { "caseReference": "T20260003", "authorityCode": "CPS" },
+              "prosecutor": { "organisationName": "Crown Prosecution Service" },
+              "defendants": [
+                { "firstName": "Floating", "lastName": "Defendant", "restrictFromCourtList": false,
+                  "offences": [ { "offenceCode": "TEST005", "statementOfOffence": { "title": "Floating offence" } } ] }
+              ]
+            },
+            {
+              "startTime": "2026-11-02T00:00",
+              "endTime": "2026-11-08T00:00",
+              "hearingType": { "id": "e5f6a7b8-c9d0-1234-efab-345678901234", "description": "Trial" },
+              "weekCommencing": true,
+              "caseIdentifier": { "caseReference": "T20260004" },
+              "defendants": [
+                { "firstName": "Not", "lastName": "Reservable", "offences": [ { "offenceCode": "TEST006", "statementOfOffence": { "title": "Offence" } } ] }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

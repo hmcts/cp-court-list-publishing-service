@@ -563,6 +563,62 @@ flowchart TD
 
 ---
 
+### 4.6 Crown publish (FINAL / WARN / FIRM)
+
+Publishes a **Crown court** list to CaTH in the format of one of three HMCTS schemas
+(`crown_daily_list`, `crown_advance_list`, `crown_firm_list`, copied from
+`pip-data-management` into `src/main/resources/schema/`). The endpoint is
+`POST /api/court-list-publish/crown/publish` with the same request body as the standard publish
+(`courtCentreId`, `courtListType`, `startDate`, `endDate`) and the media type
+`application/vnd.courtlistpublishing-service.crown.post+json`. The `courtListType` chooses the schema:
+
+| `courtListType` | Crown list | JSON root | CaTH `x-list-type` | Listing query |
+|---|---|---|---|---|
+| `FINAL` | Daily | `DailyList` | `CROWN_DAILY_LIST` | `startDate` / `endDate` |
+| `WARN` | Advance | `WarnedList` | `CROWN_ADVANCE_LIST` | `weekCommencingStartDate` / `weekCommencingEndDate` |
+| `FIRM` | Firm | `FirmList` | `CROWN_FIRM_LIST` | `weekCommencingStartDate` / `weekCommencingEndDate` |
+
+Any other `courtListType` (including `DRAFT`, which is never sent to CaTH) is rejected with `400`. The task fails the publish, recording `FAILED` on the row, when the court centre is not a Crown court (`oucodeL1Code` ≠ `C`), has no reference data, or has no numeric court id in reference data or the payload; it also records `FAILED` when `cath.publishing-enabled=false`, so the row never stays `REQUESTED`. Restricted (`restrictFromCourtList` or `shadowListed`) hearings are dropped; a masked defendant carries only the masked name and URN, with no charges, custody status or counsel. Unlike the standard publish, `startDate` and `endDate` may differ
+(a week for WARN and FIRM); the status row is keyed on the start date. There is no PDF, so the row's file status is
+null, as it is for SJP.
+
+```mermaid
+sequenceDiagram
+    participant API as CrownCourtListPublishController
+    participant SVC as CrownCourtListPublishService
+    participant TK as CrownPublishTask
+    participant LS as Listing (dailylistpayload, Crown media type)
+    participant RD as Reference Data
+    participant TR as CrownListTransformationService
+    participant CT as CaTHService
+    API->>SVC: publish(courtCentreId, type, start, end, userId)
+    SVC->>SVC: create or reset the status row (REQUESTED)
+    SVC-->>API: CourtListPublishResponse
+    SVC->>TK: queue CROWN_PUBLISH_TASK
+    TK->>LS: GET court list (Accept application/vnd.listing.search.crown.list.payload+json)
+    TK->>RD: court centre (numeric id, address, telephone)
+    TK->>TR: transform to the Crown document, remove WAF-blocked text
+    TK->>TK: validate against the Crown schema
+    TK->>CT: send with the CaTH list type
+    TK->>TK: markPublishSuccessful / markPublishFailed
+```
+
+The listing context returns its daily list payload plus linked cases, sitting notes, judge name parts and further court
+address details for the Crown media type. The transformers (`services/crown/`) take values from that payload and
+reference data. What the data does not hold is left out where the schema allows, and the following apply where the
+schema requires a value:
+
+- `CaseNumberCaTH` is a copy of the case number (or the application reference) until a real source exists.
+- A sitting with no judiciary yet gets the judge surname `To be allocated`; a court room name with no number gets court
+  room number `0`; a defendant with no last name gets the surname `Unknown`.
+- Hearings the court has restricted from the list are left out, and restricted defendants are masked (`******`,
+  `IsMasked: yes`) with no date of birth or address.
+- Firm list reserve entries are left out when the case number does not match the shape the schema requires for them
+  (`^[A-Z][0-9]{8}$`); a warning is logged with the count.
+- Not available from the data, so absent: sex, prisoner id and location, date-of-birth verification, prosecution
+  advocate, `Section53`, listing instructions and the three-letter hearing type codes.
+- CaTH is told sensitivity `CLASSIFIED` and language `ENGLISH`.
+
 ## 5. Status lifecycle
 
 *For everyone.*
@@ -603,6 +659,7 @@ All paths are relative to `/courtlistpublishing-service`. The source of truth is
 | `GET` | `/api/court-list-publish/publish-status` | Query publish status by `courtListId`, or `courtCentreId` + `publishDate` (+ optional `courtListType`) | `courtlistpublishing-service.publish.get` | Publishing roles |
 | `GET` | `/api/court-list-publish/download` | On-demand PDF/Word for a court list | `courtlistpublishing-service.download.get` | Publishing roles |
 | `GET` | `/api/court-list-publish/prison/download` | Prison court list PDF | `courtlistpublishing-service.prison-download.get` | Prison-list roles |
+| `POST` | `/api/court-list-publish/crown/publish` | Queue a Crown court list for CaTH in one of the three Crown schemas (chosen by `courtListType`); see [4.6](#46-crown-publish-draft--final--warn--firm) | `courtlistpublishing-service.crown.post` | Users with permission *Court List / Publish* |
 | `POST` | `/api/court-list-publish/sjp/publishCourtList` | Accept and queue an SJP list for CaTH | `courtlistpublishing-service.sjp.post` | System Users |
 | `POST` | `/api/court-list-publish/publish-status-cleanup` | Delete data older than the retention period | `courtlistpublishing-service.publish-status-cleanup` | System Users |
 | `GET` | `/api/files/download/{fileId}` | Download a stored PDF (`{fileId}.pdf`) | `courtlistpublishing-service.files.download` | Publishing roles |
@@ -613,7 +670,7 @@ All paths are relative to `/courtlistpublishing-service`. The source of truth is
 | Header | Required | Notes |
 |---|---|---|
 | `CJSCPPUID` | Yes (publish, download, prison download) | Calling user's id; forwarded to upstream services and used for permission checks. |
-| `Accept` / `Content-Type` | Yes | Vendor media types, e.g. `application/vnd.courtlistpublishing-service.publish.post+json`, `…publish.get+json`, `…sjp.post+json`, `…publish-status-cleanup+json`. |
+| `Accept` / `Content-Type` | Yes | Vendor media types, e.g. `application/vnd.courtlistpublishing-service.publish.post+json`, `…publish.get+json`, `…sjp.post+json`, `…crown.post+json`, `…publish-status-cleanup+json`. |
 
 **Example — publish request**
 
@@ -636,7 +693,7 @@ Content-Type: application/vnd.courtlistpublishing-service.publish.post+json
 
 | Status | When |
 |---|---|
-| `400` | Missing body/fields, start ≠ end (publish), end < start (download), missing `CJSCPPUID`, `PRISON` on the general download |
+| `400` | Missing body/fields, start ≠ end (publish), end < start (download or Crown publish), missing `CJSCPPUID`, `PRISON` on the general download, a `courtListType` with no Crown schema (Crown publish) |
 | `401/403` | Authorisation filter denies the action (when authz enabled) |
 | `404` | `/api/files/download/{fileId}` — file not found |
 | `502` | Download: upstream (Listing/Progression/Document Generator) failed or type unsupported |
