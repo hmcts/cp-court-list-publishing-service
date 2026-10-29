@@ -540,7 +540,6 @@ flowchart TD
 |---|---|---|
 | `DRAFT`, `FINAL` | `CrownDailyList` | `CrownDailyListWelsh` |
 | `FIRM` | `CrownFirmList` | `CrownFirmListWelsh` |
-| `ONLINE_PUBLIC` | `CrownOnlinePublicCourtList` | `CrownOnlinePublicCourtListWelsh` |
 | `ALPHABETICAL` | `CourtList` | `CourtListEnglishWelsh` |
 | `USHERS_CROWN` | `UshersCrownList` | `UshersCrownList` |
 

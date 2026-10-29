@@ -331,30 +331,6 @@ class CourtListDownloadServiceTest {
     }
 
     @Test
-    void generateCrownCourtPdfUsesOnlinePublicTemplate() throws IOException {
-        stubCrownPayload(CourtListType.ONLINE_PUBLIC, null, "{}");
-        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownOnlinePublicCourtList")))
-                .thenReturn(PDF_BYTES);
-
-        service.generateCrownCourtPdf(
-                CourtListType.ONLINE_PUBLIC, false, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
-
-        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CrownOnlinePublicCourtList"));
-    }
-
-    @Test
-    void generateCrownCourtPdfUsesOnlinePublicWelshTemplate() throws IOException {
-        stubCrownPayload(CourtListType.ONLINE_PUBLIC, null, "{}");
-        when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CrownOnlinePublicCourtListWelsh")))
-                .thenReturn(PDF_BYTES);
-
-        service.generateCrownCourtPdf(
-                CourtListType.ONLINE_PUBLIC, true, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
-
-        verify(documentGeneratorClient).generatePdf(any(JsonObject.class), eq("CrownOnlinePublicCourtListWelsh"));
-    }
-
-    @Test
     void generateCrownCourtPdfUsesAlphabeticalWelshTemplate() throws IOException {
         stubCrownPayload(CourtListType.ALPHABETICAL, null, "{}");
         when(documentGeneratorClient.generatePdf(any(JsonObject.class), eq("CourtListEnglishWelsh")))

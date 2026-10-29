@@ -63,7 +63,6 @@ public class CourtListDownloadService {
     private static final Map<CourtListType, TemplateInfo> CROWN_COURT_TEMPLATES = Map.of(
             CourtListType.DRAFT,         new TemplateInfo("CrownDailyList",             "CrownDailyListWelsh"),
             CourtListType.FINAL,         new TemplateInfo("CrownDailyList",             "CrownDailyListWelsh"),
-            CourtListType.ONLINE_PUBLIC, new TemplateInfo("CrownOnlinePublicCourtList", "CrownOnlinePublicCourtListWelsh"),
             CourtListType.ALPHABETICAL,  new TemplateInfo("CourtList",           "CourtListEnglishWelsh"),
             CourtListType.FIRM,          new TemplateInfo("CrownFirmList",              "CrownFirmListWelsh"),
             CourtListType.USHERS_CROWN,  new TemplateInfo("UshersCrownList",            "UshersCrownList")
