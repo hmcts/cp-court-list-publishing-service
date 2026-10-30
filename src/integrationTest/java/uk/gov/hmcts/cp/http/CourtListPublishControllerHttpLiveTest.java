@@ -568,11 +568,6 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     }
 
     @Test
-    void getDownloadCourtListReturnsPdfWhenOnlinePublicAndCrownCourt() throws Exception {
-        getDownloadCourtListReturnsCrownCourtPdfForType(CourtListType.ONLINE_PUBLIC, CROWN_COURT_CENTRE_ID, false);
-    }
-
-    @Test
     void getDownloadCourtListReturnsPdfWhenFirmAndCrownCourt() throws Exception {
         getDownloadCourtListReturnsCrownCourtPdfForType(CourtListType.FIRM, CROWN_COURT_CENTRE_ID, false);
     }
@@ -712,7 +707,6 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
             switch (type) {
                 case DRAFT:
                 case FINAL:       return "CrownDailyListWelsh";
-                case ONLINE_PUBLIC: return "CrownOnlinePublicCourtListWelsh";
                 case ALPHABETICAL: return "CourtListEnglishWelsh";
                 case FIRM:        return "CrownFirmListWelsh";
                 case USHERS_CROWN: return "UshersCrownList";
@@ -722,7 +716,6 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
             switch (type) {
                 case DRAFT:
                 case FINAL:       return "CrownDailyList";
-                case ONLINE_PUBLIC: return "CrownOnlinePublicCourtList";
                 case ALPHABETICAL: return "CourtList";
                 case FIRM:        return "CrownFirmList";
                 case USHERS_CROWN: return "UshersCrownList";
