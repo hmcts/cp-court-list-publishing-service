@@ -1,32 +1,30 @@
 package uk.gov.hmcts.cp.controllers;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.cp.config.AppConstant;
+import uk.gov.hmcts.cp.openapi.api.CrownCourtListPublishApi;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.services.crown.CrownCourtListPublishService;
 
 /**
- * Publishes a Crown court list to CaTH in one of the Crown schemas. The schema is chosen by the court list type:
- * FINAL publishes the daily list; a DRAFT is not published to CaTH, WARN the advance list and FIRM the firm list.
+ * Publishes a Crown court list to CaTH in one of the Crown schemas. The path, media type and documentation come from
+ * the generated {@link CrownCourtListPublishApi} (api-cp-crime-court-list-publisher). The court list type selects the
+ * schema: FINAL publishes the daily list, WARN the advance list and FIRM the firm list; a DRAFT is not published.
  * <p>
  * The media type names the action for the authorization rules (courtlistpublishing-service.crown.post).
  */
 @RestController
-public class CrownCourtListPublishController {
+public class CrownCourtListPublishController implements CrownCourtListPublishApi {
 
-    public static final String PATH = "/api/court-list-publish/crown/publish";
     public static final String MEDIA_TYPE = "application/vnd.courtlistpublishing-service.crown.post+json";
 
     private static final Logger LOG = LoggerFactory.getLogger(CrownCourtListPublishController.class);
@@ -37,21 +35,12 @@ public class CrownCourtListPublishController {
         this.service = service;
     }
 
-    @Operation(summary = "Publish a Crown court list to CaTH",
-            description = "Accepts a request to publish the FINAL daily, WARN advance or FIRM firm list of a Crown court centre to CaTH. "
-                    + "The work runs asynchronously; poll the court list publish status for the outcome.")
-    @ApiResponse(responseCode = "200", description = "Publish request accepted")
-    @ApiResponse(responseCode = "400", description = "Invalid request, or a list type that cannot be published as a Crown list")
-    @PostMapping(path = PATH, consumes = MEDIA_TYPE, produces = MEDIA_TYPE)
-    public ResponseEntity<CourtListPublishResponse> publishCrownCourtList(
-            @RequestBody final CourtListPublishRequest request,
-            @RequestHeader(value = AppConstant.CJSCPPUID, required = false) final String userId) {
+    @Override
+    public ResponseEntity<CourtListPublishResponse> publishCrownCourtList(final CourtListPublishRequest request) {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
         }
-        if (userId == null || userId.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CJSCPPUID header is required");
-        }
+        final String userId = requireCjscppuid();
         LOG.atInfo().log("Crown court list publish requested for court centre ID: {}, type: {}, startDate: {}, endDate: {}",
                 request.getCourtCentreId(), request.getCourtListType(), request.getStartDate(), request.getEndDate());
 
@@ -61,5 +50,16 @@ public class CrownCourtListPublishController {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(MEDIA_TYPE))
                 .body(response);
+    }
+
+    /** Returns the caller's CJSCPPUID, or throws 400 when the header is absent. */
+    private static String requireCjscppuid() {
+        final String userId = RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs
+                ? attrs.getRequest().getHeader(AppConstant.CJSCPPUID)
+                : null;
+        if (userId == null || userId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CJSCPPUID header is required");
+        }
+        return userId;
     }
 }
