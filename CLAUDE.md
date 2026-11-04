@@ -62,6 +62,13 @@ SJP (Single Justice Procedure) lists follow the same split:
 - `SjpToCathPayloadTransformer` builds the CaTH payload.
 - SJP lists share `court_list_publish_status`, with `courtCentreId` null. The SJP list type is mapped onto `CourtListType` by `SjpStatusListTypeMapper`.
 
+Crown Court lists (`FINAL`, `FIRM`, `WARN`) go to CaTH as PDDA lists through their own endpoint (all in `services/crown`, LPT-2603):
+- `POST /api/court-list-publish/crown/publish` → `CrownCourtListPublishController` (generated `CrownCourtListPublishApi`) → `CrownListStatusService.requestPublish` → `CrownListTaskTrigger` → `task/CrownListPublishTask` (`CROWN_LIST_PUBLISH_TASK`) → `CrownListCaTHPublisher`.
+- `CrownPublishRequest` holds the list rules: `FINAL` covers one day; `FIRM`/`WARN` start on a Monday and cover at most 7 days. The court centre must be a Crown Court (`oucodeL1Code == "C"`) with a numeric court id.
+- `CrownListDataClient` fetches listing's `dailylistpayload` with Accept `application/vnd.listing.search.crown.list.payload+json`. `CrownListTransformer` builds the CaTH `DailyList` / `FirmList` / `WarnedList`, validated against `crown_*_pdda_list.json` (from `hmcts/pip-data-management`). Restricted data and other days are left out.
+- Status rows are keyed on (court centre, list type, start date) with no file status (V1004 allows that for these types). The row is locked (`lockBy…`), so one publish of a list runs at a time; a second request gets 400 "already in progress".
+- The generic `/publish` rejects `FINAL`/`FIRM`/`WARN` with 400 and points to the crown endpoint.
+
 ### Transformation → sanitize → schema-validate → publish
 - `CourtListQueryService.buildCourtListDocumentFromPayload` picks a transformer. `PUBLIC` uses `OnlinePublicCourtListTransformationService`; everything else uses `StandardCourtListTransformationService`. Both extend `BaseCourtListTransformationService`.
 - Output models are in `models/transformed`. Inbound upstream models are in `models/`.

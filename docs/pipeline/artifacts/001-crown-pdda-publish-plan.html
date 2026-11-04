@@ -136,10 +136,10 @@
       <div class="ph-head"><h3>Verification &amp; rollout</h3><span class="tag now">In progress</span><span class="tag o mono">human gates</span></div>
       <div class="ph-desc">Prove it on the real services, settle the open questions, then hand over for review.</div>
       <ul class="tasks">
-        <li class="x"><span class="box"></span>Unit tests green (528)</li>
-        <li class="x"><span class="box"></span>Integration tests green against the Docker stack (76, incl. 8 for the crown publish)</li>
+        <li class="x"><span class="box"></span>Unit tests green (534, incl. Postgres checks of V1004, the unique index and the row lock)</li>
+        <li class="x"><span class="box"></span>Integration tests green against the Docker stack (77, incl. 9 for the crown publish, one for the in-progress refusal)</li>
         <li class="x"><span class="box"></span>Application guide updated (md + html): endpoint, BR-12 – BR-16, flow 4.6, V1004</li>
-        <li><span class="box"></span>Confirm with CaTH: sensitivity <code>PUBLIC</code> for the PDDA lists</li>
+        <li><span class="box"></span>Confirm with CaTH: sensitivity <code>PUBLIC</code> for the PDDA lists (CaTH&#39;s own <code>CrownDailyPddaListTest</code> uses <code>PUBLIC</code>)</li>
         <li><span class="box"></span>Tell callers of <code>/publish</code> about the FINAL/FIRM/WARN change</li>
         <li><span class="box"></span>DEV check: publish one FINAL, FIRM and WARN list; confirm each on CaTH staging</li>
         <li><span class="box"></span>Commit and open the PR; code review (Stage 6 gate), then CI</li>

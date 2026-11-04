@@ -1,5 +1,7 @@
 package uk.gov.hmcts.cp.repositories;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import uk.gov.hmcts.cp.domain.CourtListStatusEntity;
@@ -76,7 +78,10 @@ class CourtListStatusRepositoryTest {
     @AfterEach
     void clearData() {
         repository.deleteAll();
-        entityManager.clear();
+        // tests that expect a constraint violation run without a test transaction
+        if (org.springframework.test.context.transaction.TestTransaction.isActive()) {
+            entityManager.clear();
+        }
     }
 
     @Test
@@ -558,5 +563,76 @@ class CourtListStatusRepositoryTest {
 
         // Then
         assertThat(foundEntities).isEmpty();
+    }
+
+    // --- crown list rows (V1004 and the crown publish's row lock) ---
+
+    @Test
+    void crownListRowsMayHaveNoFileStatus() {
+        for (CourtListType crownType : List.of(CourtListType.FINAL, CourtListType.FIRM, CourtListType.WARN)) {
+            CourtListStatusEntity row = new CourtListStatusEntity(UUID.randomUUID(), UUID.randomUUID(),
+                    Status.REQUESTED, null, crownType, Instant.now());
+            row.setPublishDate(LocalDate.of(2026, 6, 8));
+            repository.saveAndFlush(row);
+            assertThat(repository.getByCourtListId(row.getCourtListId()).getFileStatus()).isNull();
+        }
+    }
+
+    // runs outside the test transaction: the expected constraint violation would abort it
+    @org.springframework.transaction.annotation.Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    @Test
+    void otherListTypesStillRequireAFileStatus() {
+        CourtListStatusEntity row = new CourtListStatusEntity(UUID.randomUUID(), UUID.randomUUID(),
+                Status.REQUESTED, null, CourtListType.STANDARD, Instant.now());
+        row.setPublishDate(LocalDate.of(2026, 6, 8));
+
+        assertThatThrownBy(() -> repository.saveAndFlush(row))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+    }
+
+    // runs outside the test transaction: the expected constraint violation would abort it
+    @org.springframework.transaction.annotation.Transactional(
+            propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    @Test
+    void aDuplicateCrownRowViolatesTheIndexTheCrownStatusServiceLooksFor() {
+        UUID courtCentreId = UUID.randomUUID();
+        LocalDate monday = LocalDate.of(2026, 6, 8);
+        CourtListStatusEntity first = new CourtListStatusEntity(UUID.randomUUID(), courtCentreId,
+                Status.REQUESTED, null, CourtListType.FIRM, Instant.now());
+        first.setPublishDate(monday);
+        repository.saveAndFlush(first);
+        CourtListStatusEntity duplicate = new CourtListStatusEntity(UUID.randomUUID(), courtCentreId,
+                Status.REQUESTED, null, CourtListType.FIRM, Instant.now());
+        duplicate.setPublishDate(monday);
+
+        assertThatThrownBy(() -> repository.saveAndFlush(duplicate))
+                .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class)
+                .satisfies(e -> assertThat(messages(e))
+                        .contains(uk.gov.hmcts.cp.services.crown.CrownListStatusService.UNIQUE_INDEX));
+    }
+
+    @Test
+    void theLockingLookupFindsTheRow() {
+        UUID courtCentreId = UUID.randomUUID();
+        LocalDate monday = LocalDate.of(2026, 6, 8);
+        CourtListStatusEntity row = new CourtListStatusEntity(UUID.randomUUID(), courtCentreId,
+                Status.SUCCESSFUL, null, CourtListType.WARN, Instant.now());
+        row.setPublishDate(monday);
+        repository.saveAndFlush(row);
+
+        assertThat(repository.lockByCourtCentreIdAndPublishDateAndCourtListType(courtCentreId, monday, CourtListType.WARN))
+                .map(CourtListStatusEntity::getCourtListId)
+                .contains(row.getCourtListId());
+        assertThat(repository.lockByCourtCentreIdAndPublishDateAndCourtListType(courtCentreId, monday, CourtListType.FIRM))
+                .isEmpty();
+    }
+
+    private static String messages(Throwable e) {
+        StringBuilder all = new StringBuilder();
+        for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+            all.append(cause.getMessage()).append('\n');
+        }
+        return all.toString();
     }
 }

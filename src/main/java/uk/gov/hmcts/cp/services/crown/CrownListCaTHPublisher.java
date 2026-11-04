@@ -12,13 +12,10 @@ import uk.gov.hmcts.cp.services.AzureBlobService;
 import uk.gov.hmcts.cp.services.CaTHService;
 import uk.gov.hmcts.cp.services.CourtListPublisher;
 import uk.gov.hmcts.cp.services.JsonSchemaValidatorService;
-import uk.gov.hmcts.cp.services.StandardCourtListTransformationService;
 import uk.gov.hmcts.cp.services.sanitization.DocumentSanitizer;
 import uk.gov.hmcts.cp.services.sanitization.HtmlStrippingSanitizer;
 import uk.gov.hmcts.cp.services.sanitization.WafPatternSanitizer;
 
-import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static uk.gov.hmcts.cp.config.AppConstant.ALERT_PATTERN;
@@ -32,8 +29,9 @@ import static uk.gov.hmcts.cp.config.AppConstant.ALERT_PATTERN;
  *   other CaTH lists (WAF-blocked sequences and HTML removed), before it is parsed; the court telephone from
  *   reference data is cleaned the same way.</li>
  *   <li>Builds the CaTH document and validates it against CaTH's schema.</li>
- *   <li>Publishes it with the same CaTH metadata as the other lists, sensitivity {@code PUBLIC}, displayed until
- *   23:59 UTC on the list's last day. A copy of the payload goes to blob storage (best effort).</li>
+ *   <li>Publishes it with CaTH metadata from {@link CaTHService#dtsMeta}, as for the other lists: sensitivity
+ *   {@code PUBLIC}, displayed until 23:59 UTC on the list's last day. A copy of the payload goes to blob storage
+ *   (best effort).</li>
  * </ol>
  *
  * <p>The list is not sent when listing returned hearings but none of them can be published: an empty list would
@@ -70,7 +68,8 @@ public class CrownListCaTHPublisher {
         String body = toJson(result);
         jsonSchemaValidatorService.validate(body, request.listType().schema());
 
-        DtsMeta dtsMeta = dtsMeta(request, Boolean.TRUE.equals(payload.isWelsh()));
+        DtsMeta dtsMeta = CaTHService.dtsMeta(request.listType().cathListType(), SENSITIVITY, request.courtIdNumeric(),
+                request.startDate(), request.endDate(), Boolean.TRUE.equals(payload.isWelsh()));
         log.info("Sending crown list to CaTH, {}, cathListType={}, courtId={}, hearings={}",
                 request.describe(), dtsMeta.getListType(), dtsMeta.getCourtId(), result.hearingsListed());
         uploadToBlob(body, request);
@@ -79,20 +78,6 @@ public class CrownListCaTHPublisher {
             throw new IllegalStateException("CaTH returned status " + status);
         }
         log.info("Crown list published to CaTH, {}, status={}", request.describe(), status);
-    }
-
-    private static DtsMeta dtsMeta(CrownPublishRequest request, boolean welsh) {
-        return DtsMeta.builder()
-                .provenance("COMMON_PLATFORM")
-                .type("LIST")
-                .listType(request.listType().cathListType())
-                .courtId(request.courtIdNumeric())
-                .contentDate(StandardCourtListTransformationService.toIsoDateTimeOrNull(request.startDate().toString()))
-                .language(welsh ? "WELSH" : "ENGLISH")
-                .sensitivity(SENSITIVITY)
-                .displayFrom(Instant.now().toString())
-                .displayTo(request.endDate().plusDays(1).atStartOfDay().minusMinutes(1).toInstant(ZoneOffset.UTC).toString())
-                .build();
     }
 
     private CrownPublishRequest withCleanTelephone(CrownPublishRequest request) {

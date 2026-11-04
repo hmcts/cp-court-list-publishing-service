@@ -29,7 +29,8 @@ import java.util.UUID;
 @Service
 public class CrownListStatusService {
 
-    static final String UNIQUE_INDEX = "ux_court_list_publish_status_non_sjp";
+    /** The unique index a concurrent create of the same row violates (V1003). */
+    public static final String UNIQUE_INDEX = "ux_court_list_publish_status_non_sjp";
 
     private final CourtListStatusRepository repository;
     private final CourtListStatusUpdater statusUpdater;

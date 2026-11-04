@@ -29,6 +29,12 @@ public class CrownListPublishIntegrationTest extends CourtListIntegrationTestBas
 
     /** Crown court centre in the reference data stubs (oucodeL1Code "C", courtId "001"). */
     private static final UUID CROWN_COURT_CENTRE_ID = UUID.fromString("cc000000-0000-0000-0000-000000000001");
+    /**
+     * Second crown court centre in the reference data stubs (courtId "002"). Listing answers it after a 10 second
+     * delay (stub listing-crown-list-payload-delayed.json), so its publish stays in progress long enough for a
+     * second request to arrive, even on a slow build agent.
+     */
+    private static final UUID SLOW_CROWN_COURT_CENTRE_ID = UUID.fromString("cc000000-0000-0000-0000-000000000002");
     private static final String CROWN_PUBLISH_URL =
             System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service")
                     + "/api/court-list-publish/crown/publish";
@@ -58,6 +64,26 @@ public class CrownListPublishIntegrationTest extends CourtListIntegrationTestBas
         assertThat(list.at("/ListHeader/StartDate").asText()).isEqualTo(startDate);
         assertThat(list.at("/CrownCourt/CourtHouseCode").asInt()).isEqualTo(100);
         assertThat(list.toString()).contains("T20260002");
+    }
+
+    @Test
+    void refusesASecondPublishOfTheSameListWhileTheFirstIsInProgress() throws Exception {
+        ResponseEntity<String> first = post(SLOW_CROWN_COURT_CENTRE_ID, "FINAL", "2026-06-09", "2026-06-09");
+        assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK);
+        UUID courtListId = UUID.fromString(parseResponse(first).get("courtListId").asText());
+
+        // the first publish waits 10 seconds on listing, so its row is still REQUESTED (and locked against a duplicate)
+        assertThatThrownBy(() -> post(SLOW_CROWN_COURT_CENTRE_ID, "FINAL", "2026-06-09", "2026-06-09"))
+                .isInstanceOfSatisfying(HttpClientErrorException.BadRequest.class,
+                        e -> assertThat(e.getResponseBodyAsString()).contains("already in progress"));
+
+        // the first publish still completes, and once it has, the list can be published again
+        waitForTaskCompletion(courtListId, TASK_TIMEOUT_MS);
+        assertThat(parseResponse(getStatusRequest(courtListId)).get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
+        ResponseEntity<String> again = post(SLOW_CROWN_COURT_CENTRE_ID, "FINAL", "2026-06-09", "2026-06-09");
+        assertThat(again.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(parseResponse(again).get("courtListId").asText()).isEqualTo(courtListId.toString());
+        waitForTaskCompletion(courtListId, TASK_TIMEOUT_MS);
     }
 
     @Test

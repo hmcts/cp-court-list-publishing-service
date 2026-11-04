@@ -4,8 +4,10 @@ import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import uk.gov.hmcts.cp.filters.tracing.TracingFilter;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.services.CourtListStatusUpdater;
 import uk.gov.hmcts.cp.services.crown.CrownListCaTHPublisher;
@@ -16,6 +18,9 @@ import uk.gov.hmcts.cp.taskmanager.service.task.ExecutableTask;
 import uk.gov.hmcts.cp.taskmanager.service.task.Task;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static uk.gov.hmcts.cp.config.AppConstant.ALERT_PATTERN;
@@ -27,7 +32,8 @@ import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
  * so the file status is not changed. The task always completes: a failure is recorded as publish status FAILED,
  * with an error naming the list and its dates, and logged with {@link uk.gov.hmcts.cp.config.AppConstant#ALERT_PATTERN}.
  * With CaTH publishing switched off, the publish is recorded as FAILED with that reason, so it does not look as
- * if it is still running.
+ * if it is still running. The trace context of the request that queued the task ({@code traceId}, {@code spanId})
+ * is set in the log context while the task runs; afterwards the thread's own values (if any) are put back.
  */
 @Task(CrownListPublishTask.TASK_NAME)
 @Component
@@ -40,6 +46,8 @@ public class CrownListPublishTask implements ExecutableTask {
     static final String COURT_ID_NUMERIC = "courtIdNumeric";
     static final String COURT_TELEPHONE = "courtTelephone";
     static final String PUBLISHING_DISABLED = "CaTH publishing is disabled (CATH_PUBLISHING_ENABLED=false)";
+    /** Log context keys carried from the request into the task, as set by {@link TracingFilter}. */
+    public static final List<String> TRACE_KEYS = List.of(TracingFilter.TRACE_ID, TracingFilter.SPAN_ID);
 
     private final CourtListStatusUpdater statusUpdater;
     private final CrownListCaTHPublisher publisher;
@@ -71,6 +79,23 @@ public class CrownListPublishTask implements ExecutableTask {
     @Override
     public ExecutionInfo execute(ExecutionInfo executionInfo) {
         JsonObject jobData = executionInfo.getJobData();
+        Map<String, String> previous = restoreTraceContext(jobData);
+        try {
+            run(jobData);
+        } finally {
+            // task threads are reused: put back whatever the thread had before, removing what it did not have
+            previous.forEach((key, value) -> {
+                if (value == null) {
+                    MDC.remove(key);
+                } else {
+                    MDC.put(key, value);
+                }
+            });
+        }
+        return executionInfo().from(executionInfo).withExecutionStatus(COMPLETED).build();
+    }
+
+    private void run(JsonObject jobData) {
         UUID courtListId = null;
         try {
             if (jobData == null) {
@@ -91,7 +116,26 @@ public class CrownListPublishTask implements ExecutableTask {
                 recordFailure(courtListId, e);
             }
         }
-        return executionInfo().from(executionInfo).withExecutionStatus(COMPLETED).build();
+    }
+
+    /**
+     * Puts the job's trace context into the log context.
+     *
+     * @return for each key set, the value the thread had before (null when it had none)
+     */
+    private static Map<String, String> restoreTraceContext(JsonObject jobData) {
+        Map<String, String> previous = new HashMap<>();
+        if (jobData == null) {
+            return previous;
+        }
+        for (String key : TRACE_KEYS) {
+            String value = jobData.getString(key, null);
+            if (value != null) {
+                previous.put(key, MDC.get(key));
+                MDC.put(key, value);
+            }
+        }
+        return previous;
     }
 
     private void publish(CrownPublishRequest request) {

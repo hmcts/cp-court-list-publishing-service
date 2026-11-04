@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.MDC;
 import uk.gov.hmcts.cp.services.CourtListStatusUpdater;
 import uk.gov.hmcts.cp.services.crown.CrownListCaTHPublisher;
 import uk.gov.hmcts.cp.services.crown.CrownListType;
@@ -16,10 +17,12 @@ import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 
 import java.time.LocalDate;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -104,6 +107,41 @@ class CrownListPublishTaskTest {
         ArgumentCaptor<Exception> reason = ArgumentCaptor.forClass(Exception.class);
         verify(statusUpdater).markPublishFailed(eq(courtListId), reason.capture());
         assertThat(reason.getValue()).hasMessage(CrownListPublishTask.PUBLISHING_DISABLED);
+    }
+
+    @Test
+    void logsWithTheRequestsTraceContextAndRemovesItAfterwards() {
+        JsonObject jobData = Json.createObjectBuilder(CrownListPublishTask.jobData(request(CrownListType.DAILY, MONDAY, MONDAY)))
+                .add("traceId", "trace-123")
+                .add("spanId", "span-456")
+                .build();
+        AtomicReference<String> traceIdWhilePublishing = new AtomicReference<>();
+        doAnswer(invocation -> {
+            traceIdWhilePublishing.set(MDC.get("traceId"));
+            return null;
+        }).when(publisher).publish(any());
+
+        task.execute(execution(jobData));
+
+        assertThat(traceIdWhilePublishing.get()).isEqualTo("trace-123");
+        assertThat(MDC.get("traceId")).isNull();
+        assertThat(MDC.get("spanId")).isNull();
+    }
+
+    @Test
+    void putsBackTheThreadsOwnTraceContextAfterwards() {
+        JsonObject jobData = Json.createObjectBuilder(CrownListPublishTask.jobData(request(CrownListType.DAILY, MONDAY, MONDAY)))
+                .add("traceId", "trace-123")
+                .build();
+        MDC.put("traceId", "thread-trace");
+        try {
+            task.execute(execution(jobData));
+
+            assertThat(MDC.get("traceId")).isEqualTo("thread-trace");
+            assertThat(MDC.get("spanId")).isNull();
+        } finally {
+            MDC.clear();
+        }
     }
 
     @Test
