@@ -3,6 +3,8 @@ package uk.gov.hmcts.cp.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.ParameterizedTest;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,6 +39,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -75,6 +78,23 @@ class CourtListPublishControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
         objectMapper = ObjectMapperConfig.getObjectMapper();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourtListType.class, names = {"FINAL", "FIRM", "WARN"})
+    void publishCourtList_shouldRejectCrownListTypes_andPointToCrownEndpoint(CourtListType crownListType) throws Exception {
+        CourtListPublishRequest request = new CourtListPublishRequest(
+                UUID.randomUUID(), LocalDate.now(), LocalDate.now(), crownListType, false);
+
+        mockMvc.perform(post(PUBLISH_URL)
+                        .header("CJSCPPUID", "test-user-id")
+                        .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().reason(org.hamcrest.Matchers.containsString("/api/court-list-publish/crown/publish")));
+
+        verify(service, never()).createOrUpdate(any(), any(), any(), any());
+        verify(courtListTaskTriggerService, never()).triggerCourtListTask(any(), any());
     }
 
     @Test

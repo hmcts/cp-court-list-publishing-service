@@ -382,11 +382,14 @@ flowchart TB
         <tr><td><code>USHERS_CROWN</code></td><td>Ushers (Crown Court)</td><td class="c">—</td><td class="c">—</td><td class="c">✅</td><td><strong>Word</strong></td></tr>
         <tr><td><code>USHERS_MAGISTRATE</code></td><td>Ushers (magistrates')</td><td class="c">—</td><td class="c">—</td><td class="c">✅</td><td><strong>Word</strong></td></tr>
         <tr><td><code>PRISON</code></td><td>Prisons</td><td class="c">—</td><td class="c">—</td><td class="c">✅ (dedicated endpoint)</td><td>PDF</td></tr>
-        <tr><td><code>DRAFT</code> / <code>FINAL</code></td><td>Crown Court daily list</td><td class="c">—</td><td class="c">—</td><td class="c">✅ (Crown)</td><td>PDF</td></tr>
-        <tr><td><code>FIRM</code></td><td>Crown Court firm (week-commencing) list</td><td class="c">—</td><td class="c">—</td><td class="c">✅ (Crown)</td><td>PDF</td></tr>
+        <tr><td><code>DRAFT</code></td><td>Crown Court daily list (draft)</td><td class="c">—</td><td class="c">—</td><td class="c">✅ (Crown)</td><td>PDF</td></tr>
+        <tr><td><code>FINAL</code></td><td>Crown Court daily list</td><td class="c">✅ <code>CROWN_DAILY_PDDA_LIST</code> (crown endpoint only)</td><td class="c">— (no file)</td><td class="c">✅ (Crown)</td><td>PDF</td></tr>
+        <tr><td><code>FIRM</code></td><td>Crown Court firm (week-commencing) list</td><td class="c">✅ <code>CROWN_FIRM_PDDA_LIST</code> (crown endpoint only)</td><td class="c">— (no file)</td><td class="c">✅ (Crown)</td><td>PDF</td></tr>
+        <tr><td><code>WARN</code></td><td>Crown Court warned / advance (week-commencing) list</td><td class="c">✅ <code>CROWN_ADVANCE_PDDA_LIST</code> (crown endpoint only)</td><td class="c">— (no file)</td><td class="c">—</td><td>—</td></tr>
         <tr><td><code>SJP_*</code> (8 variants)</td><td>Public / press, national</td><td class="c">✅</td><td class="c">— (no file)</td><td class="c">—</td><td>—</td></tr>
       </table></div>
-      <div class="callout warn"><strong>Business rule</strong>Only <code>STANDARD</code> and <code>ONLINE_PUBLIC</code> have a CaTH mapping and a stored-PDF template. Publishing any other list type through the standard publish endpoint records the publish as <span class="st bad">FAILED</span> ("Unsupported court list type") and the file as <span class="st bad">FAILED</span> ("No PDF template").</div>
+      <div class="callout warn"><strong>Business rule</strong>Only <code>STANDARD</code> and <code>ONLINE_PUBLIC</code> have a CaTH mapping and a stored-PDF template. Publishing another list type through the standard publish endpoint records the publish as <span class="st bad">FAILED</span> ("Unsupported court list type") and the file as <span class="st bad">FAILED</span> ("No PDF template").</div>
+      <div class="callout warn"><strong>Breaking change (LPT-2603)</strong>The standard publish endpoint now <strong>rejects <code>FINAL</code>, <code>FIRM</code> and <code>WARN</code> with <code>400 Bad Request</code></strong> ("… court lists must be published via /api/court-list-publish/crown/publish"). Before this change it accepted them and then recorded both steps as <span class="st bad">FAILED</span>. These Crown Court lists are published to CaTH through the crown publish endpoint instead (see <a href="#s4-6">4.6</a>). Callers that sent these types to <code>/publish</code> must switch to <code>/crown/publish</code>.</div>
 
       <h3>2.4 Business rules</h3>
       <div class="table-wrap"><table>
@@ -402,6 +405,11 @@ flowchart TB
         <tr><td>BR-9</td><td>Prison lists can only be downloaded through the dedicated prison endpoint, by prison-list roles.</td></tr>
         <tr><td>BR-10</td><td>Data (status records, PDFs, CaTH payload copies) older than the retention period (default 90 days) is deleted by the cleanup job.</td></tr>
         <tr><td>BR-11</td><td>Text that the Azure Web Application Firewall would block (by default <code>..\</code> and <code>../</code>) is stripped from published content, so a legitimate list is not rejected at the gateway.</td></tr>
+        <tr><td>BR-12</td><td>Crown Court lists go to CaTH as PDDA lists through <code>/api/court-list-publish/crown/publish</code> only: <code>FINAL</code> → daily list, <code>FIRM</code> → firm list, <code>WARN</code> → advance (warned) list. The court centre must be a Crown Court with a numeric court id in reference data. No PDF is produced.</td></tr>
+        <tr><td>BR-13</td><td>A crown <code>FINAL</code> list covers one day (start date = end date). A <code>FIRM</code> or <code>WARN</code> list is a week-commencing list: it starts on a <strong>Monday</strong> and covers at most <strong>7 days</strong>. The tracking record is keyed on the start date.</td></tr>
+        <tr><td>BR-14</td><td>Only one publish of a crown list (court centre + list type + start date) runs at a time. A request while one is in progress is refused with <code>400</code> ("already in progress"); a publish left <code>REQUESTED</code> longer than <code>crown.publish.in-progress-timeout</code> (default 15 minutes) is treated as abandoned.</td></tr>
+        <tr><td>BR-15</td><td>Crown lists never publish restricted data: hearings, defendants, offences and parties marked <code>restrictFromCourtList</code>, hearings whose parties are all restricted, and parties with no name, are left out. Crown lists are sent with sensitivity <code>PUBLIC</code> and displayed until 23:59 UTC on the list's last day.</td></tr>
+        <tr><td>BR-16</td><td>A crown list is not sent when listing returned hearings but none of them can be published (restricted, outside the requested dates, or without a case reference): the publish is recorded as <code>FAILED</code> and the live CaTH list is left as it was. A list for which listing returned no hearings is published empty.</td></tr>
       </table></div>
 
       <h3>2.5 The publishing journey (business view)</h3>
@@ -827,13 +835,57 @@ flowchart TD
         </script>
         <figcaption>Figure 11 — Retention cleanup.</figcaption>
       </figure>
+
+      <h3 id="s4-6">4.6 Crown publish (PDDA lists)</h3>
+      <p>Publishes a Crown Court <code>FINAL</code>, <code>FIRM</code> or <code>WARN</code> list to CaTH in the PDDA formats defined by CaTH's schemas (<code>crown_daily_pdda_list</code>, <code>crown_firm_pdda_list</code>, <code>crown_advance_pdda_list</code> from <code>hmcts/pip-data-management</code>, bundled in <code>src/main/resources/schema/</code>).</p>
+      <figure class="diagram">
+        <script type="text/plain" class="mmd">
+sequenceDiagram
+    autonumber
+    actor User as Listing officer
+    participant API as CrownCourtListPublishController
+    participant RD as Reference data
+    participant ST as CrownListStatusService
+    participant DB as PostgreSQL
+    participant TT as CrownListTaskTrigger
+    participant TK as CrownListPublishTask
+    participant PB as CrownListCaTHPublisher
+    participant LS as Listing (crown.list.payload)
+    participant CA as CourtListPublisher → CaTH
+
+    User->>API: POST /api/court-list-publish/crown/publish {courtCentreId, courtListType, startDate, endDate}
+    API->>API: list type FINAL/FIRM/WARN; dates (CrownPublishRequest)
+    API->>RD: court centre → must be a Crown Court with a numeric court id
+    API->>ST: requestPublish(centre, type, startDate)
+    ST->>DB: lock row; refuse if a publish is in progress, else REQUESTED (no file status)
+    API->>TT: queue CROWN_LIST_PUBLISH_TASK
+    API-->>User: 200 OK (crown.post+json), status REQUESTED
+
+    Note over TK: Asynchronous
+    TK->>PB: publish(request)
+    PB->>LS: GET dailylistpayload (Accept: application/vnd.listing.search.crown.list.payload+json)
+    PB->>PB: sanitise → transform (Daily / Firm / Warned list) → validate (CaTH schema)
+    PB->>CA: publish(payload, DtsMeta[CROWN_*_PDDA_LIST, PUBLIC, court id, list dates])
+    alt 2xx
+        TK->>DB: markPublishSuccessful
+    else error, nothing publishable, or CaTH publishing disabled
+        TK->>DB: markPublishFailed (error names the list and its dates)
+    end
+        </script>
+        <figcaption>Figure 11a — Crown publish (PDDA lists).</figcaption>
+      </figure>
+      <ul>
+        <li><code>FIRM</code> and <code>WARN</code> are fetched with <code>weekCommencingStartDate</code> / <code>weekCommencingEndDate</code>; <code>FINAL</code> with <code>startDate</code> / <code>endDate</code>.</li>
+        <li>The list header and CaTH metadata use the requested dates; sittings listing returns for other days are left out (logged).</li>
+        <li>Unlike the standard flow, a crown publish with <code>CATH_PUBLISHING_ENABLED=false</code> is recorded as <strong><code>FAILED</code></strong> with the reason, so it does not look as if it is still running.</li>
+      </ul>
     </section>
 
     <!-- ============================== 5 ============================== -->
     <section id="s5">
       <h2>5. Status lifecycle</h2>
       <div class="aud"><span class="tag all">Everyone</span></div>
-      <p>Each tracked list has two independent statuses: <strong>publish status</strong> (did it reach CaTH?) and <strong>file status</strong> (was the PDF stored?). SJP rows have only a publish status.</p>
+      <p>Each tracked list has two independent statuses: <strong>publish status</strong> (did it reach CaTH?) and <strong>file status</strong> (was the PDF stored?). SJP rows and rows created by the crown publish have only a publish status.</p>
 
       <figure class="diagram">
         <script type="text/plain" class="mmd">
@@ -867,7 +919,8 @@ stateDiagram-v2
 
       <div class="table-wrap"><table>
         <tr><th>Method</th><th>Path</th><th>Purpose</th><th>Drools action</th><th>Allowed</th></tr>
-        <tr><td><span class="method post">POST</span></td><td><code>/api/court-list-publish/publish</code></td><td>Create/refresh a publish record and queue the publish + PDF task</td><td><code>courtlistpublishing-service.publish.post</code></td><td>Users with permission <em>Court List / Publish</em></td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/court-list-publish/publish</code></td><td>Create/refresh a publish record and queue the publish + PDF task. <strong>Rejects <code>FINAL</code>, <code>FIRM</code>, <code>WARN</code> (400)</strong></td><td><code>courtlistpublishing-service.publish.post</code></td><td>Users with permission <em>Court List / Publish</em></td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/court-list-publish/crown/publish</code></td><td>Create/refresh a crown publish record and queue the CaTH PDDA publish task (<code>FINAL</code>, <code>FIRM</code>, <code>WARN</code>)</td><td><code>courtlistpublishing-service.crown.post</code></td><td>Users with permission <em>Court List / Publish</em></td></tr>
         <tr><td><span class="method get">GET</span></td><td><code>/api/court-list-publish/publish-status</code></td><td>Query publish status by <code>courtListId</code>, or <code>courtCentreId</code> + <code>publishDate</code> (+ optional <code>courtListType</code>)</td><td><code>courtlistpublishing-service.publish.get</code></td><td>Publishing roles</td></tr>
         <tr><td><span class="method get">GET</span></td><td><code>/api/court-list-publish/download</code></td><td>On-demand PDF/Word for a court list</td><td><code>courtlistpublishing-service.download.get</code></td><td>Publishing roles</td></tr>
         <tr><td><span class="method get">GET</span></td><td><code>/api/court-list-publish/prison/download</code></td><td>Prison court list PDF</td><td><code>courtlistpublishing-service.prison-download.get</code></td><td>Prison-list roles</td></tr>
@@ -881,7 +934,7 @@ stateDiagram-v2
       <div class="table-wrap"><table>
         <tr><th>Header</th><th>Required</th><th>Notes</th></tr>
         <tr><td><code>CJSCPPUID</code></td><td>Yes (publish, download, prison download)</td><td>Calling user's id; forwarded to upstream services and used for permission checks.</td></tr>
-        <tr><td><code>Accept</code> / <code>Content-Type</code></td><td>Yes</td><td>Vendor media types, e.g. <code>application/vnd.courtlistpublishing-service.publish.post+json</code>, <code>…publish.get+json</code>, <code>…sjp.post+json</code>, <code>…publish-status-cleanup+json</code>.</td></tr>
+        <tr><td><code>Accept</code> / <code>Content-Type</code></td><td>Yes</td><td>Vendor media types, e.g. <code>application/vnd.courtlistpublishing-service.publish.post+json</code>, <code>…crown.post+json</code>, <code>…publish.get+json</code>, <code>…sjp.post+json</code>, <code>…publish-status-cleanup+json</code>.</td></tr>
       </table></div>
 
       <h4>Example — publish request</h4>
@@ -897,10 +950,25 @@ Content-Type: application/vnd.courtlistpublishing-service.publish.post+json
 }</code></pre>
       <p><strong>Response (200)</strong> — fields of <code>CourtListPublishResponse</code>: <code>courtListId</code>, <code>courtCentreId</code>, <code>publishStatus</code>, <code>fileStatus</code>, <code>courtListType</code>, <code>lastUpdated</code>, <code>fileUrl</code>, <code>fileId</code>, <code>publishErrorMessage</code>, <code>fileErrorMessage</code>, <code>publishDate</code>.</p>
 
+      <h4>Example — crown publish request</h4>
+      <p>A firm list for the week commencing Monday 8 June 2026:</p>
+<pre><code>POST /courtlistpublishing-service/api/court-list-publish/crown/publish
+CJSCPPUID: 7aee5dea-b0de-440e-a24b-cc8a5d3a8b6e
+Content-Type: application/vnd.courtlistpublishing-service.crown.post+json
+
+{
+  "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",
+  "courtListType": "FIRM",
+  "startDate": "2026-06-08",
+  "endDate": "2026-06-14"
+}</code></pre>
+      <p>The response has the same fields; <code>publishDate</code> is the start date and <code>fileStatus</code> is empty for a new crown record.</p>
+
       <h4>Error responses</h4>
       <div class="table-wrap"><table>
         <tr><th>Status</th><th>When</th></tr>
-        <tr><td><code>400</code></td><td>Missing body/fields, start ≠ end (publish), end &lt; start (download), missing <code>CJSCPPUID</code>, <code>PRISON</code> on the general download</td></tr>
+        <tr><td><code>400</code></td><td>Missing body/fields, start ≠ end (publish), end &lt; start (download), missing <code>CJSCPPUID</code>, <code>PRISON</code> on the general download, <strong><code>FINAL</code>/<code>FIRM</code>/<code>WARN</code> on <code>/publish</code></strong></td></tr>
+        <tr><td><code>400</code> (crown publish)</td><td>List type not <code>FINAL</code>/<code>FIRM</code>/<code>WARN</code>; <code>FINAL</code> with start ≠ end; <code>FIRM</code>/<code>WARN</code> not starting on a Monday or longer than 7 days; court centre not found, not a Crown Court, or without a numeric court id; a publish of the same list already in progress</td></tr>
         <tr><td><code>401/403</code></td><td>Authorisation filter denies the action (when authz enabled)</td></tr>
         <tr><td><code>404</code></td><td><code>/api/files/download/{fileId}</code> — file not found</td></tr>
         <tr><td><code>502</code></td><td>Download: upstream (Listing/Progression/Document Generator) failed or type unsupported</td></tr>
@@ -921,7 +989,7 @@ erDiagram
         UUID court_list_id PK
         UUID court_centre_id "NULL only for SJP_*"
         TEXT publish_status "REQUESTED | SUCCESSFUL | FAILED"
-        TEXT file_status "NULL only for SJP_*"
+        TEXT file_status "NULL only for SJP_* and crown FINAL/FIRM/WARN"
         TEXT court_list_type "CourtListType enum name"
         DATE publish_date
         TIMESTAMPTZ last_updated
@@ -947,7 +1015,7 @@ erDiagram
       <div class="table-wrap"><table>
         <tr><th>Name</th><th>Rule</th></tr>
         <tr><td><code>ck_court_centre_id_required_for_non_sjp</code></td><td><code>court_centre_id</code> must be set unless <code>court_list_type</code> starts with <code>SJP_</code></td></tr>
-        <tr><td><code>ck_file_status_required_for_non_sjp</code></td><td><code>file_status</code> must be set unless <code>court_list_type</code> starts with <code>SJP_</code></td></tr>
+        <tr><td><code>ck_file_status_required_for_non_sjp_non_crown</code></td><td><code>file_status</code> must be set unless <code>court_list_type</code> starts with <code>SJP_</code> or is <code>FINAL</code>, <code>FIRM</code> or <code>WARN</code> (replaced <code>ck_file_status_required_for_non_sjp</code> in V1004)</td></tr>
         <tr><td><code>ux_court_list_publish_status_non_sjp</code></td><td>Unique <code>(court_centre_id, publish_date, court_list_type)</code> where centre is not null</td></tr>
         <tr><td><code>ux_court_list_publish_status_sjp</code></td><td>Unique <code>(publish_date, court_list_type)</code> where centre is null</td></tr>
       </table></div>
@@ -959,6 +1027,7 @@ erDiagram
         <tr><td><code>V1001</code></td><td>(Re)create <code>court_list_publish_status</code></td></tr>
         <tr><td><code>V1002</code></td><td>Add <code>publish_count</code></td></tr>
         <tr><td><code>V1003</code></td><td>Allow SJP rows (nullable centre/file status, CHECK constraints, partial unique indexes)</td></tr>
+        <tr><td><code>V1004</code></td><td>Allow crown <code>FINAL</code>/<code>FIRM</code>/<code>WARN</code> rows without a file status</td></tr>
       </table></div>
     </section>
 
@@ -1003,7 +1072,7 @@ sequenceDiagram
       <h4>Groups</h4>
       <div class="table-wrap"><table>
         <tr><th>Group set</th><th>Members</th><th>Grants</th></tr>
-        <tr><td><strong>Publish permission</strong></td><td>Any user holding permission <code>{object: "Court List", action: "Publish"}</code></td><td><code>publish.post</code></td></tr>
+        <tr><td><strong>Publish permission</strong></td><td>Any user holding permission <code>{object: "Court List", action: "Publish"}</code></td><td><code>publish.post</code>, <code>crown.post</code></td></tr>
         <tr><td><strong>Publishing roles</strong></td><td>Listing Officers, Court Clerks, Legal Advisers, Crown Court Admin, Court Administrators, Youth Offending Service Admin, CPS, Probation Admin, Victims &amp; Witness Care Admin, Police Admin, Court Associate, Non CPS Prosecutors, District Judge, System Users</td><td><code>publish.get</code>, <code>download.get</code>, <code>files.download</code>, <code>public-court-list.get</code></td></tr>
         <tr><td><strong>Prison-list roles</strong></td><td>Prison Admin, Listing Officers, Legal Advisers, Court Clerks, CTSC Admin, Operational Delivery Admin</td><td><code>prison-download.get</code></td></tr>
         <tr><td><strong>System users only</strong></td><td>System Users</td><td><code>sjp.post</code>, <code>publish-status-cleanup</code></td></tr>

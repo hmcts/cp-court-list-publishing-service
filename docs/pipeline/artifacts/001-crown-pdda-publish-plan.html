@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- claude-artifact: created=2026-11-04 project=LPT-2603 kind=report version=1 -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LPT-2603 — Crown PDDA lists to CaTH: implementation plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#071210; --panel:#0c1c19; --panel-2:#103029; --edge:#1d4038;
+    --txt:#9fc7bd; --txt-hi:#e8fff7; --muted:#5f857b;
+    --teal:#2fe6b6; --teal-dim:#179e7c; --cyan:#46d6ff; --gold:#ffce5c; --done:#2fe6b6; --rose:#ff6b8a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:radial-gradient(1000px 500px at 90% -10%,rgba(47,230,182,.07),transparent),var(--bg);
+    color:var(--txt);font-family:'Manrope',system-ui,sans-serif;font-size:15px;line-height:1.65}
+  .wrap{max-width:940px;margin:0 auto;padding:44px 24px 110px}
+  .mono{font-family:'JetBrains Mono',monospace}
+
+  header{margin-bottom:40px}
+  .kicker{font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:3px;text-transform:uppercase;color:var(--teal-dim)}
+  h1{color:var(--txt-hi);font-size:clamp(26px,4.4vw,40px);font-weight:800;letter-spacing:-.5px;margin:12px 0 8px}
+  .sub{color:var(--muted);max-width:64ch}
+
+  /* overall progress bar */
+  .overall{margin-top:24px;background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:16px 20px}
+  .overall .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:10px}
+  .overall .top b{color:var(--txt-hi)}
+  .track{height:10px;border-radius:6px;background:#0a1714;overflow:hidden;border:1px solid var(--edge)}
+  .fill{height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--teal-dim),var(--teal));
+    box-shadow:0 0 14px rgba(47,230,182,.5);animation:grow 1.4s ease forwards}
+  @keyframes grow{to{width:var(--w,42%)}}
+
+  /* phase timeline (HERO COMPONENT) */
+  .phase{position:relative;padding:0 0 14px 46px;margin-bottom:8px}
+  .phase::before{content:"";position:absolute;left:15px;top:6px;bottom:-8px;width:2px;background:var(--edge)}
+  .phase:last-child::before{display:none}
+  .phase>.pin{position:absolute;left:0;top:2px;width:32px;height:32px;border-radius:50%;background:var(--panel-2);
+    border:2px solid var(--teal-dim);display:grid;place-items:center;font:700 13px 'JetBrains Mono',monospace;color:var(--teal);z-index:2}
+  .phase.done>.pin{background:var(--teal);border-color:var(--teal);color:var(--bg)}
+  .phase.active>.pin{border-color:var(--teal);box-shadow:0 0 0 4px rgba(47,230,182,.15);animation:beat 2s infinite}
+  @keyframes beat{50%{box-shadow:0 0 0 8px rgba(47,230,182,.05)}}
+  .phase .card{background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:18px 20px;margin-left:4px}
+  .phase.active .card{border-color:var(--teal-dim)}
+  .ph-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .ph-head h3{font-size:17px;color:var(--txt-hi);font-weight:700}
+  .tag{font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.5px;padding:5px 9px;border-radius:20px;border:1px solid currentColor}
+  .tag.t{color:var(--cyan)} .tag.o{color:var(--gold)} .tag.d{color:var(--done)} .tag.now{color:var(--teal);background:rgba(47,230,182,.1)}
+  .ph-desc{color:var(--txt);font-size:14px;margin-bottom:14px}
+
+  /* task checklist */
+  ul.tasks{list-style:none;margin:6px 0 14px}
+  ul.tasks li{display:flex;align-items:flex-start;gap:10px;padding:6px 0;font-size:14px}
+  ul.tasks .box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--edge);flex-shrink:0;margin-top:2px;position:relative}
+  ul.tasks li.x .box{background:var(--teal);border-color:var(--teal)}
+  ul.tasks li.x .box::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:var(--bg);font-size:12px;font-weight:800}
+  ul.tasks li.x{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--teal-dim)}
+  ul.tasks li.doing .box{border-color:var(--teal);box-shadow:0 0 0 3px rgba(47,230,182,.12)}
+
+  /* gantt-style effort bars */
+  .gantt{margin-top:14px;border-top:1px dashed var(--edge);padding-top:14px}
+  .gantt .row{display:grid;grid-template-columns:130px 1fr;align-items:center;gap:14px;margin:7px 0;font-size:12.5px}
+  .gantt .lbl{color:var(--muted);font-family:'JetBrains Mono',monospace;text-align:right}
+  .gantt .bar{height:18px;border-radius:5px;background:linear-gradient(90deg,var(--teal-dim),var(--cyan));
+    display:flex;align-items:center;padding:0 8px;font:600 11px 'JetBrains Mono',monospace;color:var(--bg)}
+  .gantt .bar.warn{background:linear-gradient(90deg,#8a6a1f,var(--gold))}
+
+  .milestone{display:inline-flex;align-items:center;gap:8px;margin-top:8px;color:var(--gold);font-size:13px;font-weight:600}
+  .milestone::before{content:"◆";color:var(--gold)}
+
+  footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--edge);color:var(--muted);
+    font:500 12px 'JetBrains Mono',monospace;letter-spacing:1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Implementation Plan · LPT-2603</div>
+    <h1>Publish Crown Court lists to CaTH (PDDA)</h1>
+    <p class="sub">Build CaTH's Daily, Firm and Advance (warned) PDDA lists from listing's <code>application/vnd.listing.search.crown.list.payload+json</code> and publish them through <code>POST /api/court-list-publish/crown/publish</code> (api-cp-crime-court-list-publisher 0.3.7). Recorded after the implementation (retrospective plan); the remaining tasks are open.</p>
+    <div class="overall" style="--w:78%">
+      <div class="top"><span>Overall progress</span><b>78% · 14 of 18 tasks</b></div>
+      <div class="track"><div class="fill"></div></div>
+    </div>
+  </header>
+
+  <div class="phase done">
+    <div class="pin">1</div>
+    <div class="card">
+      <div class="ph-head"><h3>Contracts &amp; schemas</h3><span class="tag d">Done</span></div>
+      <div class="ph-desc">Agree the contracts first: the publish API, the CaTH formats and access control.</div>
+      <ul class="tasks">
+        <li class="x"><span class="box"></span>Generated <code>CrownCourtListPublishApi</code> from spec <code>0.3.7</code> (<code>POST /api/court-list-publish/crown/publish</code>)</li>
+        <li class="x"><span class="box"></span>CaTH schemas <code>crown_daily/firm/advance_pdda_list.json</code> from <code>hmcts/pip-data-management</code></li>
+        <li class="x"><span class="box"></span>Drools rule for <code>courtlistpublishing-service.crown.post</code> (Court List / Publish permission)</li>
+      </ul>
+      <span class="milestone">Contract frozen — CROWN_DAILY / FIRM / ADVANCE_PDDA_LIST</span>
+    </div>
+  </div>
+
+  <div class="phase done">
+    <div class="pin">2</div>
+    <div class="card">
+      <div class="ph-head"><h3>Data &amp; transformation</h3><span class="tag d">Done</span></div>
+      <div class="ph-desc">Fetch the crown payload and build schema-valid CaTH documents, never publishing restricted data.</div>
+      <ul class="tasks">
+        <li class="x"><span class="box"></span><code>CrownListDataClient</code>: <code>dailylistpayload</code> with the crown media type (week-commencing params for FIRM/WARN)</li>
+        <li class="x"><span class="box"></span><code>CrownListTransformer</code>: DailyList, FirmList (by sitting date), WarnedList (fixed / without fixed date)</li>
+        <li class="x"><span class="box"></span>Restricted hearings and parties, nameless parties and other days left out; presiding judge chosen</li>
+        <li class="x"><span class="box"></span><code>CrownListCaTHPublisher</code>: sanitise, validate against the CaTH schema, refuse an all-filtered list, check 2xx</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase done">
+    <div class="pin">3</div>
+    <div class="card">
+      <div class="ph-head"><h3>Publish flow</h3><span class="tag d">Done</span></div>
+      <div class="ph-desc">A dedicated endpoint and asynchronous task; one publish per list at a time.</div>
+      <ul class="tasks">
+        <li class="x"><span class="box"></span><code>CrownCourtListPublishController</code>: list type, dates (<code>CrownPublishRequest</code>), Crown Court check</li>
+        <li class="x"><span class="box"></span><code>CrownListStatusService</code>: row lock, in-progress refusal (400), publish status only</li>
+        <li class="x"><span class="box"></span><code>CROWN_LIST_PUBLISH_TASK</code>: always completes; failures name the list and its dates</li>
+        <li class="x"><span class="box"></span>Migration <code>V1004</code>; generic <code>/publish</code> rejects FINAL/FIRM/WARN (documented breaking change)</li>
+      </ul>
+      <span class="milestone">Crown lists reach CaTH end to end (WireMock)</span>
+    </div>
+  </div>
+
+  <div class="phase active">
+    <div class="pin">4</div>
+    <div class="card">
+      <div class="ph-head"><h3>Verification &amp; rollout</h3><span class="tag now">In progress</span><span class="tag o mono">human gates</span></div>
+      <div class="ph-desc">Prove it on the real services, settle the open questions, then hand over for review.</div>
+      <ul class="tasks">
+        <li class="x"><span class="box"></span>Unit tests green (528)</li>
+        <li class="x"><span class="box"></span>Integration tests green against the Docker stack (76, incl. 8 for the crown publish)</li>
+        <li class="x"><span class="box"></span>Application guide updated (md + html): endpoint, BR-12 – BR-16, flow 4.6, V1004</li>
+        <li><span class="box"></span>Confirm with CaTH: sensitivity <code>PUBLIC</code> for the PDDA lists</li>
+        <li><span class="box"></span>Tell callers of <code>/publish</code> about the FINAL/FIRM/WARN change</li>
+        <li><span class="box"></span>DEV check: publish one FINAL, FIRM and WARN list; confirm each on CaTH staging</li>
+        <li><span class="box"></span>Commit and open the PR; code review (Stage 6 gate), then CI</li>
+      </ul>
+      <span class="milestone">Ready for Stage 6 code review</span>
+    </div>
+  </div>
+
+  <footer>LPT-2603 · IMPLEMENTATION PLAN v1 · cp-court-list-publishing-service · from template 03 (roadmap)</footer>
+</div>
+</body>
+</html>
