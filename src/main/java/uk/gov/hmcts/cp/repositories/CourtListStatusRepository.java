@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -27,6 +29,17 @@ public interface CourtListStatusRepository extends JpaRepository<CourtListStatus
 
     Optional<CourtListStatusEntity> findByCourtCentreIdAndPublishDateAndCourtListType(
             UUID courtCentreId, LocalDate publishDate, CourtListType courtListType);
+
+    /**
+     * Same lookup as {@link #findByCourtCentreIdAndPublishDateAndCourtListType}, but locks the row until the
+     * transaction ends, so concurrent publish requests for one row are handled one after the other.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT e FROM CourtListStatusEntity e WHERE e.courtCentreId = :courtCentreId"
+            + " AND e.publishDate = :publishDate AND e.courtListType = :courtListType")
+    Optional<CourtListStatusEntity> lockByCourtCentreIdAndPublishDateAndCourtListType(
+            @Param("courtCentreId") UUID courtCentreId, @Param("publishDate") LocalDate publishDate,
+            @Param("courtListType") CourtListType courtListType);
 
     /**
      * Locates an SJP publish-status row. SJP is national so court_centre_id is NULL, which a

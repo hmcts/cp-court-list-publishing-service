@@ -1,0 +1,160 @@
+{
+  "courtCentreId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "sittingDate": "2026-06-09",
+  "weekCommencingStartDate": "2026-06-09",
+  "weekCommencingEndDate": "2026-06-13",
+  "publishedAt": "2026-06-08",
+  "documentType": "FINAL",
+  "documentCounter": 2,
+  "isWelsh": true,
+  "courtCentreName": "Cardiff Crown Court",
+  "welshCourtCentreName": "Llys y Goron Caerdydd",
+  "courtLists": [
+    {
+      "crestCourtSite": {
+        "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+        "oucode": "CDF",
+        "crestCourtId": "100",
+        "crestCourtSiteId": "100",
+        "crestCourtSiteName": "Cardiff Crown Court",
+        "welshCrestCourtSiteName": "Llys y Goron Caerdydd",
+        "validFrom": "2000-01-01",
+        "validTo": "9999-12-31",
+        "crestCourtName": "Cardiff",
+        "welshCrestCourtName": "Caerdydd",
+        "crestCourtShortName": "Cardiff",
+        "welshCrestCourtShortName": "Caerdydd",
+        "crestCourtFullName": "Cardiff Crown Court",
+        "welshCrestCourtFullName": "Llys y Goron Caerdydd",
+        "crestCourtSiteCode": "CDF01",
+        "courtType": "CROWN",
+        "courtCentreAddress1": "Cardiff Crown Court",
+        "courtCentreAddress2": "2 Park Street, Cardiff CF10 1ET",
+        "welshCourtCentreAddress1": "Llys y Goron Caerdydd",
+        "welshCourtCentreAddress2": "2 Stryd y Parc, Caerdydd CF10 1ET",
+        "courtCentreAddress3": "Cardiff",
+        "courtCentreAddress4": "South Glamorgan",
+        "courtCentreAddress5": "Wales",
+        "courtCentrePostcode": "CF10 1ET",
+        "welshCourtCentreAddress3": "Caerdydd",
+        "welshCourtCentreAddress4": "De Morgannwg",
+        "welshCourtCentreAddress5": "Cymru"
+      },
+      "sittings": [
+        {
+          "sittingDate": "2026-06-09",
+          "courtRoomId": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+          "courtRoomName": "Court Room 1",
+          "welshCourtRoomName": "Ystafell Llys 1",
+          "weekCommencing": true,
+          "judiciary": [
+            {
+              "isBenchChairman": false,
+              "isDeputy": false,
+              "judicialId": "d4e5f6a7-b8c9-0123-defa-234567890123",
+              "judiciaryName": "His Honour Judge Williams",
+              "welshJudiciaryName": "Ei Anrhydedd Barnwr Williams",
+              "judicialRoleType": {
+                "judiciaryType": "CIRCUIT_JUDGE"
+              },
+              "judiciaryTitle": "His Honour Judge",
+              "judiciaryForenames": "Mark J",
+              "judiciarySurname": "Williams",
+              "judiciaryTitleSuffix": "KC",
+              "welshJudiciaryTitle": "Ei Anrhydedd Barnwr",
+              "welshJudiciaryTitleSuffix": "CB"
+            }
+          ],
+          "hearings": [
+            {
+              "startTime": "2026-06-09T10:00:00",
+              "endTime": "2026-06-09T11:00:00",
+              "hearingType": {
+                "id": "e5f6a7b8-c9d0-1234-efab-345678901234",
+                "description": "Trial",
+                "welshDescription": "Treial"
+              },
+              "restrictFromCourtList": false,
+              "weekCommencing": true,
+              "hasVideoLink": false,
+              "publicListNote": "Mae cyfyngiadau adrodd yn gymwys",
+              "committingCourtCentreId": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+              "caseIdentifier": {
+                "caseReference": "T20260002",
+                "authorityCode": "CPS002"
+              },
+              "prosecutor": {
+                "organisationName": "Crown Prosecution Service"
+              },
+              "defendants": [
+                {
+                  "id": "a7b8c9d0-e1f2-3456-abcd-567890123456",
+                  "firstName": "Dafydd",
+                  "lastName": "Jones",
+                  "restrictFromCourtList": false,
+                  "defenceOrganisation": "Morgan & Co Solicitors",
+                  "offences": [
+                    {
+                      "offenceCode": "TH68001",
+                      "statementOfOffence": {
+                        "title": "Theft contrary to section 1(1) and 7 of the Theft Act 1968",
+                        "welshTitle": "Lladrad yn groes i adran 1(1) a 7 o Ddeddf Lladrad 1968"
+                      },
+                      "restrictFromCourtList": false,
+                      "reportingRestrictions": [
+                        {
+                          "label": "Reporting restriction: Victim anonymity",
+                          "welshLabel": "Cyfyngiad adrodd: Anhysbysrwydd dioddefwr"
+                        }
+                      ],
+                      "committingCourt": {
+                        "courtCentreId": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+                        "courtHouseName": "Cardiff Magistrates Court"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "linkedCases": [
+                {
+                  "caseId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "caseUrn": "LINKEDURN001"
+                }
+              ]
+            },
+            {
+              "startTime": "2026-06-09T14:00:00",
+              "endTime": "2026-06-09T14:30:00",
+              "hearingType": {
+                "id": "d0e1f2a3-b4c5-6789-defa-890123456789",
+                "description": "Application",
+                "welshDescription": "Cais"
+              },
+              "restrictFromCourtList": false,
+              "weekCommencing": true,
+              "hasVideoLink": false,
+              "publicListNote": "Cais am fechnïaeth",
+              "applicationReference": "APP20260002",
+              "caseIdentifier": {
+                "caseReference": "APP20260002"
+              },
+              "applicant": {
+                "firstName": "Siân",
+                "lastName": "Morgan",
+                "restrictFromCourtList": false
+              },
+              "respondents": [
+                {
+                  "firstName": "Crown",
+                  "lastName": "Prosecution Service",
+                  "restrictFromCourtList": false
+                }
+              ]
+            }
+          ],
+          "sittingNote": "Court 1 sits late today"
+        }
+      ]
+    }
+  ]
+}

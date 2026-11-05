@@ -66,18 +66,8 @@ public class CaTHService {
             log.info("CaTH list type mapping resolved: courtListType={} -> cathListType={}, sensitivity={}",
                     courtListType, cathListInfo.cathCourtListType(), cathListInfo.sensitivity());
 
-            final Instant now = Instant.now();
-            final DtsMeta dtsMeta = DtsMeta.builder()
-                    .provenance("COMMON_PLATFORM")
-                    .type("LIST")
-                    .listType(cathListInfo.cathCourtListType())
-                    .courtId(courtIdFromRefData)
-                    .contentDate(StandardCourtListTransformationService.toIsoDateTimeOrNull(publishDate.toString()))
-                    .language(language)
-                    .sensitivity(cathListInfo.sensitivity())
-                    .displayFrom(now.toString())
-                    .displayTo(getDisplayTo(publishDate))
-                    .build();
+            final DtsMeta dtsMeta = dtsMeta(cathListInfo.cathCourtListType(), cathListInfo.sensitivity(),
+                    courtIdFromRefData, publishDate, publishDate, Boolean.TRUE.equals(isWelsh));
 
             final String payload = OBJECT_MAPPER.writeValueAsString(courtListDocument);
 
@@ -105,6 +95,28 @@ public class CaTHService {
             },
             () -> log.debug("Azure Blob Service not available, skipping payload upload")
         );
+    }
+
+    /**
+     * CaTH metadata for a list publication, built the same way for every list type: provenance
+     * {@code COMMON_PLATFORM}, content date = the list's first day, displayed from now until 23:59 UTC on its last day.
+     *
+     * @param startDate first day the list covers
+     * @param endDate   last day the list covers (the same day for a single-day list)
+     */
+    public static DtsMeta dtsMeta(String cathListType, String sensitivity, String courtId,
+                                  LocalDate startDate, LocalDate endDate, boolean welsh) {
+        return DtsMeta.builder()
+                .provenance("COMMON_PLATFORM")
+                .type("LIST")
+                .listType(cathListType)
+                .courtId(courtId)
+                .contentDate(StandardCourtListTransformationService.toIsoDateTimeOrNull(startDate.toString()))
+                .language(welsh ? "WELSH" : "ENGLISH")
+                .sensitivity(sensitivity)
+                .displayFrom(Instant.now().toString())
+                .displayTo(getDisplayTo(endDate))
+                .build();
     }
 
     public static String buildBlobName(UUID courtListId) {

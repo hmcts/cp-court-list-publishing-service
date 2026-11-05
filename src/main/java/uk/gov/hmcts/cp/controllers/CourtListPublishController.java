@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import uk.gov.hmcts.cp.cleanup.CleanupJobService;
 import uk.gov.hmcts.cp.config.AppConstant;
 import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
+import uk.gov.hmcts.cp.openapi.api.CrownCourtListPublishApi;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
@@ -16,6 +17,7 @@ import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListFileResult;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
+import uk.gov.hmcts.cp.services.crown.CrownListType;
 import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
 import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService.SjpPublishResult;
 
@@ -81,6 +83,11 @@ public class CourtListPublishController implements CourtListPublishApi {
             @RequestBody final CourtListPublishRequest request) {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
+        }
+        if (CrownListType.from(request.getCourtListType()).isPresent()) {
+            // crown lists have their own endpoint and status rows; publishing them here would overwrite those rows
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getCourtListType()
+                    + " court lists must be published via " + CrownCourtListPublishApi.PATH_PUBLISH_CROWN_COURT_LIST);
         }
 
         LOG.atInfo().log("Creating or updating court list publish status for court centre ID: {}, type: {}, startDate: {}, endDate: {}",

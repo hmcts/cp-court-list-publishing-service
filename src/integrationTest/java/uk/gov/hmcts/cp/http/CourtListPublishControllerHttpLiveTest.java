@@ -36,7 +36,9 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
     private static final String DOWNLOAD_ACCEPT = "application/vnd.courtlistpublishing-service.download.get+json";
     private static final String REQUESTED_STATUS = Status.REQUESTED.toString();
     private static final String COURT_LIST_TYPE_PUBLIC = CourtListType.PUBLIC.toString();
-    private static final String COURT_LIST_TYPE_FINAL = CourtListType.FINAL.toString();
+    // a list type that is not published as a crown list and has no PDF template, so its background task never
+    // calls the document generator (which the download tests assert is not called)
+    private static final String COURT_LIST_TYPE_BENCH = CourtListType.BENCH.toString();
     private static final String CROWN_COURT_CENTRE_ID = "cc000000-0000-0000-0000-000000000001";
     private static final String CROWN_COURT_CENTRE_ID_WELSH = "cc000000-0000-0000-0000-000000000002";
 
@@ -70,7 +72,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         postRequest(createRequestJson(courtCentreId, CourtListType.PUBLIC));
 
         // When - Update the entity with same ID
-        String updateRequestJson = createRequestJson(courtCentreId, CourtListType.FINAL);
+        String updateRequestJson = createRequestJson(courtCentreId, CourtListType.BENCH);
         ResponseEntity<String> response = postRequest(updateRequestJson);
 
         // Then
@@ -78,7 +80,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         JsonNode responseBody = parseResponse(response);
         assertThat(responseBody.get("courtListId").asText()).isNotNull();
         assertThat(responseBody.get("publishStatus").asText()).isEqualTo(REQUESTED_STATUS);
-        assertThat(responseBody.get("courtListType").asText()).isEqualTo(COURT_LIST_TYPE_FINAL);
+        assertThat(responseBody.get("courtListType").asText()).isEqualTo(COURT_LIST_TYPE_BENCH);
     }
 
     @Test
@@ -165,7 +167,7 @@ public class CourtListPublishControllerHttpLiveTest extends AbstractTest {
         UUID courtListId2 = UUID.randomUUID();
 
         postRequest(createRequestJson(courtCentreId, CourtListType.PUBLIC));
-        postRequest(createRequestJson(courtCentreId, CourtListType.FINAL));
+        postRequest(createRequestJson(courtCentreId, CourtListType.BENCH));
 
         // When
         String url = BASE_URL + "/api/court-list-publish/publish-status?courtCentreId=" + courtCentreId + "&publishDate=" + publishDate;
