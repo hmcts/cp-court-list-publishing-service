@@ -1,9 +1,14 @@
 package uk.gov.hmcts.cp.services;
 
+import jakarta.json.Json;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
@@ -12,6 +17,9 @@ import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListFileResult;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,7 +56,7 @@ class CourtListDownloadServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new CourtListDownloadService(courtListDataService, documentGeneratorClient);
+        service = new CourtListDownloadService(courtListDataService, documentGeneratorClient, true);
     }
 
     @Test
@@ -495,6 +503,57 @@ class CourtListDownloadServiceTest {
                 courtRoomId == null ? isNull() : eq(courtRoomId),
                 eq(START_DATE), eq(END_DATE), eq(CJSCPPUID), eq(false)))
                 .thenReturn(payloadJson);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourtListType.class, names = {"DRAFT", "FINAL", "FIRM", "ONLINE_PUBLIC"})
+    void generateCrownCourtPdfSendsTrimmedDailyListPayloadToDocmosis(CourtListType type) throws IOException {
+        stubCrownPayload(type, null, resourceText("courtlistdownload/crown-daily-list-payload.json"));
+        ArgumentCaptor<JsonObject> sent = ArgumentCaptor.forClass(JsonObject.class);
+        when(documentGeneratorClient.generatePdf(sent.capture(), anyString())).thenReturn(PDF_BYTES);
+
+        service.generateCrownCourtPdf(type, false, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
+
+        assertThat(sent.getValue()).isEqualTo(readJson(resourceText("courtlistdownload/crown-daily-list-payload-trimmed.json")));
+    }
+
+    @Test
+    void generateCrownCourtPdfSendsFullDailyListPayloadWhenTrimDisabled() throws IOException {
+        service = new CourtListDownloadService(courtListDataService, documentGeneratorClient, false);
+        String payload = resourceText("courtlistdownload/crown-daily-list-payload.json");
+        stubCrownPayload(CourtListType.FINAL, null, payload);
+        ArgumentCaptor<JsonObject> sent = ArgumentCaptor.forClass(JsonObject.class);
+        when(documentGeneratorClient.generatePdf(sent.capture(), anyString())).thenReturn(PDF_BYTES);
+
+        service.generateCrownCourtPdf(
+                CourtListType.FINAL, false, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
+
+        assertThat(sent.getValue()).isEqualTo(readJson(payload));
+    }
+
+    @Test
+    void generateCrownCourtPdfSendsAlphabeticalPayloadUnchanged() throws IOException {
+        String payload = "{\"courtCentreName\":\"X\",\"hearingDates\":[{\"id\":\"1\"}]}";
+        stubCrownPayload(CourtListType.ALPHABETICAL, null, payload);
+        ArgumentCaptor<JsonObject> sent = ArgumentCaptor.forClass(JsonObject.class);
+        when(documentGeneratorClient.generatePdf(sent.capture(), eq("CourtList"))).thenReturn(PDF_BYTES);
+
+        service.generateCrownCourtPdf(
+                CourtListType.ALPHABETICAL, false, COURT_CENTRE_ID, null, START_DATE, END_DATE, CJSCPPUID, false);
+
+        assertThat(sent.getValue()).isEqualTo(readJson(payload));
+    }
+
+    private static String resourceText(String resource) throws IOException {
+        try (InputStream in = CourtListDownloadServiceTest.class.getClassLoader().getResourceAsStream(resource)) {
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
+    private static JsonObject readJson(String json) {
+        try (JsonReader reader = Json.createReader(new StringReader(json))) {
+            return reader.readObject();
+        }
     }
 
     private void stubCrownPayload(CourtListType type, String courtRoomId, String payloadJson) {

@@ -1,0 +1,133 @@
+{
+  "courtCentreId": "f8254db1-1683-483e-afb3-b87fde5a0a26",
+  "sittingDate": "2026-02-27",
+  "weekCommencingStartDate": "2026-02-23",
+  "weekCommencingEndDate": "2026-02-27",
+  "publishedAt": "2026-02-26T15:30:00Z",
+  "documentType": "Final",
+  "documentCounter": 2,
+  "isWelsh": false,
+  "courtCentreName": "Test Crown Court",
+  "welshCourtCentreName": "Llys y Goron Prawf",
+  "listDate": "2026-02-27",
+  "draftNumber": "1",
+  "courtLists": [
+    {
+      "crestCourtSite": {
+        "id": "0f8b3f2e-1111-4a2b-9c3d-000000000001",
+        "oucode": "C01TS00",
+        "crestCourtId": "401",
+        "crestCourtSiteId": "1",
+        "crestCourtSiteName": "Test Crown Court Site",
+        "welshCrestCourtSiteName": "Safle Llys y Goron Prawf",
+        "validFrom": "2020-01-01",
+        "validTo": "2099-12-31",
+        "crestCourtName": "Test",
+        "welshCrestCourtName": "Prawf",
+        "crestCourtShortName": "TCC",
+        "welshCrestCourtShortName": "LYGP",
+        "crestCourtFullName": "The Crown Court at Test",
+        "welshCrestCourtFullName": "Llys y Goron yn Prawf",
+        "crestCourtSiteCode": "TS",
+        "courtType": "CROWN",
+        "courtCentreAddress1": "1 Test Street",
+        "courtCentreAddress2": "Test Town",
+        "welshCourtCentreAddress1": "1 Stryd Prawf",
+        "welshCourtCentreAddress2": "Tref Prawf",
+        "courtCentreAddress3": "Testshire",
+        "courtCentreAddress4": "Line 4",
+        "courtCentreAddress5": "Line 5",
+        "courtCentrePostcode": "TE1 1ST",
+        "welshCourtCentreAddress3": "Sir Prawf",
+        "welshCourtCentreAddress4": "Llinell 4",
+        "welshCourtCentreAddress5": "Llinell 5",
+        "phoneNumber": "01234 567890"
+      },
+      "sittings": [
+        {
+          "sittingDate": "2026-02-27",
+          "courtRoomId": "a1b2c3d4-0000-0000-0000-000000000001",
+          "courtRoomName": "Courtroom 1",
+          "welshCourtRoomName": "Ystafell Llys 1",
+          "weekCommencing": false,
+          "sittingNote": "Internal sitting note",
+          "judiciary": [
+            {
+              "isBenchChairman": true,
+              "isDeputy": false,
+              "judicialId": "b1b2b3b4-0000-0000-0000-000000000001",
+              "judiciaryName": "HHJ Smith",
+              "welshJudiciaryName": "EiA Smith",
+              "judiciaryTitle": "HHJ",
+              "judiciaryForenames": "John",
+              "judiciarySurname": "Smith",
+              "judiciaryTitleSuffix": "KC",
+              "welshJudiciaryTitle": "EiA",
+              "welshJudiciaryTitleSuffix": "CB",
+              "judicialRoleType": { "judiciaryType": "CIRCUIT_JUDGE" }
+            }
+          ],
+          "hearings": [
+            {
+              "startTime": "2026-02-27T10:00:00.000Z",
+              "endTime": "2026-02-27T12:00:00.000Z",
+              "hearingType": {
+                "id": "c1c2c3c4-0000-0000-0000-000000000001",
+                "description": "Trial",
+                "welshDescription": "Treial"
+              },
+              "restrictFromCourtList": false,
+              "weekCommencing": false,
+              "hasVideoLink": false,
+              "publicListNote": "Public note",
+              "committingCourtCentreId": "d1d2d3d4-0000-0000-0000-000000000001",
+              "caseIdentifier": { "caseReference": "T20260001", "authorityCode": "CPS" },
+              "prosecutor": { "organisationName": "Crown Prosecution Service", "welshOrganisationName": "Gwasanaeth Erlyn y Goron" },
+              "linkedCases": [ { "caseId": "e1e2e3e4-0000-0000-0000-000000000001", "caseUrn": "T20260002" } ],
+              "defendants": [
+                {
+                  "id": "f1f2f3f4-0000-0000-0000-000000000001",
+                  "firstName": "Jane",
+                  "lastName": "Doe",
+                  "restrictFromCourtList": false,
+                  "defenceOrganisation": "Defence LLP",
+                  "offences": [
+                    {
+                      "offenceCode": "TH68001",
+                      "statementOfOffence": { "title": "Theft", "welshTitle": "Lladrad" },
+                      "restrictFromCourtList": false,
+                      "reportingRestrictions": [ { "label": "Section 45", "welshLabel": "Adran 45" } ],
+                      "committingCourt": { "courtCentreId": "d1d2d3d4-0000-0000-0000-000000000001", "courtHouseName": "Test Magistrates" }
+                    },
+                    {
+                      "offenceCode": "TH68002",
+                      "statementOfOffence": { "title": "Burglary", "welshTitle": "Byrgleriaeth" },
+                      "restrictFromCourtList": false,
+                      "reportingRestrictions": []
+                    }
+                  ]
+                },
+                {
+                  "id": "f1f2f3f4-0000-0000-0000-000000000002",
+                  "organisationName": "Acme Ltd",
+                  "restrictFromCourtList": false,
+                  "offences": []
+                }
+              ],
+              "applicationReference": "APP-0001",
+              "applicant": { "firstName": "Ann", "lastName": "Applicant", "restrictFromCourtList": false },
+              "respondents": [ { "firstName": "Rob", "lastName": "Respondent", "restrictFromCourtList": false } ],
+              "subject": { "firstName": "Sam", "lastName": "Subject", "restrictFromCourtList": false }
+            }
+          ]
+        },
+        {
+          "sittingDate": "2026-02-27",
+          "courtRoomName": "Courtroom 2",
+          "judiciary": [],
+          "hearings": []
+        }
+      ]
+    }
+  ]
+}

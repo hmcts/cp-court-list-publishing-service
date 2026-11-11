@@ -1,0 +1,193 @@
+{
+  "sittingDate": "2026-02-27",
+  "publishedAt": "2026-02-26T15:30:00Z",
+  "documentType": "Final",
+  "documentCounter": 3,
+  "courtCentreName": "Test Crown Court",
+  "listDate": "2026-02-27",
+  "draftNumber": "",
+  "courtLists": [
+    {
+      "crestCourtSite": {
+        "crestCourtShortName": "Test CC",
+        "welshCrestCourtShortName": "LlG Prawf",
+        "crestCourtFullName": "The Crown Court at Test",
+        "welshCrestCourtFullName": "Llys y Goron yn Prawf",
+        "courtCentreAddress1": "1 Test Street",
+        "courtCentreAddress2": "Test Town",
+        "welshCourtCentreAddress1": "1 Stryd Prawf",
+        "welshCourtCentreAddress2": "Tref Prawf",
+        "phoneNumber": "01234 567890"
+      },
+      "sittings": [
+        {
+          "sittingDate": "2026-02-27",
+          "courtRoomName": "Courtroom 1",
+          "welshCourtRoomName": "Ystafell Llys 1",
+          "judiciary": [
+            {
+              "judiciaryName": "HHJ Smith",
+              "welshJudiciaryName": "EiA Smith"
+            },
+            {
+              "judiciaryName": "Recorder Jones",
+              "welshJudiciaryName": "Cofiadur Jones"
+            }
+          ],
+          "hearings": [
+            {
+              "startTime": "2026-02-27T10:00:00.000Z",
+              "hearingType": {
+                "description": "Trial",
+                "welshDescription": "Treial"
+              },
+              "publicListNote": "Hearing continues from yesterday",
+              "caseIdentifier": {
+                "caseReference": "T20260001"
+              },
+              "prosecutor": {
+                "organisationName": "Crown Prosecution Service",
+                "welshOrganisationName": "Gwasanaeth Erlyn y Goron"
+              },
+              "defendants": [
+                {
+                  "firstName": "Jane",
+                  "lastName": "Doe",
+                  "defenceOrganisation": "Defence Solicitors LLP",
+                  "offences": [
+                    {
+                      "statementOfOffence": {
+                        "title": "Theft"
+                      },
+                      "reportingRestrictions": [
+                        {
+                          "label": "Section 45 Youth Justice and Criminal Evidence Act 1999"
+                        }
+                      ]
+                    },
+                    {
+                      "statementOfOffence": {
+                        "title": "Burglary"
+                      },
+                      "reportingRestrictions": []
+                    }
+                  ]
+                },
+                {
+                  "firstName": "John",
+                  "lastName": "Roe",
+                  "defenceOrganisation": "Defence Solicitors LLP",
+                  "offences": [
+                    {
+                      "statementOfOffence": {
+                        "title": "Handling stolen goods"
+                      },
+                      "reportingRestrictions": []
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "startTime": "2026-02-27T14:00:00.000Z",
+              "hearingType": {
+                "description": "Sentence",
+                "welshDescription": "Dedfryd"
+              },
+              "publicListNote": "",
+              "caseIdentifier": {
+                "caseReference": "T20260002"
+              },
+              "prosecutor": {
+                "organisationName": "Crown Prosecution Service",
+                "welshOrganisationName": "Gwasanaeth Erlyn y Goron"
+              },
+              "defendants": [
+                {
+                  "organisationName": "Acme Trading Ltd",
+                  "defenceOrganisation": "Corporate Defence LLP",
+                  "offences": [
+                    {
+                      "statementOfOffence": {
+                        "title": "Fraud by false representation"
+                      },
+                      "reportingRestrictions": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sittingDate": "2026-02-27",
+          "courtRoomName": "Courtroom 2",
+          "welshCourtRoomName": "Ystafell Llys 2",
+          "judiciary": [],
+          "hearings": [
+            {
+              "startTime": "2026-02-27T10:30:00.000Z",
+              "hearingType": {
+                "description": "Application",
+                "welshDescription": "Cais"
+              },
+              "publicListNote": "",
+              "caseIdentifier": {
+                "caseReference": "T20260003"
+              },
+              "prosecutor": {
+                "organisationName": "Crown Prosecution Service",
+                "welshOrganisationName": "Gwasanaeth Erlyn y Goron"
+              },
+              "defendants": [
+                {
+                  "firstName": "Sam",
+                  "lastName": "Subject",
+                  "defenceOrganisation": "Defence Solicitors LLP",
+                  "offences": []
+                }
+              ],
+              "applicationReference": "APP-2026-0001"
+            },
+            {
+              "startTime": "2026-02-27T11:00:00.000Z",
+              "hearingType": {
+                "description": "Plea and Trial Preparation",
+                "welshDescription": "Ple a Pharatoi ar gyfer Treial"
+              },
+              "publicListNote": "",
+              "caseIdentifier": {
+                "caseReference": "T20260004"
+              },
+              "prosecutor": {
+                "organisationName": "Crown Prosecution Service",
+                "welshOrganisationName": "Gwasanaeth Erlyn y Goron"
+              },
+              "defendants": [
+                {
+                  "firstName": "",
+                  "lastName": "Single",
+                  "defenceOrganisation": "Defence Solicitors LLP",
+                  "offences": [
+                    {
+                      "statementOfOffence": {
+                        "title": "Assault occasioning actual bodily harm"
+                      },
+                      "reportingRestrictions": []
+                    }
+                  ]
+                },
+                {
+                  "firstName": "Mononym",
+                  "lastName": "",
+                  "defenceOrganisation": "Defence Solicitors LLP",
+                  "offences": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

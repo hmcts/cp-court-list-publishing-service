@@ -20,6 +20,12 @@ spring:
 
 courtlistpublishing:
   system-user-id: ${COURTLISTPUBLISHING_SYSTEM_USER_ID:}
+  download:
+    # Trim the crown daily list payload to the fields the crown Docmosis templates read
+    # (see CrownDailyListPayloadTrimmer). Set to false to send the full payload if a
+    # template field is found missing from generated lists. This needs no code change,
+    # but the pods restart to pick up the new value.
+    crown-payload-trim-enabled: ${CP_CLP_CROWN_PAYLOAD_TRIM_ENABLED:true}
 
 common-platform-query-api:
   base-url: ${CP_CLP_BASE_URL:http://localhost:8080}

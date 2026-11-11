@@ -774,6 +774,7 @@ flowchart LR
 | `CATH_PUBLISHING_ENABLED` | `false` | Turn CaTH publishing on/off |
 | `CATH_BASE_URL` / `CATH_ENDPOINT` | `http://localhost:8080` / `/courtlistpublisher/publication` | CaTH endpoint (stub/integration) |
 | `CATH_WAF_BLOCKED_PATTERNS` | `..\,../` | Substrings removed from payloads; empty disables |
+| `CP_CLP_CROWN_PAYLOAD_TRIM_ENABLED` | `true` | Trims the crown daily list payload (Draft, Final, Firm, Online Public downloads) to the fields the Docmosis templates read. Set to `false` to send the full payload if a field prints blank |
 | `AZURE_STORAGE_ENABLED` | `false` | Enables blob storage, PDF generation and file download beans |
 | `AZURE_STORAGE_ACCOUNT_NAME` / `_KEY` / `_CONTAINER_NAME` | — / — / `courtpublisher-blob-container` | Blob storage |
 | `AZURE_LOCAL_DTS_APIMURL`, `AZURE_LOCAL_DTS_*`, `AZURE_REMOTE_DTS_*` | — | APIM URL and Azure AD app registrations for CaTH |
@@ -822,7 +823,7 @@ flowchart LR
     APP --> PG & WM & AZ
 ```
 
-Attach a remote debugger to port **8787** to debug the running container.
+Attach a remote debugger to port **8787** to debug the running container. If another local stack already uses `8787`, set `CP_CLP_IT_DEBUG_PORT` to a free port before running `./gradlew integration`.
 
 ### 10.4 Adding things — where to change what
 

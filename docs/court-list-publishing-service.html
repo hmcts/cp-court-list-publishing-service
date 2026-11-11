@@ -1048,6 +1048,7 @@ flowchart LR
         <tr><td><code>CATH_PUBLISHING_ENABLED</code></td><td><code>false</code></td><td>Turn CaTH publishing on/off</td></tr>
         <tr><td><code>CATH_BASE_URL</code> / <code>CATH_ENDPOINT</code></td><td><code>http://localhost:8080</code> / <code>/courtlistpublisher/publication</code></td><td>CaTH endpoint (stub/integration)</td></tr>
         <tr><td><code>CATH_WAF_BLOCKED_PATTERNS</code></td><td><code>..\,../</code></td><td>Substrings removed from payloads; empty disables</td></tr>
+        <tr><td><code>CP_CLP_CROWN_PAYLOAD_TRIM_ENABLED</code></td><td><code>true</code></td><td>Trims the crown daily list payload (Draft, Final, Firm, Online Public downloads) to the fields the Docmosis templates read. Set to <code>false</code> to send the full payload if a field prints blank</td></tr>
         <tr><td><code>AZURE_STORAGE_ENABLED</code></td><td><code>false</code></td><td>Enables blob storage, PDF generation and file download beans</td></tr>
         <tr><td><code>AZURE_STORAGE_ACCOUNT_NAME</code> / <code>_KEY</code> / <code>_CONTAINER_NAME</code></td><td>— / — / <code>courtpublisher-blob-container</code></td><td>Blob storage</td></tr>
         <tr><td><code>AZURE_LOCAL_DTS_APIMURL</code>, <code>AZURE_LOCAL_DTS_*</code>, <code>AZURE_REMOTE_DTS_*</code></td><td>—</td><td>APIM URL and Azure AD app registrations for CaTH</td></tr>
@@ -1093,7 +1094,7 @@ flowchart LR
         </script>
         <figcaption>Figure 16 — Local / integration stack.</figcaption>
       </figure>
-      <p>Attach a remote debugger to port <strong>8787</strong> to debug the running container.</p>
+      <p>Attach a remote debugger to port <strong>8787</strong> to debug the running container. If another local stack already uses <code>8787</code>, set <code>CP_CLP_IT_DEBUG_PORT</code> to a free port before running <code>./gradlew integration</code>.</p>
 
       <h3>10.4 Where to change what</h3>
       <div class="table-wrap"><table>
