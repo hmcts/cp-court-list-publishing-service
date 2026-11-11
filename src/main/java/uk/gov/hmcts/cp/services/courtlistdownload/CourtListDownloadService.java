@@ -6,6 +6,7 @@ import jakarta.json.JsonReader;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.services.CourtListDataService;
@@ -73,6 +74,18 @@ public class CourtListDownloadService {
 
     private static final Set<CourtListType> CROWN_COURT_DOWNLOAD_PAYLOAD_TYPES = EnumSet.of(CourtListType.USHERS_CROWN);
 
+    /**
+     * Types rendered from listing's crown daily list payload (/dailylistpayload) with the CrownDailyList,
+     * CrownFirmList or CrownOnlinePublicCourtList templates. Their payload is trimmed to the template fields
+     * unless {@code courtlistpublishing.download.crown-payload-trim-enabled} (CP_CLP_CROWN_PAYLOAD_TRIM_ENABLED)
+     * is false. ALPHABETICAL (listing /courtlistpayload) and USHERS_CROWN (progression) are sent unchanged.
+     */
+    private static final Set<CourtListType> CROWN_DAILY_LIST_PAYLOAD_TYPES = EnumSet.of(
+            CourtListType.DRAFT,
+            CourtListType.FINAL,
+            CourtListType.FIRM,
+            CourtListType.ONLINE_PUBLIC);
+
     private static final Set<CourtListType> CROWN_COURT_SUPPORTED_TYPES = EnumSet.copyOf(CROWN_COURT_TEMPLATES.keySet());
 
     static {
@@ -81,11 +94,15 @@ public class CourtListDownloadService {
 
     private final CourtListDataService courtListDataService;
     private final DocumentGeneratorClient documentGeneratorClient;
+    private final boolean crownPayloadTrimEnabled;
 
     public CourtListDownloadService(final CourtListDataService courtListDataService,
-                                    final DocumentGeneratorClient documentGeneratorClient) {
+                                    final DocumentGeneratorClient documentGeneratorClient,
+                                    @Value("${courtlistpublishing.download.crown-payload-trim-enabled:true}")
+                                    final boolean crownPayloadTrimEnabled) {
         this.courtListDataService = courtListDataService;
         this.documentGeneratorClient = documentGeneratorClient;
+        this.crownPayloadTrimEnabled = crownPayloadTrimEnabled;
     }
 
     public CourtListFileResult generateCourtListDownload(final CourtListType courtListType,
@@ -190,12 +207,23 @@ public class CourtListDownloadService {
                 : courtListDataService.getCrownCourtDailyListPayload(
                         courtListType, courtCentreId, courtRoomId, startDate, endDate, cjscppuid, restricted);
 
-        final JsonObject payload;
+        final JsonObject fullPayload;
         try (JsonReader reader = Json.createReader(new StringReader(payloadJson))) {
-            payload = reader.readObject();
+            fullPayload = reader.readObject();
         } catch (Exception e) {
             throw new CourtListDownloadException(
                     "Failed to parse crown court payload JSON: " + e.getMessage(), e);
+        }
+
+        final JsonObject payload;
+        if (crownPayloadTrimEnabled && CROWN_DAILY_LIST_PAYLOAD_TYPES.contains(courtListType)) {
+            payload = CrownDailyListPayloadTrimmer.trim(fullPayload);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Crown court payload trimmed for Docmosis: type={}, courtCentreId={}, {} -> {} chars",
+                        courtListType, Encode.forJava(courtCentreId), payloadJson.length(), payload.toString().length());
+            }
+        } else {
+            payload = fullPayload;
         }
 
         final boolean wantsWord = WORD_DOWNLOAD_TYPES.contains(courtListType);

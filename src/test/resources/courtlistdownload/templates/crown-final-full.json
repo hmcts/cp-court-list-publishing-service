@@ -1,0 +1,362 @@
+{
+  "courtCentreId": "00000000-0000-4000-8000-000000000002",
+  "sittingDate": "2026-02-27",
+  "publishedAt": "2026-02-26T15:30:00Z",
+  "documentType": "Final",
+  "documentCounter": 3,
+  "isWelsh": true,
+  "courtCentreName": "Test Crown Court",
+  "welshCourtCentreName": "Llys y Goron Prawf",
+  "listDate": "2026-02-27",
+  "draftNumber": "",
+  "courtLists": [
+    {
+      "crestCourtSite": {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "oucode": "C01TS00",
+        "crestCourtId": "401",
+        "crestCourtSiteId": "1",
+        "crestCourtSiteName": "Test Crown Court",
+        "welshCrestCourtSiteName": "Llys y Goron Prawf",
+        "validFrom": "2020-01-01",
+        "validTo": "2099-12-31",
+        "crestCourtName": "Test",
+        "welshCrestCourtName": "Prawf",
+        "crestCourtShortName": "Test CC",
+        "welshCrestCourtShortName": "LlG Prawf",
+        "crestCourtFullName": "The Crown Court at Test",
+        "welshCrestCourtFullName": "Llys y Goron yn Prawf",
+        "crestCourtSiteCode": "TS",
+        "courtType": "CROWN",
+        "courtCentreAddress1": "1 Test Street",
+        "courtCentreAddress2": "Test Town",
+        "welshCourtCentreAddress1": "1 Stryd Prawf",
+        "welshCourtCentreAddress2": "Tref Prawf",
+        "courtCentreAddress3": "Testshire",
+        "courtCentreAddress4": "Wales",
+        "courtCentreAddress5": "UK",
+        "courtCentrePostcode": "TE1 1ST",
+        "welshCourtCentreAddress3": "Sir Prawf",
+        "welshCourtCentreAddress4": "Cymru",
+        "welshCourtCentreAddress5": "DU",
+        "phoneNumber": "01234 567890"
+      },
+      "sittings": [
+        {
+          "sittingDate": "2026-02-27",
+          "courtRoomId": "00000000-0000-4000-8000-000000000501",
+          "courtRoomName": "Courtroom 1",
+          "welshCourtRoomName": "Ystafell Llys 1",
+          "weekCommencing": false,
+          "sittingNote": "Internal sitting note",
+          "judiciary": [
+            {
+              "isBenchChairman": true,
+              "isDeputy": false,
+              "judicialId": "00000000-0000-4000-8000-000000000101",
+              "judiciaryName": "HHJ Smith",
+              "welshJudiciaryName": "EiA Smith",
+              "judiciaryTitle": "HHJ",
+              "judiciaryForenames": "Alex",
+              "judiciarySurname": "Smith",
+              "judiciaryTitleSuffix": "KC",
+              "welshJudiciaryTitle": "EiA",
+              "welshJudiciaryTitleSuffix": "CB",
+              "judicialRoleType": {
+                "judiciaryType": "CIRCUIT_JUDGE"
+              }
+            },
+            {
+              "isBenchChairman": false,
+              "isDeputy": true,
+              "judicialId": "00000000-0000-4000-8000-000000000102",
+              "judiciaryName": "Recorder Jones",
+              "welshJudiciaryName": "Cofiadur Jones",
+              "judiciaryTitle": "HHJ",
+              "judiciaryForenames": "Alex",
+              "judiciarySurname": "Jones",
+              "judiciaryTitleSuffix": "KC",
+              "welshJudiciaryTitle": "EiA",
+              "welshJudiciaryTitleSuffix": "CB",
+              "judicialRoleType": {
+                "judiciaryType": "CIRCUIT_JUDGE"
+              }
+            }
+          ],
+          "hearings": [
+            {
+              "startTime": "2026-02-27T10:00:00.000Z",
+              "endTime": "2026-02-27T16:00:00.000Z",
+              "hearingType": {
+                "id": "00000000-0000-4000-8000-000000000301",
+                "description": "Trial",
+                "welshDescription": "Treial"
+              },
+              "restrictFromCourtList": false,
+              "weekCommencing": false,
+              "hasVideoLink": false,
+              "publicListNote": "Hearing continues from yesterday",
+              "committingCourtCentreId": "00000000-0000-4000-8000-000000000900",
+              "caseIdentifier": {
+                "caseReference": "T20260001",
+                "authorityCode": "CPS"
+              },
+              "prosecutor": {
+                "organisationName": "Crown Prosecution Service",
+                "welshOrganisationName": "Gwasanaeth Erlyn y Goron"
+              },
+              "linkedCases": [
+                {
+                  "caseId": "00000000-0000-4000-8000-000000000401",
+                  "caseUrn": "LNK00001"
+                }
+              ],
+              "defendants": [
+                {
+                  "id": "00000000-0000-4000-8000-000000000201",
+                  "firstName": "Jane",
+                  "lastName": "Doe",
+                  "restrictFromCourtList": false,
+                  "defenceOrganisation": "Defence Solicitors LLP",
+                  "offences": [
+                    {
+                      "offenceCode": "TH68001",
+                      "statementOfOffence": {
+                        "title": "Theft",
+                        "welshTitle": "Lladrad"
+                      },
+                      "restrictFromCourtList": false,
+                      "reportingRestrictions": [
+                        {
+                          "label": "Section 45 Youth Justice and Criminal Evidence Act 1999",
+                          "welshLabel": "Adran 45"
+                        }
+                      ],
+                      "committingCourt": {
+                        "courtCentreId": "00000000-0000-4000-8000-000000000900",
+                        "courtHouseName": "Test Magistrates' Court"
+                      }
+                    },
+                    {
+                      "offenceCode": "TH68002",
+                      "statementOfOffence": {
+                        "title": "Burglary",
+                        "welshTitle": "Byrgleriaeth"
+                      },
+                      "restrictFromCourtList": false,
+                      "reportingRestrictions": [],
+                      "committingCourt": {
+                        "courtCentreId": "00000000-0000-4000-8000-000000000900",
+                        "courtHouseName": "Test Magistrates' Court"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000-0000-4000-8000-000000000202",
+                  "firstName": "John",
+                  "lastName": "Roe",
+                  "restrictFromCourtList": false,
+                  "defenceOrganisation": "Defence Solicitors LLP",
+                  "offences": [
+                    {
+                      "offenceCode": "TH68003",
+                      "statementOfOffence": {
+                        "title": "Handling stolen goods",
+                        "welshTitle": "Trin nwyddau wedi'u dwyn"
+                      },
+                      "restrictFromCourtList": false,
+                      "reportingRestrictions": [],
+                      "committingCourt": {
+                        "courtCentreId": "00000000-0000-4000-8000-000000000900",
+                        "courtHouseName": "Test Magistrates' Court"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "startTime": "2026-02-27T14:00:00.000Z",
+              "endTime": "2026-02-27T16:00:00.000Z",
+              "hearingType": {
+                "id": "00000000-0000-4000-8000-000000000302",
+                "description": "Sentence",
+                "welshDescription": "Dedfryd"
+              },
+              "restrictFromCourtList": false,
+              "weekCommencing": false,
+              "hasVideoLink": true,
+              "publicListNote": "",
+              "committingCourtCentreId": "00000000-0000-4000-8000-000000000900",
+              "caseIdentifier": {
+                "caseReference": "T20260002",
+                "authorityCode": "CPS"
+              },
+              "prosecutor": {
+                "organisationName": "Crown Prosecution Service",
+                "welshOrganisationName": "Gwasanaeth Erlyn y Goron"
+              },
+              "linkedCases": [
+                {
+                  "caseId": "00000000-0000-4000-8000-000000000402",
+                  "caseUrn": "LNK00002"
+                }
+              ],
+              "defendants": [
+                {
+                  "id": "00000000-0000-4000-8000-000000000203",
+                  "organisationName": "Acme Trading Ltd",
+                  "restrictFromCourtList": false,
+                  "defenceOrganisation": "Corporate Defence LLP",
+                  "offences": [
+                    {
+                      "offenceCode": "TH68004",
+                      "statementOfOffence": {
+                        "title": "Fraud by false representation",
+                        "welshTitle": "Twyll drwy gynrychiolaeth ffug"
+                      },
+                      "restrictFromCourtList": false,
+                      "reportingRestrictions": [],
+                      "committingCourt": {
+                        "courtCentreId": "00000000-0000-4000-8000-000000000900",
+                        "courtHouseName": "Test Magistrates' Court"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "sittingDate": "2026-02-27",
+          "courtRoomId": "00000000-0000-4000-8000-000000000502",
+          "courtRoomName": "Courtroom 2",
+          "welshCourtRoomName": "Ystafell Llys 2",
+          "weekCommencing": false,
+          "sittingNote": "Internal sitting note",
+          "judiciary": [],
+          "hearings": [
+            {
+              "startTime": "2026-02-27T10:30:00.000Z",
+              "endTime": "2026-02-27T16:00:00.000Z",
+              "hearingType": {
+                "id": "00000000-0000-4000-8000-000000000303",
+                "description": "Application",
+                "welshDescription": "Cais"
+              },
+              "restrictFromCourtList": false,
+              "weekCommencing": false,
+              "hasVideoLink": false,
+              "publicListNote": "",
+              "committingCourtCentreId": "00000000-0000-4000-8000-000000000900",
+              "caseIdentifier": {
+                "caseReference": "T20260003",
+                "authorityCode": "CPS"
+              },
+              "prosecutor": {
+                "organisationName": "Crown Prosecution Service",
+                "welshOrganisationName": "Gwasanaeth Erlyn y Goron"
+              },
+              "linkedCases": [
+                {
+                  "caseId": "00000000-0000-4000-8000-000000000403",
+                  "caseUrn": "LNK00003"
+                }
+              ],
+              "defendants": [
+                {
+                  "id": "00000000-0000-4000-8000-000000000204",
+                  "firstName": "Sam",
+                  "lastName": "Subject",
+                  "restrictFromCourtList": false,
+                  "defenceOrganisation": "Defence Solicitors LLP",
+                  "offences": []
+                }
+              ],
+              "applicationReference": "APP-2026-0001",
+              "applicant": {
+                "firstName": "Ann",
+                "lastName": "Applicant",
+                "restrictFromCourtList": false
+              },
+              "respondents": [
+                {
+                  "firstName": "Rob",
+                  "lastName": "Respondent",
+                  "restrictFromCourtList": false
+                }
+              ],
+              "subject": {
+                "firstName": "Sam",
+                "lastName": "Subject",
+                "restrictFromCourtList": false
+              }
+            },
+            {
+              "startTime": "2026-02-27T11:00:00.000Z",
+              "endTime": "2026-02-27T16:00:00.000Z",
+              "hearingType": {
+                "id": "00000000-0000-4000-8000-000000000304",
+                "description": "Plea and Trial Preparation",
+                "welshDescription": "Ple a Pharatoi ar gyfer Treial"
+              },
+              "restrictFromCourtList": false,
+              "weekCommencing": false,
+              "hasVideoLink": true,
+              "publicListNote": "",
+              "committingCourtCentreId": "00000000-0000-4000-8000-000000000900",
+              "caseIdentifier": {
+                "caseReference": "T20260004",
+                "authorityCode": "CPS"
+              },
+              "prosecutor": {
+                "organisationName": "Crown Prosecution Service",
+                "welshOrganisationName": "Gwasanaeth Erlyn y Goron"
+              },
+              "linkedCases": [
+                {
+                  "caseId": "00000000-0000-4000-8000-000000000404",
+                  "caseUrn": "LNK00004"
+                }
+              ],
+              "defendants": [
+                {
+                  "id": "00000000-0000-4000-8000-000000000205",
+                  "firstName": "",
+                  "lastName": "Single",
+                  "restrictFromCourtList": false,
+                  "defenceOrganisation": "Defence Solicitors LLP",
+                  "offences": [
+                    {
+                      "offenceCode": "TH68005",
+                      "statementOfOffence": {
+                        "title": "Assault occasioning actual bodily harm",
+                        "welshTitle": "Ymosod gan achosi niwed corfforol gwirioneddol"
+                      },
+                      "restrictFromCourtList": false,
+                      "reportingRestrictions": [],
+                      "committingCourt": {
+                        "courtCentreId": "00000000-0000-4000-8000-000000000900",
+                        "courtHouseName": "Test Magistrates' Court"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "00000000-0000-4000-8000-000000000206",
+                  "firstName": "Mononym",
+                  "lastName": "",
+                  "restrictFromCourtList": false,
+                  "defenceOrganisation": "Defence Solicitors LLP",
+                  "offences": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

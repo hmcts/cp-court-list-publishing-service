@@ -1,0 +1,92 @@
+{
+  "sittingDate": "2026-02-27",
+  "weekCommencingStartDate": "2026-02-23",
+  "weekCommencingEndDate": "2026-02-27",
+  "publishedAt": "2026-02-26T15:30:00Z",
+  "documentType": "Final",
+  "documentCounter": 2,
+  "courtCentreName": "Test Crown Court",
+  "listDate": "2026-02-27",
+  "draftNumber": "1",
+  "courtLists": [
+    {
+      "crestCourtSite": {
+        "crestCourtShortName": "TCC",
+        "welshCrestCourtShortName": "LYGP",
+        "crestCourtFullName": "The Crown Court at Test",
+        "welshCrestCourtFullName": "Llys y Goron yn Prawf",
+        "courtCentreAddress1": "1 Test Street",
+        "courtCentreAddress2": "Test Town",
+        "welshCourtCentreAddress1": "1 Stryd Prawf",
+        "welshCourtCentreAddress2": "Tref Prawf",
+        "phoneNumber": "01234 567890"
+      },
+      "sittings": [
+        {
+          "sittingDate": "2026-02-27",
+          "courtRoomName": "Courtroom 1",
+          "welshCourtRoomName": "Ystafell Llys 1",
+          "judiciary": [
+            {
+              "judiciaryName": "HHJ Smith",
+              "welshJudiciaryName": "EiA Smith"
+            }
+          ],
+          "hearings": [
+            {
+              "startTime": "2026-02-27T10:00:00.000Z",
+              "hearingType": {
+                "description": "Trial",
+                "welshDescription": "Treial"
+              },
+              "publicListNote": "Public note",
+              "caseIdentifier": {
+                "caseReference": "T20260001"
+              },
+              "prosecutor": {
+                "organisationName": "Crown Prosecution Service",
+                "welshOrganisationName": "Gwasanaeth Erlyn y Goron"
+              },
+              "defendants": [
+                {
+                  "firstName": "Jane",
+                  "lastName": "Doe",
+                  "defenceOrganisation": "Defence LLP",
+                  "offences": [
+                    {
+                      "statementOfOffence": {
+                        "title": "Theft"
+                      },
+                      "reportingRestrictions": [
+                        {
+                          "label": "Section 45"
+                        }
+                      ]
+                    },
+                    {
+                      "statementOfOffence": {
+                        "title": "Burglary"
+                      },
+                      "reportingRestrictions": []
+                    }
+                  ]
+                },
+                {
+                  "organisationName": "Acme Ltd",
+                  "offences": []
+                }
+              ],
+              "applicationReference": "APP-0001"
+            }
+          ]
+        },
+        {
+          "sittingDate": "2026-02-27",
+          "courtRoomName": "Courtroom 2",
+          "judiciary": [],
+          "hearings": []
+        }
+      ]
+    }
+  ]
+}

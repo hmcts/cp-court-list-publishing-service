@@ -94,7 +94,7 @@ Notes:
 | `wiremock` | `8089` | Stubs for Listing, Progression, Reference Data, usersgroups, Document Generator and CaTH. Mappings are in [`src/integrationTest/resources/wiremock`](src/integrationTest/resources/wiremock) |
 | `azurite` | `10000` | Azure Blob Storage emulator (see [`docker/README.md`](docker/README.md)) |
 
-The `integration` profile replaces the real CaTH publisher with a stub that posts to WireMock, and points blob storage at Azurite. To debug the running app, attach a remote debugger to port `8787`.
+The `integration` profile replaces the real CaTH publisher with a stub that posts to WireMock, and points blob storage at Azurite. To debug the running app, attach a remote debugger to port `8787`. If another local stack already uses `8787`, set `CP_CLP_IT_DEBUG_PORT` to a free port before running `./gradlew integration`.
 
 For the test layers, the scenario checklist and how to inspect results, see the [QA and testing guide](docs/court-list-publishing-service.md#11-qa-and-testing-guide).
 
@@ -143,6 +143,7 @@ Commonly used variables:
 | `CP_CLP_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD` | local Postgres on `55432` / `courtlistpublishing` | Database |
 | `CP_CLP_BASE_URL` | `http://localhost:8080` | Base URL of the Common Platform query APIs |
 | `CATH_PUBLISHING_ENABLED` | `false` | Send lists to CaTH |
+| `CP_CLP_CROWN_PAYLOAD_TRIM_ENABLED` | `true` | Trims the crown daily list payload (Draft, Final, Firm, Online Public downloads) to the fields the Docmosis templates read. Set to `false` to send the full payload if a field prints blank |
 | `AZURE_STORAGE_ENABLED` | `false` | Enables blob storage, PDF generation and file download. Also needs `AZURE_STORAGE_ACCOUNT_NAME` and `AZURE_CLIENT_ID` |
 | `AZURE_LOCAL_DTS_APIMURL`, `AZURE_LOCAL_DTS_*`, `AZURE_REMOTE_DTS_*` | — | APIM / Publishing Hub endpoint and Azure AD app registrations. Internal hostnames are not defaulted in the repo |
 | `CP_CLP_AUTHZ_ENABLED`, `CP_CLP_AUDIT_ENABLED` | `false` | Authorisation (Drools) and audit filters |
