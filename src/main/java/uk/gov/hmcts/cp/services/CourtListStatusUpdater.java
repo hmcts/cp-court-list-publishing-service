@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CourtListStatusUpdater {
 
-    private static final Logger logger = LoggerFactory.getLogger(CourtListStatusUpdater.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CourtListStatusUpdater.class);
 
     private final CourtListStatusRepository repository;
 
@@ -95,7 +95,7 @@ public class CourtListStatusUpdater {
 
     private static void logIgnored(String statusName, UUID courtListId,
                                    Status statusOnRow, Status statusToRecord) {
-        logger.warn("Ignoring {} status {} for court list ID {}: a later attempt has already recorded {}, "
+        LOGGER.warn("Ignoring {} status {} for court list ID {}: a later attempt has already recorded {}, "
                 + "which stands until the next attempt", statusName, statusToRecord, courtListId, statusOnRow);
     }
 
@@ -132,7 +132,7 @@ public class CourtListStatusUpdater {
     private void withEntity(UUID courtListId, Predicate<CourtListStatusEntity> mutator) {
         CourtListStatusEntity entity = repository.getByCourtListId(courtListId);
         if (entity == null) {
-            logger.warn("No court list publish status record found for court list ID: {}", courtListId);
+            LOGGER.warn("No court list publish status record found for court list ID: {}", courtListId);
             return;
         }
         if (!mutator.test(entity)) {

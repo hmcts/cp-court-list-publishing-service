@@ -43,7 +43,7 @@ import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 @Component
 public class SjpPublishTask implements ExecutableTask {
 
-    private static final Logger logger = LoggerFactory.getLogger(SjpPublishTask.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SjpPublishTask.class);
 
     private static final String SENSITIVITY_PUBLIC = "PUBLIC";
     private static final String SENSITIVITY_CLASSIFIED = "CLASSIFIED";
@@ -120,11 +120,11 @@ public class SjpPublishTask implements ExecutableTask {
 
     @Override
     public ExecutionInfo execute(ExecutionInfo executionInfo) {
-        logger.info("Executing SJP_PUBLISH_TASK [job {}]", executionInfo);
+        LOGGER.info("Executing SJP_PUBLISH_TASK [job {}]", executionInfo);
 
         JsonObject jobData = executionInfo.getJobData();
         if (jobData == null) {
-            logger.warn("SJP_PUBLISH_TASK executed with no job data");
+            LOGGER.warn("SJP_PUBLISH_TASK executed with no job data");
             return completed(executionInfo);
         }
 
@@ -137,7 +137,7 @@ public class SjpPublishTask implements ExecutableTask {
                 tryPublishToCaTH(context);
             }
         } catch (Exception e) {
-            logger.error("Error {} publishing SJP court list for courtListId: {}, {}",
+            LOGGER.error("Error {} publishing SJP court list for courtListId: {}, {}",
                     ALERT_PATTERN, courtListId, describe(context, jobData), e);
             if (courtListId != null) {
                 statusUpdater.markPublishFailed(courtListId, e);
@@ -164,7 +164,7 @@ public class SjpPublishTask implements ExecutableTask {
                 ? jobData.getString(JobDataConstant.SJP_REQUEST_TYPE) : null;
 
         if (courtListId == null || listTypeValue == null || payloadJson == null) {
-            logger.warn("Missing required job data for SJP publish task, courtListId={}, listType={}", courtListId, listTypeValue);
+            LOGGER.warn("Missing required job data for SJP publish task, courtListId={}, listType={}", courtListId, listTypeValue);
             return null;
         }
 
@@ -172,7 +172,7 @@ public class SjpPublishTask implements ExecutableTask {
         try {
             listType = SjpListType.fromValue(listTypeValue);
         } catch (IllegalArgumentException e) {
-            logger.warn("Unknown SJP list type in job data for courtListId: {}, listType: {}", courtListId, listTypeValue);
+            LOGGER.warn("Unknown SJP list type in job data for courtListId: {}, listType: {}", courtListId, listTypeValue);
             return null;
         }
 
@@ -200,7 +200,7 @@ public class SjpPublishTask implements ExecutableTask {
 
     private void tryPublishToCaTH(SjpPublishContext context) throws Exception {
         if (!cathPublishingEnabled) {
-            logger.debug("CaTH publishing is disabled (CATH_PUBLISHING_ENABLED=false), skipping SJP CaTH send");
+            LOGGER.debug("CaTH publishing is disabled (CATH_PUBLISHING_ENABLED=false), skipping SJP CaTH send");
             return;
         }
         publish(context);
@@ -230,10 +230,10 @@ public class SjpPublishTask implements ExecutableTask {
 
         DtsMeta meta = buildDtsMeta(cathListType, sensitivity, context.language(), context.requestType(),
                 context.payload().getCourtIdNumeric());
-        logger.info("Sending SJP court list to CaTH, courtListId={}, {}, sensitivity={}",
+        LOGGER.info("Sending SJP court list to CaTH, courtListId={}, {}, sensitivity={}",
                 courtListId, context.describe(), sensitivity);
         int status = courtListPublisher.publish(transformedPayload, meta);
-        logger.info("SJP court list published to CaTH, courtListId={}, {}, status={}",
+        LOGGER.info("SJP court list published to CaTH, courtListId={}, {}, status={}",
                 courtListId, context.describe(), status);
 
         if (status >= 200 && status < 300) {
@@ -241,7 +241,7 @@ public class SjpPublishTask implements ExecutableTask {
         } else {
             RuntimeException cathFailure = new RuntimeException(
                     "CaTH returned status " + status + " for " + context.describe());
-            logger.error("Error {} CaTH publish failed for courtListId: {}, {}, status: {}",
+            LOGGER.error("Error {} CaTH publish failed for courtListId: {}, {}, status: {}",
                     ALERT_PATTERN, courtListId, context.describe(), status, cathFailure);
             statusUpdater.markPublishFailed(courtListId, cathFailure);
         }
@@ -253,10 +253,10 @@ public class SjpPublishTask implements ExecutableTask {
                     try {
                         blobService.uploadJson(payload, CaTHService.buildBlobName(courtListId));
                     } catch (Exception e) {
-                        logger.error("Error {} uploading SJP payload to blob storage, continuing with publish", ALERT_PATTERN, e);
+                        LOGGER.error("Error {} uploading SJP payload to blob storage, continuing with publish", ALERT_PATTERN, e);
                     }
                 },
-                () -> logger.debug("Azure Blob Service not available, skipping SJP payload upload")
+                () -> LOGGER.debug("Azure Blob Service not available, skipping SJP payload upload")
         );
     }
 
@@ -287,10 +287,10 @@ public class SjpPublishTask implements ExecutableTask {
             String value = jobData.getString(JobDataConstant.SJP_LIST_ID, null);
             return value != null ? UUID.fromString(value) : null;
         } catch (IllegalArgumentException e) {
-            logger.warn("Invalid UUID format for courtListId: {}", jobData.getString(JobDataConstant.SJP_LIST_ID, null), e);
+            LOGGER.warn("Invalid UUID format for courtListId: {}", jobData.getString(JobDataConstant.SJP_LIST_ID, null), e);
             return null;
         } catch (Exception e) {
-            logger.warn("Could not extract courtListId from JsonObject", e);
+            LOGGER.warn("Could not extract courtListId from JsonObject", e);
             return null;
         }
     }
