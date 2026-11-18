@@ -21,7 +21,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 
 /**
- * {@code POST /api/court-list-publish/crown/publish} against the running stack: the crown list is fetched from
+ * {@code POST /api/court-list-publish/publish} with Content-Type
+ * {@code application/vnd.courtlistpublishing-service.crown.publish.post+json} against the running stack: the crown list is fetched from
  * listing (WireMock, {@code application/vnd.listing.search.crown.list.payload+json}), turned into the CaTH PDDA
  * list and posted to CaTH (WireMock).
  */
@@ -37,8 +38,8 @@ public class CrownListPublishIntegrationTest extends CourtListIntegrationTestBas
     private static final UUID SLOW_CROWN_COURT_CENTRE_ID = UUID.fromString("cc000000-0000-0000-0000-000000000002");
     private static final String CROWN_PUBLISH_URL =
             System.getProperty("app.baseUrl", "http://localhost:8082/courtlistpublishing-service")
-                    + "/api/court-list-publish/crown/publish";
-    private static final MediaType CROWN_POST = MediaType.parseMediaType("application/vnd.courtlistpublishing-service.crown.post+json");
+                    + "/api/court-list-publish/publish";
+    private static final MediaType CROWN_POST = MediaType.parseMediaType("application/vnd.courtlistpublishing-service.crown.publish.post+json");
 
     @ParameterizedTest
     @CsvSource({
@@ -106,7 +107,7 @@ public class CrownListPublishIntegrationTest extends CourtListIntegrationTestBas
     }
 
     @Test
-    void theStandardPublishRefersCrownListsToTheCrownEndpoint() {
+    void theMagistratesMediaTypeRefusesCrownLists() {
         assertThatThrownBy(() -> postPublishRequest(createPublishRequestJson(CROWN_COURT_CENTRE_ID, "FINAL")))
                 .isInstanceOf(HttpClientErrorException.BadRequest.class);
     }

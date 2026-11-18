@@ -25,7 +25,7 @@ import java.util.Map;
 class CourtListPublishingAccessControlTest {
 
     private static final String PUBLISH_POST = "courtlistpublishing-service.publish.post";
-    private static final String CROWN_POST = "courtlistpublishing-service.crown.post";
+    private static final String CROWN_POST = "courtlistpublishing-service.crown.publish.post";
     private static final String PUBLISH_GET = "courtlistpublishing-service.publish.get";
     private static final String FILES_DOWNLOAD = "courtlistpublishing-service.files.download";
     private static final String DOWNLOAD_GET = "courtlistpublishing-service.download.get";
@@ -82,7 +82,7 @@ class CourtListPublishingAccessControlTest {
         assertThat(outcome.isSuccess()).isTrue();
     }
 
-    // --- crown.post ---
+    // --- crown.publish.post ---
 
     @Test
     void crownPost_shouldAllowUserWithPublishPermission() {

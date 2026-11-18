@@ -89,7 +89,8 @@ class SjpCathPublishingDisabledIntegrationTest {
                 courtListDownloadService,
                 cleanupJobService,
                 sjpService,
-                referenceDataService
+                referenceDataService,
+                null
         );
 
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();

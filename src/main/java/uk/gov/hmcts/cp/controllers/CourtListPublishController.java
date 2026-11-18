@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import uk.gov.hmcts.cp.cleanup.CleanupJobService;
 import uk.gov.hmcts.cp.config.AppConstant;
 import uk.gov.hmcts.cp.openapi.api.CourtListPublishApi;
-import uk.gov.hmcts.cp.openapi.api.CrownCourtListPublishApi;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
@@ -17,6 +16,7 @@ import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadException;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListDownloadService;
 import uk.gov.hmcts.cp.services.courtlistdownload.CourtListFileResult;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
+import uk.gov.hmcts.cp.services.crown.CrownCourtListPublishService;
 import uk.gov.hmcts.cp.services.crown.CrownListType;
 import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
 import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService.SjpPublishResult;
@@ -51,6 +51,11 @@ public class CourtListPublishController implements CourtListPublishApi {
 
     private static final String PDF_FILENAME = "CourtList.pdf";
     private static final String CONTENT_DISPOSITION_VALUE = "attachment; filename=\"" + PDF_FILENAME + "\"";
+    private static final MediaType PUBLISH_POST_MEDIA_TYPE =
+            MediaType.parseMediaType("application/vnd.courtlistpublishing-service.publish.post+json");
+    /** Content-Type that selects the Crown Court PDDA flow on {@code POST /api/court-list-publish/publish}. */
+    static final String CROWN_PUBLISH_MEDIA_TYPE_VALUE = "application/vnd.courtlistpublishing-service.crown.publish.post+json";
+    static final MediaType CROWN_PUBLISH_MEDIA_TYPE = MediaType.parseMediaType(CROWN_PUBLISH_MEDIA_TYPE_VALUE);
     private static final String PUBLISH_STATUS_CLEANUP_MEDIA_TYPE = "application/vnd.courtlistpublishing-service.publish-status-cleanup+json";
 
     private final CourtListPublishStatusService service;
@@ -59,6 +64,7 @@ public class CourtListPublishController implements CourtListPublishApi {
     private final SjpCourtListPublishService sjpCourtListPublishService;
     private final CleanupJobService cleanupJobService;
     private final ReferenceDataService referenceDataService;
+    private final CrownCourtListPublishService crownCourtListPublishService;
 
     @Value("${cleanup.publish-status-cleanup-days:90}")
     private int publishStatusCleanupDays;
@@ -68,13 +74,15 @@ public class CourtListPublishController implements CourtListPublishApi {
                                       final CourtListDownloadService courtListDownloadService,
                                       final CleanupJobService cleanupJobService,
                                       final SjpCourtListPublishService sjpCourtListPublishService,
-                                      final ReferenceDataService referenceDataService) {
+                                      final ReferenceDataService referenceDataService,
+                                      final CrownCourtListPublishService crownCourtListPublishService) {
         this.service = service;
         this.courtListTaskTriggerService = courtListTaskTriggerService;
         this.courtListDownloadService = courtListDownloadService;
         this.cleanupJobService = cleanupJobService;
         this.sjpCourtListPublishService = sjpCourtListPublishService;
         this.referenceDataService = referenceDataService;
+        this.crownCourtListPublishService = crownCourtListPublishService;
     }
 
 
@@ -84,10 +92,16 @@ public class CourtListPublishController implements CourtListPublishApi {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request body is required");
         }
+        // one operation, two media types (API spec): the crown media type publishes a Crown Court PDDA list
+        if (isCrownPublish(getContentTypeFromRequest())) {
+            final CourtListPublishResponse response = crownCourtListPublishService.publish(request, requireCjscppuid());
+            return ResponseEntity.ok().contentType(CROWN_PUBLISH_MEDIA_TYPE).body(response);
+        }
         if (CrownListType.from(request.getCourtListType()).isPresent()) {
-            // crown lists have their own endpoint and status rows; publishing them here would overwrite those rows
+            // crown lists have their own flow and status rows; publishing them here would overwrite those rows
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, request.getCourtListType()
-                    + " court lists must be published via " + CrownCourtListPublishApi.PATH_PUBLISH_CROWN_COURT_LIST);
+                    + " court lists must be published with Content-Type "
+                    + CROWN_PUBLISH_MEDIA_TYPE_VALUE);
         }
 
         LOG.atInfo().log("Creating or updating court list publish status for court centre ID: {}, type: {}, startDate: {}, endDate: {}",
@@ -115,7 +129,7 @@ public class CourtListPublishController implements CourtListPublishApi {
         }
 
         return ResponseEntity.ok()
-                .contentType(new MediaType("application", "vnd.courtlistpublishing-service.publish.post+json"))
+                .contentType(PUBLISH_POST_MEDIA_TYPE)
                 .body(response);
     }
 
@@ -255,6 +269,25 @@ public class CourtListPublishController implements CourtListPublishApi {
                     .contentType(MediaType.parseMediaType(PUBLISH_STATUS_CLEANUP_MEDIA_TYPE))
                     .body(PublishStatusCleanupResponse.builder().success(false).build());
         }
+    }
+
+    /** True when the Content-Type is the crown publish media type (parameters such as charset are ignored). */
+    static boolean isCrownPublish(final String contentType) {
+        if (contentType == null || contentType.isBlank()) {
+            return false;
+        }
+        try {
+            return CROWN_PUBLISH_MEDIA_TYPE.equalsTypeAndSubtype(MediaType.parseMediaType(contentType));
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private static String getContentTypeFromRequest() {
+        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes servletAttrs) {
+            return servletAttrs.getRequest().getContentType();
+        }
+        return null;
     }
 
     private static String getCjscppuidFromRequest() {
