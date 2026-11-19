@@ -17,7 +17,7 @@ end
 rule "Allow – crown court list publish post"
 when
   $o: Outcome()
-  $a: Action(name == "courtlistpublishing-service.crown.post")
+  $a: Action(name == "courtlistpublishing-service.crown.publish.post")
   eval(userAndGroupProvider.hasPermission($a, PermissionConstants.accessToPublishCourtListPermissions()))
 then
   $o.setSuccess(true);

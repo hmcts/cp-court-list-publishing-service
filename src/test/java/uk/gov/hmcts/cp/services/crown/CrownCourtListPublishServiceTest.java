@@ -1,7 +1,6 @@
-package uk.gov.hmcts.cp.controllers;
+package uk.gov.hmcts.cp.services.crown;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -10,10 +9,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import uk.gov.hmcts.cp.config.ObjectMapperConfig;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.cp.models.CourtCentreData;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishRequest;
 import uk.gov.hmcts.cp.openapi.model.CourtListPublishResponse;
@@ -21,31 +18,22 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.CourtListStatusUpdater;
 import uk.gov.hmcts.cp.services.ReferenceDataService;
-import uk.gov.hmcts.cp.services.crown.CrownListStatusService;
-import uk.gov.hmcts.cp.services.crown.CrownListTaskTrigger;
-import uk.gov.hmcts.cp.services.crown.CrownListType;
-import uk.gov.hmcts.cp.services.crown.CrownPublishInProgressException;
-import uk.gov.hmcts.cp.services.crown.CrownPublishRequest;
 
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
-class CrownCourtListPublishControllerTest {
+class CrownCourtListPublishServiceTest {
 
-    private static final String URL = "/api/court-list-publish/crown/publish";
     private static final String USER_ID = "test-user-id";
     private static final UUID COURT_CENTRE_ID = UUID.fromString("cc000000-0000-0000-0000-000000000001");
     private static final LocalDate MONDAY = LocalDate.of(2026, 6, 8);
@@ -61,28 +49,17 @@ class CrownCourtListPublishControllerTest {
     private ReferenceDataService referenceDataService;
 
     @InjectMocks
-    private CrownCourtListPublishController controller;
-
-    private MockMvc mockMvc;
-    private final ObjectMapper objectMapper = ObjectMapperConfig.getObjectMapper();
-
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
-    }
+    private CrownCourtListPublishService service;
 
     @ParameterizedTest
     @CsvSource({"FINAL, 2026-06-10, 2026-06-10", "FIRM, 2026-06-08, 2026-06-14", "WARN, 2026-06-08, 2026-06-12"})
-    void recordsThePublishAndQueuesTheTask(CourtListType courtListType, LocalDate startDate, LocalDate endDate) throws Exception {
+    void recordsThePublishAndQueuesTheTask(CourtListType courtListType, LocalDate startDate, LocalDate endDate) {
         UUID courtListId = UUID.randomUUID();
         crownCourt();
-        when(statusService.requestPublish(COURT_CENTRE_ID, courtListType, startDate)).thenReturn(response(courtListId, courtListType));
+        CourtListPublishResponse expected = response(courtListId, courtListType);
+        when(statusService.requestPublish(COURT_CENTRE_ID, courtListType, startDate)).thenReturn(expected);
 
-        perform(request(courtListType, startDate, endDate))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(CrownCourtListPublishController.CROWN_PUBLISH_MEDIA_TYPE))
-                .andExpect(jsonPath("$.courtListId").value(courtListId.toString()))
-                .andExpect(jsonPath("$.publishStatus").value("REQUESTED"));
+        assertThat(service.publish(request(courtListType, startDate, endDate), USER_ID)).isSameAs(expected);
 
         verify(taskTrigger).queue(new CrownPublishRequest(courtListId, COURT_CENTRE_ID,
                 CrownListType.from(courtListType).orElseThrow(), startDate, endDate, USER_ID, "001", "0113 306 2800"));
@@ -90,79 +67,86 @@ class CrownCourtListPublishControllerTest {
     }
 
     @Test
-    void refusesWithBadRequestWhileTheSameListIsBeingPublished() throws Exception {
+    void refusesWithBadRequestWhileTheSameListIsBeingPublished() {
         crownCourt();
         when(statusService.requestPublish(COURT_CENTRE_ID, CourtListType.FIRM, MONDAY))
                 .thenThrow(new CrownPublishInProgressException("A FIRM list publish starting 2026-06-08 is already in progress", null));
 
-        perform(request(CourtListType.FIRM, MONDAY, SUNDAY))
-                .andExpect(status().isBadRequest())
-                .andExpect(status().reason(containsString("already in progress")));
+        assertThatThrownBy(() -> service.publish(request(CourtListType.FIRM, MONDAY, SUNDAY), USER_ID))
+                .isInstanceOfSatisfying(ResponseStatusException.class, e -> {
+                    assertThat(e.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(e.getReason()).contains("already in progress");
+                });
         verifyNoInteractions(taskTrigger, statusUpdater);
     }
 
     @Test
-    void recordsAFailureAndReturns500WhenTheTaskCannotBeQueued() throws Exception {
+    void recordsAFailureAndReturns500WhenTheTaskCannotBeQueued() {
         UUID courtListId = UUID.randomUUID();
         crownCourt();
         when(statusService.requestPublish(COURT_CENTRE_ID, CourtListType.FINAL, MONDAY)).thenReturn(response(courtListId, CourtListType.FINAL));
         IllegalStateException failure = new IllegalStateException("jobs table unavailable");
         doThrow(failure).when(taskTrigger).queue(any());
 
-        perform(request(CourtListType.FINAL, MONDAY, MONDAY)).andExpect(status().isInternalServerError());
+        assertStatus(() -> service.publish(request(CourtListType.FINAL, MONDAY, MONDAY), USER_ID), HttpStatus.INTERNAL_SERVER_ERROR);
 
         verify(statusUpdater).markPublishFailed(courtListId, failure);
     }
 
     @ParameterizedTest
     @EnumSource(value = CourtListType.class, names = {"FINAL", "FIRM", "WARN"}, mode = EnumSource.Mode.EXCLUDE)
-    void rejectsListTypesThatAreNotCrownLists(CourtListType courtListType) throws Exception {
-        perform(request(courtListType, MONDAY, MONDAY)).andExpect(status().isBadRequest());
+    void rejectsListTypesThatAreNotCrownLists(CourtListType courtListType) {
+        assertStatus(() -> service.publish(request(courtListType, MONDAY, MONDAY), USER_ID), HttpStatus.BAD_REQUEST);
         verifyNothingRecorded();
     }
 
     @ParameterizedTest
     @CsvSource({"FINAL, 2026-06-08, 2026-06-09", "FIRM, 2026-06-09, 2026-06-14", "FIRM, 2026-06-08, 2026-06-15", "WARN, 2026-06-14, 2026-06-08"})
-    void rejectsInvalidDates(CourtListType courtListType, LocalDate startDate, LocalDate endDate) throws Exception {
-        perform(request(courtListType, startDate, endDate)).andExpect(status().isBadRequest());
+    void rejectsInvalidDates(CourtListType courtListType, LocalDate startDate, LocalDate endDate) {
+        assertStatus(() -> service.publish(request(courtListType, startDate, endDate), USER_ID), HttpStatus.BAD_REQUEST);
         verifyNoInteractions(referenceDataService);
         verifyNothingRecorded();
     }
 
     @Test
-    void rejectsACourtCentreThatIsNotACrownCourt() throws Exception {
+    void rejectsAMissingCourtCentreId() {
+        CourtListPublishRequest request = CourtListPublishRequest.builder().courtListType(CourtListType.FINAL)
+                .startDate(MONDAY).endDate(MONDAY).build();
+
+        assertStatus(() -> service.publish(request, USER_ID), HttpStatus.BAD_REQUEST);
+        verifyNoInteractions(referenceDataService);
+        verifyNothingRecorded();
+    }
+
+    @Test
+    void rejectsACourtCentreThatIsNotACrownCourt() {
         when(referenceDataService.getCourtCenterDataByCourtCentreId(COURT_CENTRE_ID.toString(), USER_ID))
                 .thenReturn(Optional.of(CourtCentreData.builder().oucodeL1Code("B").courtIdNumeric("415").build()));
 
-        perform(request(CourtListType.FINAL, MONDAY, MONDAY)).andExpect(status().isBadRequest());
+        assertStatus(() -> service.publish(request(CourtListType.FINAL, MONDAY, MONDAY), USER_ID), HttpStatus.BAD_REQUEST);
         verifyNothingRecorded();
     }
 
     @Test
-    void rejectsACrownCourtWithoutANumericCourtId() throws Exception {
+    void rejectsACrownCourtWithoutANumericCourtId() {
         when(referenceDataService.getCourtCenterDataByCourtCentreId(COURT_CENTRE_ID.toString(), USER_ID))
                 .thenReturn(Optional.of(CourtCentreData.builder().oucodeL1Code("C").build()));
 
-        perform(request(CourtListType.FINAL, MONDAY, MONDAY)).andExpect(status().isBadRequest());
+        assertStatus(() -> service.publish(request(CourtListType.FINAL, MONDAY, MONDAY), USER_ID), HttpStatus.BAD_REQUEST);
         verifyNothingRecorded();
     }
 
     @Test
-    void rejectsACourtCentreMissingFromReferenceData() throws Exception {
+    void rejectsACourtCentreMissingFromReferenceData() {
         when(referenceDataService.getCourtCenterDataByCourtCentreId(COURT_CENTRE_ID.toString(), USER_ID)).thenReturn(Optional.empty());
 
-        perform(request(CourtListType.FINAL, MONDAY, MONDAY)).andExpect(status().isBadRequest());
+        assertStatus(() -> service.publish(request(CourtListType.FINAL, MONDAY, MONDAY), USER_ID), HttpStatus.BAD_REQUEST);
         verifyNothingRecorded();
     }
 
-    @Test
-    void rejectsARequestWithoutCjscppuid() throws Exception {
-        mockMvc.perform(post(URL)
-                        .contentType(CrownCourtListPublishController.CROWN_PUBLISH_MEDIA_TYPE)
-                        .content(objectMapper.writeValueAsString(request(CourtListType.FIRM, MONDAY, SUNDAY))))
-                .andExpect(status().isBadRequest());
-        verifyNoInteractions(referenceDataService);
-        verifyNothingRecorded();
+    private static void assertStatus(ThrowingCallable call, HttpStatus expected) {
+        assertThatThrownBy(call).isInstanceOfSatisfying(ResponseStatusException.class,
+                e -> assertThat(e.getStatusCode()).isEqualTo(expected));
     }
 
     private void crownCourt() {
@@ -172,13 +156,6 @@ class CrownCourtListPublishControllerTest {
 
     private void verifyNothingRecorded() {
         verifyNoInteractions(statusService, taskTrigger, statusUpdater);
-    }
-
-    private ResultActions perform(CourtListPublishRequest request) throws Exception {
-        return mockMvc.perform(post(URL)
-                .header("CJSCPPUID", USER_ID)
-                .contentType(CrownCourtListPublishController.CROWN_PUBLISH_MEDIA_TYPE)
-                .content(objectMapper.writeValueAsString(request)));
     }
 
     private static CourtListPublishRequest request(CourtListType type, LocalDate startDate, LocalDate endDate) {
