@@ -1,5 +1,6 @@
 package uk.gov.hmcts.cp.models;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -58,5 +59,17 @@ public class Offence {
 
     @JsonProperty("pleaDate")
     private String pleaDate;
+
+    /**
+     * Offence number shown on Case at a glance and Manage hearing; the court list PDF prints it.
+     * Left out when absent so the template falls back to the offence's position.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("orderIndex")
+    private Integer orderIndex;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("count")
+    private Integer count;
 }
 
