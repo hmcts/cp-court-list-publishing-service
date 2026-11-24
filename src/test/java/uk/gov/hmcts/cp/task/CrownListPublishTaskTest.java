@@ -5,17 +5,22 @@ import jakarta.json.JsonObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
 import uk.gov.hmcts.cp.services.CourtListStatusUpdater;
 import uk.gov.hmcts.cp.services.crown.CrownListCaTHPublisher;
+import uk.gov.hmcts.cp.services.crown.CrownListPdfGenerator;
 import uk.gov.hmcts.cp.services.crown.CrownListType;
 import uk.gov.hmcts.cp.services.crown.CrownPublishRequest;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -24,9 +29,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 
@@ -41,6 +48,8 @@ class CrownListPublishTaskTest {
     private CourtListStatusUpdater statusUpdater;
     @Mock
     private CrownListCaTHPublisher publisher;
+    @Mock
+    private CrownListPdfGenerator pdfGenerator;
 
     private UUID courtListId;
     private CrownListPublishTask task;
@@ -48,7 +57,7 @@ class CrownListPublishTaskTest {
     @BeforeEach
     void setUp() {
         courtListId = UUID.randomUUID();
-        task = new CrownListPublishTask(statusUpdater, publisher, true);
+        task = new CrownListPublishTask(statusUpdater, publisher, Optional.empty(), true);
     }
 
     @Test
@@ -99,7 +108,7 @@ class CrownListPublishTaskTest {
 
     @Test
     void recordsPublishingDisabledAsAFailureWithItsReason() {
-        CrownListPublishTask disabled = new CrownListPublishTask(statusUpdater, publisher, false);
+        CrownListPublishTask disabled = new CrownListPublishTask(statusUpdater, publisher, Optional.empty(), false);
 
         disabled.execute(execution(CrownListPublishTask.jobData(request(CrownListType.WARNED, MONDAY, SUNDAY))));
 
@@ -150,6 +159,99 @@ class CrownListPublishTaskTest {
 
         assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
         verifyNoInteractions(publisher, statusUpdater);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CrownListType.class, names = {"DAILY", "FIRM"})
+    void generatesAndUploadsThePdfOfADailyOrFirmListAfterPublishing(CrownListType type) {
+        CrownPublishRequest request = type == CrownListType.DAILY
+                ? request(type, MONDAY, MONDAY) : request(type, MONDAY, SUNDAY);
+        when(pdfGenerator.generateAndUpload(request)).thenReturn(courtListId);
+
+        ExecutionInfo result = taskWithPdf(true).execute(execution(CrownListPublishTask.jobData(request)));
+
+        assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
+        InOrder order = inOrder(publisher, statusUpdater, pdfGenerator);
+        order.verify(publisher).publish(request);
+        order.verify(statusUpdater).markPublishSuccessful(courtListId);
+        order.verify(statusUpdater).markFileRequested(courtListId);
+        order.verify(pdfGenerator).generateAndUpload(request);
+        order.verify(statusUpdater).markFileSuccessful(courtListId, courtListId);
+    }
+
+    @Test
+    void generatesNoPdfForAWarnedList() {
+        taskWithPdf(true).execute(execution(CrownListPublishTask.jobData(request(CrownListType.WARNED, MONDAY, SUNDAY))));
+
+        verify(statusUpdater).markPublishSuccessful(courtListId);
+        verifyNoInteractions(pdfGenerator);
+        verify(statusUpdater, never()).markFileRequested(any());
+        verify(statusUpdater, never()).markFileSuccessful(any(), any());
+    }
+
+    @Test
+    void generatesThePdfEvenWhenTheCaTHPublishFails() {
+        CrownPublishRequest request = request(CrownListType.DAILY, MONDAY, MONDAY);
+        doThrow(new IllegalStateException("CaTH returned status 500")).when(publisher).publish(any());
+        when(pdfGenerator.generateAndUpload(request)).thenReturn(courtListId);
+
+        taskWithPdf(true).execute(execution(CrownListPublishTask.jobData(request)));
+
+        verify(statusUpdater).markPublishFailed(eq(courtListId), any());
+        verify(statusUpdater).markFileSuccessful(courtListId, courtListId);
+    }
+
+    @Test
+    void generatesThePdfWhenCaTHPublishingIsDisabled() {
+        CrownPublishRequest request = request(CrownListType.FIRM, MONDAY, SUNDAY);
+        when(pdfGenerator.generateAndUpload(request)).thenReturn(courtListId);
+
+        taskWithPdf(false).execute(execution(CrownListPublishTask.jobData(request)));
+
+        verifyNoInteractions(publisher);
+        verify(statusUpdater).markFileSuccessful(courtListId, courtListId);
+    }
+
+    @Test
+    void recordsAPdfFailureNamingTheListWithoutChangingThePublishOutcome() {
+        CrownPublishRequest request = request(CrownListType.DAILY, MONDAY, MONDAY);
+        IllegalStateException failure = new IllegalStateException("document generator returned 500");
+        when(pdfGenerator.generateAndUpload(request)).thenThrow(failure);
+
+        ExecutionInfo result = taskWithPdf(true).execute(execution(CrownListPublishTask.jobData(request)));
+
+        assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
+        verify(statusUpdater).markPublishSuccessful(courtListId);
+        ArgumentCaptor<Exception> recorded = ArgumentCaptor.forClass(Exception.class);
+        verify(statusUpdater).markFileFailed(eq(courtListId), recorded.capture());
+        assertThat(recorded.getValue())
+                .hasMessage("FINAL list 2026-06-08 to 2026-06-08 PDF not generated: document generator returned 500")
+                .hasCause(failure);
+        verify(statusUpdater, never()).markFileSuccessful(any(), any());
+    }
+
+    @Test
+    void completesWhenRecordingAPdfFailureFails() {
+        CrownPublishRequest request = request(CrownListType.FIRM, MONDAY, SUNDAY);
+        when(pdfGenerator.generateAndUpload(request)).thenThrow(new IllegalStateException("upload failed"));
+        doThrow(new IllegalStateException("database down")).when(statusUpdater).markFileFailed(any(), any());
+
+        ExecutionInfo result = taskWithPdf(true).execute(execution(CrownListPublishTask.jobData(request)));
+
+        assertThat(result.getExecutionStatus()).isEqualTo(COMPLETED);
+    }
+
+    @Test
+    void leavesTheFileStatusAloneWhenBlobStorageIsDisabled() {
+        task.execute(execution(CrownListPublishTask.jobData(request(CrownListType.DAILY, MONDAY, MONDAY))));
+
+        verify(statusUpdater).markPublishSuccessful(courtListId);
+        verify(statusUpdater, never()).markFileRequested(any());
+        verify(statusUpdater, never()).markFileFailed(any(), any());
+    }
+
+    private CrownListPublishTask taskWithPdf(boolean cathPublishingEnabled) {
+        return new CrownListPublishTask(statusUpdater, publisher, Optional.of(pdfGenerator), cathPublishingEnabled);
     }
 
     private CrownPublishRequest request(CrownListType type, LocalDate startDate, LocalDate endDate) {

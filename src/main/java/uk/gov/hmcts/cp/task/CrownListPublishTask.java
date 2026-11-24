@@ -11,6 +11,7 @@ import uk.gov.hmcts.cp.filters.tracing.TracingFilter;
 import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.services.CourtListStatusUpdater;
 import uk.gov.hmcts.cp.services.crown.CrownListCaTHPublisher;
+import uk.gov.hmcts.cp.services.crown.CrownListPdfGenerator;
 import uk.gov.hmcts.cp.services.crown.CrownListType;
 import uk.gov.hmcts.cp.services.crown.CrownPublishRequest;
 import uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo;
@@ -21,6 +22,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static uk.gov.hmcts.cp.config.AppConstant.ALERT_PATTERN;
@@ -28,9 +30,14 @@ import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 
 /**
- * Publishes one crown court list to CaTH and records the outcome as the row's publish status. It produces no file,
- * so the file status is not changed. The task always completes: a failure is recorded as publish status FAILED,
- * with an error naming the list and its dates, and logged with {@link uk.gov.hmcts.cp.config.AppConstant#ALERT_PATTERN}.
+ * Publishes one crown court list to CaTH and records the outcome as the row's publish status. Then, for FINAL and
+ * FIRM lists, generates the list's PDF and uploads it to blob storage ({@link CrownListPdfGenerator}), recording
+ * the outcome as the row's file status, as {@link CourtListPublishAndPDFGenerationTask} does. The two steps are
+ * independent: a failed or disabled CaTH publish does not stop the PDF. WARN lists have no PDF template, so their
+ * file status is not changed; nor is it when blob storage is switched off ({@code azure.storage.enabled=false}).
+ *
+ * <p>The task always completes: a failure is recorded as publish status (or file status) FAILED, with an error
+ * naming the list and its dates, and logged with {@link uk.gov.hmcts.cp.config.AppConstant#ALERT_PATTERN}.
  * With CaTH publishing switched off, the publish is recorded as FAILED with that reason, so it does not look as
  * if it is still running. The trace context of the request that queued the task ({@code traceId}, {@code spanId})
  * is set in the log context while the task runs; afterwards the thread's own values (if any) are put back.
@@ -51,12 +58,15 @@ public class CrownListPublishTask implements ExecutableTask {
 
     private final CourtListStatusUpdater statusUpdater;
     private final CrownListCaTHPublisher publisher;
+    private final Optional<CrownListPdfGenerator> pdfGenerator;
     private final boolean cathPublishingEnabled;
 
     public CrownListPublishTask(CourtListStatusUpdater statusUpdater, CrownListCaTHPublisher publisher,
+                                Optional<CrownListPdfGenerator> pdfGenerator,
                                 @Value("${cath.publishing-enabled:false}") boolean cathPublishingEnabled) {
         this.statusUpdater = statusUpdater;
         this.publisher = publisher;
+        this.pdfGenerator = pdfGenerator;
         this.cathPublishingEnabled = cathPublishingEnabled;
     }
 
@@ -97,12 +107,27 @@ public class CrownListPublishTask implements ExecutableTask {
 
     private void run(JsonObject jobData) {
         UUID courtListId = null;
+        CrownPublishRequest request;
         try {
             if (jobData == null) {
                 throw new IllegalArgumentException("Job data is missing");
             }
             courtListId = UUID.fromString(jobData.getString(JobDataConstant.COURT_LIST_ID));
-            CrownPublishRequest request = request(courtListId, jobData);
+            request = request(courtListId, jobData);
+        } catch (Exception e) {
+            log.error("Error {} reading crown list publish job, courtListId={}", ALERT_PATTERN, courtListId, e);
+            if (courtListId != null) {
+                recordFailure(courtListId, e);
+            }
+            return;
+        }
+        publishToCaTH(request);
+        generatePdf(request);
+    }
+
+    private void publishToCaTH(CrownPublishRequest request) {
+        UUID courtListId = request.courtListId();
+        try {
             if (cathPublishingEnabled) {
                 publish(request);
                 statusUpdater.markPublishSuccessful(courtListId);
@@ -112,9 +137,30 @@ public class CrownListPublishTask implements ExecutableTask {
             }
         } catch (Exception e) {
             log.error("Error {} publishing crown court list to CaTH, courtListId={}", ALERT_PATTERN, courtListId, e);
-            if (courtListId != null) {
-                recordFailure(courtListId, e);
-            }
+            recordFailure(courtListId, e);
+        }
+    }
+
+    /** Generates and uploads the list's PDF (FINAL and FIRM only) and records the outcome as the file status. */
+    private void generatePdf(CrownPublishRequest request) {
+        if (!CrownListPdfGenerator.hasPdf(request.listType())) {
+            return;
+        }
+        UUID courtListId = request.courtListId();
+        if (pdfGenerator.isEmpty()) {
+            log.warn("Blob storage is disabled (AZURE_STORAGE_ENABLED=false): no PDF for {}, courtListId={}",
+                    request.describe(), courtListId);
+            return;
+        }
+        try {
+            statusUpdater.markFileRequested(courtListId);
+            UUID fileId = pdfGenerator.get().generateAndUpload(request);
+            statusUpdater.markFileSuccessful(courtListId, fileId);
+        } catch (Exception e) {
+            log.error("Error {} generating crown court list PDF, {}, courtListId={}", ALERT_PATTERN,
+                    request.describe(), courtListId, e);
+            recordFileFailure(courtListId,
+                    new IllegalStateException(request.describe() + " PDF not generated: " + e.getMessage(), e));
         }
     }
 
@@ -158,6 +204,14 @@ public class CrownListPublishTask implements ExecutableTask {
                 jobData.getString(JobDataConstant.USER_ID),
                 jobData.getString(COURT_ID_NUMERIC),
                 jobData.getString(COURT_TELEPHONE, null));
+    }
+
+    private void recordFileFailure(UUID courtListId, Exception cause) {
+        try {
+            statusUpdater.markFileFailed(courtListId, cause);
+        } catch (Exception e) {
+            log.error("Error {} recording crown list PDF failure, courtListId={}", ALERT_PATTERN, courtListId, e);
+        }
     }
 
     private void recordFailure(UUID courtListId, Exception cause) {

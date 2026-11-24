@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -24,7 +26,8 @@ import org.springframework.web.client.HttpClientErrorException;
  * {@code POST /api/court-list-publish/publish} with Content-Type
  * {@code application/vnd.courtlistpublishing-service.crown.publish.post+json} against the running stack: the crown list is fetched from
  * listing (WireMock, {@code application/vnd.listing.search.crown.list.payload+json}), turned into the CaTH PDDA
- * list and posted to CaTH (WireMock).
+ * list and posted to CaTH (WireMock). FINAL and FIRM lists also get a PDF: rendered by the document generator
+ * (WireMock) from listing's daily list payload and stored in blob storage (Azurite), downloadable by court list id.
  */
 public class CrownListPublishIntegrationTest extends CourtListIntegrationTestBase {
 
@@ -65,6 +68,63 @@ public class CrownListPublishIntegrationTest extends CourtListIntegrationTestBas
         assertThat(list.at("/ListHeader/StartDate").asText()).isEqualTo(startDate);
         assertThat(list.at("/CrownCourt/CourtHouseCode").asInt()).isEqualTo(100);
         assertThat(list.toString()).contains("T20260002");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "FINAL, 2026-06-10, 2026-06-10, CrownDailyList",
+            "FIRM, 2026-06-15, 2026-06-21, CrownFirmList"})
+    void storesThePdfOfADailyOrFirmList(String courtListType, String startDate, String endDate, String template)
+            throws Exception {
+        clearTables(); // a fresh row, so a file status left by an earlier run cannot end the wait
+        ResponseEntity<String> response = post(CROWN_COURT_CENTRE_ID, courtListType, startDate, endDate);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        UUID courtListId = UUID.fromString(parseResponse(response).get("courtListId").asText());
+
+        waitForPDFGenerationFileCompletion(courtListId, FILE_COMPLETION_TIMEOUT_MS);
+
+        JsonNode status = parseResponse(getStatusRequest(courtListId));
+        assertThat(status.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
+        assertThat(status.get("fileStatus").asText()).isEqualTo("SUCCESSFUL");
+        assertThat(status.get("fileId").asText()).isEqualTo(courtListId.toString());
+        byte[] pdf = downloadPdf(courtListId);
+        assertThat(pdf).isNotEmpty();
+        assertThat(new String(pdf, 0, 4, StandardCharsets.US_ASCII)).isEqualTo("%PDF");
+        assertThat(renderRequestsFor(template)).isNotEmpty();
+    }
+
+    @Test
+    void storesNoPdfForAWarnedList() throws Exception {
+        clearTables();
+        ResponseEntity<String> response = post(CROWN_COURT_CENTRE_ID, "WARN", "2026-06-22", "2026-06-28");
+        UUID courtListId = UUID.fromString(parseResponse(response).get("courtListId").asText());
+
+        waitForTaskCompletion(courtListId, TASK_TIMEOUT_MS);
+
+        JsonNode status = parseResponse(getStatusRequest(courtListId));
+        assertThat(status.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
+        assertThat(status.path("fileStatus").isMissingNode() || status.path("fileStatus").isNull()).isTrue();
+        assertThatThrownBy(() -> downloadPdf(courtListId)).isInstanceOf(HttpClientErrorException.NotFound.class);
+    }
+
+    @Test
+    void recordsAPdfFailureWithoutChangingTheCaTHPublish() throws Exception {
+        clearTables();
+        DocumentGeneratorStub.stubFailure(500);
+        try {
+            ResponseEntity<String> response = post(CROWN_COURT_CENTRE_ID, "FINAL", "2026-06-11", "2026-06-11");
+            UUID courtListId = UUID.fromString(parseResponse(response).get("courtListId").asText());
+
+            waitForPDFGenerationFileCompletion(courtListId, FILE_COMPLETION_TIMEOUT_MS);
+
+            JsonNode status = parseResponse(getStatusRequest(courtListId));
+            assertThat(status.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
+            assertThat(status.get("fileStatus").asText()).isEqualTo("FAILED");
+            assertThat(status.get("fileErrorMessage").asText()).contains("FINAL list 2026-06-11 to 2026-06-11 PDF not generated");
+            waitForCaTHRequest("DailyList", courtListId);
+        } finally {
+            resetWireMock();
+        }
     }
 
     @Test
@@ -137,6 +197,23 @@ public class CrownListPublishIntegrationTest extends CourtListIntegrationTestBas
             Thread.sleep(WIREMOCK_POLL_MS);
         }
         throw new AssertionError("No CaTH " + rootElement + " publication for courtListId " + courtListId);
+    }
+
+    /** The PDF render requests sent to the document generator with the given template. */
+    private List<JsonNode> renderRequestsFor(String template) throws Exception {
+        List<JsonNode> found = new ArrayList<>();
+        for (JsonNode entry : objectMapper.readTree(http.getForObject(WIREMOCK_ADMIN_REQUESTS, String.class)).path("requests")) {
+            JsonNode request = entry.has("request") ? entry.get("request") : entry;
+            String body = body(request);
+            if (request.path("url").asText().contains(DocumentGeneratorStub.PATH) && body != null) {
+                JsonNode render = objectMapper.readTree(body);
+                if (template.equals(render.path("templateName").asText())
+                        && "pdf".equals(render.path("conversionFormat").asText())) {
+                    found.add(render);
+                }
+            }
+        }
+        return found;
     }
 
     private static String body(JsonNode request) {

@@ -54,6 +54,15 @@ public class CourtListStatusUpdater {
                 entity -> entity.setPublishErrorMessage(buildErrorMessage(e)));
     }
 
+    /**
+     * Starts a fresh file attempt: back to REQUESTED, with any previous attempt's error cleared, so a file
+     * failure of this attempt is recorded even over an earlier attempt's success.
+     */
+    public void markFileRequested(UUID courtListId) {
+        updateFileStatus(courtListId, Status.REQUESTED,
+                entity -> entity.setFileErrorMessage(null));
+    }
+
     public void markFileSuccessful(UUID courtListId, UUID fileId) {
         updateFileStatus(courtListId, Status.SUCCESSFUL, entity -> {
             entity.setFileId(fileId);
