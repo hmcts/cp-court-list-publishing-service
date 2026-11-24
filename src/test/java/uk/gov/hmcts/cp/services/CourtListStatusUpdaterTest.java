@@ -143,6 +143,30 @@ class CourtListStatusUpdaterTest {
         assertThat(entity.getFileErrorMessage()).contains("PDF upload failed");
     }
     @Test
+    void markFileRequested_reopensTheFileStatusOverAPreviousSuccessAndClearsTheError() {
+        CourtListStatusEntity entity = entityWith(Status.SUCCESSFUL, Status.SUCCESSFUL);
+        UUID fileId = UUID.randomUUID();
+        entity.setFileId(fileId);
+        entity.setFileErrorMessage("previous stack trace");
+
+        updater.markFileRequested(courtListId);
+
+        assertThat(entity.getFileStatus()).isEqualTo(Status.REQUESTED);
+        assertThat(entity.getFileErrorMessage()).isNull();
+        assertThat(entity.getFileId()).isEqualTo(fileId);
+        verify(repository).save(entity);
+    }
+
+    @Test
+    void markFileRequested_setsTheFileStatusWhereNoneHasBeenRecordedYet() {
+        CourtListStatusEntity entity = entityWith(Status.REQUESTED, null);
+
+        updater.markFileRequested(courtListId);
+
+        assertThat(entity.getFileStatus()).isEqualTo(Status.REQUESTED);
+    }
+
+    @Test
     void markFileFailed_leavesRowUntouched_whenALaterAttemptAlreadyUploadedTheFile() {
         CourtListStatusEntity entity = entityWith(Status.SUCCESSFUL, Status.SUCCESSFUL);
         UUID fileId = UUID.randomUUID();
