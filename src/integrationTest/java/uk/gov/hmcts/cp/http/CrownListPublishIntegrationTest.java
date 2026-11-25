@@ -26,8 +26,9 @@ import org.springframework.web.client.HttpClientErrorException;
  * {@code POST /api/court-list-publish/publish} with Content-Type
  * {@code application/vnd.courtlistpublishing-service.crown.publish.post+json} against the running stack: the crown list is fetched from
  * listing (WireMock, {@code application/vnd.listing.search.crown.list.payload+json}), turned into the CaTH PDDA
- * list and posted to CaTH (WireMock). FINAL and FIRM lists also get a PDF: rendered by the document generator
+ * list and posted to CaTH (WireMock). Every crown list also gets a PDF: rendered by the document generator
  * (WireMock) from listing's daily list payload and stored in blob storage (Azurite), downloadable by court list id.
+ * WARN lists get a PDF too, rendered with the firm list template until a warned list template exists.
  */
 public class CrownListPublishIntegrationTest extends CourtListIntegrationTestBase {
 
@@ -73,8 +74,10 @@ public class CrownListPublishIntegrationTest extends CourtListIntegrationTestBas
     @ParameterizedTest
     @CsvSource({
             "FINAL, 2026-06-10, 2026-06-10, CrownDailyList",
-            "FIRM, 2026-06-15, 2026-06-21, CrownFirmList"})
-    void storesThePdfOfADailyOrFirmList(String courtListType, String startDate, String endDate, String template)
+            "FIRM, 2026-06-15, 2026-06-21, CrownFirmList",
+            // no warned list template yet: WARN uses the firm list template
+            "WARN, 2026-06-22, 2026-06-28, CrownFirmList"})
+    void storesTheListsPdf(String courtListType, String startDate, String endDate, String template)
             throws Exception {
         clearTables(); // a fresh row, so a file status left by an earlier run cannot end the wait
         ResponseEntity<String> response = post(CROWN_COURT_CENTRE_ID, courtListType, startDate, endDate);
@@ -91,20 +94,6 @@ public class CrownListPublishIntegrationTest extends CourtListIntegrationTestBas
         assertThat(pdf).isNotEmpty();
         assertThat(new String(pdf, 0, 4, StandardCharsets.US_ASCII)).isEqualTo("%PDF");
         assertThat(renderRequestsFor(template)).isNotEmpty();
-    }
-
-    @Test
-    void storesNoPdfForAWarnedList() throws Exception {
-        clearTables();
-        ResponseEntity<String> response = post(CROWN_COURT_CENTRE_ID, "WARN", "2026-06-22", "2026-06-28");
-        UUID courtListId = UUID.fromString(parseResponse(response).get("courtListId").asText());
-
-        waitForTaskCompletion(courtListId, TASK_TIMEOUT_MS);
-
-        JsonNode status = parseResponse(getStatusRequest(courtListId));
-        assertThat(status.get("publishStatus").asText()).isEqualTo("SUCCESSFUL");
-        assertThat(status.path("fileStatus").isMissingNode() || status.path("fileStatus").isNull()).isTrue();
-        assertThatThrownBy(() -> downloadPdf(courtListId)).isInstanceOf(HttpClientErrorException.NotFound.class);
     }
 
     @Test

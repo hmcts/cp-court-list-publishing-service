@@ -162,8 +162,8 @@ class CrownListPublishTaskTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = CrownListType.class, names = {"DAILY", "FIRM"})
-    void generatesAndUploadsThePdfOfADailyOrFirmListAfterPublishing(CrownListType type) {
+    @EnumSource(CrownListType.class)
+    void generatesAndUploadsTheListsPdfAfterPublishing(CrownListType type) {
         CrownPublishRequest request = type == CrownListType.DAILY
                 ? request(type, MONDAY, MONDAY) : request(type, MONDAY, SUNDAY);
         when(pdfGenerator.generateAndUpload(request)).thenReturn(courtListId);
@@ -177,16 +177,6 @@ class CrownListPublishTaskTest {
         order.verify(statusUpdater).markFileRequested(courtListId);
         order.verify(pdfGenerator).generateAndUpload(request);
         order.verify(statusUpdater).markFileSuccessful(courtListId, courtListId);
-    }
-
-    @Test
-    void generatesNoPdfForAWarnedList() {
-        taskWithPdf(true).execute(execution(CrownListPublishTask.jobData(request(CrownListType.WARNED, MONDAY, SUNDAY))));
-
-        verify(statusUpdater).markPublishSuccessful(courtListId);
-        verifyNoInteractions(pdfGenerator);
-        verify(statusUpdater, never()).markFileRequested(any());
-        verify(statusUpdater, never()).markFileSuccessful(any(), any());
     }
 
     @Test

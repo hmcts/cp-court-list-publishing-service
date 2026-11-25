@@ -219,7 +219,8 @@ public class CourtListDataService {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(courtListDataBaseUrl).path(DAILY_LIST_PAYLOAD_PATH)
                 .queryParam("publishCourtListType", publishCourtListType.name())
                 .queryParam("courtCentreId", courtCentreId);
-        if (CourtListType.FIRM.equals(publishCourtListType)) {
+        // FIRM and WARN are week commencing lists: listing reads their dates from the week commencing parameters
+        if (CourtListType.FIRM.equals(publishCourtListType) || CourtListType.WARN.equals(publishCourtListType)) {
             builder.queryParam("weekCommencingStartDate", startDate)
                     .queryParam("weekCommencingEndDate", endDate);
         } else {

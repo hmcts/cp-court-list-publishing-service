@@ -30,11 +30,12 @@ import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionInfo.executionInfo;
 import static uk.gov.hmcts.cp.taskmanager.domain.ExecutionStatus.COMPLETED;
 
 /**
- * Publishes one crown court list to CaTH and records the outcome as the row's publish status. Then, for FINAL and
- * FIRM lists, generates the list's PDF and uploads it to blob storage ({@link CrownListPdfGenerator}), recording
+ * Publishes one crown court list to CaTH and records the outcome as the row's publish status. Then generates the
+ * list's PDF and uploads it to blob storage ({@link CrownListPdfGenerator}), recording
  * the outcome as the row's file status, as {@link CourtListPublishAndPDFGenerationTask} does. The two steps are
- * independent: a failed or disabled CaTH publish does not stop the PDF. WARN lists have no PDF template, so their
- * file status is not changed; nor is it when blob storage is switched off ({@code azure.storage.enabled=false}).
+ * independent: a failed or disabled CaTH publish does not stop the PDF. WARN lists use the firm list template until
+ * a warned list template exists. With blob storage switched off ({@code azure.storage.enabled=false}) no PDF is made
+ * and the file status is not changed.
  *
  * <p>The task always completes: a failure is recorded as publish status (or file status) FAILED, with an error
  * naming the list and its dates, and logged with {@link uk.gov.hmcts.cp.config.AppConstant#ALERT_PATTERN}.
@@ -141,7 +142,7 @@ public class CrownListPublishTask implements ExecutableTask {
         }
     }
 
-    /** Generates and uploads the list's PDF (FINAL and FIRM only) and records the outcome as the file status. */
+    /** Generates and uploads the list's PDF and records the outcome as the file status. */
     private void generatePdf(CrownPublishRequest request) {
         if (!CrownListPdfGenerator.hasPdf(request.listType())) {
             return;
