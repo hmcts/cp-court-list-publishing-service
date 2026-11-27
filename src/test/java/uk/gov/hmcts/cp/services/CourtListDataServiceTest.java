@@ -2,6 +2,8 @@ package uk.gov.hmcts.cp.services;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -408,19 +410,20 @@ class CourtListDataServiceTest {
                 eq(String.class));
     }
 
-    @Test
-    void getCrownCourtDailyListPayloadForFirmUsesWeekCommencingParams() {
-        String payload = "{\"listType\":\"firm\"}";
+    @ParameterizedTest
+    @EnumSource(value = CourtListType.class, names = {"FIRM", "WARN"})
+    void getCrownCourtDailyListPayloadForAWeekListUsesWeekCommencingParams(CourtListType courtListType) {
+        String payload = "{\"listType\":\"week\"}";
         when(publicCourtListRestTemplate.exchange(anyString(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(new ResponseEntity<>(payload, HttpStatus.OK));
 
         String result = courtListDataService.getCrownCourtDailyListPayload(
-                CourtListType.FIRM, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
+                courtListType, "f8254db1-1683-483e-afb3-b87fde5a0a26", null,
                 LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 6), "user-id", false);
 
         assertThat(result).isEqualTo(payload);
         verify(publicCourtListRestTemplate).exchange(
-                argThat((String url) -> url.contains(DAILY_LIST_PATH) && url.contains("publishCourtListType=FIRM")
+                argThat((String url) -> url.contains(DAILY_LIST_PATH) && url.contains("publishCourtListType=" + courtListType)
                         && url.contains("courtCentreId=f8254db1-1683-483e-afb3-b87fde5a0a26")
                         && url.contains("weekCommencingStartDate=2026-09-01") && url.contains("weekCommencingEndDate=2026-09-06")
                         && !url.contains("&startDate=") && !url.contains("&endDate=")),

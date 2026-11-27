@@ -46,10 +46,8 @@ class CrownListPdfGeneratorTest {
     private CrownListPdfGenerator generator;
 
     @Test
-    void onlyDailyAndFirmListsHaveAPdf() {
-        assertThat(CrownListPdfGenerator.hasPdf(CrownListType.DAILY)).isTrue();
-        assertThat(CrownListPdfGenerator.hasPdf(CrownListType.FIRM)).isTrue();
-        assertThat(CrownListPdfGenerator.hasPdf(CrownListType.WARNED)).isFalse();
+    void everyCrownListHasAPdf() {
+        assertThat(CrownListType.values()).allMatch(CrownListPdfGenerator::hasPdf);
     }
 
     @ParameterizedTest
@@ -57,7 +55,10 @@ class CrownListPdfGeneratorTest {
             "DAILY, false, CrownDailyList",
             "DAILY, true,  CrownDailyListWelsh",
             "FIRM,  false, CrownFirmList",
-            "FIRM,  true,  CrownFirmListWelsh"})
+            "FIRM,  true,  CrownFirmListWelsh",
+            // no warned list template yet: WARN uses the firm list template
+            "WARNED, false, CrownFirmList",
+            "WARNED, true,  CrownFirmListWelsh"})
     void rendersTheListsTemplateInItsLanguageAndUploadsThePdf(CrownListType type, boolean welsh, String template)
             throws IOException {
         CrownPublishRequest request = request(type);
@@ -83,14 +84,6 @@ class CrownListPdfGeneratorTest {
         generator.generateAndUpload(request(CrownListType.DAILY));
 
         verify(pdfGenerationService).uploadPdfBytes(PDF, COURT_LIST_ID);
-    }
-
-    @Test
-    void refusesAWarnedListWithoutCallingListing() {
-        assertThatThrownBy(() -> generator.generateAndUpload(request(CrownListType.WARNED)))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("WARN");
-        verifyNoInteractions(courtListDataService, documentGeneratorClient, pdfGenerationService);
     }
 
     @Test

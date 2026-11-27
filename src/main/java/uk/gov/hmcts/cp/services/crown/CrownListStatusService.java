@@ -19,8 +19,8 @@ import java.util.UUID;
 
 /**
  * Status rows for crown list publishing, in {@code court_list_publish_status}. Only the publish status is set
- * here: a new row has no file status. For FINAL and FIRM lists, {@code CrownListPublishTask} sets the file status
- * when it makes the list's PDF; WARN lists have no PDF, so (as for SJP) their rows keep no file status.
+ * here: a new row has no file status. {@code CrownListPublishTask} sets the file status when it makes the list's
+ * PDF (FINAL, FIRM and WARN; WARN with the firm list template for now).
  *
  * <p>One row stands for one list: court centre, list type and start date. One publish of a list runs at a time:
  * the row is locked while it is checked, and a request while a publish is still {@code REQUESTED} is refused.

@@ -20,8 +20,9 @@ import java.util.UUID;
 
 /**
  * Generates the PDF of a crown court list and uploads it to blob storage as {@code {courtListId}.pdf}, as
- * {@code CourtListPublishAndPDFGenerationTask} does for the other lists. Only FINAL (daily list) and FIRM lists
- * have a template; WARN has none, so it gets no PDF.
+ * {@code CourtListPublishAndPDFGenerationTask} does for the other lists. FINAL uses the daily list template and
+ * FIRM the firm list template. There is no warned list template yet, so for the time being WARN is rendered with
+ * the firm list template (both are week commencing lists); the data is still listing's WARN list.
  *
  * <p>The PDF is rendered from listing's daily list payload ({@code dailylistpayload}, Accept
  * {@code application/vnd.listing.search.daily.list.payload+json}), the same payload and templates as the crown
@@ -36,13 +37,15 @@ public class CrownListPdfGenerator {
     static final String IS_WELSH = "isWelsh";
     private static final Map<CrownListType, TemplateInfo> TEMPLATES = Map.of(
             CrownListType.DAILY, new TemplateInfo("CrownDailyList", "CrownDailyListWelsh"),
-            CrownListType.FIRM, new TemplateInfo("CrownFirmList", "CrownFirmListWelsh"));
+            CrownListType.FIRM, new TemplateInfo("CrownFirmList", "CrownFirmListWelsh"),
+            // no warned list template exists yet: use the firm list template until one is added
+            CrownListType.WARNED, new TemplateInfo("CrownFirmList", "CrownFirmListWelsh"));
 
     private final CourtListDataService courtListDataService;
     private final DocumentGeneratorClient documentGeneratorClient;
     private final PdfGenerationService pdfGenerationService;
 
-    /** Whether the list type has a PDF template (FINAL and FIRM do; WARN does not). */
+    /** Whether the list type has a PDF template (FINAL, FIRM and, with the firm list template, WARN). */
     public static boolean hasPdf(CrownListType listType) {
         return TEMPLATES.containsKey(listType);
     }

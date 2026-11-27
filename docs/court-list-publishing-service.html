@@ -385,7 +385,7 @@ flowchart TB
         <tr><td><code>DRAFT</code></td><td>Crown Court daily list (draft)</td><td class="c">—</td><td class="c">—</td><td class="c">✅ (Crown)</td><td>PDF</td></tr>
         <tr><td><code>FINAL</code></td><td>Crown Court daily list</td><td class="c">✅ <code>CROWN_DAILY_PDDA_LIST</code> (crown media type)</td><td class="c">✅ <code>CrownDailyList</code></td><td class="c">✅ (Crown)</td><td>PDF</td></tr>
         <tr><td><code>FIRM</code></td><td>Crown Court firm (week-commencing) list</td><td class="c">✅ <code>CROWN_FIRM_PDDA_LIST</code> (crown media type)</td><td class="c">✅ <code>CrownFirmList</code></td><td class="c">✅ (Crown)</td><td>PDF</td></tr>
-        <tr><td><code>WARN</code></td><td>Crown Court warned / advance (week-commencing) list</td><td class="c">✅ <code>CROWN_ADVANCE_PDDA_LIST</code> (crown media type)</td><td class="c">— (no template)</td><td class="c">—</td><td>—</td></tr>
+        <tr><td><code>WARN</code></td><td>Crown Court warned / advance (week-commencing) list</td><td class="c">✅ <code>CROWN_ADVANCE_PDDA_LIST</code> (crown media type)</td><td class="c">✅ <code>CrownFirmList</code> (interim)</td><td class="c">—</td><td>—</td></tr>
         <tr><td><code>SJP_*</code> (8 variants)</td><td>Public / press, national</td><td class="c">✅</td><td class="c">— (no file)</td><td class="c">—</td><td>—</td></tr>
       </table></div>
       <div class="callout warn"><strong>Business rule</strong>Only <code>STANDARD</code> and <code>ONLINE_PUBLIC</code> have a CaTH mapping and a stored-PDF template. Publishing another list type through the standard publish endpoint records the publish as <span class="st bad">FAILED</span> ("Unsupported court list type") and the file as <span class="st bad">FAILED</span> ("No PDF template").</div>
@@ -405,7 +405,7 @@ flowchart TB
         <tr><td>BR-9</td><td>Prison lists can only be downloaded through the dedicated prison endpoint, by prison-list roles.</td></tr>
         <tr><td>BR-10</td><td>Data (status records, PDFs, CaTH payload copies) older than the retention period (default 90 days) is deleted by the cleanup job.</td></tr>
         <tr><td>BR-11</td><td>Text that the Azure Web Application Firewall would block (by default <code>..\</code> and <code>../</code>) is stripped from published content, so a legitimate list is not rejected at the gateway.</td></tr>
-        <tr><td>BR-12</td><td>Crown Court lists go to CaTH as PDDA lists through <code>/api/court-list-publish/publish</code> with Content-Type <code>application/vnd.courtlistpublishing-service.crown.publish.post+json</code> only: <code>FINAL</code> → daily list, <code>FIRM</code> → firm list, <code>WARN</code> → advance (warned) list. The court centre must be a Crown Court with a numeric court id in reference data. <code>FINAL</code> and <code>FIRM</code> also get a stored PDF (<code>CrownDailyList</code> / <code>CrownFirmList</code>, Welsh variants when listing's payload says <code>isWelsh</code>), as on the standard flow; <code>WARN</code> has no PDF template, so it gets none.</td></tr>
+        <tr><td>BR-12</td><td>Crown Court lists go to CaTH as PDDA lists through <code>/api/court-list-publish/publish</code> with Content-Type <code>application/vnd.courtlistpublishing-service.crown.publish.post+json</code> only: <code>FINAL</code> → daily list, <code>FIRM</code> → firm list, <code>WARN</code> → advance (warned) list. The court centre must be a Crown Court with a numeric court id in reference data. Each list also gets a stored PDF, as on the standard flow: <code>FINAL</code> with <code>CrownDailyList</code>, <code>FIRM</code> with <code>CrownFirmList</code>, and <code>WARN</code> with <code>CrownFirmList</code> until a warned list template exists (Welsh variants when listing's payload says <code>isWelsh</code>).</td></tr>
         <tr><td>BR-13</td><td>A crown <code>FINAL</code> list covers one day (start date = end date). A <code>FIRM</code> or <code>WARN</code> list is a week-commencing list: it starts on a <strong>Monday</strong> and covers at most <strong>7 days</strong>. The tracking record is keyed on the start date.</td></tr>
         <tr><td>BR-14</td><td>Only one publish of a crown list (court centre + list type + start date) runs at a time. A request while one is in progress is refused with <code>400</code> ("already in progress"); a publish left <code>REQUESTED</code> longer than <code>crown.publish.in-progress-timeout</code> (default 15 minutes) is treated as abandoned.</td></tr>
         <tr><td>BR-15</td><td>Crown lists never publish restricted data: hearings, defendants, offences and parties marked <code>restrictFromCourtList</code>, hearings whose parties are all restricted, and parties with no name, are left out. Crown lists are sent with sensitivity <code>PUBLIC</code> and displayed until 23:59 UTC on the list's last day.</td></tr>
@@ -876,11 +876,11 @@ sequenceDiagram
     else error, nothing publishable, or CaTH publishing disabled
         TK->>DB: markPublishFailed (error names the list and its dates)
     end
-    opt FINAL or FIRM, and blob storage enabled (runs whatever the CaTH outcome)
+    opt blob storage enabled (runs whatever the CaTH outcome)
         TK->>DB: markFileRequested
         TK->>PG: generateAndUpload(request)
         PG->>LS: GET dailylistpayload (Accept: application/vnd.listing.search.daily.list.payload+json)
-        PG->>DG: render CrownDailyList / CrownFirmList (Welsh variant if isWelsh)
+        PG->>DG: render CrownDailyList (FINAL) / CrownFirmList (FIRM, WARN) (Welsh variant if isWelsh)
         PG->>BL: upload {courtListId}.pdf
         alt uploaded
             TK->>DB: markFileSuccessful(fileId)
@@ -892,7 +892,7 @@ sequenceDiagram
         <figcaption>Figure 11a — Crown publish (PDDA lists).</figcaption>
       </figure>
       <ul>
-        <li><code>FINAL</code> and <code>FIRM</code> get a stored PDF, rendered from the same listing payload and templates as the crown court download. The PDF step is independent of the CaTH step: it runs when the CaTH publish fails or is disabled, and a PDF failure does not change the publish status. <code>WARN</code> has no template and gets no PDF; with <code>AZURE_STORAGE_ENABLED=false</code> no PDF is made and the file status is left empty.</li>
+        <li>Every crown list gets a stored PDF, rendered from the same listing payload and templates as the crown court download. There is no warned list template yet, so <code>WARN</code> is rendered with the firm list template (<code>CrownFirmList</code>) for the time being, from listing's <code>WARN</code> data. The PDF step is independent of the CaTH step: it runs when the CaTH publish fails or is disabled, and a PDF failure does not change the publish status. With <code>AZURE_STORAGE_ENABLED=false</code> no PDF is made and the file status is left empty.</li>
         <li><code>FIRM</code> and <code>WARN</code> are fetched with <code>weekCommencingStartDate</code> / <code>weekCommencingEndDate</code>; <code>FINAL</code> with <code>startDate</code> / <code>endDate</code>.</li>
         <li>The list header and CaTH metadata use the requested dates; sittings listing returns for other days are left out (logged).</li>
         <li>Unlike the standard flow, a crown publish with <code>CATH_PUBLISHING_ENABLED=false</code> is recorded as <strong><code>FAILED</code></strong> with the reason, so it does not look as if it is still running.</li>
@@ -903,7 +903,7 @@ sequenceDiagram
     <section id="s5">
       <h2>5. Status lifecycle</h2>
       <div class="aud"><span class="tag all">Everyone</span></div>
-      <p>Each tracked list has two independent statuses: <strong>publish status</strong> (did it reach CaTH?) and <strong>file status</strong> (was the PDF stored?). SJP rows and crown <code>WARN</code> rows have only a publish status; crown <code>FINAL</code> and <code>FIRM</code> rows get a file status once the task makes their PDF.</p>
+      <p>Each tracked list has two independent statuses: <strong>publish status</strong> (did it reach CaTH?) and <strong>file status</strong> (was the PDF stored?). SJP rows have only a publish status; crown rows get a file status once the task makes their PDF.</p>
 
       <figure class="diagram">
         <script type="text/plain" class="mmd">
@@ -938,7 +938,7 @@ stateDiagram-v2
       <div class="table-wrap"><table>
         <tr><th>Method</th><th>Path</th><th>Purpose</th><th>Drools action</th><th>Allowed</th></tr>
         <tr><td><span class="method post">POST</span></td><td><code>/api/court-list-publish/publish</code></td><td>Content-Type <code>application/vnd.courtlistpublishing-service.publish.post+json</code>: create/refresh a publish record and queue the publish + PDF task. <strong>Rejects <code>FINAL</code>, <code>FIRM</code>, <code>WARN</code> (400)</strong></td><td><code>courtlistpublishing-service.publish.post</code></td><td>Users with permission <em>Court List / Publish</em></td></tr>
-        <tr><td><span class="method post">POST</span></td><td><code>/api/court-list-publish/publish</code></td><td>Content-Type <code>application/vnd.courtlistpublishing-service.crown.publish.post+json</code>: create/refresh a crown publish record and queue the CaTH PDDA publish task (<code>FINAL</code>, <code>FIRM</code>, <code>WARN</code> only; PDF stored for <code>FINAL</code> and <code>FIRM</code>)</td><td><code>courtlistpublishing-service.crown.publish.post</code></td><td>Users with permission <em>Court List / Publish</em></td></tr>
+        <tr><td><span class="method post">POST</span></td><td><code>/api/court-list-publish/publish</code></td><td>Content-Type <code>application/vnd.courtlistpublishing-service.crown.publish.post+json</code>: create/refresh a crown publish record and queue the CaTH PDDA publish task (<code>FINAL</code>, <code>FIRM</code>, <code>WARN</code> only; PDF stored for each, <code>WARN</code> with the firm list template for now)</td><td><code>courtlistpublishing-service.crown.publish.post</code></td><td>Users with permission <em>Court List / Publish</em></td></tr>
         <tr><td><span class="method get">GET</span></td><td><code>/api/court-list-publish/publish-status</code></td><td>Query publish status by <code>courtListId</code>, or <code>courtCentreId</code> + <code>publishDate</code> (+ optional <code>courtListType</code>)</td><td><code>courtlistpublishing-service.publish.get</code></td><td>Publishing roles</td></tr>
         <tr><td><span class="method get">GET</span></td><td><code>/api/court-list-publish/download</code></td><td>On-demand PDF/Word for a court list</td><td><code>courtlistpublishing-service.download.get</code></td><td>Publishing roles</td></tr>
         <tr><td><span class="method get">GET</span></td><td><code>/api/court-list-publish/prison/download</code></td><td>Prison court list PDF</td><td><code>courtlistpublishing-service.prison-download.get</code></td><td>Prison-list roles</td></tr>
