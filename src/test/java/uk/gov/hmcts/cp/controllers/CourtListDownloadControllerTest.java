@@ -69,7 +69,7 @@ class CourtListDownloadControllerTest {
     void setUp() {
         CourtListPublishController controller = new CourtListPublishController(
                 service, courtListTaskTriggerService, courtListDownloadService, cleanupJobService,
-                sjpCourtListPublishService, referenceDataService);
+                sjpCourtListPublishService, referenceDataService, null);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 

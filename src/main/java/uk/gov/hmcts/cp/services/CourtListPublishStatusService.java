@@ -225,19 +225,21 @@ public class CourtListPublishStatusService {
         Status publishStatusEnum = entity.getPublishStatus();
         Status fileStatusEnum = entity.getFileStatus();
 
-        return new CourtListPublishResponse(
-                entity.getCourtListId(),
-                entity.getCourtCentreId(),
-                publishStatusEnum,
-                fileStatusEnum,
-                entity.getCourtListType(),
-                lastUpdated,
-                entity.getFileUrl(),
-                entity.getFileId(),
-                entity.getPublishErrorMessage(),
-                entity.getFileErrorMessage(),
-                entity.getPublishDate()
-        );
+        // by name, not the generated all-args constructor: its two String error messages come in the spec's
+        // property order (fileErrorMessage, then publishErrorMessage), so a positional call can silently swap them
+        return CourtListPublishResponse.builder()
+                .courtListId(entity.getCourtListId())
+                .courtCentreId(entity.getCourtCentreId())
+                .publishStatus(publishStatusEnum)
+                .fileStatus(fileStatusEnum)
+                .courtListType(entity.getCourtListType())
+                .lastUpdated(lastUpdated)
+                .fileUrl(entity.getFileUrl())
+                .fileId(entity.getFileId())
+                .publishErrorMessage(entity.getPublishErrorMessage())
+                .fileErrorMessage(entity.getFileErrorMessage())
+                .publishDate(entity.getPublishDate())
+                .build();
     }
 }
 

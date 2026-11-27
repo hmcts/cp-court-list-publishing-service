@@ -64,6 +64,30 @@ class CourtListPublishStatusServiceTest {
     }
 
     @Test
+    void getByCourtListId_shouldReturnEachErrorMessageInItsOwnField() {
+        UUID courtListId = UUID.randomUUID();
+        UUID fileId = UUID.randomUUID();
+        CourtListStatusEntity entity = new CourtListStatusEntity(
+                courtListId, UUID.randomUUID(), Status.SUCCESSFUL, Status.FAILED, CourtListType.FINAL, Instant.now());
+        entity.setPublishErrorMessage("publish error");
+        entity.setFileErrorMessage("file error");
+        entity.setFileUrl("https://files/" + fileId + ".pdf");
+        entity.setFileId(fileId);
+        entity.setPublishDate(LocalDate.of(2026, 6, 9));
+        when(repository.getByCourtListId(courtListId)).thenReturn(entity);
+
+        CourtListPublishResponse result = service.getByCourtListId(courtListId);
+
+        assertThat(result.getPublishErrorMessage()).isEqualTo("publish error");
+        assertThat(result.getFileErrorMessage()).isEqualTo("file error");
+        assertThat(result.getPublishStatus()).isEqualTo(Status.SUCCESSFUL);
+        assertThat(result.getFileStatus()).isEqualTo(Status.FAILED);
+        assertThat(result.getFileUrl()).isEqualTo("https://files/" + fileId + ".pdf");
+        assertThat(result.getFileId()).isEqualTo(fileId);
+        assertThat(result.getPublishDate()).isEqualTo(LocalDate.of(2026, 6, 9));
+    }
+
+    @Test
     void getByCourtListId_shouldThrowResponseStatusException_whenEntityDoesNotExist() {
         // Given
         UUID courtListId = UUID.randomUUID();
