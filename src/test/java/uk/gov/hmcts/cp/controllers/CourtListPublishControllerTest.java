@@ -3,6 +3,10 @@ package uk.gov.hmcts.cp.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import uk.gov.hmcts.cp.config.ObjectMapperConfig;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,6 +22,7 @@ import uk.gov.hmcts.cp.openapi.model.CourtListType;
 import uk.gov.hmcts.cp.openapi.model.Status;
 import uk.gov.hmcts.cp.services.CourtListPublishStatusService;
 import uk.gov.hmcts.cp.services.CourtListTaskTriggerService;
+import uk.gov.hmcts.cp.services.crown.CrownCourtListPublishService;
 import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService;
 import uk.gov.hmcts.cp.services.sjp.SjpCourtListPublishService.SjpPublishResult;
 
@@ -33,10 +38,13 @@ import uk.gov.hmcts.cp.openapi.model.PublishCourtListRequest;
 import uk.gov.hmcts.cp.openapi.model.SjpListPayload;
 import uk.gov.hmcts.cp.openapi.model.SjpListType;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -48,6 +56,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class CourtListPublishControllerTest {
 
     public static final MediaType CONTENT_TYPE_APPLICATION_VND_POST = new MediaType("application", "vnd.courtlistpublishing-service.publish.post+json");
+    public static final MediaType CONTENT_TYPE_CROWN_PUBLISH_POST =
+            MediaType.parseMediaType("application/vnd.courtlistpublishing-service.crown.publish.post+json");
     public static final MediaType CONTENT_TYPE_APPLICATION_VND_GET = new MediaType("application", "vnd.courtlistpublishing-service.publish.get+json");
 
     private MockMvc mockMvc;
@@ -62,6 +72,9 @@ class CourtListPublishControllerTest {
     @Mock
     private SjpCourtListPublishService sjpCourtListPublishService;
 
+    @Mock
+    private CrownCourtListPublishService crownCourtListPublishService;
+
     @InjectMocks
     private CourtListPublishController controller;
 
@@ -75,6 +88,106 @@ class CourtListPublishControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
         objectMapper = ObjectMapperConfig.getObjectMapper();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourtListType.class, names = {"FINAL", "FIRM", "WARN"})
+    void publishCourtList_shouldRejectCrownListTypes_andPointToCrownMediaType(CourtListType crownListType) throws Exception {
+        CourtListPublishRequest request = new CourtListPublishRequest(
+                UUID.randomUUID(), LocalDate.now(), LocalDate.now(), crownListType, false);
+
+        mockMvc.perform(post(PUBLISH_URL)
+                        .header("CJSCPPUID", "test-user-id")
+                        .contentType(CONTENT_TYPE_APPLICATION_VND_POST)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().reason(org.hamcrest.Matchers.containsString("application/vnd.courtlistpublishing-service.crown.publish.post+json")));
+
+        verify(service, never()).createOrUpdate(any(), any(), any(), any());
+        verify(courtListTaskTriggerService, never()).triggerCourtListTask(any(), any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourtListType.class, names = {"FINAL", "FIRM", "WARN"})
+    void publishCourtList_shouldPublishThroughTheCrownService_whenContentTypeIsTheCrownMediaType(CourtListType crownListType) throws Exception {
+        CourtListPublishRequest request = new CourtListPublishRequest(
+                UUID.randomUUID(), LocalDate.now(), LocalDate.now(), crownListType, false);
+        UUID courtListId = UUID.randomUUID();
+        when(crownCourtListPublishService.publish(request, "test-user-id"))
+                .thenReturn(CourtListPublishResponse.builder().courtListId(courtListId).courtCentreId(request.getCourtCentreId())
+                        .courtListType(crownListType).publishStatus(Status.REQUESTED).build());
+
+        mockMvc.perform(post(PUBLISH_URL)
+                        .header("CJSCPPUID", "test-user-id")
+                        .contentType(CONTENT_TYPE_CROWN_PUBLISH_POST)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(CONTENT_TYPE_CROWN_PUBLISH_POST))
+                .andExpect(jsonPath("$.courtListId").value(courtListId.toString()))
+                .andExpect(jsonPath("$.publishStatus").value("REQUESTED"));
+
+        verify(service, never()).createOrUpdate(any(), any(), any(), any());
+        verify(courtListTaskTriggerService, never()).triggerCourtListTask(any(), any());
+    }
+
+    @Test
+    void publishCourtList_shouldReturnTheCrownServiceRefusal() throws Exception {
+        CourtListPublishRequest request = new CourtListPublishRequest(
+                UUID.randomUUID(), LocalDate.now(), LocalDate.now(), CourtListType.STANDARD, false);
+        when(crownCourtListPublishService.publish(request, "test-user-id"))
+                .thenThrow(new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.BAD_REQUEST, "courtListType STANDARD cannot be published as a crown list"));
+
+        mockMvc.perform(post(PUBLISH_URL)
+                        .header("CJSCPPUID", "test-user-id")
+                        .contentType(CONTENT_TYPE_CROWN_PUBLISH_POST)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().reason(org.hamcrest.Matchers.containsString("cannot be published as a crown list")));
+
+        verify(service, never()).createOrUpdate(any(), any(), any(), any());
+    }
+
+    @Test
+    void publishCourtList_shouldRequireCjscppuid_forTheCrownMediaType() throws Exception {
+        CourtListPublishRequest request = new CourtListPublishRequest(
+                UUID.randomUUID(), LocalDate.now(), LocalDate.now(), CourtListType.FINAL, false);
+
+        mockMvc.perform(post(PUBLISH_URL)
+                        .contentType(CONTENT_TYPE_CROWN_PUBLISH_POST)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(crownCourtListPublishService);
+    }
+
+    @Test
+    void publishCourtList_shouldRejectTheOldCrownMediaType() throws Exception {
+        CourtListPublishRequest request = new CourtListPublishRequest(
+                UUID.randomUUID(), LocalDate.now(), LocalDate.now(), CourtListType.FINAL, false);
+
+        mockMvc.perform(post(PUBLISH_URL)
+                        .header("CJSCPPUID", "test-user-id")
+                        .contentType(MediaType.parseMediaType("application/vnd.courtlistpublishing-service.crown.post+json"))
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnsupportedMediaType());
+
+        verifyNoInteractions(crownCourtListPublishService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "application/vnd.courtlistpublishing-service.crown.publish.post+json",
+            "application/vnd.courtlistpublishing-service.crown.publish.post+json;charset=UTF-8"})
+    void isCrownPublish_shouldMatchTheCrownMediaType(String contentType) {
+        assertThat(CourtListPublishController.isCrownPublish(contentType)).isTrue();
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"application/vnd.courtlistpublishing-service.publish.post+json", "not a media type"})
+    void isCrownPublish_shouldNotMatchOtherContentTypes(String contentType) {
+        assertThat(CourtListPublishController.isCrownPublish(contentType)).isFalse();
     }
 
     @Test

@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/listing-service/query/api/rest/listing/dailylistpayload",
+    "queryParameters": {
+      "courtCentreId": {
+        "equalTo": "cc000000-0000-0000-0000-000000000002"
+      }
+    },
+    "headers": {
+      "Accept": {
+        "equalTo": "application/vnd.listing.search.crown.list.payload+json"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "fixedDelayMilliseconds": 10000,
+    "headers": {
+      "Content-Type": "application/vnd.listing.search.crown.list.payload+json"
+    },
+    "bodyFileName": "crown-list-payload.json"
+  },
+  "priority": 1
+}
